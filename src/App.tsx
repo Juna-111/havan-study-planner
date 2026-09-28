@@ -16,7 +16,14 @@ import {
   type PlanMode,
   type StudentProfile,
 } from './domain/plan'
-import { initialiseTelegram } from './lib/telegram'
+import { getTelegramIdentity, initialiseTelegram } from './lib/telegram'
+import {
+  clearLocalSession,
+  createBrowserIdentity,
+  getPlannerStorageKey,
+  loadBrowserIdentity,
+  type AppIdentity,
+} from './lib/session'
 import './index.css'
 
 type PlannerState = {
@@ -27,9 +34,7 @@ type PlannerState = {
   selectedDay: number
 }
 
-type Sheet = 'actions' | 'reschedule' | 'add' | null
-
-const storageKey = 'havan-study-planner-v1'
+type Sheet = 'actions' | 'reschedule' | 'add' | 'profile' | null
 
 const makeInitialProfile = (): StudentProfile => {
   const assessmentDate = new Date()
@@ -61,9 +66,11 @@ const makeInitialState = (): PlannerState => ({
   selectedDay: 1,
 })
 
-function loadState(): PlannerState {
+function loadState(identity: AppIdentity | null): PlannerState {
+  if (!identity) return makeInitialState()
+
   try {
-    const stored = window.localStorage.getItem(storageKey)
+    const stored = window.localStorage.getItem(getPlannerStorageKey(identity))
     if (!stored) return makeInitialState()
     const parsed = JSON.parse(stored) as PlannerState
     if (!parsed.profile || !Array.isArray(parsed.plan)) return makeInitialState()
@@ -82,21 +89,29 @@ function formatWeekRange() {
 }
 
 function App() {
-  const [state, setState] = useState<PlannerState>(loadState)
+  const [identity, setIdentity] = useState<AppIdentity | null>(() => getTelegramIdentity() ?? loadBrowserIdentity())
+  const [state, setState] = useState<PlannerState>(() => loadState(identity))
   const [step, setStep] = useState(0)
   const [sheet, setSheet] = useState<Sheet>(null)
   const [activeItemId, setActiveItemId] = useState<string | null>(null)
   const [rescheduleDay, setRescheduleDay] = useState(1)
   const [rescheduleTime, setRescheduleTime] = useState('17:30')
   const [newItem, setNewItem] = useState({ title: '', topic: '', courseId: '', day: 1, duration: 45 })
+  const [browserName, setBrowserName] = useState('')
 
   useEffect(() => {
     initialiseTelegram()
   }, [])
 
   useEffect(() => {
-    window.localStorage.setItem(storageKey, JSON.stringify(state))
-  }, [state])
+    if (!identity) return
+
+    try {
+      window.localStorage.setItem(getPlannerStorageKey(identity), JSON.stringify(state))
+    } catch {
+      // Keep the current plan usable when browser storage is unavailable.
+    }
+  }, [identity, state])
 
   const recommendedMode = useMemo(
     () => getRecommendedMode(state.profile, state.plan),
@@ -201,10 +216,27 @@ function App() {
     setSheet(null)
   }
 
+  const signInInBrowser = () => {
+    if (!browserName.trim()) return
+    setIdentity(createBrowserIdentity(browserName))
+    setBrowserName('')
+  }
+
+  const logOut = () => {
+    if (!identity) return
+    if (!window.confirm('Log out of Havan? This clears your local plan and profile on this device. It will not sign you out of Telegram.')) return
+
+    clearLocalSession(identity)
+    setIdentity(null)
+    setState(makeInitialState())
+    setStep(0)
+    setSheet(null)
+  }
+
   const resetPlanner = () => {
     if (!window.confirm('Start over? Your locally saved plan will be removed.')) return
     const fresh = makeInitialState()
-    window.localStorage.removeItem(storageKey)
+    if (identity) window.localStorage.removeItem(getPlannerStorageKey(identity))
     setState(fresh)
     setStep(0)
   }
@@ -215,6 +247,75 @@ function App() {
     step === 2 ||
     (step === 3 && state.profile.studyDays.length >= 2)
 
+  const profileSheet = identity && sheet === 'profile' ? (
+    <>
+      <div className="sheet-backdrop" onClick={() => setSheet(null)} />
+      <section className="bottom-sheet" aria-label="Your profile">
+        <div className="sheet-handle" />
+        <div className="sheet-title-row">
+          <div>
+            <span className="eyebrow">YOUR PROFILE</span>
+            <h2>Study your way.</h2>
+          </div>
+          <button type="button" className="close-sheet" onClick={() => setSheet(null)} aria-label="Close profile">×</button>
+        </div>
+        <div className="profile-identity">
+          <span className="profile-avatar profile-avatar-large" aria-hidden="true">{identity.name.charAt(0).toUpperCase()}</span>
+          <div>
+            <strong>{identity.name}</strong>
+            <span>{identity.username ? `@${identity.username}` : identity.source === 'telegram' ? 'Telegram student' : 'Browser profile'}</span>
+          </div>
+        </div>
+        <div className="profile-note">
+          <strong>{identity.source === 'telegram' ? 'Connected through Telegram' : 'Saved on this device'}</strong>
+          <p>{identity.source === 'telegram' ? 'Your Telegram name is shown here. Plan sync will be available after secure server-side verification is added.' : 'This profile is only stored in this browser. It does not sync to other devices.'}</p>
+        </div>
+        <button className="sheet-action danger-action" type="button" onClick={logOut}>Log out</button>
+        <p className="profile-logout-note">Logging out clears Havan data on this device. It does not sign you out of Telegram.</p>
+      </section>
+    </>
+  ) : null
+
+  if (!identity) {
+    return (
+      <main className="session-page">
+        <header className="brand-header">
+          <div className="brand-lockup" aria-label="Havan">
+            <span className="brand-mark">H</span>
+            <span>havan</span>
+          </div>
+          <span className="header-note">Study planner</span>
+        </header>
+        <section className="session-card">
+          <span className="eyebrow">YOUR PROFILE</span>
+          <h1>Make this plan yours.</h1>
+          <p className="intro-copy">Create a browser profile to keep your plan on this device. In Telegram, your profile connects automatically.</p>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault()
+              signInInBrowser()
+            }}
+          >
+            <label className="field-label" htmlFor="browser-name">Your name</label>
+            <input
+              id="browser-name"
+              className="text-input"
+              value={browserName}
+              onChange={(event) => setBrowserName(event.target.value)}
+              placeholder="e.g. Hana Bekele"
+              autoComplete="name"
+              autoFocus
+            />
+            <button className="primary-button full-width session-button" type="submit" disabled={!browserName.trim()}>
+              Continue to Havan
+            </button>
+          </form>
+          <div className="quiet-note">This is a browser-only profile, not a password-based account. Your plan will stay on this device until secure account sync is available.</div>
+        </section>
+      </main>
+    )
+  }
+
   if (!state.ready) {
     return (
       <main className="onboarding-page">
@@ -223,7 +324,13 @@ function App() {
             <span className="brand-mark">H</span>
             <span>havan</span>
           </div>
-          <span className="header-note">Study planner</span>
+          <div className="header-actions">
+            <span className="header-note">Study planner</span>
+            <button className="profile-button" type="button" onClick={() => setSheet('profile')} aria-label="Open your profile">
+              <span className="profile-avatar" aria-hidden="true">{identity.name.charAt(0).toUpperCase()}</span>
+              <span className="profile-name">{identity.name}</span>
+            </button>
+          </div>
         </header>
 
         <section className="onboarding-card">
@@ -447,6 +554,7 @@ function App() {
             </button>
           </footer>
         </section>
+        {profileSheet}
       </main>
     )
   }
@@ -458,7 +566,13 @@ function App() {
           <span className="brand-mark">H</span>
           <span>havan</span>
         </div>
-        <button className="reset-button" type="button" onClick={resetPlanner}>Start over</button>
+        <div className="header-actions">
+          <button className="reset-button" type="button" onClick={resetPlanner}>Start over</button>
+          <button className="profile-button" type="button" onClick={() => setSheet('profile')} aria-label="Open your profile">
+            <span className="profile-avatar" aria-hidden="true">{identity.name.charAt(0).toUpperCase()}</span>
+            <span className="profile-name">{identity.name}</span>
+          </button>
+        </div>
       </header>
 
       <section className="greeting-section">
@@ -611,7 +725,8 @@ function App() {
         <span>You stay in control.</span>
       </footer>
 
-      {sheet && <div className="sheet-backdrop" onClick={() => setSheet(null)} />}
+      {profileSheet}
+      {sheet && sheet !== 'profile' && <div className="sheet-backdrop" onClick={() => setSheet(null)} />}
 
       {sheet === 'actions' && activeItem && (
         <section className="bottom-sheet" aria-label="Study session actions">

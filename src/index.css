@@ -59,9 +59,17 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 
 .brand-lockup { display: inline-flex; gap: 8px; align-items: center; color: var(--blue); font-weight: 700; font-size: 21px; letter-spacing: -.7px; }
 .brand-mark { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 9px; background: var(--blue); color: #fff; font-size: 16px; font-family: Georgia, serif; }
+.header-actions { display: flex; align-items: center; gap: 11px; min-width: 0; }
 .header-note { color: var(--muted); font-size: 13px; }
+.profile-button { display: inline-flex; align-items: center; gap: 7px; min-width: 0; padding: 4px 0; border: 0; color: var(--blue); background: transparent; font-size: 12px; font-weight: 700; }
+.profile-avatar { display: grid; flex: 0 0 auto; place-items: center; width: 27px; height: 27px; border-radius: 50%; color: #fff; background: var(--blue); font-size: 11px; }
+.profile-name { overflow: hidden; max-width: 92px; white-space: nowrap; text-overflow: ellipsis; }
 
 .onboarding-card { margin-top: clamp(48px, 12vh, 100px); padding: 0 2px; }
+.session-page { width: min(100%, 540px); min-height: 100svh; margin: 0 auto; padding: max(20px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom)); background: var(--canvas); }
+.session-card { margin-top: clamp(48px, 12vh, 100px); padding: 0 2px; }
+.session-button { margin-top: 24px; }
+
 .stepper { display: flex; gap: 7px; margin-bottom: 26px; }
 .step-dot { width: 30px; height: 4px; border-radius: 99px; background: #dedee8; }
 .step-dot.is-active { background: var(--red); }
@@ -174,6 +182,16 @@ h3 { color: var(--ink); font-size: 16px; line-height: 1.25; margin: 8px 0 4px; }
 .close-sheet { display: grid; place-items: center; width: 33px; height: 33px; border: 0; border-radius: 50%; color: var(--blue); background: #f0f0f7; font-size: 24px; line-height: 1; }
 .sheet-action { display: block; width: 100%; min-height: 48px; margin-top: 9px; padding: 0 15px; border: 1px solid var(--line); border-radius: 13px; color: #3f3f51; background: #fff; font-size: 14px; font-weight: 700; text-align: left; }
 .primary-sheet-action { border-color: var(--blue); color: #fff; background: var(--blue); }
+.profile-identity { display: flex; align-items: center; gap: 12px; margin: 22px 0 14px; padding: 15px; border: 1px solid var(--line); border-radius: 16px; background: var(--paper); }
+.profile-avatar-large { width: 46px; height: 46px; font-size: 17px; }
+.profile-identity strong, .profile-identity span { display: block; }
+.profile-identity strong { color: var(--ink); font-size: 16px; }
+.profile-identity div span { margin-top: 3px; color: var(--muted); font-size: 12px; }
+.profile-note { padding: 14px; border-radius: 14px; color: #4c4c60; background: var(--soft-blue); }
+.profile-note strong { color: var(--blue); font-size: 13px; }
+.profile-note p, .profile-logout-note { margin: 5px 0 0; font-size: 12px; line-height: 1.45; }
+.danger-action { border-color: #f0b8b6; color: #b62120; background: var(--soft-red); }
+.profile-logout-note { color: var(--muted); }
 .reschedule-days { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 20px 0 10px; }
 .reschedule-day { display: grid; place-items: center; gap: 2px; padding: 8px 4px; }
 .reschedule-day span { font-size: 10px; }
