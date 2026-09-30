@@ -1,4 +1,12 @@
-export type StudyStream = 'natural' | 'social'
+import { UNIVERSITIES, findUniversity, UNIVERSITY_NOT_LISTED, type ProgramKey, type UniversityEntry } from '../data/universities'
+import { PREP_MODULES, HEALTH_TRACK_DAYS, type PrepDay } from '../data/curriculum'
+
+export { UNIVERSITIES, findUniversity, UNIVERSITY_NOT_LISTED }
+export type { ProgramKey, UniversityEntry }
+export { PREP_MODULES, HEALTH_TRACK_DAYS }
+export type { PrepDay }
+
+export type StudyStream = ProgramKey
 export type PlanMode = 'keep-up' | 'catch-up' | 'exam'
 export type ActivityType = 'focus' | 'practice' | 'review' | 'buffer' | 'personal'
 export type PlanItemStatus = 'scheduled' | 'completed' | 'skipped'
@@ -17,8 +25,13 @@ export interface Assessment {
 
 export interface StudentProfile {
   university: string
+  /** Catalog id of the chosen university, '' when unknown, or UNIVERSITY_NOT_LISTED. */
+  universityId?: string
   stream: StudyStream
   courses: Course[]
+  /** Midterm and/or final exam dates. Replaces the old single `assessment`. */
+  assessments?: Assessment[]
+  /** @deprecated legacy single assessment; migrated into `assessments` on load. */
   assessment?: Assessment
   studyDays: number[]
   studyHours: number
@@ -39,6 +52,48 @@ export interface PlanItem {
 }
 
 export const weekdayOrder = [1, 2, 3, 4, 5, 6, 0]
+
+/**
+ * Canonical freshman courses for a university + track from the HAVAN catalog.
+ * Returns [] when the university is unknown or has no data for that track,
+ * so the UI always falls back to manual course entry.
+ */
+export function getCatalogCourses(universityId: string | undefined, track: StudyStream): string[] {
+  if (!universityId) return []
+  const uni = findUniversity(universityId)
+  if (!uni) return []
+  const direct = uni.programs[track]
+  if (direct && direct.length) return [...direct]
+  // Sensible fallbacks inside the same university
+  const fallbacks: ProgramKey[] = ['natural', 'social', 'other_natural', 'other_social', 'pre_engineering']
+  for (const key of fallbacks) {
+    const courses = uni.programs[key]
+    if (courses && courses.length) return [...courses]
+  }
+  return []
+}
+
+const normalizeName = (value: string) => value.toLowerCase().replace(/[^a-z]+/g, ' ').trim()
+
+/** Days of the 30-day HAVAN prep program relevant to a university (and health tracks). */
+export function getPrepDaysForUniversity(university: string, isHealthTrack: boolean): PrepDay[] {
+  const target = normalizeName(university)
+  const days: PrepDay[] = []
+  for (const module of PREP_MODULES) {
+    for (const day of module.days) {
+      if (!isHealthTrack && HEALTH_TRACK_DAYS.includes(day.day)) continue
+      if (!day.allUniversities && day.universities.length > 0) {
+        const matches = day.universities.some((name) => {
+          const candidate = normalizeName(name)
+          return target.includes(candidate) || candidate.includes(target)
+        })
+        if (target && !matches) continue
+      }
+      days.push(day)
+    }
+  }
+  return days
+}
 
 export const weekdayLabels: Record<number, { short: string; long: string }> = {
   0: { short: 'S', long: 'Sunday' },
@@ -74,8 +129,22 @@ export function getDaysUntil(date: string) {
   return Math.ceil((target.getTime() - today.getTime()) / 86_400_000)
 }
 
+/** All known assessments sorted by soonest first (past ones last). */
+export function getUpcomingAssessments(profile: StudentProfile): Assessment[] {
+  const assessments = profile.assessments ?? (profile.assessment ? [profile.assessment] : [])
+  return [...assessments]
+    .filter((item) => item.date)
+    .sort((a, b) => getDaysUntil(a.date) - getDaysUntil(b.date))
+}
+
+/** The nearest upcoming assessment, or null when none is in the future. */
+export function getNextAssessment(profile: StudentProfile): Assessment | null {
+  return getUpcomingAssessments(profile).find((item) => getDaysUntil(item.date) >= 0) ?? null
+}
+
 export function getRecommendedMode(profile: StudentProfile, plan: PlanItem[]): PlanMode {
-  const daysUntilAssessment = profile.assessment ? getDaysUntil(profile.assessment.date) : null
+  const next = getNextAssessment(profile)
+  const daysUntilAssessment = next ? getDaysUntil(next.date) : null
 
   if (daysUntilAssessment !== null && daysUntilAssessment >= 0 && daysUntilAssessment <= 14) {
     return 'exam'
@@ -90,7 +159,7 @@ export function getRecommendedMode(profile: StudentProfile, plan: PlanItem[]): P
 
 export function getModeCopy(mode: PlanMode, profile: StudentProfile) {
   if (mode === 'exam') {
-    const assessment = profile.assessment
+    const assessment = getNextAssessment(profile) ?? getUpcomingAssessments(profile)[0]
     const days = assessment ? getDaysUntil(assessment.date) : 0
     return {
       eyebrow: 'EXAM MODE RECOMMENDED',

@@ -9,12 +9,18 @@ import {
   getRecommendedMode,
   getWeekStart,
   getModeCopy,
+  getCatalogCourses,
+  getPrepDaysForUniversity,
   weekdayLabels,
   weekdayOrder,
+  UNIVERSITIES,
+  UNIVERSITY_NOT_LISTED,
+  PREP_MODULES,
   type Course,
   type PlanItem,
   type PlanMode,
   type StudentProfile,
+  type StudyStream,
 } from './domain/plan'
 import { getTelegramIdentity, initialiseTelegram } from './lib/telegram'
 import {
@@ -22,6 +28,8 @@ import {
   createBrowserIdentity,
   getPlannerStorageKey,
   loadBrowserIdentity,
+  migrateState,
+  readPlannerStorage,
   type AppIdentity,
 } from './lib/session'
 import './index.css'
@@ -32,27 +40,19 @@ type PlannerState = {
   plan: PlanItem[]
   activeMode: PlanMode
   selectedDay: number
+  /** Completed prep-program blocks: day number -> completed block labels. */
+  prepProgress?: Record<string, string[]>
 }
 
-type Sheet = 'actions' | 'reschedule' | 'add' | 'profile' | null
+type Sheet = 'actions' | 'reschedule' | 'add' | 'profile' | 'move' | null
 
 const makeInitialProfile = (): StudentProfile => {
-  const assessmentDate = new Date()
-  assessmentDate.setDate(assessmentDate.getDate() + 10)
-
   return {
     university: '',
+    universityId: '',
     stream: 'natural',
-    courses: [
-      { id: 'mathematics', name: 'Mathematics', topic: 'Chapter 3: Functions' },
-      { id: 'physics', name: 'Physics', topic: 'Chapter 2: Motion' },
-      { id: 'english', name: 'English', topic: 'Chapter 4: Academic writing' },
-    ],
-    assessment: {
-      courseId: 'mathematics',
-      name: 'Mathematics midterm',
-      date: getDateInputValue(assessmentDate),
-    },
+    courses: [],
+    assessments: [],
     studyDays: [1, 3, 5, 6],
     studyHours: 3,
   }
@@ -70,10 +70,14 @@ function loadState(identity: AppIdentity | null): PlannerState {
   if (!identity) return makeInitialState()
 
   try {
-    const stored = window.localStorage.getItem(getPlannerStorageKey(identity))
+    const stored = readPlannerStorage(identity)
     if (!stored) return makeInitialState()
-    const parsed = JSON.parse(stored) as PlannerState
+    const migrated = migrateState(JSON.parse(stored))
+    if (!migrated) return makeInitialState()
+    const parsed = migrated as PlannerState
     if (!parsed.profile || !Array.isArray(parsed.plan)) return makeInitialState()
+    parsed.profile.assessments = parsed.profile.assessments ?? []
+    parsed.profile.universityId = parsed.profile.universityId ?? ''
     return parsed
   } catch {
     return makeInitialState()
@@ -96,6 +100,9 @@ function App() {
   const [activeItemId, setActiveItemId] = useState<string | null>(null)
   const [rescheduleDay, setRescheduleDay] = useState(1)
   const [rescheduleTime, setRescheduleTime] = useState('17:30')
+  const [moveDay, setMoveDay] = useState(1)
+  const [universityQuery, setUniversityQuery] = useState('')
+  const [view, setView] = useState<'week' | 'prep'>('week')
   const [newItem, setNewItem] = useState({ title: '', topic: '', courseId: '', day: 1, duration: 45 })
   const [browserName, setBrowserName] = useState('')
 
@@ -117,6 +124,22 @@ function App() {
     () => getRecommendedMode(state.profile, state.plan),
     [state.profile, state.plan],
   )
+  const isHealthTrack = ['medicine', 'other_health', 'pharmacy'].includes(state.profile.stream)
+  const prepDays = useMemo(
+    () => getPrepDaysForUniversity(state.profile.university, isHealthTrack),
+    [state.profile.university, isHealthTrack],
+  )
+  const togglePrepBlock = (day: number, label: string) => {
+    setState((current) => {
+      const progress = { ...(current.prepProgress ?? {}) }
+      const key = String(day)
+      const done = new Set(progress[key] ?? [])
+      if (done.has(label)) done.delete(label)
+      else done.add(label)
+      progress[key] = [...done]
+      return { ...current, prepProgress: progress }
+    })
+  }
   const modeCopy = getModeCopy(state.activeMode, state.profile)
   const activeItem = state.plan.find((item) => item.id === activeItemId) ?? null
   const selectedItems = state.plan
@@ -188,6 +211,44 @@ function App() {
     setSheet(null)
   }
 
+  const moveItemToDay = () => {
+    if (!activeItem) return
+    updateItem(activeItem.id, { day: moveDay, status: 'scheduled' })
+    setState((current) => ({ ...current, selectedDay: moveDay }))
+    setSheet(null)
+  }
+
+  const applyCatalogCourses = (universityId: string, track: StudyStream) => {
+    const catalog = getCatalogCourses(universityId, track)
+    if (!catalog.length) return false
+    setState((current) => ({
+      ...current,
+      profile: {
+        ...current.profile,
+        universityId,
+        courses: catalog.map((name, index) => ({
+          id: `course-${index}-${name.toLowerCase().replace(/[^a-z]+/g, '-')}`,
+          name,
+          topic: '',
+        })),
+      },
+    }))
+    return true
+  }
+
+  const goToNextStep = () => {
+    if (step === 0) {
+      // Auto-fill from the catalog the first time the student leaves step 0.
+      const hasCatalog = getCatalogCourses(state.profile.universityId ?? '', state.profile.stream)
+      if (state.profile.courses.length === 0 && hasCatalog.length > 0) {
+        applyCatalogCourses(state.profile.universityId ?? '', state.profile.stream)
+      } else if (state.profile.courses.length === 0) {
+        updateProfile({ courses: [{ id: 'course-1', name: '', topic: '' }] })
+      }
+    }
+    setStep((current) => current + 1)
+  }
+
   const rescheduleItem = () => {
     if (!activeItem) return
     updateItem(activeItem.id, { day: rescheduleDay, time: rescheduleTime, status: 'scheduled' })
@@ -242,8 +303,10 @@ function App() {
   }
 
   const canContinue =
-    (step === 0 && state.profile.university.trim().length > 0) ||
-    (step === 1 && state.profile.courses.some((course) => course.name.trim() && course.topic.trim())) ||
+    (step === 0 &&
+      state.profile.university.trim().length > 0 &&
+      (state.profile.stream === 'natural' || state.profile.stream === 'social' || state.profile.universityId === UNIVERSITY_NOT_LISTED || getCatalogCourses(state.profile.universityId, state.profile.stream).length > 0 || state.profile.courses.length >= 0)) ||
+    (step === 1 && state.profile.courses.some((course) => course.name.trim())) ||
     step === 2 ||
     (step === 3 && state.profile.studyDays.length >= 2)
 
@@ -344,16 +407,56 @@ function App() {
           {step === 0 && (
             <>
               <h1>Start from where you are.</h1>
-              <p className="intro-copy">Havan will recommend a realistic path. You will always stay in control.</p>
+              <p className="intro-copy">Pick your university and stream - Havan pre-fills the courses freshmen actually take there. You can always edit them.</p>
               <label className="field-label" htmlFor="university">Your university</label>
               <input
                 id="university"
                 className="text-input"
-                value={state.profile.university}
-                onChange={(event) => updateProfile({ university: event.target.value })}
+                value={universityQuery || state.profile.university}
+                onChange={(event) => setUniversityQuery(event.target.value)}
                 placeholder="e.g. Addis Ababa University"
                 autoComplete="organization"
               />
+              {universityQuery.trim() && (
+                <div className="university-results">
+                  {UNIVERSITIES.filter((uni) => uni.name.toLowerCase().includes(universityQuery.trim().toLowerCase())).slice(0, 6).map((uni) => (
+                    <button
+                      key={uni.id}
+                      type="button"
+                      className="university-option"
+                      onClick={() => {
+                        updateProfile({ university: uni.name, universityId: uni.id })
+                        setUniversityQuery('')
+                      }}
+                    >
+                      {uni.name}
+                      <small>{Object.keys(uni.programs).length} tracks</small>
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className="university-option"
+                    onClick={() => {
+                      updateProfile({ university: universityQuery.trim(), universityId: UNIVERSITY_NOT_LISTED })
+                      setUniversityQuery('')
+                    }}
+                  >
+                    Use "{universityQuery.trim()}" (not in list)
+                  </button>
+                </div>
+              )}
+              {state.profile.university && (
+                <div className="university-selected">
+                  <strong>{state.profile.university}</strong>
+                  <button
+                    type="button"
+                    className="text-button"
+                    onClick={() => updateProfile({ university: '', universityId: '' })}
+                  >
+                    Change
+                  </button>
+                </div>
+              )}
               <span className="field-label">Your stream</span>
               <div className="choice-grid">
                 <button
@@ -373,6 +476,15 @@ function App() {
                   <small>Humanities, society & business</small>
                 </button>
               </div>
+              {state.profile.universityId && state.profile.universityId !== UNIVERSITY_NOT_LISTED && (
+                <button
+                  type="button"
+                  className="secondary-button full-width"
+                  onClick={() => applyCatalogCourses(state.profile.universityId ?? '', state.profile.stream)}
+                >
+                  Load my university's course list
+                </button>
+              )}
             </>
           )}
 
@@ -430,28 +542,44 @@ function App() {
           {step === 2 && (
             <>
               <h1>What is coming up?</h1>
-              <p className="intro-copy">Exam dates are optional. Add one when you know it and Havan will adjust the recommendation.</p>
-              {state.profile.assessment ? (
-                <div className="assessment-form">
+              <p className="intro-copy">Add your midterm or final exam dates when you know them. Havan prioritises the nearest one.</p>
+              {(state.profile.assessments ?? []).map((assessment, index) => (
+                <div className="assessment-form" key={index}>
                   <div className="course-editor-topline">
-                    <span>Upcoming assessment</span>
-                    <button type="button" className="text-button" onClick={() => updateProfile({ assessment: undefined })}>
-                      I do not know yet
+                    <span>Assessment {index + 1}</span>
+                    <button
+                      type="button"
+                      className="text-button"
+                      onClick={() =>
+                        updateProfile({
+                          assessments: (state.profile.assessments ?? []).filter((_, i) => i !== index),
+                        })
+                      }
+                    >
+                      Remove
                     </button>
                   </div>
                   <input
                     className="text-input compact"
-                    value={state.profile.assessment.name}
+                    value={assessment.name}
                     onChange={(event) =>
-                      updateProfile({ assessment: { ...state.profile.assessment!, name: event.target.value } })
+                      updateProfile({
+                        assessments: (state.profile.assessments ?? []).map((item, i) =>
+                          i === index ? { ...item, name: event.target.value } : item,
+                        ),
+                      })
                     }
                     placeholder="e.g. Mathematics midterm"
                   />
                   <select
                     className="text-input compact"
-                    value={state.profile.assessment.courseId}
+                    value={assessment.courseId}
                     onChange={(event) =>
-                      updateProfile({ assessment: { ...state.profile.assessment!, courseId: event.target.value } })
+                      updateProfile({
+                        assessments: (state.profile.assessments ?? []).map((item, i) =>
+                          i === index ? { ...item, courseId: event.target.value } : item,
+                        ),
+                      })
                     }
                   >
                     {state.profile.courses.filter((course) => course.name).map((course) => (
@@ -461,29 +589,35 @@ function App() {
                   <input
                     className="text-input compact"
                     type="date"
-                    value={state.profile.assessment.date}
+                    value={assessment.date}
                     onChange={(event) =>
-                      updateProfile({ assessment: { ...state.profile.assessment!, date: event.target.value } })
+                      updateProfile({
+                        assessments: (state.profile.assessments ?? []).map((item, i) =>
+                          i === index ? { ...item, date: event.target.value } : item,
+                        ),
+                      })
                     }
                   />
                 </div>
-              ) : (
-                <button
-                  type="button"
-                  className="secondary-button full-width"
-                  onClick={() =>
-                    updateProfile({
-                      assessment: {
+              ))}
+              <button
+                type="button"
+                className="secondary-button full-width"
+                onClick={() =>
+                  updateProfile({
+                    assessments: [
+                      ...(state.profile.assessments ?? []),
+                      {
                         courseId: state.profile.courses[0]?.id ?? '',
-                        name: 'Upcoming assessment',
+                        name: 'Midterm',
                         date: getDateInputValue(new Date()),
                       },
-                    })
-                  }
-                >
-                  Add an exam date
-                </button>
-              )}
+                    ],
+                  })
+                }
+              >
+                Add midterm / final exam date
+              </button>
               <div className="quiet-note">You can add or change exam dates at any time after creating your plan.</div>
             </>
           )}
@@ -548,7 +682,7 @@ function App() {
               className="primary-button"
               type="button"
               disabled={!canContinue}
-              onClick={() => (step === 3 ? generatePlan() : setStep((current) => current + 1))}
+              onClick={() => (step === 3 ? generatePlan() : goToNextStep())}
             >
               {step === 3 ? 'Create my study plan' : 'Continue'}
             </button>
@@ -579,7 +713,75 @@ function App() {
         <span className="eyebrow">YOUR STUDY WEEK</span>
         <h1>One focused step at a time.</h1>
         <p>{formatWeekRange()} · {state.profile.university}</p>
+        <div className="view-toggle">
+          <button
+            type="button"
+            className={view === 'week' ? 'view-button is-active' : 'view-button'}
+            onClick={() => setView('week')}
+          >
+            Weekly plan
+          </button>
+          <button
+            type="button"
+            className={view === 'prep' ? 'view-button is-active' : 'view-button'}
+            onClick={() => setView('prep')}
+          >
+            30-Day Prep
+          </button>
+        </div>
       </section>
+
+      {view === 'prep' && (
+        <section className="prep-section" aria-label="30-day prep program">
+          {PREP_MODULES.map((module) => {
+            const days = prepDays.filter((day) => day.day >= module.dayRange[0] && day.day <= module.dayRange[1])
+            if (!days.length) return null
+            return (
+              <div className="prep-module" key={module.title}>
+                <div className="section-heading">
+                  <div>
+                    <span className="eyebrow">HAVAN 30-DAY PROGRAM</span>
+                    <h2>{module.title}</h2>
+                  </div>
+                  <span className="day-count">days {module.dayRange[0]}–{module.dayRange[1]}</span>
+                </div>
+                {days.map((day) => {
+                  const done = state.prepProgress?.[String(day.day)] ?? []
+                  return (
+                    <article className={`prep-day ${done.length === day.blocks.length ? 'is-complete' : ''}`} key={day.day}>
+                      <div className="prep-day-head">
+                        <span className="prep-day-number">Day {day.day}</span>
+                        <div>
+                          <h3>{day.title}</h3>
+                          <p>{day.focus}</p>
+                        </div>
+                      </div>
+                      <div className="prep-blocks">
+                        {day.blocks.map((block) => {
+                          const isDone = done.includes(block.label)
+                          return (
+                            <button
+                              key={block.label}
+                              type="button"
+                              className={isDone ? 'prep-block is-done' : 'prep-block'}
+                              onClick={() => togglePrepBlock(day.day, block.label)}
+                            >
+                              <span className="prep-block-label">
+                                {block.label} · {block.minutes} min {isDone ? '✓' : ''}
+                              </span>
+                              {block.items.map((item, i) => <small key={i}>{item}</small>)}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </article>
+                  )
+                })}
+              </div>
+            )
+          })}
+        </section>
+      )}
 
       <section className="summary-row" aria-label="Weekly plan summary">
         <div className="summary-card">
@@ -749,6 +951,7 @@ function App() {
             {activeItem.status === 'completed' ? 'Mark as not complete' : 'Mark complete'}
           </button>
           <button className="sheet-action" type="button" onClick={moveToNextSlot}>Move to next study day</button>
+          <button className="sheet-action" type="button" onClick={() => { setMoveDay(getNextStudyDay(activeItem.day)); setSheet('move') }}>Move to day…</button>
           <button className="sheet-action" type="button" onClick={() => setSheet('reschedule')}>Reschedule</button>
           <button
             className="sheet-action"
@@ -760,6 +963,33 @@ function App() {
           >
             {activeItem.status === 'skipped' ? 'Put back in my plan' : 'Skip for now'}
           </button>
+        </section>
+      )}
+
+      {sheet === 'move' && activeItem && (
+        <section className="bottom-sheet" aria-label="Move study session">
+          <div className="sheet-handle" />
+          <div className="sheet-title-row">
+            <div>
+              <span className="eyebrow">MOVE SESSION</span>
+              <h2>Pick another day.</h2>
+            </div>
+            <button type="button" className="close-sheet" onClick={() => setSheet('actions')} aria-label="Back to actions">‹</button>
+          </div>
+          <div className="reschedule-days">
+            {weekdayOrder.filter((day) => state.profile.studyDays.includes(day)).map((day) => (
+              <button
+                key={day}
+                type="button"
+                className={moveDay === day ? 'reschedule-day is-selected' : 'reschedule-day'}
+                onClick={() => setMoveDay(day)}
+              >
+                <span>{weekdayLabels[day].short}</span>
+                <strong>{getDateForWeekday(day).getDate()}</strong>
+              </button>
+            ))}
+          </div>
+          <button className="primary-button full-width" type="button" onClick={moveItemToDay}>Move session</button>
         </section>
       )}
 

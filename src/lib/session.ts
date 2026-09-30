@@ -6,7 +6,39 @@ export type AppIdentity = {
 }
 
 const browserProfileKey = 'havan-study-planner-browser-profile-v1'
-const plannerStoragePrefix = 'havan-study-planner-v2'
+const plannerStoragePrefix = 'havan-study-planner-v3'
+const legacyStoragePrefix = 'havan-study-planner-v2'
+
+/**
+ * Repairs a stored PlannerState:
+ * - legacy v2 keys are read transparently (same data, new prefix)
+ * - old single `assessment` is folded into `assessments`
+ */
+export function migrateState(parsed: unknown): unknown | null {
+  if (!parsed || typeof parsed !== 'object') return null
+  const state = parsed as Record<string, unknown>
+  const profile = state.profile as Record<string, unknown> | undefined
+  if (!profile) return null
+
+  if (!Array.isArray(profile.assessments)) {
+    profile.assessments =
+      profile.assessment && typeof profile.assessment === 'object'
+        ? [profile.assessment]
+        : []
+  }
+  return state
+}
+
+export function readPlannerStorage(identity: AppIdentity): string | null {
+  try {
+    return (
+      window.localStorage.getItem(`${plannerStoragePrefix}:${identity.id}`) ??
+      window.localStorage.getItem(`${legacyStoragePrefix}:${identity.id}`)
+    )
+  } catch {
+    return null
+  }
+}
 
 export function getPlannerStorageKey(identity: AppIdentity) {
   return `${plannerStoragePrefix}:${identity.id}`
