@@ -75,7 +75,7 @@ export function getCatalogCourses(universityId: string | undefined, track: Study
 
 const normalizeName = (value: string) => value.toLowerCase().replace(/[^a-z]+/g, ' ').trim()
 
-/** Days of the 30-day HAVAN prep program relevant to a university (and health tracks). */
+/** Days of the 30-day HAVAN prep program relevant to a university - and health tracks. */
 export function getPrepDaysForUniversity(university: string, isHealthTrack: boolean): PrepDay[] {
   const target = normalizeName(university)
   const days: PrepDay[] = []
