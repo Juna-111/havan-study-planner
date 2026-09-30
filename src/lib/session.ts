@@ -77,6 +77,7 @@ export function createBrowserIdentity(name: string): AppIdentity {
 export function clearLocalSession(identity: AppIdentity) {
   try {
     window.localStorage.removeItem(getPlannerStorageKey(identity))
+    window.localStorage.removeItem(`${legacyStoragePrefix}:${identity.id}`)
     if (identity.source === 'browser') window.localStorage.removeItem(browserProfileKey)
   } catch {
     // The in-memory session still ends even if storage is unavailable.

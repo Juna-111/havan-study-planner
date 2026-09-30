@@ -5,7 +5,10 @@ import {
   getPrepDaysForUniversity,
   getRecommendedMode,
   getNextAssessment,
+  searchUniversities,
+  UNIVERSITIES,
   type Assessment,
+  type ProgramKey,
   type StudentProfile,
 } from './plan'
 
@@ -44,6 +47,27 @@ describe('catalog lookups', () => {
     expect(getCatalogCourses('', 'natural')).toEqual([])
     expect(getCatalogCourses('not-listed', 'natural')).toEqual([])
     expect(getCatalogCourses('20_gambella', 'natural')).toEqual([])
+  })
+
+  it('filters spreadsheet placeholders out of every catalog list', () => {
+    const junk = ['varies', 'other health', 'pharmacy', 'pre eng', 'premed', 'no std', 'no social student', 'Pending', 'lab', 'Law & Other social varies']
+    for (const uni of UNIVERSITIES) {
+      for (const track of Object.keys(uni.programs) as ProgramKey[]) {
+        const courses = getCatalogCourses(uni.id, track)
+        for (const name of junk) {
+          expect(courses, `${uni.name} ${track}`).not.toContain(name)
+        }
+      }
+    }
+  })
+})
+
+describe('university search', () => {
+  it('matches catalog names and full-name aliases', () => {
+    expect(searchUniversities('AAU').map((u) => u.id)).toContain('aau')
+    expect(searchUniversities('addis ababa university').map((u) => u.id)).toContain('aau')
+    expect(searchUniversities('haramaya').map((u) => u.id)).toContain('haramaya')
+    expect(searchUniversities('  ')).toEqual([])
   })
 })
 
@@ -98,6 +122,25 @@ describe('prep program filtering', () => {
     const days = getPrepDaysForUniversity('AAU', false)
     expect(days.filter((d) => d.title.startsWith('Review')).length).toBeGreaterThan(3)
   })
+
+  it('matches catalog spellings Wachamo and Welketie', () => {
+    const days = getPrepDaysForUniversity('Wachamo', false)
+    expect(days.length).toBeGreaterThan(5)
+    const welketie = getPrepDaysForUniversity('Welketie', false)
+    expect(welketie.length).toBeGreaterThan(5)
+  })
+
+  it('renders no docx conversion artifacts', () => {
+    const days = getPrepDaysForUniversity('AAU', true)
+    for (const day of days) {
+      for (const block of day.blocks) {
+        for (const item of block.items) {
+          expect(item).not.toMatch(/Evening|MODULE|&amp;/)
+        }
+      }
+      expect(day.title).not.toMatch(/&amp;/)
+    }
+  })
 })
 
 describe('plan generation', () => {
@@ -111,5 +154,15 @@ describe('plan generation', () => {
     expect(plan.length).toBeGreaterThan(0)
     for (const item of plan) expect(profile.studyDays).toContain(item.day)
     expect(plan.every((item) => item.topic.length > 0)).toBe(true)
+  })
+
+  it('prioritizes the course of the nearest assessment in exam mode', () => {
+    const profile: StudentProfile = {
+      ...baseProfile,
+      assessments: [{ courseId: 'c2', name: 'Physics midterm', date: inDays(5) } as Assessment],
+    }
+    const plan = buildPlan(profile)
+    const firstDay = plan.filter((item) => item.day === profile.studyDays[0])
+    expect(firstDay[0].courseId).toBe('c2')
   })
 })

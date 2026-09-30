@@ -53,6 +53,29 @@ export interface PlanItem {
 
 export const weekdayOrder = [1, 2, 3, 4, 5, 6, 0]
 
+const normalizeName = (value: string) => value.toLowerCase().replace(/[^a-z]+/g, ' ').trim()
+
+/**
+ * Spreadsheet placeholders that leaked into the generated catalog as course
+ * names (e.g. "varies", "no std", track references like "premed"). Normalized
+ * comparison, so spacing and punctuation differences are ignored.
+ */
+const CATALOG_JUNK = new Set([
+  'varies',
+  'law other social varies',
+  'other health',
+  'pharmacy',
+  'pre eng',
+  'premed',
+  'no std',
+  'no social student',
+  'pending',
+  'lab',
+  'for med students engii',
+])
+
+const isJunkCourse = (name: string) => CATALOG_JUNK.has(normalizeName(name))
+
 /**
  * Canonical freshman courses for a university + track from the HAVAN catalog.
  * Returns [] when the university is unknown or has no data for that track,
@@ -62,18 +85,35 @@ export function getCatalogCourses(universityId: string | undefined, track: Study
   if (!universityId) return []
   const uni = findUniversity(universityId)
   if (!uni) return []
-  const direct = uni.programs[track]
-  if (direct && direct.length) return [...direct]
+  const clean = (courses?: string[]) => (courses ?? []).filter((name) => !isJunkCourse(name))
+  const direct = clean(uni.programs[track])
+  if (direct.length) return direct
   // Sensible fallbacks inside the same university
   const fallbacks: ProgramKey[] = ['natural', 'social', 'other_natural', 'other_social', 'pre_engineering']
   for (const key of fallbacks) {
-    const courses = uni.programs[key]
-    if (courses && courses.length) return [...courses]
+    const courses = clean(uni.programs[key])
+    if (courses.length) return courses
   }
   return []
 }
 
-const normalizeName = (value: string) => value.toLowerCase().replace(/[^a-z]+/g, ' ').trim()
+/** Alternate search spellings for universities stored under short catalog names. */
+const UNIVERSITY_ALIASES: Record<string, string[]> = {
+  aau: ['addis ababa university', 'addis ababa'],
+  aastu: ['addis ababa science and technology university'],
+  astu: ['adama science and technology university', 'adama'],
+}
+
+/** Universities matching a free-text search by catalog name or alias. */
+export function searchUniversities(query: string): UniversityEntry[] {
+  const q = query.trim().toLowerCase()
+  if (!q) return []
+  return UNIVERSITIES.filter(
+    (uni) =>
+      uni.name.toLowerCase().includes(q) ||
+      (UNIVERSITY_ALIASES[uni.id] ?? []).some((alias) => alias.includes(q)),
+  )
+}
 
 /** Days of the 30-day HAVAN prep program relevant to a university - and health tracks. */
 export function getPrepDaysForUniversity(university: string, isHealthTrack: boolean): PrepDay[] {
@@ -219,7 +259,7 @@ export function formatActivity(activity: ActivityType) {
 
 export function buildPlan(profile: StudentProfile): PlanItem[] {
   const selectedDays = weekdayOrder.filter((day) => profile.studyDays.includes(day))
-  const assessmentCourseId = profile.assessment?.courseId
+  const assessmentCourseId = getNextAssessment(profile)?.courseId
   const orderedCourses = [...profile.courses].sort((a, b) => {
     if (a.id === assessmentCourseId) return -1
     if (b.id === assessmentCourseId) return 1

@@ -11,9 +11,9 @@ import {
   getModeCopy,
   getCatalogCourses,
   getPrepDaysForUniversity,
+  searchUniversities,
   weekdayLabels,
   weekdayOrder,
-  UNIVERSITIES,
   UNIVERSITY_NOT_LISTED,
   PREP_MODULES,
   type Course,
@@ -302,10 +302,10 @@ function App() {
     setStep(0)
   }
 
+  // Step 0 needs a university; any stream is allowed because students can edit
+  // courses manually when their track is not in the catalog.
   const canContinue =
-    (step === 0 &&
-      state.profile.university.trim().length > 0 &&
-      (state.profile.stream === 'natural' || state.profile.stream === 'social' || state.profile.universityId === UNIVERSITY_NOT_LISTED || getCatalogCourses(state.profile.universityId, state.profile.stream).length > 0 || state.profile.courses.length >= 0)) ||
+    (step === 0 && state.profile.university.trim().length > 0) ||
     (step === 1 && state.profile.courses.some((course) => course.name.trim())) ||
     step === 2 ||
     (step === 3 && state.profile.studyDays.length >= 2)
@@ -414,12 +414,12 @@ function App() {
                 className="text-input"
                 value={universityQuery || state.profile.university}
                 onChange={(event) => setUniversityQuery(event.target.value)}
-                placeholder="e.g. Addis Ababa University"
+                placeholder="Search e.g. AAU, Haramaya, Mekelle"
                 autoComplete="organization"
               />
               {universityQuery.trim() && (
                 <div className="university-results">
-                  {UNIVERSITIES.filter((uni) => uni.name.toLowerCase().includes(universityQuery.trim().toLowerCase())).slice(0, 6).map((uni) => (
+                  {searchUniversities(universityQuery).slice(0, 6).map((uni) => (
                     <button
                       key={uni.id}
                       type="button"

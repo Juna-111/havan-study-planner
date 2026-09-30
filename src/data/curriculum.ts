@@ -52,7 +52,7 @@ export const PREP_MODULES: PrepModule[] = [
           { label: "Practice", minutes: 30, items: ["15 math problems"] },
         ],
         allUniversities: false,
-        universities: ["AASTU", "ASTU", "AAU", "Adigrat", "Ambo", "Arba Minch", "Arsi", "Bahir Dar", "Dire Dawa", "Haramaya", "Jimma", "Mekelle", "Wachemo", "Welkite", "Wollega", "Wollo", "Civil Service", "Bonga", "Debrebirhan", "Debremarkos", "Dilla", "Jigijiga", "Kotebe", "Meda Wellabu", "Mizan Tepi", "Oda Bultum", "Semera", "Unity", "St Marry"],
+        universities: ["AASTU", "ASTU", "AAU", "Adigrat", "Ambo", "Arba Minch", "Arsi", "Bahir Dar", "Dire Dawa", "Haramaya", "Jimma", "Mekelle", "Wachamo", "Welketie", "Wollega", "Wollo", "Civil Service", "Bonga", "Debrebirhan", "Debremarkos", "Dilla", "Jigijiga", "Kotebe", "Meda Wellabu", "Mizan Tepi", "Oda Bultum", "Semera", "Unity", "St Marry"],
       },
       {
         day: 3,
@@ -65,7 +65,7 @@ export const PREP_MODULES: PrepModule[] = [
           { label: "Practice", minutes: 30, items: ["10 logic questions"] },
         ],
         allUniversities: false,
-        universities: ["AASTU", "ASTU", "AAU", "Adigrat", "Ambo", "Arba Minch", "Arsi", "Assossa", "Axum", "Bahir Dar", "Bonga", "Debrebirhan", "Debremarkos", "Dembidollo", "Dilla", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jigijiga", "Jimma", "Jinka", "Kotebe", "Meda Wellabu", "Mekelle", "Mizan Tepi", "Oda Bultum", "Salale", "Semera", "Wachemo", "Welkite", "Werabe", "Wolayita Sodo", "Wollega", "Wollo", "Civil Service", "Sante", "St Marry", "Unity"],
+        universities: ["AASTU", "ASTU", "AAU", "Adigrat", "Ambo", "Arba Minch", "Arsi", "Assossa", "Axum", "Bahir Dar", "Bonga", "Debrebirhan", "Debremarkos", "Dembidollo", "Dilla", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jigijiga", "Jimma", "Jinka", "Kotebe", "Meda Wellabu", "Mekelle", "Mizan Tepi", "Oda Bultum", "Salale", "Semera", "Wachamo", "Welketie", "Werabe", "Wolayita Sodo", "Wollega", "Wollo", "Civil Service", "Sante", "St Marry", "Unity"],
       },
       {
         day: 4,
@@ -78,7 +78,7 @@ export const PREP_MODULES: PrepModule[] = [
           { label: "Practice", minutes: 30, items: ["10 psychology questions"] },
         ],
         allUniversities: false,
-        universities: ["AASTU", "AAU", "Adigrat", "Ambo", "Arba Minch", "Arsi", "Assossa", "Axum", "Bahir Dar", "Bonga", "Debrebirhan", "Debremarkos", "Dembidollo", "Dilla", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jigijiga", "Jimma", "Jinka", "Kotebe", "Meda Wellabu", "Mekelle", "Mizan Tepi", "Oda Bultum", "Salale", "Semera", "Wachemo", "Welkite", "Werabe", "Wolayita Sodo", "Wollega", "Wollo", "Civil Service", "Sante", "St Marry", "Unity"],
+        universities: ["AASTU", "AAU", "Adigrat", "Ambo", "Arba Minch", "Arsi", "Assossa", "Axum", "Bahir Dar", "Bonga", "Debrebirhan", "Debremarkos", "Dembidollo", "Dilla", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jigijiga", "Jimma", "Jinka", "Kotebe", "Meda Wellabu", "Mekelle", "Mizan Tepi", "Oda Bultum", "Salale", "Semera", "Wachamo", "Welketie", "Werabe", "Wolayita Sodo", "Wollega", "Wollo", "Civil Service", "Sante", "St Marry", "Unity"],
       },
       {
         day: 5,
@@ -91,7 +91,7 @@ export const PREP_MODULES: PrepModule[] = [
           { label: "Practice", minutes: 30, items: ["10 geography questions"] },
         ],
         allUniversities: false,
-        universities: ["AASTU", "AAU", "Adigrat", "Ambo", "Arba Minch", "Arsi", "Assossa", "Axum", "Bahir Dar", "Bonga", "Debrebirhan", "Debremarkos", "Dembidollo", "Dilla", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jigijiga", "Jimma", "Jinka", "Kotebe", "Meda Wellabu", "Mekelle", "Mizan Tepi", "Oda Bultum", "Salale", "Semera", "Wachemo", "Welkite", "Werabe", "Wolayita Sodo", "Wollega", "Wollo", "Civil Service", "Sante", "St Marry", "Unity"],
+        universities: ["AASTU", "AAU", "Adigrat", "Ambo", "Arba Minch", "Arsi", "Assossa", "Axum", "Bahir Dar", "Bonga", "Debrebirhan", "Debremarkos", "Dembidollo", "Dilla", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jigijiga", "Jimma", "Jinka", "Kotebe", "Meda Wellabu", "Mekelle", "Mizan Tepi", "Oda Bultum", "Salale", "Semera", "Wachamo", "Welketie", "Werabe", "Wolayita Sodo", "Wollega", "Wollo", "Civil Service", "Sante", "St Marry", "Unity"],
       },
       {
         day: 6,
@@ -104,7 +104,7 @@ export const PREP_MODULES: PrepModule[] = [
           { label: "Practice", minutes: 30, items: ["10 fitness questions"] },
         ],
         allUniversities: false,
-        universities: ["AASTU", "AAU", "Adigrat", "Arsi", "Bahir Dar", "Debrebirhan", "Dire Dawa", "Dembidollo", "Haramaya", "Jigijiga", "Mekelle", "Wachemo", "Welkite", "Wollega", "Wollo", "Civil Service", "Sante", "St Marry"],
+        universities: ["AASTU", "AAU", "Adigrat", "Arsi", "Bahir Dar", "Debrebirhan", "Dire Dawa", "Dembidollo", "Haramaya", "Jigijiga", "Mekelle", "Wachamo", "Welketie", "Wollega", "Wollo", "Civil Service", "Sante", "St Marry"],
       },
       {
         day: 7,
@@ -112,7 +112,7 @@ export const PREP_MODULES: PrepModule[] = [
         focus: "",
         blocks: [
           { label: "Morning", minutes: 90, items: ["Review all notes", "Redo wrong problems"] },
-          { label: "Afternoon", minutes: 90, items: ["Mini practice test (30 questions)", "Check answersEvening (1 hour):", "Rest"] },
+          { label: "Afternoon", minutes: 90, items: ["Mini practice test (30 questions)", "Check answers", "Rest"] },
         ],
         allUniversities: false,
         universities: [],
@@ -141,7 +141,7 @@ export const PREP_MODULES: PrepModule[] = [
           { label: "Practice", minutes: 30, items: ["15 math problems"] },
         ],
         allUniversities: false,
-        universities: ["AASTU", "ASTU", "AAU", "Adigrat", "Ambo", "Arba Minch", "Arsi", "Bahir Dar", "Dire Dawa", "Haramaya", "Jimma", "Mekelle", "Wachemo", "Welkite", "Wollega", "Wollo", "Civil Service", "Bonga", "Debrebirhan", "Debremarkos", "Dilla", "Jigijiga", "Kotebe", "Meda Wellabu", "Mizan Tepi", "Oda Bultum", "Semera", "Unity", "St Marry"],
+        universities: ["AASTU", "ASTU", "AAU", "Adigrat", "Ambo", "Arba Minch", "Arsi", "Bahir Dar", "Dire Dawa", "Haramaya", "Jimma", "Mekelle", "Wachamo", "Welketie", "Wollega", "Wollo", "Civil Service", "Bonga", "Debrebirhan", "Debremarkos", "Dilla", "Jigijiga", "Kotebe", "Meda Wellabu", "Mizan Tepi", "Oda Bultum", "Semera", "Unity", "St Marry"],
       },
       {
         day: 10,
@@ -149,7 +149,7 @@ export const PREP_MODULES: PrepModule[] = [
         focus: "",
         blocks: [
           { label: "Morning", minutes: 90, items: ["Review English and Math", "Practice weak areas"] },
-          { label: "Afternoon", minutes: 90, items: ["Mini practice test (30 questions)", "Check answersEvening (1 hour):", "RestMODULE 2: CORE COURSES (DAYS 11–20)"] },
+          { label: "Afternoon", minutes: 90, items: ["Mini practice test (30 questions)", "Check answers", "Rest"] },
         ],
         allUniversities: false,
         universities: [],
@@ -171,7 +171,7 @@ export const PREP_MODULES: PrepModule[] = [
           { label: "Practice", minutes: 30, items: ["10 questions"] },
         ],
         allUniversities: false,
-        universities: ["AASTU", "AAU", "Adigrat", "Ambo", "Arba Minch", "Arsi", "Assossa", "Axum", "Bahir Dar", "Bonga", "Debrebirhan", "Debremarkos", "Dilla", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jimma", "Jinka", "Meda Wellabu", "Mekelle", "Mizan Tepi", "Semera", "Wachemo", "Welkite", "Werabe", "Wolayita Sodo", "Wollega", "Wollo", "Civil Service", "St Marry", "Unity"],
+        universities: ["AASTU", "AAU", "Adigrat", "Ambo", "Arba Minch", "Arsi", "Assossa", "Axum", "Bahir Dar", "Bonga", "Debrebirhan", "Debremarkos", "Dilla", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jimma", "Jinka", "Meda Wellabu", "Mekelle", "Mizan Tepi", "Semera", "Wachamo", "Welketie", "Werabe", "Wolayita Sodo", "Wollega", "Wollo", "Civil Service", "St Marry", "Unity"],
       },
       {
         day: 12,
@@ -184,7 +184,7 @@ export const PREP_MODULES: PrepModule[] = [
           { label: "Practice", minutes: 30, items: ["10 questions"] },
         ],
         allUniversities: false,
-        universities: ["AASTU", "AAU", "Adigrat", "Ambo", "Arba Minch", "Arsi", "Assossa", "Axum", "Bahir Dar", "Bonga", "Debrebirhan", "Debremarkos", "Dilla", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jimma", "Jinka", "Meda Wellabu", "Mekelle", "Mizan Tepi", "Semera", "Wachemo", "Welkite", "Werabe", "Wolayita Sodo", "Wollega", "Wollo", "Civil Service", "St Marry", "Unity"],
+        universities: ["AASTU", "AAU", "Adigrat", "Ambo", "Arba Minch", "Arsi", "Assossa", "Axum", "Bahir Dar", "Bonga", "Debrebirhan", "Debremarkos", "Dilla", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jimma", "Jinka", "Meda Wellabu", "Mekelle", "Mizan Tepi", "Semera", "Wachamo", "Welketie", "Werabe", "Wolayita Sodo", "Wollega", "Wollo", "Civil Service", "St Marry", "Unity"],
       },
       {
         day: 13,
@@ -197,7 +197,7 @@ export const PREP_MODULES: PrepModule[] = [
           { label: "Practice", minutes: 30, items: ["10 questions"] },
         ],
         allUniversities: false,
-        universities: ["AASTU", "ASTU", "AAU", "Adigrat", "Ambo", "Arba Minch", "Arsi", "Assossa", "Axum", "Bahir Dar", "Bonga", "Debrebirhan", "Debremarkos", "Dilla", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jigijiga", "Jimma", "Jinka", "Kotebe", "Meda Wellabu", "Mekelle", "Mizan Tepi", "Oda Bultum", "Semera", "Wachemo", "Welkite", "Werabe", "Wolayita Sodo", "Wollega", "Wollo", "Civil Service", "Sante", "St Marry", "Unity"],
+        universities: ["AASTU", "ASTU", "AAU", "Adigrat", "Ambo", "Arba Minch", "Arsi", "Assossa", "Axum", "Bahir Dar", "Bonga", "Debrebirhan", "Debremarkos", "Dilla", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jigijiga", "Jimma", "Jinka", "Kotebe", "Meda Wellabu", "Mekelle", "Mizan Tepi", "Oda Bultum", "Semera", "Wachamo", "Welketie", "Werabe", "Wolayita Sodo", "Wollega", "Wollo", "Civil Service", "Sante", "St Marry", "Unity"],
       },
       {
         day: 14,
@@ -210,7 +210,7 @@ export const PREP_MODULES: PrepModule[] = [
           { label: "Practice", minutes: 30, items: ["10 questions"] },
         ],
         allUniversities: false,
-        universities: ["AASTU", "AAU", "Adigrat", "Ambo", "Arba Minch", "Arsi", "Assossa", "Axum", "Bahir Dar", "Bonga", "Debrebirhan", "Debremarkos", "Dilla", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jigijiga", "Jimma", "Jinka", "Kotebe", "Meda Wellabu", "Mekelle", "Mizan Tepi", "Oda Bultum", "Semera", "Wachemo", "Welkite", "Werabe", "Wolayita Sodo", "Wollega", "Wollo", "Civil Service", "St Marry", "Unity"],
+        universities: ["AASTU", "AAU", "Adigrat", "Ambo", "Arba Minch", "Arsi", "Assossa", "Axum", "Bahir Dar", "Bonga", "Debrebirhan", "Debremarkos", "Dilla", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jigijiga", "Jimma", "Jinka", "Kotebe", "Meda Wellabu", "Mekelle", "Mizan Tepi", "Oda Bultum", "Semera", "Wachamo", "Welketie", "Werabe", "Wolayita Sodo", "Wollega", "Wollo", "Civil Service", "St Marry", "Unity"],
       },
       {
         day: 15,
@@ -218,7 +218,7 @@ export const PREP_MODULES: PrepModule[] = [
         focus: "",
         blocks: [
           { label: "Morning", minutes: 90, items: ["Review all Module 2 notes", "Practice weak areas"] },
-          { label: "Afternoon", minutes: 90, items: ["Mini practice test (40 questions)", "Check answersEvening (1 hour):", "Rest"] },
+          { label: "Afternoon", minutes: 90, items: ["Mini practice test (40 questions)", "Check answers", "Rest"] },
         ],
         allUniversities: false,
         universities: [],
@@ -234,7 +234,7 @@ export const PREP_MODULES: PrepModule[] = [
           { label: "Practice", minutes: 30, items: ["10 questions"] },
         ],
         allUniversities: false,
-        universities: ["AASTU", "AAU", "Adigrat", "Ambo", "Arba Minch", "Arsi", "Assossa", "Axum", "Bahir Dar", "Bonga", "Debrebirhan", "Debremarkos", "Dilla", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jimma", "Jinka", "Meda Wellabu", "Mekelle", "Mizan Tepi", "Semera", "Wachemo", "Welkite", "Werabe", "Wolayita Sodo", "Wollega", "Wollo", "Civil Service", "St Marry", "Unity"],
+        universities: ["AASTU", "AAU", "Adigrat", "Ambo", "Arba Minch", "Arsi", "Assossa", "Axum", "Bahir Dar", "Bonga", "Debrebirhan", "Debremarkos", "Dilla", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jimma", "Jinka", "Meda Wellabu", "Mekelle", "Mizan Tepi", "Semera", "Wachamo", "Welketie", "Werabe", "Wolayita Sodo", "Wollega", "Wollo", "Civil Service", "St Marry", "Unity"],
       },
       {
         day: 17,
@@ -247,7 +247,7 @@ export const PREP_MODULES: PrepModule[] = [
           { label: "Practice", minutes: 30, items: ["10 questions"] },
         ],
         allUniversities: false,
-        universities: ["AASTU", "AAU", "Adigrat", "Ambo", "Arba Minch", "Arsi", "Assossa", "Axum", "Bahir Dar", "Bonga", "Debrebirhan", "Debremarkos", "Dilla", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jimma", "Jinka", "Meda Wellabu", "Mekelle", "Mizan Tepi", "Semera", "Wachemo", "Welkite", "Werabe", "Wolayita Sodo", "Wollega", "Wollo", "Civil Service", "St Marry", "Unity"],
+        universities: ["AASTU", "AAU", "Adigrat", "Ambo", "Arba Minch", "Arsi", "Assossa", "Axum", "Bahir Dar", "Bonga", "Debrebirhan", "Debremarkos", "Dilla", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jimma", "Jinka", "Meda Wellabu", "Mekelle", "Mizan Tepi", "Semera", "Wachamo", "Welketie", "Werabe", "Wolayita Sodo", "Wollega", "Wollo", "Civil Service", "St Marry", "Unity"],
       },
       {
         day: 18,
@@ -260,7 +260,7 @@ export const PREP_MODULES: PrepModule[] = [
           { label: "Practice", minutes: 30, items: ["10 questions"] },
         ],
         allUniversities: false,
-        universities: ["AASTU", "AAU", "Adigrat", "Ambo", "Arba Minch", "Arsi", "Assossa", "Axum", "Bahir Dar", "Bonga", "Debrebirhan", "Debremarkos", "Dilla", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jigijiga", "Jimma", "Jinka", "Kotebe", "Meda Wellabu", "Mekelle", "Mizan Tepi", "Oda Bultum", "Semera", "Wachemo", "Welkite", "Werabe", "Wolayita Sodo", "Wollega", "Wollo", "Civil Service", "Sante", "St Marry", "Unity"],
+        universities: ["AASTU", "AAU", "Adigrat", "Ambo", "Arba Minch", "Arsi", "Assossa", "Axum", "Bahir Dar", "Bonga", "Debrebirhan", "Debremarkos", "Dilla", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jigijiga", "Jimma", "Jinka", "Kotebe", "Meda Wellabu", "Mekelle", "Mizan Tepi", "Oda Bultum", "Semera", "Wachamo", "Welketie", "Werabe", "Wolayita Sodo", "Wollega", "Wollo", "Civil Service", "Sante", "St Marry", "Unity"],
       },
       {
         day: 19,
@@ -273,7 +273,7 @@ export const PREP_MODULES: PrepModule[] = [
           { label: "Practice", minutes: 30, items: ["10 questions"] },
         ],
         allUniversities: false,
-        universities: ["AASTU", "AAU", "Adigrat", "Ambo", "Arba Minch", "Arsi", "Assossa", "Axum", "Bahir Dar", "Bonga", "Debrebirhan", "Debremarkos", "Dilla", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jigijiga", "Jimma", "Jinka", "Kotebe", "Meda Wellabu", "Mekelle", "Mizan Tepi", "Oda Bultum", "Semera", "Wachemo", "Welkite", "Werabe", "Wolayita Sodo", "Wollega", "Wollo", "Civil Service", "Sante", "St Marry", "Unity"],
+        universities: ["AASTU", "AAU", "Adigrat", "Ambo", "Arba Minch", "Arsi", "Assossa", "Axum", "Bahir Dar", "Bonga", "Debrebirhan", "Debremarkos", "Dilla", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jigijiga", "Jimma", "Jinka", "Kotebe", "Meda Wellabu", "Mekelle", "Mizan Tepi", "Oda Bultum", "Semera", "Wachamo", "Welketie", "Werabe", "Wolayita Sodo", "Wollega", "Wollo", "Civil Service", "Sante", "St Marry", "Unity"],
       },
       {
         day: 20,
@@ -281,7 +281,7 @@ export const PREP_MODULES: PrepModule[] = [
         focus: "",
         blocks: [
           { label: "Morning", minutes: 90, items: ["Review all notes", "Practice weak areas"] },
-          { label: "Afternoon", minutes: 90, items: ["Mini practice test (40 questions)", "Check answersEvening (1 hour):", "RestMODULE 3: ADVANCED &amp;"] },
+          { label: "Afternoon", minutes: 90, items: ["Mini practice test (40 questions)", "Check answers", "Rest"] },
         ],
         allUniversities: false,
         universities: [],
@@ -303,7 +303,7 @@ export const PREP_MODULES: PrepModule[] = [
           { label: "Practice", minutes: 30, items: ["10 programming questions"] },
         ],
         allUniversities: false,
-        universities: ["AASTU", "AAU", "Adigrat", "Ambo", "Arba Minch", "Arsi", "Assossa", "Axum", "Bahir Dar", "Debrebirhan", "Dilla", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jimma", "Meda Wellabu", "Mekelle", "Wachemo", "Welkite", "Woldiya", "Wollega", "Wollo", "Civil Service", "St Marry", "Unity"],
+        universities: ["AASTU", "AAU", "Adigrat", "Ambo", "Arba Minch", "Arsi", "Assossa", "Axum", "Bahir Dar", "Debrebirhan", "Dilla", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jimma", "Meda Wellabu", "Mekelle", "Wachamo", "Welketie", "Woldiya", "Wollega", "Wollo", "Civil Service", "St Marry", "Unity"],
       },
       {
         day: 22,
@@ -316,7 +316,7 @@ export const PREP_MODULES: PrepModule[] = [
           { label: "Practice", minutes: 30, items: ["10 questions"] },
         ],
         allUniversities: false,
-        universities: ["AAU", "Adigrat", "Ambo", "Arba Minch", "Bahir Dar", "Bonga", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jimma", "Jinka", "Mekelle", "Mizan Tepi", "Wachemo", "Welkite", "Wollega", "Wollo"],
+        universities: ["AAU", "Adigrat", "Ambo", "Arba Minch", "Bahir Dar", "Bonga", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jimma", "Jinka", "Mekelle", "Mizan Tepi", "Wachamo", "Welketie", "Wollega", "Wollo"],
       },
       {
         day: 23,
@@ -329,7 +329,7 @@ export const PREP_MODULES: PrepModule[] = [
           { label: "Practice", minutes: 30, items: ["10 questions"] },
         ],
         allUniversities: false,
-        universities: ["AAU", "Adigrat", "Ambo", "Arba Minch", "Bahir Dar", "Bonga", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jimma", "Jinka", "Mekelle", "Mizan Tepi", "Wachemo", "Welkite", "Wollega", "Wollo"],
+        universities: ["AAU", "Adigrat", "Ambo", "Arba Minch", "Bahir Dar", "Bonga", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jimma", "Jinka", "Mekelle", "Mizan Tepi", "Wachamo", "Welketie", "Wollega", "Wollo"],
       },
       {
         day: 24,
@@ -342,7 +342,7 @@ export const PREP_MODULES: PrepModule[] = [
           { label: "Practice", minutes: 30, items: ["10 questions"] },
         ],
         allUniversities: false,
-        universities: ["AAU", "Adigrat", "Ambo", "Arba Minch", "Bahir Dar", "Bonga", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jimma", "Jinka", "Mekelle", "Mizan Tepi", "Wachemo", "Welkite", "Wollega", "Wollo"],
+        universities: ["AAU", "Adigrat", "Ambo", "Arba Minch", "Bahir Dar", "Bonga", "Dire Dawa", "Gondar", "Haramaya", "Hawassa", "Jimma", "Jinka", "Mekelle", "Mizan Tepi", "Wachamo", "Welketie", "Wollega", "Wollo"],
       },
       {
         day: 25,
@@ -350,7 +350,7 @@ export const PREP_MODULES: PrepModule[] = [
         focus: "",
         blocks: [
           { label: "Morning", minutes: 90, items: ["Review all notes", "Practice weak areas"] },
-          { label: "Afternoon", minutes: 90, items: ["Mini practice test (40 questions)", "Check answersEvening (1 hour):", "Rest"] },
+          { label: "Afternoon", minutes: 90, items: ["Mini practice test (40 questions)", "Check answers", "Rest"] },
         ],
         allUniversities: false,
         universities: [],
@@ -366,7 +366,7 @@ export const PREP_MODULES: PrepModule[] = [
           { label: "Practice", minutes: 30, items: ["10 questions"] },
         ],
         allUniversities: false,
-        universities: ["AAU", "Bahir Dar", "Gondar", "Haramaya", "Jimma", "Mekelle", "Wachemo", "Welkite"],
+        universities: ["AAU", "Bahir Dar", "Gondar", "Haramaya", "Jimma", "Mekelle", "Wachamo", "Welketie"],
       },
       {
         day: 27,
@@ -379,7 +379,7 @@ export const PREP_MODULES: PrepModule[] = [
           { label: "Practice", minutes: 30, items: ["10 questions"] },
         ],
         allUniversities: false,
-        universities: ["AAU", "Bahir Dar", "Gondar", "Haramaya", "Jimma", "Mekelle", "Wachemo", "Welkite"],
+        universities: ["AAU", "Bahir Dar", "Gondar", "Haramaya", "Jimma", "Mekelle", "Wachamo", "Welketie"],
       },
       {
         day: 28,
@@ -392,7 +392,7 @@ export const PREP_MODULES: PrepModule[] = [
           { label: "Practice", minutes: 30, items: ["15 COC questions"] },
         ],
         allUniversities: false,
-        universities: ["AAU", "Bahir Dar", "Gondar", "Haramaya", "Jimma", "Mekelle", "Wachemo", "Welkite"],
+        universities: ["AAU", "Bahir Dar", "Gondar", "Haramaya", "Jimma", "Mekelle", "Wachamo", "Welketie"],
       },
       {
         day: 29,
@@ -400,18 +400,18 @@ export const PREP_MODULES: PrepModule[] = [
         focus: "",
         blocks: [
           { label: "Morning", minutes: 120, items: ["Review all notes from Days 1–28", "Focus on weak areas"] },
-          { label: "Afternoon", minutes: 120, items: ["Full practice test (60 questions)", "Check answersEvening (1 hour):", "Rest"] },
+          { label: "Afternoon", minutes: 120, items: ["Full practice test (60 questions)", "Check answers", "Rest"] },
         ],
         allUniversities: false,
         universities: [],
       },
       {
         day: 30,
-        title: "Final Review &amp; Preparation",
+        title: "Final Review & Preparation",
         focus: "",
         blocks: [
           { label: "Morning", minutes: 90, items: ["Review all formula sheets and key notes", "Practice weak areas"] },
-          { label: "Afternoon", minutes: 90, items: ["Final practice test (60 questions)", "Check answersEvening (1 hour):", "Rest, relax, prepare mentally", "Write down your goals for university"] },
+          { label: "Afternoon", minutes: 90, items: ["Final practice test (60 questions)", "Check answers", "Rest, relax, prepare mentally", "Write down your goals for university"] },
         ],
         allUniversities: false,
         universities: [],
