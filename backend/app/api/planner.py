@@ -4,9 +4,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from datetime import date
 from app.db.models.planner import StudyTask
+from app.db.models.student import StudentTopicProgress
 from app.db.session import get_db
-from app.schemas.planner import PlanGenerateRequest, StudyPlanDay, StudyPlanRead, StudyTaskRead
+from app.schemas.planner import PlanGenerateRequest, StudyPlanDay, StudyPlanRead, StudyTaskAction, StudyTaskRead
 from app.services.planner import generate_plan, load_plan
 
 router = APIRouter(prefix="/api/v1/planner", tags=["planner"])
