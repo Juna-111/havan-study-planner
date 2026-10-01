@@ -198,7 +198,7 @@ export default function PlannerPage() {
         setSelectedTaskId(null)
         setToast('Skipped and recorded. Havan rebuilt the remaining week around that decision.')
       } else {
-        setSelectedDate(updated.planned_date)
+        setSelectedDate(targetDate || updatedPlan.days?.[0]?.date || selectedDate)
         setMoveDate('')
         setSelectedTaskId(null)
         setToast('Session moved. Havan rebuilt the remaining week around the new date.')
