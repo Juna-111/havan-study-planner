@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import date, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db.models.curriculum import Chapter, Course, Topic, TopicRelationship
@@ -56,30 +56,40 @@ def generate_plan(db: Session, student_id: int, horizon_days: int = 7) -> StudyP
     selected = list(db.scalars(
         select(StudentCourse).where(
             StudentCourse.student_id == student_id,
-            StudentCourse.status == "ACTIVE",
+            func.upper(StudentCourse.status) == "ACTIVE",
         )
     ).all())
     if not selected:
         raise ValueError("Select at least one course before generating a plan")
 
     course_ids = [item.course_id for item in selected]
-    courses = {
-        course.id: course
-        for course in db.scalars(select(Course).where(Course.id.in_(course_ids))).all()
-    }
+
+    # A student's selected courses define planner scope. Do not let a legacy
+    # course/chapter status value make valid topics disappear.
     chapters = list(db.scalars(
         select(Chapter).where(Chapter.course_id.in_(course_ids))
     ).all())
     chapter_ids = [chapter.id for chapter in chapters]
+
+    # Curriculum status is matched case-insensitively so existing records such
+    # as "active" are treated correctly instead of appearing to have no topics.
     topics = list(db.scalars(
         select(Topic).where(
             Topic.chapter_id.in_(chapter_ids),
-            Topic.status == "ACTIVE",
+            func.upper(Topic.status) == "ACTIVE",
         )
     ).all()) if chapter_ids else []
 
     if not topics:
-        raise ValueError("Your selected courses do not have active topics yet")
+        all_topics = list(db.scalars(
+            select(Topic).where(Topic.chapter_id.in_(chapter_ids))
+        ).all()) if chapter_ids else []
+        if all_topics:
+            raise ValueError(
+                "Your selected courses have topics, but they are not marked ACTIVE. "
+                "Activate those topics in the curriculum before generating a plan."
+            )
+        raise ValueError("Your selected courses do not have topics yet")
 
     chapter_to_course = {chapter.id: chapter.course_id for chapter in chapters}
     course_confidence = {item.course_id: item.confidence for item in selected}
@@ -102,7 +112,7 @@ def generate_plan(db: Session, student_id: int, horizon_days: int = 7) -> StudyP
     topic_ids = {topic.id for topic in topics}
     relationships = list(db.scalars(
         select(TopicRelationship).where(
-            TopicRelationship.relationship_type == "PREREQUISITE",
+            func.lower(TopicRelationship.relationship_type) == "prerequisite",
             TopicRelationship.target_topic_id.in_(topic_ids),
         )
     ).all()) if topic_ids else []
