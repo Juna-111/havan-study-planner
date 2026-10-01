@@ -7,7 +7,13 @@ import '../student.css'
 import './planner.css'
 
 type Item = Record<string, any>
-type Task = Item & { estimated_minutes: number }\n\ninterface TopicProgress {\n  topic_id: string | number\n  completed_minutes?: number\n  study_sessions?: number\n}
+type Task = Item & { estimated_minutes: number }
+
+interface TopicProgress {
+  topic_id: string | number
+  completed_minutes?: number
+  study_sessions?: number
+}
 
 const KEY = 'havan_student_key'
 
