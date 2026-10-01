@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.academic_quality import router as academic_quality_router
+from app.api.auth import router as auth_router
 from app.api.curriculum import router as curriculum_router
 from app.api.curriculum_import import router as curriculum_import_router
 from app.api.health import router as health_router
@@ -28,6 +29,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(health_router)
+app.include_router(auth_router)
 app.include_router(curriculum_router)
 app.include_router(curriculum_import_router)
 app.include_router(student_router)
