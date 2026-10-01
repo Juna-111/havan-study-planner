@@ -2719,3 +2719,49 @@
   .planner-exam-item{padding:11px}
   .planner-exam-item-top strong{font-size:11px}
 }
+
+
+/* Phase 6.6 recommendation explanations */
+.planner-reason-list {
+  display: grid;
+  gap: 8px;
+  margin: 13px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.planner-reason-list li {
+  display: grid;
+  grid-template-columns: 19px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+  color: #4c4c60;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.planner-reason-list li > span:first-child {
+  display: grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  border-radius: 6px;
+  color: var(--havan-blue);
+  background: #eef0ff;
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.planner-detail-reason > p {
+  max-width: 560px;
+}
+
+@media (max-width: 560px) {
+  .planner-reason-list {
+    gap: 7px;
+  }
+
+  .planner-reason-list li {
+    font-size: 9px;
+  }
+}
