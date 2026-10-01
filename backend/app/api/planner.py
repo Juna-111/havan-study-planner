@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.db.models.planner import StudyTask
 from app.db.models.student import StudentTopicProgress
 from app.db.session import get_db
-from app.schemas.planner import PlanGenerateRequest, StudyPlanDay, StudyPlanRead, StudyTaskAction, StudyTaskRead
+from app.schemas.planner import PlanGenerateRequest, StudyPlanDay, StudyPlanRead, StudyTaskAction
 from app.services.planner import generate_plan, load_plan, replan_remaining
 
 router = APIRouter(prefix="/api/v1/planner", tags=["planner"])
@@ -45,13 +45,6 @@ def _tasks_for_plan(db: Session, plan_id: int):
         .where(StudyTask.plan_id == plan_id)
         .order_by(StudyTask.planned_date, StudyTask.priority.desc())
     ).all())
-
-
-def _plan_by_id(db: Session, plan_id: int) -> StudyPlanRead:
-    plan = db.get(__import__("app.db.models.planner", fromlist=["StudyPlan"]).StudyPlan, plan_id)
-    if plan is None:
-        raise HTTPException(status_code=404, detail="Study plan not found")
-    return _plan_response(plan, _tasks_for_plan(db, plan.id))
 
 
 def _generate(db: Session, student_id: int, horizon_days: int) -> StudyPlanRead:
