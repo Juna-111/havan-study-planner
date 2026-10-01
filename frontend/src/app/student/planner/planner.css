@@ -2765,3 +2765,73 @@
     font-size: 9px;
   }
 }
+
+
+/* Phase 6.6: explain the effect of student decisions without changing Havan's visual language. */
+.planner-decision-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--red);
+  border-radius: var(--radius-md);
+  background: #fff;
+}
+
+.planner-decision-icon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  color: #fff;
+  background: var(--red);
+  font-weight: 800;
+}
+
+.planner-decision-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.planner-decision-copy .student-eyebrow {
+  margin-bottom: 3px;
+  color: var(--red);
+}
+
+.planner-decision-copy strong {
+  display: block;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.planner-decision-copy p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.planner-decision-close {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  color: var(--blue);
+  background: #f0f0f7;
+  font-size: 20px;
+  line-height: 1;
+}
+
+@media (max-width: 640px) {
+  .planner-decision-note {
+    margin-inline: 0;
+  }
+}
