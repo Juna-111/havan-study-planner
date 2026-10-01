@@ -85,12 +85,12 @@ export default function PlannerPage() {
     }
   }
 
-  async function updateTask(task: Item, status: string) {
+  async function updateTask(task: Item, status: string, plannedDate?: string) {
     if (!studentId) return
     try {
       const updated = await apiFetch<Item>(`/planner/students/${studentId}/tasks/${task.id}`, {
         method: 'PATCH',
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, planned_date: plannedDate }),
       })
       setPlan((current: Item | null) => current ? {
         ...current,
@@ -164,6 +164,11 @@ export default function PlannerPage() {
                     <div className="task-actions">
                       <button onClick={() => updateTask(task, 'COMPLETED')}>Complete</button>
                       <button onClick={() => updateTask(task, 'SKIPPED')}>Skip</button>
+                      <button onClick={() => {
+                        const next = new Date(task.planned_date + 'T00:00:00')
+                        next.setDate(next.getDate() + 1)
+                        updateTask(task, 'RESCHEDULED', next.toISOString().slice(0, 10))
+                      }}>Move +1 day</button>
                     </div>
                   )}
                 </div>
