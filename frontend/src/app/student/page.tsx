@@ -262,7 +262,7 @@ export default function StudentPage() {
 
   return (
     <main className="student-shell dashboard-shell">
-      <header className="student-topbar"><div className="student-brand"><span className="student-mark">H</span><strong>havan</strong><span>Study Planner</span></div><span className="student-context">{profile?.name} · {profile?.study_hours_per_day}h/day</span></header>
+      <header className="student-topbar"><div className="student-brand"><span className="student-mark">H</span><strong>havan</strong><span>Study Planner</span></div><div className="student-nav"><a href="/student/planner">Study plan</a><span className="student-context">{profile?.name} · {profile?.study_hours_per_day}h/day</span></div></header>
       {error && <div className="student-error top-error">{error}<button onClick={() => setError('')}>×</button></div>}
       <section className="dashboard-hero"><div><span className="student-eyebrow">YOUR ACADEMIC CONTEXT</span><h1>{profile?.name}, this is your starting point.</h1><p>{profile?.university_id ? universities.find((x) => x.id === profile.university_id)?.name ?? 'Your university' : 'Your university'} · {profile?.study_hours_per_day} hours per study day</p></div></section>
 
