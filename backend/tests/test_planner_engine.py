@@ -110,6 +110,19 @@ def test_short_topic_duration_is_not_inflated():
     assert scheduled[0][2] == 10
 
 
+def test_recommendation_reason_explains_major_signals():
+    item = score_topic(
+        topic(1, difficulty=5, exam_importance=0.8, status="IN_PROGRESS", confidence=2),
+        PlannerExam(1, TODAY + timedelta(days=3), 5, "FINAL"),
+        TODAY,
+    )
+    assert "FINAL is in 3 day(s)" in item.reason
+    assert "high exam importance" in item.reason
+    assert "senior-student difficulty is Expert" in item.reason
+    assert "already started it" in item.reason
+    assert "low confidence" in item.reason
+
+
 def test_senior_difficulty_affects_priority():
     easy = score_topic(topic(1, difficulty=1), None, TODAY)
     expert = score_topic(topic(2, difficulty=5), None, TODAY)
