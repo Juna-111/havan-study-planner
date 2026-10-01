@@ -71,6 +71,66 @@ def create_plan(
     return _generate(db, student_id, payload.horizon_days)
 
 
+
+@router.post("/students/{student_id}/tasks/{task_id}/action", response_model=StudyTaskRead)
+def act_on_task(
+    student_id: int,
+    task_id: int,
+    payload: StudyTaskAction,
+    db: Session = Depends(get_db),
+):
+    task = db.scalar(
+        select(StudyTask).where(
+            StudyTask.id == task_id,
+            StudyTask.student_id == student_id,
+        )
+    )
+    if task is None:
+        raise HTTPException(status_code=404, detail="Study task not found")
+
+    if payload.action == "MOVE":
+        if payload.target_date is None:
+            raise HTTPException(status_code=400, detail="A target date is required when moving a task")
+        if payload.target_date < date.today():
+            raise HTTPException(status_code=400, detail="A task cannot be moved to a past date")
+        task.planned_date = payload.target_date
+        task.status = "RECOMMENDED"
+
+    elif payload.action == "START":
+        if task.status == "COMPLETED":
+            raise HTTPException(status_code=400, detail="Completed tasks cannot be started again")
+        task.status = "IN_PROGRESS"
+
+    elif payload.action == "SKIP":
+        if task.status == "COMPLETED":
+            raise HTTPException(status_code=400, detail="Completed tasks cannot be skipped")
+        task.status = "SKIPPED"
+
+    elif payload.action == "COMPLETE":
+        task.status = "COMPLETED"
+        progress = db.scalar(
+            select(StudentTopicProgress).where(
+                StudentTopicProgress.student_id == student_id,
+                StudentTopicProgress.topic_id == task.topic_id,
+            )
+        )
+        if progress is None:
+            progress = StudentTopicProgress(
+                student_id=student_id,
+                topic_id=task.topic_id,
+                status="COMPLETED",
+                confidence=3,
+            )
+            db.add(progress)
+        else:
+            progress.status = "COMPLETED"
+            progress.last_studied_at = datetime.now(timezone.utc)
+
+    db.commit()
+    db.refresh(task)
+    return task
+
+
 @router.get("/students/{student_id}/latest", response_model=StudyPlanRead)
 def latest_plan(student_id: int, db: Session = Depends(get_db)):
     plan = load_plan(db, student_id)
