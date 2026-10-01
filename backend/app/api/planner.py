@@ -74,6 +74,19 @@ def create_plan(
     return _generate(db, student_id, payload.horizon_days)
 
 
+@router.post("/students/{student_id}/replan", response_model=StudyPlanRead)
+def replan_student(
+    student_id: int,
+    payload: PlanGenerateRequest,
+    db: Session = Depends(get_db),
+):
+    try:
+        plan = replan_remaining(db, student_id, horizon_days=payload.horizon_days)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return _plan_response(plan, _tasks_for_plan(db, plan.id))
+
+
 @router.post("/students/{student_id}/tasks/{task_id}/action", response_model=StudyPlanRead)
 def act_on_task(
     student_id: int,
