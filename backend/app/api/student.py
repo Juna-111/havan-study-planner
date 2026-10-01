@@ -178,7 +178,18 @@ def upsert_progress(student_id: int, topic_id: int, payload: ProgressUpsert, db:
     item.status = payload.status
     item.confidence = payload.confidence
     item.notes = payload.notes
-    item.last_studied_at = datetime.now(timezone.utc) if payload.status != "NOT_STARTED" else None
+
+    if payload.status == "NOT_STARTED":
+        item.completed_minutes = 0
+        item.study_sessions = 0
+        item.last_studied_at = None
+    elif payload.status == "COMPLETED":
+        topic = db.get(Topic, topic_id)
+        item.completed_minutes = max(item.completed_minutes, topic.estimated_study_minutes if topic else 0)
+        item.study_sessions = max(item.study_sessions, 1)
+        item.last_studied_at = datetime.now(timezone.utc)
+    else:
+        item.last_studied_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(item)
     return item

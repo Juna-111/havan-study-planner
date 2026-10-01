@@ -143,3 +143,10 @@ def test_pinned_topic_starts_on_requested_date():
     )
     pinned_rows = [(day, minutes) for item, day, minutes in scheduled if item.topic.topic_id == 1]
     assert pinned_rows == [(target, 30)]
+
+
+def test_partial_topic_progress_schedules_only_remaining_minutes():
+    partially_studied = topic(1, minutes=30, status="IN_PROGRESS")
+    item = score_topic(partially_studied, None, TODAY)
+    scheduled = schedule_tasks([item], [TODAY], 60)
+    assert scheduled[0][2] == 30

@@ -131,7 +131,7 @@ def generate_plan(
                 course_id=course_id,
                 name=topic.name,
                 difficulty=topic.difficulty,
-                estimated_minutes=topic.estimated_study_minutes,
+                estimated_minutes=max(1, topic.estimated_study_minutes - (row.completed_minutes if row else 0)),
                 exam_importance=float(topic.exam_importance),
                 conceptual_importance=float(topic.conceptual_importance),
                 progress_status=row.status if row else "NOT_STARTED",

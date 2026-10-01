@@ -186,6 +186,8 @@ export default function PlannerPage() {
         body: JSON.stringify({ action, target_date: targetDate || null }),
       })
       setPlan(updatedPlan)
+      const latestProgress = await apiFetch<Item>('/students/profiles/' + studentId + '/progress')
+      setContext((current) => current ? { ...current, progress: latestProgress } : current)
       if (action === 'START') {
         setFocusTaskId(task.id)
         setFocusSeconds(25 * 60)
@@ -253,6 +255,24 @@ export default function PlannerPage() {
   const selectedMinutes = selectedTasks.reduce((sum, task) => sum + task.estimated_minutes, 0)
   const recommendedCount = visibleTasks.filter((task) => task.status === 'RECOMMENDED').length
   const completedCount = visibleTasks.filter((task) => task.status === 'COMPLETED').length
+
+  const progressMap = useMemo(
+    () => new Map((context?.progress ?? []).map((item: Item) => [item.topic_id, item])),
+    [context],
+  )
+
+  const academicProgress = useMemo(() => {
+    const total = topics.reduce((sum, topic) => sum + Number(topic.estimated_study_minutes || 0), 0)
+    const completed = topics.reduce((sum, topic) => {
+      const progress = progressMap.get(topic.id)
+      return sum + Math.min(Number(progress?.completed_minutes || 0), Number(topic.estimated_study_minutes || 0))
+    }, 0)
+    return {
+      total,
+      completed,
+      percent: total ? Math.round((completed / total) * 100) : 0,
+    }
+  }, [topics, progressMap])
 
   const selectedTask = selectedTaskId ? tasks.find((task) => task.id === selectedTaskId) : null
   const selectedTopic = selectedTask ? topicMap.get(selectedTask.topic_id) : null
@@ -368,6 +388,11 @@ export default function PlannerPage() {
               <span>COMPLETED</span>
               <strong>{completedCount}</strong>
               <small>already finished</small>
+            </article>
+            <article className="planner-stat planner-stat-progress">
+              <span>ACADEMIC PROGRESS</span>
+              <strong>{academicProgress.percent}%</strong>
+              <small>{minutesLabel(academicProgress.completed)} studied of {minutesLabel(academicProgress.total)}</small>
             </article>
             <article className="planner-stat planner-stat-exam">
               <span>NEXT EXAM</span>
@@ -697,6 +722,19 @@ export default function PlannerPage() {
             <div className="planner-detail-reason">
               <span className="student-eyebrow">WHY IT IS HERE</span>
               <p>{selectedTask.reason}</p>
+            </div>
+
+            <div className="planner-progress-meter">
+              <div className="planner-progress-meter-heading">
+                <span>TOPIC PROGRESS</span>
+                <strong>{Math.min(100, Math.round(((progressMap.get(selectedTask.topic_id)?.completed_minutes || 0) / Number(selectedTopic?.estimated_study_minutes || 1)) * 100))}%</strong>
+              </div>
+              <div className="planner-progress-track" aria-label="Topic progress">
+                <span style={{ width: Math.min(100, Math.round(((progressMap.get(selectedTask.topic_id)?.completed_minutes || 0) / Number(selectedTopic?.estimated_study_minutes || 1)) * 100)) + '%' }} />
+              </div>
+              <small>
+                {minutesLabel(progressMap.get(selectedTask.topic_id)?.completed_minutes || 0)} studied · {progressMap.get(selectedTask.topic_id)?.study_sessions || 0} session(s)
+              </small>
             </div>
 
             <div className="planner-detail-grid">

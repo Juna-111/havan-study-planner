@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.models.planner import StudyTask
+from app.db.models.curriculum import Topic
 from app.db.models.student import StudentTopicProgress
 from app.db.session import get_db
 from app.schemas.planner import PlanGenerateRequest, StudyPlanDay, StudyPlanRead, StudyTaskAction
@@ -123,7 +124,13 @@ def act_on_task(
         task.status = "SKIPPED"
 
     elif action == "COMPLETE":
-        task.status = "COMPLETED"
+        if task.status == "COMPLETED":
+            raise HTTPException(status_code=400, detail="This study session is already completed")
+
+        topic = db.get(Topic, task.topic_id)
+        if topic is None:
+            raise HTTPException(status_code=404, detail="Topic not found")
+
         progress = db.scalar(
             select(StudentTopicProgress).where(
                 StudentTopicProgress.student_id == student_id,
@@ -134,13 +141,23 @@ def act_on_task(
             progress = StudentTopicProgress(
                 student_id=student_id,
                 topic_id=task.topic_id,
-                status="COMPLETED",
+                status="IN_PROGRESS",
                 confidence=3,
+                completed_minutes=0,
+                study_sessions=0,
             )
             db.add(progress)
-        else:
-            progress.status = "COMPLETED"
-            progress.last_studied_at = datetime.now(timezone.utc)
+            db.flush()
+
+        progress.completed_minutes += task.estimated_minutes
+        progress.study_sessions += 1
+        progress.last_studied_at = datetime.now(timezone.utc)
+        progress.status = (
+            "COMPLETED"
+            if progress.completed_minutes >= topic.estimated_study_minutes
+            else "IN_PROGRESS"
+        )
+        task.status = "COMPLETED"
 
     db.commit()
 

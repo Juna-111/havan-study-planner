@@ -58,6 +58,8 @@ class ProgressRead(ProgressUpsert):
     student_id: int
     topic_id: int
     last_studied_at: Optional[datetime]
+    completed_minutes: int
+    study_sessions: int
 
 
 class ExamCreate(BaseModel):

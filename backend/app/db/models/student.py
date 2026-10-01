@@ -58,6 +58,8 @@ class StudentTopicProgress(Base):
     confidence: Mapped[int] = mapped_column(Integer, nullable=False, default=3, server_default="3")
     notes: Mapped[Optional[str]] = mapped_column(Text)
     last_studied_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    completed_minutes: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    study_sessions: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
     student: Mapped[StudentProfile] = relationship(back_populates="progress")
 
 
