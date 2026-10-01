@@ -287,6 +287,7 @@ export default function StudentPage() {
         method: 'POST',
         body: JSON.stringify({
           client_key: clientKey(),
+          account_id: account?.id ?? undefined,
           name: draft.name.trim(),
           university_id: Number(draft.universityId),
           curriculum_id: Number(draft.curriculumId),
