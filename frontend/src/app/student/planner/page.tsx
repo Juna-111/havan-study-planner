@@ -298,6 +298,31 @@ export default function PlannerPage() {
     ? Math.max(0, Math.ceil((upcomingExam.dateObject.getTime() - today().getTime()) / 86400000))
     : null
 
+  const examReadiness = useMemo(() => {
+    const exams = (context?.exams ?? [])
+      .map((exam: Item) => {
+        const courseTopics = topics.filter((topic) => topic.chapter_course_id === exam.course_id || topic.course_id === exam.course_id)
+        const scopedTopics = courseTopics.length
+          ? courseTopics
+          : topics.filter((topic) => topicMap.get(topic.id)?.course_id === exam.course_id)
+        const total = scopedTopics.reduce((sum, topic) => sum + Number(topic.estimated_study_minutes || 0), 0)
+        const completed = scopedTopics.reduce((sum, topic) => {
+          const progress = progressMap.get(topic.id)
+          return sum + Math.min(Number(progress?.completed_minutes || 0), Number(topic.estimated_study_minutes || 0))
+        }, 0)
+        const days = Math.max(0, Math.ceil((toDate(exam.exam_date).getTime() - today().getTime()) / 86400000))
+        return {
+          ...exam,
+          days,
+          readiness: total ? Math.round((completed / total) * 100) : 0,
+          remainingMinutes: Math.max(0, total - completed),
+        }
+      })
+      .filter((exam: Item) => exam.days >= 0)
+      .sort((a: Item, b: Item) => a.days - b.days || Number(b.importance) - Number(a.importance))
+    return exams
+  }, [context, topics, progressMap, topicMap])
+
   if (loading) {
     return (
       <main className="student-shell planner-shell">
@@ -582,17 +607,36 @@ export default function PlannerPage() {
                 </div>
               </section>
 
-              {upcomingExam && (
-                <section className="planner-side-card planner-exam-card panel">
-                  <span className="student-eyebrow">ASSESSMENT AHEAD</span>
-                  <strong className="planner-exam-title">
-                    {courseMap.get(upcomingExam.course_id)?.code ?? 'Course'} {upcomingExam.exam_type}
-                  </strong>
-                  <span className="planner-exam-date">
-                    {formatDate(upcomingExam.dateObject, { weekday: 'long', month: 'long', day: 'numeric' })}
-                  </span>
-                  <b>{examDays === 0 ? 'Today' : examDays + ' days away'}</b>
-                  <a href="/student">Manage exam dates →</a>
+              {examReadiness.length > 0 && (
+                <section className="planner-side-card planner-exam-card planner-exam-management panel">
+                  <div className="planner-section-heading">
+                    <div>
+                      <span className="student-eyebrow">ASSESSMENT AHEAD</span>
+                      <h2>Your exam pressure</h2>
+                    </div>
+                    <a href="/student">Manage</a>
+                  </div>
+                  <div className="planner-exam-list">
+                    {examReadiness.slice(0, 3).map((exam: Item) => (
+                      <article className="planner-exam-item" key={exam.id}>
+                        <div className="planner-exam-item-top">
+                          <div>
+                            <strong>{courseMap.get(exam.course_id)?.code ?? 'Course'}</strong>
+                            <span>{exam.exam_type} · Importance {exam.importance}/5</span>
+                          </div>
+                          <b className={exam.days <= 3 ? 'is-urgent' : exam.days <= 7 ? 'is-near' : ''}>
+                            {exam.days === 0 ? 'Today' : exam.days + 'd'}
+                          </b>
+                        </div>
+                        <div className="planner-exam-readiness">
+                          <div><span>READINESS</span><strong>{exam.readiness}%</strong></div>
+                          <div className="planner-exam-readiness-track"><span style={{ width: Math.min(100, exam.readiness) + '%' }} /></div>
+                          <small>{minutesLabel(exam.remainingMinutes)} of study time remaining in this course scope</small>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                  <p className="planner-exam-note">Exam urgency and importance are already feeding Havan's recommendation score. Readiness adds the progress context you can act on.</p>
                 </section>
               )}
 
