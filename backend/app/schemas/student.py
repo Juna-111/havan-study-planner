@@ -37,6 +37,8 @@ class StudentRead(StudentBase):
 class StudentCourseAdd(BaseModel):
     course_id: int = Field(gt=0)
     confidence: int = Field(default=3, ge=1, le=5)
+    starting_chapter_id: Optional[int] = Field(default=None, gt=0)
+    starting_topic_id: Optional[int] = Field(default=None, gt=0)
 
 
 class StudentCourseRead(StudentCourseAdd):
