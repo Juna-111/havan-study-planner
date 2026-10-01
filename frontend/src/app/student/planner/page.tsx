@@ -80,6 +80,12 @@ export default function PlannerPage() {
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null)
   const [actionBusy, setActionBusy] = useState(false)
   const [toast, setToast] = useState('')
+  const [lastDecision, setLastDecision] = useState<{
+    action: 'START' | 'COMPLETE' | 'SKIP' | 'MOVE'
+    topicName: string
+    summary: string
+    impact: string
+  } | null>(null)
   const [moveDate, setMoveDate] = useState('')
   const [focusTaskId, setFocusTaskId] = useState<number | null>(null)
   const [focusSeconds, setFocusSeconds] = useState(25 * 60)
@@ -196,21 +202,47 @@ export default function PlannerPage() {
       setPlan(updatedPlan)
       const latestProgress = await apiFetch<TopicProgress[]>('/students/profiles/' + studentId + '/progress')
       setContext((current) => current ? { ...current, progress: latestProgress } : current)
+      const topicName = topicMap.get(task.topic_id)?.name ?? 'this topic'
       if (action === 'START') {
+        setLastDecision({
+          action,
+          topicName,
+          summary: `Havan started ${topicName} without changing your schedule.`,
+          impact: 'The plan stays unchanged until you complete, skip, or move the session.',
+        })
         setFocusTaskId(task.id)
         setFocusSeconds(25 * 60)
         setFocusMode('normal')
         setSelectedTaskId(null)
         setToast('Focus mode started. One session, one topic, no heroic promises required.')
       } else if (action === 'COMPLETE') {
+        setLastDecision({
+          action,
+          topicName,
+          summary: `You completed ${topicName}.`,
+          impact: 'Havan recorded the progress and recalculated the remaining recommendations around what you finished.',
+        })
         setFocusTaskId(null)
         setSelectedTaskId(null)
         setToast('Session completed. Havan recorded the progress and recalculated what comes next.')
       } else if (action === 'SKIP') {
+        setLastDecision({
+          action,
+          topicName,
+          summary: `You skipped ${topicName} for now.`,
+          impact: 'Havan defers it so it does not immediately return on the first study day, then rebuilds the remaining capacity around your decision.',
+        })
         setSelectedTaskId(null)
         setToast('Skipped and recorded. Havan rebuilt the remaining week around that decision.')
       } else {
-        setSelectedDate(targetDate || updatedPlan.days?.[0]?.date || selectedDate)
+        const nextDate = targetDate || updatedPlan.days?.[0]?.date || selectedDate
+        setLastDecision({
+          action,
+          topicName,
+          summary: `You moved ${topicName} to ${formatDate(toDate(nextDate), { weekday: 'long', month: 'long', day: 'numeric' })}.`,
+          impact: 'Havan pins the session to that date and recalculates the remaining schedule around the new commitment.',
+        })
+        setSelectedDate(nextDate)
         setMoveDate('')
         setSelectedTaskId(null)
         setToast('Session moved. Havan rebuilt the remaining week around the new date.')
@@ -299,57 +331,31 @@ export default function PlannerPage() {
 
   const recommendationReasons = useMemo(() => {
     if (!selectedTask || !selectedTopic) return []
+
     const progress = progressMap.get(selectedTask.topic_id)
     const totalMinutes = Number(selectedTopic.estimated_study_minutes || 0)
-    const completedMinutes = Math.min(
-      Number(progress?.completed_minutes || 0),
-      totalMinutes,
-    )
-    const reasons: string[] = []
+    const completedMinutes = Math.min(Number(progress?.completed_minutes || 0), totalMinutes)
+    const engineReasons = String(selectedTask.reason || '')
+      .split(';')
+      .map((reason) => reason.trim())
+      .filter(Boolean)
 
-    if (selectedExam) {
-      const days = Math.max(
-        0,
-        Math.ceil((selectedExam.dateObject.getTime() - today().getTime()) / 86400000),
-      )
-      reasons.push(
-        days === 0
-          ? `Your ${selectedExam.exam_type} is today, so exam urgency is high.`
-          : `Your ${selectedExam.exam_type} is in ${days} day${days === 1 ? '' : 's'}, which increases its priority.`,
-      )
-      reasons.push(`This assessment has importance ${selectedExam.importance}/5.`)
-    } else {
-      reasons.push('There is no upcoming exam for this course, so Havan is using the other academic signals.')
-    }
-
-    reasons.push(
-      Number(selectedTopic.exam_importance || 0) >= 0.7
-        ? 'This topic has high exam importance in the curriculum.'
-        : 'This topic contributes to the curriculum importance score.',
-    )
-    reasons.push(
-      `Senior-student academic difficulty is ${selectedTopic.difficulty ?? 'not set'}/5.`,
-    )
+    const reasons = [...engineReasons]
 
     if (completedMinutes > 0 && completedMinutes < totalMinutes) {
       reasons.push(
-        `You have already studied ${completedMinutes} of ${totalMinutes} minutes, so Havan plans the remaining work instead of restarting the topic.`,
+        `You have studied ${completedMinutes} of ${totalMinutes} minutes, so this session continues the remaining work.`,
       )
-    } else if (!completedMinutes) {
-      reasons.push('You have not recorded study time for this topic yet.')
     }
-
     if (progress?.confidence && Number(progress.confidence) <= 2) {
-      reasons.push(`Your recorded confidence is ${progress.confidence}/5, so the planner gives this topic additional attention.`)
+      reasons.push(`Your recorded confidence is ${progress.confidence}/5, so Havan gives this topic additional attention.`)
     }
-    if (selectedTask.estimated_minutes < totalMinutes) {
-      reasons.push(`The ${selectedTask.estimated_minutes}-minute session is a portion of the remaining work and fits the planner's available study capacity.`)
-    } else {
-      reasons.push(`The ${selectedTask.estimated_minutes}-minute session fits the planner's available study capacity.`)
-    }
+    reasons.push(
+      `${selectedTask.estimated_minutes}-minute session fits inside the planner's available study capacity.`,
+    )
 
-    return reasons
-  }, [selectedTask, selectedTopic, selectedExam, context, progressMap])
+    return Array.from(new Set(reasons))
+  }, [selectedTask, selectedTopic, progressMap])
 
   const upcomingExam = useMemo(() => {
     const now = today()
@@ -414,6 +420,20 @@ export default function PlannerPage() {
           </span>
         </nav>
       </header>
+
+      {lastDecision && (
+        <section className="planner-decision-note panel" aria-live="polite">
+          <div className="planner-decision-icon" aria-hidden="true">
+            {lastDecision.action === 'COMPLETE' ? '✓' : lastDecision.action === 'SKIP' ? '↷' : lastDecision.action === 'MOVE' ? '→' : '▶'}
+          </div>
+          <div className="planner-decision-copy">
+            <span className="student-eyebrow">HAVAN ADAPTATION</span>
+            <strong>{lastDecision.summary}</strong>
+            <p>{lastDecision.impact}</p>
+          </div>
+          <button type="button" className="planner-decision-close" aria-label="Dismiss adaptation notice" onClick={() => setLastDecision(null)}>×</button>
+        </section>
+      )}
 
       {error && (
         <div className="student-error planner-error" role="alert">
@@ -651,9 +671,9 @@ export default function PlannerPage() {
                 <span className="student-eyebrow">WHY THIS PLAN</span>
                 <h2>Several signals shape every recommendation.</h2>
                 <p>
-                  Phase 5 is deliberately deterministic. Havan considers exam urgency,
-                  topic importance, senior-student difficulty, student confidence, progress,
-                  prerequisites, available capacity, and revision need.
+                  Havan's deterministic planner uses the same academic signals that drive each
+                  recommendation. This explanation layer makes those signals readable instead of
+                  hiding the reasoning behind a black box.
                 </p>
                 <div className="planner-signal-list">
                   <span>Exam urgency</span>
@@ -665,7 +685,7 @@ export default function PlannerPage() {
                 </div>
                 <div className="planner-principle">
                   <strong>You stay in control.</strong>
-                  <span>Phase 6.1 explains recommendations. Task changes are intentionally reserved for Phase 6.2.</span>
+                  <span>Phase 6.6 explains the planner's reasoning and makes the effect of your decisions visible.</span>
                 </div>
               </section>
 
@@ -835,7 +855,7 @@ export default function PlannerPage() {
 
             <div className="planner-detail-reason">
               <span className="student-eyebrow">WHY HAVAN RECOMMENDS IT</span>
-              <p>{selectedTask.reason}</p>
+              <p>{selectedTask.reason || 'Havan selected this session from the current academic context and available capacity.'}</p>
               {recommendationReasons.length > 0 && (
                 <ul className="planner-reason-list">
                   {recommendationReasons.map((reason, index) => (
