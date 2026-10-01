@@ -13,6 +13,7 @@ interface TopicProgress {
   topic_id: string | number
   completed_minutes?: number
   study_sessions?: number
+  confidence?: number | string
 }
 
 const KEY = 'havan_student_key'
