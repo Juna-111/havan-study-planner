@@ -9,7 +9,7 @@ from app.db.models.curriculum import Chapter, Course, Curriculum, Stream, Topic,
 from app.db.models.student import StudentCourse, StudentExam, StudentProfile, StudentTopicProgress
 from app.db.session import get_db
 from app.schemas.student import (
-    CourseTopicStatus, ExamCreate, ExamRead, ProgressRead, ProgressUpsert, StudentContext,
+    CourseTopicStatus, ExamCreate, ExamRead, ExamUpdate, ProgressRead, ProgressUpsert, StudentContext,
     StudentCourseAdd, StudentCourseRead, StudentCreate, StudentRead, StudentUpdate,
 )
 
@@ -219,6 +219,34 @@ def add_exam(student_id: int, payload: ExamCreate, db: DB):
         raise HTTPException(status_code=400, detail="Exam course is outside the student's selected stream")
     item = StudentExam(student_id=student_id, **payload.model_dump())
     db.add(item)
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+@router.patch("/profiles/{student_id}/exams/{exam_id}", response_model=ExamRead)
+def update_exam(student_id: int, exam_id: int, payload: ExamUpdate, db: DB):
+    profile = profile_or_404(db, student_id)
+    item = db.scalar(
+        select(StudentExam).where(
+            StudentExam.student_id == student_id,
+            StudentExam.id == exam_id,
+        )
+    )
+    if not item:
+        raise HTTPException(status_code=404, detail="Exam not found")
+
+    data = payload.model_dump(exclude_unset=True)
+    course_id = data.get("course_id", item.course_id)
+    course = db.get(Course, course_id)
+    if not course:
+        raise HTTPException(status_code=404, detail="Exam course not found")
+    if course.stream_id != profile.stream_id:
+        raise HTTPException(status_code=400, detail="Exam course is outside the student's selected stream")
+
+    for key, value in data.items():
+        setattr(item, key, value)
+
     db.commit()
     db.refresh(item)
     return item

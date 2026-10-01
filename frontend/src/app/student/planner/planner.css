@@ -2693,3 +2693,29 @@
     font-size: 11px;
   }
 }
+
+/* Phase 6.5 Havan exam intelligence */
+.planner-exam-management .planner-section-heading{align-items:center}
+.planner-exam-management .planner-section-heading a{display:inline-flex;min-height:34px;align-items:center;padding:0 10px;border:1px solid #cfd0e8;border-radius:9px;color:var(--havan-blue);background:#fff;font-size:9px;font-weight:900;text-decoration:none}
+.planner-exam-management .planner-section-heading a:hover{border-color:var(--havan-blue);background:#f4f4ff}
+.planner-exam-list{display:grid;gap:9px;margin-top:14px}
+.planner-exam-item{padding:13px;border:1px solid #e2e2ed;border-radius:14px;background:linear-gradient(135deg,#fff 0%,#fafaff 100%)}
+.planner-exam-item-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.planner-exam-item-top div{display:grid;gap:3px;min-width:0}
+.planner-exam-item-top strong{color:var(--havan-blue);font-size:12px}
+.planner-exam-item-top span{color:var(--muted);font-size:8px}
+.planner-exam-item-top>b{display:inline-flex;min-width:38px;min-height:28px;align-items:center;justify-content:center;padding:0 7px;border-radius:8px;color:var(--havan-blue);background:#eef0ff;font-size:9px}
+.planner-exam-item-top>b.is-near{color:#8b5b00;background:#fff5d8}
+.planner-exam-item-top>b.is-urgent{color:#a32120;background:#fff0ef}
+.planner-exam-readiness{margin-top:11px}
+.planner-exam-readiness>div:first-child{display:flex;justify-content:space-between;gap:8px}
+.planner-exam-readiness>div:first-child span{color:var(--muted);font-size:7px;font-weight:900;letter-spacing:.8px}
+.planner-exam-readiness>div:first-child strong{color:var(--havan-blue);font-size:10px}
+.planner-exam-readiness-track{height:6px;margin-top:6px;overflow:hidden;border-radius:999px;background:#e8e8f3}
+.planner-exam-readiness-track span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--havan-blue),var(--havan-blue) 72%,var(--havan-red));transition:width .3s ease}
+.planner-exam-readiness small{display:block;margin-top:6px;color:var(--muted);font-size:7.5px;line-height:1.4}
+.planner-exam-note{margin:11px 0 0;padding-top:10px;border-top:1px solid #eeeef3;color:var(--muted);font-size:8px;line-height:1.5}
+@media (max-width:560px){
+  .planner-exam-item{padding:11px}
+  .planner-exam-item-top strong{font-size:11px}
+}
