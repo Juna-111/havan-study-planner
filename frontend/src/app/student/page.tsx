@@ -32,6 +32,60 @@ function initials(name: string): string {
   const letters = name.trim().split(/\\s+/).filter(Boolean).map((part) => part[0]).join('').slice(0, 2).toUpperCase()
   return letters || 'ST'
 }
+type HavanOption = { value: string; label: string }
+type HavanSelectProps = { value: string; options: HavanOption[]; placeholder: string; disabled?: boolean; onChange: (value: string) => void; ariaLabel?: string }
+function HavanSelect({ value, options, placeholder, disabled, onChange, ariaLabel }: HavanSelectProps) {
+  const [open, setOpen] = useState(false)
+  const selected = options.find((option) => option.value === value)
+  return (
+    <div className={disabled ? 'havan-select disabled' : 'havan-select'}>
+      <button type="button" className="havan-select-trigger" aria-haspopup="listbox" aria-expanded={open} aria-label={ariaLabel ?? placeholder} disabled={disabled} onClick={() => setOpen((current) => !current)}>
+        <span className={selected ? 'has-value' : ''}>{selected?.label ?? placeholder}</span><i>{open ? '−' : '+'}</i>
+      </button>
+      {open && !disabled && <div className="havan-select-menu" role="listbox">
+        {options.length ? options.map((option) => (
+          <button type="button" role="option" aria-selected={option.value === value} className={option.value === value ? 'havan-select-option selected' : 'havan-select-option'} key={option.value} onClick={() => { onChange(option.value); setOpen(false) }}>
+            <span>{option.label}</span>{option.value === value && <b>✓</b>}
+          </button>
+        )) : <div className="havan-select-empty">No options available</div>}
+      </div>}
+    </div>
+  )
+}
+
+function HavanDatePicker({ value, min, onChange, ariaLabel = 'Select date' }: { value: string; min?: string; onChange: (value: string) => void; ariaLabel?: string }) {
+  const [open, setOpen] = useState(false)
+  const initial = value ? new Date(value + 'T00:00:00') : new Date()
+  const [month, setMonth] = useState(new Date(initial.getFullYear(), initial.getMonth(), 1))
+  const firstDay = new Date(month.getFullYear(), month.getMonth(), 1).getDay()
+  const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate()
+  const minDate = min ? new Date(min + 'T00:00:00') : null
+  const monthLabel = month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  const cells = Array.from({ length: firstDay + daysInMonth }, (_, index) => index < firstDay ? null : index - firstDay + 1)
+  const keyFor = (day: number) => month.getFullYear() + '-' + String(month.getMonth() + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0')
+  const display = value ? new Date(value + 'T00:00:00').toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Choose a date'
+  return (
+    <div className="havan-date-picker">
+      <button type="button" className="havan-date-trigger" aria-label={ariaLabel} aria-expanded={open} onClick={() => setOpen((current) => !current)}><span className={value ? 'has-value' : ''}>{display}</span><span className="havan-date-icon">▦</span></button>
+      {open && <div className="havan-calendar" role="dialog" aria-label="Calendar">
+        <div className="havan-calendar-head"><button type="button" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}>‹</button><strong>{monthLabel}</strong><button type="button" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}>›</button></div>
+        <div className="havan-calendar-week"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div>
+        <div className="havan-calendar-grid">{cells.map((day, index) => {
+          if (!day) return <span key={'empty-' + index} />
+          const key = keyFor(day)
+          const current = new Date(key + 'T00:00:00')
+          const disabledDay = Boolean(minDate && current < minDate)
+          return <button type="button" disabled={disabledDay} className={key === value ? 'selected' : ''} key={key} onClick={() => { onChange(key); setOpen(false) }}>{day}</button>
+        })}</div>
+      </div>}
+    </div>
+  )
+}
+
+function HavanStepper({ value, min, max, step, onChange, suffix }: { value: number; min: number; max: number; step: number; onChange: (value: number) => void; suffix?: string }) {
+  const update = (next: number) => onChange(Math.min(max, Math.max(min, Number(next.toFixed(2)))))
+  return <div className="havan-stepper"><button type="button" onClick={() => update(value - step)} disabled={value <= min}>−</button><span><b>{value}</b>{suffix && <small>{suffix}</small>}</span><button type="button" onClick={() => update(value + step)} disabled={value >= max}>+</button></div>
+}
 
 export default function StudentPage() {
   const [studentId, setStudentId] = useState<number | null>(null)
@@ -47,6 +101,10 @@ export default function StudentPage() {
   const [streams, setStreams] = useState<Item[]>([])
   const [courses, setCourses] = useState<Item[]>([])
   const [topics, setTopics] = useState<Item[]>([])
+  const [chaptersByCourse, setChaptersByCourse] = useState<Record<string, Item[]>>({})
+  const [topicsByChapter, setTopicsByChapter] = useState<Record<string, Item[]>>({})
+  const [loadingChapters, setLoadingChapters] = useState<Record<string, boolean>>({})
+  const [loadingTopics, setLoadingTopics] = useState<Record<string, boolean>>({})
 
   const [draft, setDraft] = useState({
     name: '',
@@ -57,6 +115,7 @@ export default function StudentPage() {
     confidence: {} as Record<string, number>,
     studyHours: 2,
     studyDays: [1, 2, 3, 4, 5],
+    startingPosition: {} as Record<string, { chapterId: string; topicId: string }>,
   })
 
   const [draftExams, setDraftExams] = useState<Array<{
@@ -162,7 +221,42 @@ export default function StudentPage() {
       `/courses?stream_id=${draft.streamId}&page=1&page_size=100`,
     ).then(setCourses).catch((err) => setError(err instanceof Error ? err.message : 'Could not load courses.'))
   }, [draft.streamId])
+  useEffect(() => {
+    const selectedIds = draft.courseIds
+    if (!selectedIds.length) {
+      setChaptersByCourse({})
+      return
+    }
+    const run = async () => {
+      const next: Record<string, Item[]> = {}
+      for (const courseId of selectedIds) {
+        setLoadingChapters((current) => ({ ...current, [courseId]: true }))
+        try {
+          next[courseId] = await apiList('/chapters?course_id=' + courseId + '&page=1&page_size=100')
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Could not load course chapters.')
+          next[courseId] = []
+        } finally {
+          setLoadingChapters((current) => ({ ...current, [courseId]: false }))
+        }
+      }
+      setChaptersByCourse(next)
+    }
+    run()
+  }, [draft.courseIds])
 
+  async function loadChapterTopics(chapterId: string) {
+    if (!chapterId || topicsByChapter[chapterId]) return
+    setLoadingTopics((current) => ({ ...current, [chapterId]: true }))
+    try {
+      const items = await apiList('/topics?chapter_id=' + chapterId + '&page=1&page_size=100')
+      setTopicsByChapter((current) => ({ ...current, [chapterId]: items.filter((item) => String(item.status).toUpperCase() === 'ACTIVE') }))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not load chapter topics.')
+    } finally {
+      setLoadingTopics((current) => ({ ...current, [chapterId]: false }))
+    }
+  }
   const selectedCourses = useMemo(
     () => courses.filter((course) => draft.courseIds.includes(String(course.id))),
     [courses, draft.courseIds],
@@ -200,6 +294,8 @@ export default function StudentPage() {
           body: JSON.stringify({
             course_id: Number(courseId),
             confidence: draft.confidence[courseId] ?? 3,
+            starting_chapter_id: draft.startingPosition[courseId]?.chapterId ? Number(draft.startingPosition[courseId].chapterId) : null,
+            starting_topic_id: draft.startingPosition[courseId]?.topicId ? Number(draft.startingPosition[courseId].topicId) : null,
           }),
         })
       }
@@ -396,22 +492,13 @@ export default function StudentPage() {
                 <input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder="e.g. Hana" required />
               </label>
               <label>University
-                <select value={draft.universityId} onChange={(e) => setDraft({ ...draft, universityId: e.target.value, curriculumId: '', streamId: '', courseIds: [], confidence: {} })}>
-                  <option value="">Select university</option>
-                  {universities.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-                </select>
+                <HavanSelect value={draft.universityId} placeholder="Select university" options={universities.map((item) => ({ value: String(item.id), label: item.name }))} onChange={(value) => setDraft({ ...draft, universityId: value, curriculumId: '', streamId: '', courseIds: [], confidence: {}, startingPosition: {} })} />
               </label>
               <label>Curriculum
-                <select disabled={!draft.universityId} value={draft.curriculumId} onChange={(e) => setDraft({ ...draft, curriculumId: e.target.value, streamId: '', courseIds: [], confidence: {} })}>
-                  <option value="">Select curriculum</option>
-                  {curriculums.map((item) => <option key={item.id} value={item.id}>{item.name} · v{item.version}</option>)}
-                </select>
+                <HavanSelect disabled={!draft.universityId} value={draft.curriculumId} placeholder="Select curriculum" options={curriculums.map((item) => ({ value: String(item.id), label: item.name + ' · v' + item.version }))} onChange={(value) => setDraft({ ...draft, curriculumId: value, streamId: '', courseIds: [], confidence: {}, startingPosition: {} })} />
               </label>
               <label>Stream
-                <select disabled={!draft.curriculumId} value={draft.streamId} onChange={(e) => setDraft({ ...draft, streamId: e.target.value, courseIds: [], confidence: {} })}>
-                  <option value="">Select stream</option>
-                  {streams.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-                </select>
+                <HavanSelect disabled={!draft.curriculumId} value={draft.streamId} placeholder="Select stream" options={streams.map((item) => ({ value: String(item.id), label: item.name }))} onChange={(value) => setDraft({ ...draft, streamId: value, courseIds: [], confidence: {}, startingPosition: {} })} />
               </label>
               {error && <div className="student-error">{error}</div>}
               <div className="student-actions">
@@ -448,18 +535,22 @@ export default function StudentPage() {
                         <i>{selected ? '✓' : '+'}</i>
                       </button>
                       {selected && (
-                        <div className="confidence-pick">
-                          <span>Confidence</span>
-                          {[1, 2, 3, 4, 5].map((value) => (
-                            <button
-                              key={value}
-                              className={draft.confidence[id] === value ? 'confidence-dot selected' : 'confidence-dot'}
-                              onClick={() => setDraft({ ...draft, confidence: { ...draft.confidence, [id]: value } })}
-                            >{value}</button>
-                          ))}
+                        <div className="course-position-panel">
+                          <div className="confidence-pick">
+                            <span>Confidence</span>
+                            {[1, 2, 3, 4, 5].map((value) => <button type="button" key={value} className={draft.confidence[id] === value ? 'confidence-dot selected' : 'confidence-dot'} onClick={() => setDraft({ ...draft, confidence: { ...draft.confidence, [id]: value } })}>{value}</button>)}
+                          </div>
+                          <div className="position-heading"><div><b>Current position</b><span>Optional. Leave blank to start from the beginning.</span></div><em>COURSE</em></div>
+                          <div className="position-grid">
+                            <HavanSelect value={draft.startingPosition[id]?.chapterId ?? ''} placeholder={loadingChapters[id] ? 'Loading chapters…' : 'Choose chapter (optional)'} options={(chaptersByCourse[id] ?? []).map((chapter) => ({ value: String(chapter.id), label: String(chapter.order_index) + '. ' + chapter.name }))} disabled={Boolean(loadingChapters[id]) || !(chaptersByCourse[id] ?? []).length} onChange={(chapterId) => {
+                              setDraft({ ...draft, startingPosition: { ...draft.startingPosition, [id]: { chapterId, topicId: '' } } })
+                              loadChapterTopics(chapterId)
+                            }} />
+                            <HavanSelect value={draft.startingPosition[id]?.topicId ?? ''} placeholder={!draft.startingPosition[id]?.chapterId ? 'Choose chapter first' : loadingTopics[draft.startingPosition[id].chapterId] ? 'Loading topics…' : 'Choose topic (optional)'} options={(topicsByChapter[draft.startingPosition[id]?.chapterId ?? ''] ?? []).map((topic) => ({ value: String(topic.id), label: String(topic.order_index) + '. ' + topic.name }))} disabled={!draft.startingPosition[id]?.chapterId || Boolean(loadingTopics[draft.startingPosition[id]?.chapterId ?? ''])} onChange={(topicId) => setDraft({ ...draft, startingPosition: { ...draft.startingPosition, [id]: { chapterId: draft.startingPosition[id]?.chapterId ?? '', topicId } } })} />
+                          </div>
+                          {draft.startingPosition[id]?.chapterId && <p className="position-hint">Havan will begin planning from this chapter{draft.startingPosition[id]?.topicId ? ' and selected topic' : ''}. Earlier material is treated as already covered.</p>}
                         </div>
-                      )}
-                    </div>
+                      )}                    </div>
                   )
                 })}
               </div>
@@ -477,13 +568,10 @@ export default function StudentPage() {
               <h1>Deadlines change what deserves attention.</h1>
               <p className="student-lead">Add the exams you already know. Havan uses their distance and importance when recommending topics.</p>
               <div className="exam-builder">
-                <select value={examForm.courseId} onChange={(e) => setExamForm({ ...examForm, courseId: e.target.value })}>
-                  <option value="">Course</option>
-                  {selectedCourses.map((course) => <option key={course.id} value={course.id}>{course.code} · {course.name}</option>)}
-                </select>
-                <select value={examForm.type} onChange={(e) => setExamForm({ ...examForm, type: e.target.value })}><option>FINAL</option><option>MIDTERM</option><option>QUIZ</option></select>
-                <input type="date" min={new Date().toISOString().slice(0, 10)} value={examForm.date} onChange={(e) => setExamForm({ ...examForm, date: e.target.value })} />
-                <select value={examForm.importance} onChange={(e) => setExamForm({ ...examForm, importance: Number(e.target.value) })}><option value={5}>Critical</option><option value={4}>Important</option><option value={3}>Normal</option><option value={2}>Low</option><option value={1}>Minor</option></select>
+                <HavanSelect value={examForm.courseId} placeholder="Course" options={selectedCourses.map((course) => ({ value: String(course.id), label: course.code + ' · ' + course.name }))} onChange={(value) => setExamForm({ ...examForm, courseId: value })} />
+                <HavanSelect value={examForm.type} placeholder="Exam type" options={[{ value: 'FINAL', label: 'Final' }, { value: 'MIDTERM', label: 'Midterm' }, { value: 'QUIZ', label: 'Quiz' }]} onChange={(value) => setExamForm({ ...examForm, type: value })} />
+                <HavanDatePicker min={new Date().toISOString().slice(0, 10)} value={examForm.date} onChange={(value) => setExamForm({ ...examForm, date: value })} />
+                <HavanSelect value={String(examForm.importance)} placeholder="Importance" options={[{ value: '5', label: 'Critical' }, { value: '4', label: 'Important' }, { value: '3', label: 'Normal' }, { value: '2', label: 'Low' }, { value: '1', label: 'Minor' }]} onChange={(value) => setExamForm({ ...examForm, importance: Number(value) })} />
                 <button className="student-secondary" disabled={!examForm.courseId || !examForm.date} onClick={() => { setDraftExams([...draftExams, { ...examForm }]); setExamForm({ ...examForm, courseId: '', date: '' }) }}>Add exam</button>
               </div>
               {draftExams.length > 0 ? (
@@ -505,7 +593,7 @@ export default function StudentPage() {
               <h1>Give the planner a boundary, not a fantasy.</h1>
               <p className="student-lead">Havan recommends work inside this capacity. You remain in control and can move, skip, complete, or regenerate tasks later.</p>
               <label>Study hours per day
-                <input type="number" min="0.5" max="12" step="0.5" value={draft.studyHours} onChange={(e) => setDraft({ ...draft, studyHours: Number(e.target.value) })} />
+                <HavanStepper value={draft.studyHours} min={0.5} max={12} step={0.5} suffix="h / day" onChange={(value) => setDraft({ ...draft, studyHours: value })} />
               </label>
               <span className="day-label">Normal study days</span>
               <div className="day-pick">{DAYS.map((day) => <button key={day.id} className={draft.studyDays.includes(day.id) ? 'day selected' : 'day'} onClick={() => setDraft({ ...draft, studyDays: draft.studyDays.includes(day.id) ? draft.studyDays.filter((id) => id !== day.id) : [...draft.studyDays, day.id] })}>{day.short}</button>)}</div>
@@ -666,10 +754,10 @@ export default function StudentPage() {
               )
             }) : <p className="muted">No exam dates yet.</p>}
             <div className="exam-form">
-              <select value={examForm.courseId} onChange={(e) => setExamForm({ ...examForm, courseId: e.target.value })}><option value="">Course</option>{courses.map((course) => <option key={course.id} value={course.id}>{course.code}</option>)}</select>
-              <select value={examForm.type} onChange={(e) => setExamForm({ ...examForm, type: e.target.value })}><option>FINAL</option><option>MIDTERM</option><option>QUIZ</option></select>
-              <input type="date" min={todayKey} value={examForm.date} onChange={(e) => setExamForm({ ...examForm, date: e.target.value })} />
-              <select value={examForm.importance} onChange={(e) => setExamForm({ ...examForm, importance: Number(e.target.value) })}><option value={5}>Critical</option><option value={4}>Important</option><option value={3}>Normal</option><option value={2}>Low</option><option value={1}>Minor</option></select>
+              <HavanSelect value={examForm.courseId} placeholder="Course" options={courses.map((course) => ({ value: String(course.id), label: course.code }))} onChange={(value) => setExamForm({ ...examForm, courseId: value })} />
+              <HavanSelect value={examForm.type} placeholder="Exam type" options={[{ value: 'FINAL', label: 'Final' }, { value: 'MIDTERM', label: 'Midterm' }, { value: 'QUIZ', label: 'Quiz' }]} onChange={(value) => setExamForm({ ...examForm, type: value })} />
+              <HavanDatePicker min={todayKey} value={examForm.date} onChange={(value) => setExamForm({ ...examForm, date: value })} />
+              <HavanSelect value={String(examForm.importance)} placeholder="Importance" options={[{ value: '5', label: 'Critical' }, { value: '4', label: 'Important' }, { value: '3', label: 'Normal' }, { value: '2', label: 'Low' }, { value: '1', label: 'Minor' }]} onChange={(value) => setExamForm({ ...examForm, importance: Number(value) })} />
               <div className="exam-form-actions"><button type="button" className="student-secondary" disabled={saving || !examForm.courseId || !examForm.date} onClick={saveExam}>{saving ? 'Saving…' : editingExamId ? 'Save changes' : 'Add exam'}</button>{editingExamId && <button type="button" className="student-secondary" onClick={cancelExamEdit}>Cancel</button>}</div>
             </div>
           </div>
