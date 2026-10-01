@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.curriculum import router as curriculum_router
+from app.api.curriculum_import import router as curriculum_import_router
 from app.api.health import router as health_router
 from app.core.config import get_settings
 from app.core.errors import register_exception_handlers
@@ -24,6 +25,7 @@ app.add_middleware(
 )
 app.include_router(health_router)
 app.include_router(curriculum_router)
+app.include_router(curriculum_import_router)
 register_exception_handlers(app)
 
 
