@@ -256,8 +256,10 @@ export default function PlannerPage() {
   const recommendedCount = visibleTasks.filter((task) => task.status === 'RECOMMENDED').length
   const completedCount = visibleTasks.filter((task) => task.status === 'COMPLETED').length
 
-  const progressMap = useMemo(
-    () => new Map((context?.progress ?? []).map((item: Item) => [item.topic_id, item])),
+  const progressMap = useMemo<Map<string | number, TopicProgress>>(
+    () => new Map<string | number, TopicProgress>(
+      (context?.progress ?? []).map((item: TopicProgress) => [item.topic_id, item]),
+    ),
     [context],
   )
 
