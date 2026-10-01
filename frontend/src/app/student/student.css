@@ -49,3 +49,24 @@
     flex-direction: column;
   }
 }
+
+/* Phase 6.5 exam management */
+.exam-row-managed{align-items:center}
+.exam-row-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.exam-row-actions button{min-height:32px;padding:0 9px;border:1px solid #dedee9;border-radius:9px;background:#fff;color:#01017e;font-size:10px;font-weight:800;cursor:pointer}
+.exam-row-actions button:last-child{color:#a32120;border-color:#eadada;background:#fffafa}
+.exam-row-actions button:disabled{opacity:.45;cursor:not-allowed}
+.exam-form{display:grid;gap:8px}
+.exam-form-actions{display:flex;gap:8px;grid-column:1/-1}
+.exam-form-actions button{flex:1}
+@media (max-width:760px){
+  .exam-row-managed{align-items:flex-start}
+  .exam-row-actions{width:100%;justify-content:flex-start}
+  .exam-row-actions strong{margin-right:auto}
+}
+@media (max-width:560px){
+  .exam-row-managed{display:grid}
+  .exam-row-actions{gap:6px}
+  .exam-row-actions button{min-height:38px}
+  .exam-form-actions{display:grid;grid-template-columns:1fr 1fr}
+}
