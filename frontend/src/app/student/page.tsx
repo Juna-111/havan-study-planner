@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { apiFetch } from '../../lib/api'
-import { clearAuth, getAuthToken, getSavedAccount } from '../../lib/auth'
+import { clearAuth, getAuthToken, getSavedAccount, type AuthAccount } from '../../lib/auth'
 import './student.css'
 
 type Item = Record<string, any>
@@ -91,7 +91,7 @@ function HavanStepper({ value, min, max, step, onChange, suffix }: { value: numb
 
 export default function StudentPage() {
   const router = useRouter()
-  const [account, setAccount] = useState(getSavedAccount())
+  const [account, setAccount] = useState<AuthAccount | null>(getSavedAccount())
   const [studentId, setStudentId] = useState<number | null>(null)
   const [profile, setProfile] = useState<Item | null>(null)
   const [context, setContext] = useState<Item | null>(null)
@@ -177,7 +177,7 @@ export default function StudentPage() {
         return
       }
       try {
-        const current = await apiFetch<Item>('/auth/me')
+        const current = await apiFetch<AuthAccount>('/auth/me')
         setAccount(current)
         if (current.student_profile_id) {
           await loadContext(current.student_profile_id)
