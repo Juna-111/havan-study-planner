@@ -324,18 +324,28 @@ export default function PlannerPage() {
           </p>
         </div>
         <div className="planner-hero-actions">
-          <span className="planner-capacity">
-            {profile?.study_hours_per_day ?? 0}h/day
-            <small>available capacity</small>
-          </span>
-          <button
-            className="student-primary planner-regenerate"
-            type="button"
-            disabled={generating || !studentId}
-            onClick={() => studentId && generatePlan(studentId)}
-          >
-            {generating ? 'Rebuilding…' : 'Refresh plan'}
-          </button>
+          <div className="planner-capacity">
+            <strong>{profile?.study_hours_per_day ?? 0}h/day</strong>
+            <small>available study capacity</small>
+          </div>
+          <div className="planner-hero-buttons">
+            <button
+              className="student-secondary planner-rebalance"
+              type="button"
+              disabled={generating || !studentId}
+              onClick={() => studentId && rebalancePlan(studentId)}
+            >
+              {generating ? 'Rebalancing…' : 'Rebalance week'}
+            </button>
+            <button
+              className="student-primary planner-regenerate"
+              type="button"
+              disabled={generating || !studentId}
+              onClick={() => studentId && generatePlan(studentId)}
+            >
+              {generating ? 'Rebuilding…' : 'Refresh plan'}
+            </button>
+          </div>
         </div>
       </section>
 
@@ -719,7 +729,7 @@ export default function PlannerPage() {
                 onClick={() => actOnTask(selectedTask, 'SKIP')}
               >
                 <strong>Skip today</strong>
-                <span>Keep the decision explicit</span>
+                <span>Record the decision and adapt the week</span>
               </button>
             </div>
 
