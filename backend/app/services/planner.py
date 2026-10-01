@@ -89,7 +89,7 @@ def generate_plan(db: Session, student_id: int, horizon_days: int = 7) -> StudyP
                 "Your selected courses have topics, but they are not marked ACTIVE. "
                 "Activate those topics in the curriculum before generating a plan."
             )
-        raise ValueError("Your selected courses do not have topics yet")
+        raise ValueError("No topics are registered for your selected courses. The academic database needs course chapters and topics before Havan can generate recommendations.")
 
     chapter_to_course = {chapter.id: chapter.course_id for chapter in chapters}
     course_confidence = {item.course_id: item.confidence for item in selected}
