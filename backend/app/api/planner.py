@@ -110,7 +110,7 @@ def act_on_task(
         if payload.target_date < date.today():
             raise HTTPException(status_code=400, detail="A task cannot be moved to a past date")
         task.planned_date = payload.target_date
-        task.status = "RECOMMENDED"
+        task.status = "MOVED"
 
     elif action == "START":
         if task.status == "COMPLETED":
