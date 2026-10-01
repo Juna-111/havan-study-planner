@@ -78,8 +78,10 @@ export default function PlannerPage() {
     setCourses(selected)
     setTopics(topicItems)
 
-    const hasPlan = await loadPlan(id)
-    if (!hasPlan) await generatePlan(id)
+    // Always build a fresh deterministic plan when the planner is opened.
+    // This prevents an old empty/obsolete plan from masking the current
+    // student progress, courses, and exam dates.
+    await generatePlan(id)
   }
 
   useEffect(() => {
