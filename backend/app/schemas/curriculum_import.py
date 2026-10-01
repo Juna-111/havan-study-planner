@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 class ImportTopic(BaseModel):
     name: str = Field(min_length=2, max_length=250)
+    difficulty: int = Field(ge=1, le=5)
 
 
 class ImportChapter(BaseModel):
