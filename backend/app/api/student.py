@@ -5,11 +5,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db.models.curriculum import Course, Curriculum, Stream, Topic, University
+from app.db.models.curriculum import Chapter, Course, Curriculum, Stream, Topic, University
 from app.db.models.student import StudentCourse, StudentExam, StudentProfile, StudentTopicProgress
 from app.db.session import get_db
 from app.schemas.student import (
-    ExamCreate, ExamRead, ProgressRead, ProgressUpsert, StudentContext,
+    CourseTopicStatus, ExamCreate, ExamRead, ProgressRead, ProgressUpsert, StudentContext,
     StudentCourseAdd, StudentCourseRead, StudentCreate, StudentRead, StudentUpdate,
 )
 
@@ -81,11 +81,44 @@ def update_profile(student_id: int, payload: StudentUpdate, db: DB):
 @router.get("/profiles/{student_id}/context", response_model=StudentContext)
 def get_context(student_id: int, db: DB):
     profile = profile_or_404(db, student_id)
+    student_courses = list(db.scalars(
+        select(StudentCourse).where(StudentCourse.student_id == student_id)
+    ).all())
+
+    course_topic_status = []
+    for student_course in student_courses:
+        course = db.get(Course, student_course.course_id)
+        if not course:
+            continue
+
+        chapters = list(db.scalars(
+            select(Chapter).where(Chapter.course_id == course.id)
+        ).all())
+        chapter_ids = [chapter.id for chapter in chapters]
+
+        active_topic_count = 0
+        if chapter_ids:
+            active_topic_count = len(list(db.scalars(
+                select(Topic).where(
+                    Topic.chapter_id.in_(chapter_ids),
+                    Topic.status == "ACTIVE",
+                )
+            ).all()))
+
+        course_topic_status.append(CourseTopicStatus(
+            course_id=course.id,
+            course_code=course.code,
+            course_name=course.name,
+            chapter_count=len(chapters),
+            active_topic_count=active_topic_count,
+        ))
+
     return StudentContext(
         profile=profile,
-        courses=list(db.scalars(select(StudentCourse).where(StudentCourse.student_id == student_id)).all()),
+        courses=student_courses,
         progress=list(db.scalars(select(StudentTopicProgress).where(StudentTopicProgress.student_id == student_id)).all()),
         exams=list(db.scalars(select(StudentExam).where(StudentExam.student_id == student_id).order_by(StudentExam.exam_date)).all()),
+        course_topic_status=course_topic_status,
     )
 
 
