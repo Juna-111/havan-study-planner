@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     )
     cors_origins: list[str] = Field(default=["http://localhost:3000"], validation_alias="CORS_ORIGINS")
     log_level: str = "INFO"
+    auth_secret: str = Field("change-this-secret-in-production", validation_alias="AUTH_SECRET")
+    auth_token_ttl_days: int = Field(30, validation_alias="AUTH_TOKEN_TTL_DAYS")
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
