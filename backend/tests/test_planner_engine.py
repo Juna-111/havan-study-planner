@@ -101,3 +101,10 @@ def test_insufficient_time_returns_only_what_fits():
     assert sum(minutes for _, _, minutes in scheduled) <= 30
     assert len(scheduled) == 1
     assert scheduled[0][2] == 30
+
+
+def test_short_topic_duration_is_not_inflated():
+    item = score_topic(topic(1, minutes=10), None, TODAY)
+    scheduled = schedule_tasks([item], [TODAY], 60)
+    assert len(scheduled) == 1
+    assert scheduled[0][2] == 10
