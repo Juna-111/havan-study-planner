@@ -7,7 +7,7 @@ import '../student.css'
 import './planner.css'
 
 type Item = Record<string, any>
-type Task = Item & { estimated_minutes: number }
+type Task = Item & { estimated_minutes: number }\n\ninterface TopicProgress {\n  topic_id: string | number\n  completed_minutes?: number\n  study_sessions?: number\n}
 
 const KEY = 'havan_student_key'
 
@@ -186,7 +186,7 @@ export default function PlannerPage() {
         body: JSON.stringify({ action, target_date: targetDate || null }),
       })
       setPlan(updatedPlan)
-      const latestProgress = await apiFetch<Item>('/students/profiles/' + studentId + '/progress')
+      const latestProgress = await apiFetch<TopicProgress[]>('/students/profiles/' + studentId + '/progress')
       setContext((current) => current ? { ...current, progress: latestProgress } : current)
       if (action === 'START') {
         setFocusTaskId(task.id)
