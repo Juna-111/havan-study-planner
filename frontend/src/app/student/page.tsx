@@ -207,15 +207,18 @@ export default function StudentPage() {
         })
       }
 
-      // Generate the first recommendation immediately. The student should
-      // arrive at a useful planner, not an empty calendar waiting for a button.
+      // Build the first deterministic plan before leaving onboarding.
+      // Registration is not considered complete from the student's perspective
+      // until Havan has something actionable to recommend.
       try {
-        await apiFetch(`/planner/students/${created.id}/generate`, {
+        await apiFetch(`/planner/generate`, {
           method: 'POST',
-          body: JSON.stringify({ horizon_days: 7 }),
+          body: JSON.stringify({ student_id: created.id, horizon_days: 7 }),
         })
-      } catch {
-        // The profile is still valid even if the first plan needs a retry.
+        window.location.href = '/student/planner'
+        return
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Your profile was saved, but Havan could not build the first plan.')
       }
 
       await loadContext(created.id)
