@@ -1,5 +1,22 @@
+from collections.abc import Generator
+
+import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
+
+from app.db.models import Base
 from app.db.models.curriculum import Chapter, Course, Stream, Topic, TopicRelationship, Curriculum, University
 from app.services.academic_quality import run_academic_quality_checks
+
+
+@pytest.fixture
+def db_session() -> Generator[Session, None, None]:
+    engine = create_engine("sqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    factory = sessionmaker(bind=engine)
+    with factory() as session:
+        yield session
+    engine.dispose()
 
 
 def test_academic_quality_route_is_registered() -> None:
@@ -7,7 +24,7 @@ def test_academic_quality_route_is_registered() -> None:
     assert "/api/v1/academic-quality" in {route.path for route in app.routes}
 
 
-def test_quality_detects_missing_content_and_prerequisite_cycle(db_session) -> None:
+def test_quality_detects_missing_content_and_prerequisite_cycle(db_session: Session) -> None:
     university = University(name="Test University", code="TST")
     curriculum = Curriculum(university=university, name="Test Curriculum", version="1")
     stream = Stream(curriculum=curriculum, name="Computer Science", code="CS")
@@ -27,7 +44,7 @@ def test_quality_detects_missing_content_and_prerequisite_cycle(db_session) -> N
     assert result["counts"]["topics"] == 2
 
 
-def test_quality_reports_active_course_without_chapters(db_session) -> None:
+def test_quality_reports_active_course_without_chapters(db_session: Session) -> None:
     university = University(name="Test University 2", code="TST2")
     curriculum = Curriculum(university=university, name="Test Curriculum 2", version="1")
     stream = Stream(curriculum=curriculum, name="Physics", code="PHY")
