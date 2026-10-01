@@ -51,19 +51,6 @@ export default function PlannerPage() {
     }
   }
 
-  async function loadPlan(id: number) {
-    try {
-      const latest = await apiFetch<Item>(`/planner/students/${id}/latest`)
-      setPlan(latest)
-      return true
-    } catch (err) {
-      const message = err instanceof Error ? err.message : ''
-      if (message.includes('404')) return false
-      setError(message || 'Could not load your plan.')
-      return false
-    }
-  }
-
   async function loadContext(id: number) {
     const context = await apiFetch<Item>(`/students/profiles/${id}/context`)
     const courseIds = (context.courses ?? []).map((course: Item) => course.course_id)
