@@ -19,9 +19,9 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
-    # Vercel preview/production domains need CORS access during admin use.
+    # Hosted Netlify/Vercel preview and production domains are allowed.
     # Custom domains can still be added through CORS_ORIGINS.
-    allow_origin_regex=r"^https://([a-zA-Z0-9-]+\.)*vercel\.app$",
+    allow_origin_regex=r"^https://[a-zA-Z0-9-]+\.(?:netlify|vercel)\.app$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
