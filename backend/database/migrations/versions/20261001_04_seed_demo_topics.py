@@ -86,18 +86,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    bind = op.get_bind()
-    names = [topic[0] for topic in DEMO_TOPICS]
-    bind.execute(
-        sa.text(
-            """
-            DELETE FROM topics
-            WHERE name IN (:name1, :name2, :name3)
-            """
-        ),
-        {
-            "name1": names[0],
-            "name2": names[1],
-            "name3": names[2],
-        },
-    )
+    # Demo rows are intentionally retained on downgrade so a rollback cannot
+    # accidentally delete topics that an administrator later created with the
+    # same names.
+    pass
