@@ -1320,3 +1320,508 @@
     max-width: calc(100vw - 20px);
   }
 }
+
+
+/* Phase 6.3 responsive product layer
+   Mobile is a primary layout, not a collapsed desktop layout. */
+.planner-shell {
+  overflow-x: clip;
+}
+
+.planner-hero-buttons {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.planner-hero-buttons button {
+  min-height: 44px;
+  padding-inline: 14px;
+}
+
+.planner-rebalance {
+  color: #fff;
+  border-color: rgba(255,255,255,.28);
+  background: rgba(255,255,255,.09);
+}
+
+.planner-rebalance:hover:not(:disabled) {
+  background: rgba(255,255,255,.16);
+}
+
+.planner-capacity strong {
+  display: block;
+}
+
+.planner-capacity small {
+  display: block;
+}
+
+.planner-focus-task,
+.planner-agenda-item,
+.planner-week-day,
+.planner-action,
+.planner-today-button,
+.planner-detail-close,
+.planner-move-controls button,
+.planner-toast button,
+.planner-focus-actions button {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.planner-week-strip {
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.planner-week-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.planner-week-day,
+.planner-focus-task,
+.planner-agenda-item,
+.planner-action,
+.planner-move-controls input,
+.planner-move-controls button,
+.planner-today-button {
+  min-height: 44px;
+}
+
+.planner-detail {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.planner-focus-mode {
+  overscroll-behavior: contain;
+}
+
+@media (min-width: 961px) {
+  .planner-workspace {
+    grid-template-columns: minmax(0, 1.75fr) minmax(300px, .78fr);
+  }
+
+  .planner-side-column {
+    top: 24px;
+  }
+}
+
+@media (max-width: 950px) {
+  .planner-hero {
+    margin-top: 34px;
+  }
+
+  .planner-workspace {
+    gap: 12px;
+  }
+
+  .planner-side-column {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .planner-academic-card {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .planner-shell {
+    width: 100%;
+  }
+
+  .planner-topbar {
+    position: relative;
+  }
+
+  .planner-hero {
+    gap: 24px;
+    margin-top: 28px;
+    padding: 26px;
+  }
+
+  .planner-hero h1 {
+    font-size: clamp(32px, 9vw, 46px);
+  }
+
+  .planner-hero-actions {
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .planner-capacity {
+    padding-bottom: 2px;
+  }
+
+  .planner-hero-buttons {
+    width: 100%;
+  }
+
+  .planner-hero-buttons button {
+    flex: 1;
+  }
+
+  .planner-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .planner-stat {
+    min-height: 108px;
+  }
+
+  .planner-week-strip {
+    margin-right: -22px;
+    padding-right: 22px;
+  }
+
+  .planner-week-day {
+    min-width: 82px;
+    min-height: 88px;
+  }
+
+  .planner-focus-task {
+    grid-template-columns: 38px minmax(0, 1fr);
+  }
+
+  .focus-number {
+    width: 38px;
+    height: 38px;
+  }
+
+  .focus-time {
+    grid-column: 2;
+    justify-items: start;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 2px;
+  }
+
+  .focus-content small {
+    white-space: normal;
+  }
+
+  .planner-agenda-item {
+    grid-template-columns: 64px minmax(0, 1fr);
+    align-items: start;
+    min-height: 64px;
+    padding-block: 14px;
+  }
+
+  .agenda-copy strong,
+  .agenda-copy small {
+    white-space: normal;
+  }
+
+  .agenda-priority {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .planner-detail-backdrop {
+    align-items: end;
+    padding: 0;
+  }
+
+  .planner-detail {
+    width: 100%;
+    max-height: min(92svh, 820px);
+    padding: 10px 20px max(24px, env(safe-area-inset-bottom));
+    border-radius: 24px 24px 0 0;
+  }
+
+  .planner-action-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .planner-action-primary {
+    grid-column: 1 / -1;
+  }
+
+  .planner-action {
+    min-height: 82px;
+  }
+
+  .planner-move-row {
+    gap: 12px;
+  }
+
+  .planner-move-controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .planner-move-controls input,
+  .planner-move-controls button {
+    width: 100%;
+    min-height: 46px;
+  }
+
+  .planner-toast {
+    left: 12px;
+    right: 12px;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    max-width: none;
+  }
+
+  .planner-focus-backdrop {
+    padding: 0;
+  }
+
+  .planner-focus-mode {
+    width: 100%;
+    min-height: 100dvh;
+    min-height: 100svh;
+    justify-content: center;
+    border: 0;
+    border-radius: 0;
+    padding: max(28px, env(safe-area-inset-top)) 20px max(28px, env(safe-area-inset-bottom));
+  }
+
+  .planner-focus-timer {
+    margin-block: 34px 20px;
+  }
+
+  .planner-focus-actions {
+    width: 100%;
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+
+  .planner-focus-actions button {
+    width: 100%;
+    min-height: 48px;
+  }
+}
+
+@media (max-width: 560px) {
+  .planner-shell {
+    padding-inline: 12px;
+  }
+
+  .planner-topbar {
+    padding-inline: 4px;
+  }
+
+  .planner-dashboard-link {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .planner-hero {
+    margin-top: 20px;
+    padding: 22px 18px;
+    border-radius: 20px;
+  }
+
+  .planner-hero p {
+    font-size: 12px;
+  }
+
+  .planner-hero-actions {
+    gap: 11px;
+  }
+
+  .planner-hero-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .planner-hero-buttons button {
+    width: 100%;
+    padding-inline: 9px;
+    font-size: 10px;
+  }
+
+  .planner-overview {
+    gap: 7px;
+  }
+
+  .planner-stat {
+    min-height: 100px;
+    padding: 13px;
+    border-radius: 14px;
+  }
+
+  .planner-stat strong {
+    font-size: 20px;
+  }
+
+  .planner-stat small {
+    font-size: 9px;
+  }
+
+  .planner-calendar,
+  .planner-today,
+  .planner-agenda,
+  .planner-side-card {
+    border-radius: 16px;
+  }
+
+  .planner-calendar {
+    padding: 17px;
+  }
+
+  .planner-week-strip {
+    margin-right: -17px;
+    padding-right: 17px;
+  }
+
+  .planner-week-day {
+    min-width: 76px;
+    min-height: 84px;
+    border-radius: 13px;
+  }
+
+  .planner-section-heading h2,
+  .planner-today-heading h2 {
+    font-size: 19px;
+  }
+
+  .planner-focus-task {
+    padding: 13px;
+    border-radius: 14px;
+  }
+
+  .focus-content strong {
+    font-size: 12px;
+  }
+
+  .planner-agenda {
+    padding: 17px;
+  }
+
+  .planner-agenda-heading select {
+    min-height: 46px;
+    font-size: 11px;
+  }
+
+  .planner-agenda-item {
+    grid-template-columns: 56px minmax(0, 1fr);
+    gap: 9px;
+    padding-left: 0;
+  }
+
+  .agenda-time {
+    padding-left: 10px;
+    font-size: 9px;
+  }
+
+  .planner-side-column {
+    gap: 10px;
+  }
+
+  .planner-side-card {
+    padding: 16px;
+  }
+
+  .planner-signal-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .planner-detail {
+    padding-inline: 16px;
+  }
+
+  .planner-detail-header h2 {
+    max-width: calc(100vw - 100px);
+    font-size: 23px;
+    overflow-wrap: anywhere;
+  }
+
+  .planner-detail-meta {
+    gap: 5px;
+  }
+
+  .planner-detail-meta span,
+  .planner-detail-meta strong {
+    min-height: 32px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .planner-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .planner-action-grid {
+    gap: 7px;
+  }
+
+  .planner-action {
+    min-height: 78px;
+    padding: 11px;
+  }
+
+  .planner-action strong {
+    font-size: 10px;
+  }
+
+  .planner-action span {
+    font-size: 9px;
+  }
+
+  .planner-move-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .planner-move-controls button {
+    width: 100%;
+  }
+
+  .planner-focus-mode h2 {
+    max-width: 100%;
+    font-size: 28px;
+    overflow-wrap: anywhere;
+  }
+
+  .planner-focus-mode p {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 380px) {
+  .planner-hero-buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .planner-overview {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .planner-stat {
+    min-height: 92px;
+  }
+
+  .planner-stat strong {
+    font-size: 18px;
+  }
+
+  .planner-week-day {
+    min-width: 70px;
+  }
+
+  .planner-signal-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (hover: none) {
+  .planner-week-day:hover,
+  .planner-focus-task:hover,
+  .planner-agenda-item:hover,
+  .planner-action:hover:not(:disabled) {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .planner-toast,
+  .planner-detail,
+  .planner-focus-mode {
+    scroll-behavior: auto;
+  }
+}
