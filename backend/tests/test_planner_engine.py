@@ -115,3 +115,31 @@ def test_senior_difficulty_affects_priority():
     expert = score_topic(topic(2, difficulty=5), None, TODAY)
     assert expert.score > easy.score
     assert "Expert difficulty" in expert.reason
+
+
+def test_deferred_topic_waits_until_after_first_study_day():
+    first = score_topic(topic(1, minutes=30), None, TODAY)
+    second = score_topic(topic(2, minutes=30), None, TODAY)
+    scheduled = schedule_tasks(
+        [first, second],
+        [TODAY, TODAY + timedelta(days=1)],
+        30,
+        deferred_topic_ids={1},
+    )
+    assert scheduled[0][0].topic.topic_id == 2
+    assert scheduled[-1][0].topic.topic_id == 1
+    assert scheduled[-1][1] == TODAY + timedelta(days=1)
+
+
+def test_pinned_topic_starts_on_requested_date():
+    pinned = score_topic(topic(1, minutes=30), None, TODAY)
+    other = score_topic(topic(2, minutes=30), None, TODAY)
+    target = TODAY + timedelta(days=1)
+    scheduled = schedule_tasks(
+        [pinned, other],
+        [TODAY, target],
+        30,
+        pinned_topic_dates={1: target},
+    )
+    pinned_rows = [(day, minutes) for item, day, minutes in scheduled if item.topic.topic_id == 1]
+    assert pinned_rows == [(target, 30)]
