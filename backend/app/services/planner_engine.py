@@ -5,6 +5,15 @@ from datetime import date
 from typing import Iterable
 
 
+DIFFICULTY_LABELS = {
+    1: "Basic",
+    2: "Easy",
+    3: "Intermediate",
+    4: "Advanced",
+    5: "Expert",
+}
+
+
 @dataclass(frozen=True)
 class PlannerTopic:
     topic_id: int
@@ -71,7 +80,9 @@ def score_topic(topic: PlannerTopic, exam: PlannerExam | None, today: date) -> S
     if topic.exam_importance >= 0.70:
         reasons.append("high exam importance")
     if topic.difficulty >= 4:
-        reasons.append("higher difficulty")
+        reasons.append(f"{DIFFICULTY_LABELS[topic.difficulty]} difficulty")
+    else:
+        reasons.append(f"{DIFFICULTY_LABELS[topic.difficulty]} difficulty")
     if topic.progress_confidence <= 2:
         reasons.append("low confidence")
     if topic.progress_status == "IN_PROGRESS":
