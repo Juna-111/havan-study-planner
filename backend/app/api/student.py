@@ -101,7 +101,7 @@ def get_context(student_id: int, db: DB):
             active_topic_count = len(list(db.scalars(
                 select(Topic).where(
                     Topic.chapter_id.in_(chapter_ids),
-                    Topic.status == "ACTIVE",
+                    func.upper(Topic.status) == "ACTIVE",
                 )
             ).all()))
 
