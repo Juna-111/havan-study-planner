@@ -3,7 +3,7 @@ const rawApiBaseUrl = process.env.NEXT_PUBLIC_API_URL?.trim()
 // The frontend talks to FastAPI through /api/v1 routes. Keep the configured
 // value as the backend origin, even if someone accidentally includes /api/v1.
 const API_BASE_URL = rawApiBaseUrl
-  ? rawApiBaseUrl.replace(/\\/+$/, '').replace(/\\/api\\/v1$/, '')
+  ? rawApiBaseUrl.replace(/\/+$/, '').replace(/\/api\/v1$/, '')
   : process.env.NODE_ENV === 'production'
     ? ''
     : 'http://localhost:8000'
