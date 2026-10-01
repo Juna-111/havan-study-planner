@@ -76,6 +76,7 @@ export default function PlannerPage() {
   const [moveDate, setMoveDate] = useState('')
   const [focusTaskId, setFocusTaskId] = useState<number | null>(null)
   const [focusSeconds, setFocusSeconds] = useState(25 * 60)
+  const [focusMode, setFocusMode] = useState<'compact' | 'normal' | 'fullscreen' | 'minimized'>('normal')
 
   const courseMap = useMemo(
     () => new Map(courses.map((course) => [course.id, course])),
@@ -188,6 +189,7 @@ export default function PlannerPage() {
       if (action === 'START') {
         setFocusTaskId(task.id)
         setFocusSeconds(25 * 60)
+        setFocusMode('normal')
         setSelectedTaskId(null)
         setToast('Focus mode started. One session, one topic, no heroic promises required.')
       } else if (action === 'COMPLETE') {
@@ -617,21 +619,46 @@ export default function PlannerPage() {
         if (!focusTask) return null
         return (
           <div className="planner-focus-backdrop" role="presentation">
-            <section className="planner-focus-mode" role="dialog" aria-modal="true" aria-labelledby="focus-mode-title">
-              <span className="student-eyebrow">FOCUS MODE · 25 MINUTES</span>
-              <span className="planner-focus-course">{focusCourse?.code ?? 'COURSE'}</span>
-              <h2 id="focus-mode-title">{focusTopic?.name ?? 'Study session'}</h2>
-              <p>{focusTask.reason}</p>
-              <div className="planner-focus-timer" aria-live="polite">{formatFocusTime(focusSeconds)}</div>
-              <div className="planner-focus-progress">
-                <span style={{ width: Math.max(0, Math.min(100, ((25 * 60 - focusSeconds) / (25 * 60)) * 100)) + '%' }} />
-              </div>
-              <div className="planner-focus-actions">
-                <button type="button" className="student-secondary" disabled={actionBusy} onClick={() => setFocusTaskId(null)}>Pause & close</button>
-                <button type="button" className="student-primary" disabled={actionBusy} onClick={() => actOnTask(focusTask, 'COMPLETE')}>Complete session</button>
-              </div>
-              <small>Havan records your progress. It does not grade how you studied.</small>
-            </section>
+            {focusMode === 'minimized' ? (
+              <section className="planner-focus-mini" role="dialog" aria-modal="false" aria-label="Minimized Havan focus session">
+                <div>
+                  <span className="planner-focus-mini-brand"><span className="student-mark">H</span> havan focus</span>
+                  <strong>{focusTopic?.name ?? 'Study session'}</strong>
+                  <small>{formatFocusTime(focusSeconds)} remaining</small>
+                </div>
+                <div className="planner-focus-mini-actions">
+                  <button type="button" className="planner-focus-window-button" aria-label="Restore focus window" onClick={() => setFocusMode('normal')}>↗</button>
+                  <button type="button" className="planner-focus-window-button planner-focus-window-close" aria-label="Close focus mode" onClick={() => setFocusTaskId(null)}>×</button>
+                </div>
+              </section>
+            ) : (
+              <section className={'planner-focus-mode planner-focus-mode-' + focusMode} role="dialog" aria-modal="true" aria-labelledby="focus-mode-title">
+                <div className="planner-focus-window-bar">
+                  <span className="planner-focus-brand"><span className="student-mark">H</span><strong>havan</strong><small>FOCUS</small></span>
+                  <div className="planner-focus-window-controls" aria-label="Focus window controls">
+                    <button type="button" className="planner-focus-window-button" aria-label="Minimize focus mode" onClick={() => setFocusMode('minimized')}>−</button>
+                    <button type="button" className="planner-focus-window-button" aria-label={focusMode === 'compact' ? 'Resize focus window to normal' : 'Resize focus window to compact'} onClick={() => setFocusMode(focusMode === 'compact' ? 'normal' : 'compact')}>□</button>
+                    <button type="button" className="planner-focus-window-button" aria-label="Use full screen focus mode" onClick={() => setFocusMode('fullscreen')}>⛶</button>
+                    <button type="button" className="planner-focus-window-button planner-focus-window-close" aria-label="Close focus mode" onClick={() => setFocusTaskId(null)}>×</button>
+                  </div>
+                </div>
+                <div className="planner-focus-body">
+                  <span className="student-eyebrow">FOCUS MODE · 25 MINUTES</span>
+                  <span className="planner-focus-course">{focusCourse?.code ?? 'COURSE'}</span>
+                  <h2 id="focus-mode-title">{focusTopic?.name ?? 'Study session'}</h2>
+                  <p>{focusTask.reason}</p>
+                  <div className="planner-focus-timer" aria-live="polite">{formatFocusTime(focusSeconds)}</div>
+                  <div className="planner-focus-progress">
+                    <span style={{ width: Math.max(0, Math.min(100, ((25 * 60 - focusSeconds) / (25 * 60)) * 100)) + '%' }} />
+                  </div>
+                  <div className="planner-focus-actions">
+                    <button type="button" className="student-secondary" disabled={actionBusy} onClick={() => setFocusTaskId(null)}>Pause & close</button>
+                    <button type="button" className="student-primary" disabled={actionBusy} onClick={() => actOnTask(focusTask, 'COMPLETE')}>Complete session</button>
+                  </div>
+                  <small>Havan records your progress. It does not grade how you studied.</small>
+                </div>
+              </section>
+            )}
           </div>
         )
       })()}
