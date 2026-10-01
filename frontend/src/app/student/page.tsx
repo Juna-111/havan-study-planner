@@ -98,7 +98,7 @@ export default function StudentPage() {
       )
     ).flat()
 
-    setTopics(topicItems)
+    setTopics(topicItems.filter((topic: Item) => String(topic.status).toUpperCase() === 'ACTIVE'))
   }
 
   useEffect(() => {
