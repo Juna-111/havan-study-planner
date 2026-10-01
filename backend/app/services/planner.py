@@ -236,13 +236,26 @@ def replan_remaining(
                 task.status = "REPLANNED"
         db.flush()
 
-    return generate_plan(
-        db,
-        student_id,
-        horizon_days,
-        deferred_topic_ids=deferred_topic_ids,
-        pinned_topic_dates=pinned_topic_dates,
-    )
+    try:
+        return generate_plan(
+            db,
+            student_id,
+            horizon_days,
+            deferred_topic_ids=deferred_topic_ids,
+            pinned_topic_dates=pinned_topic_dates,
+        )
+    except ValueError as exc:
+        if str(exc) != "There are no unfinished active topics in your selected courses.":
+            raise
+
+        # A student can complete the final remaining topic. The action itself
+        # succeeded, so return an explicit empty plan instead of turning that
+        # successful action into a 400 response.
+        plan = StudyPlan(student_id=student_id, horizon_days=horizon_days)
+        db.add(plan)
+        db.commit()
+        db.refresh(plan)
+        return plan
 
 
 def load_plan(db: Session, student_id: int, plan_id: int | None = None) -> StudyPlan | None:
