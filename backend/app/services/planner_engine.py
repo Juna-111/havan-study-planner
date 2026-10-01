@@ -79,16 +79,11 @@ def score_topic(topic: PlannerTopic, exam: PlannerExam | None, today: date) -> S
         reasons.append("important assessment")
     if topic.exam_importance >= 0.70:
         reasons.append("high exam importance")
-    if topic.difficulty >= 4:
-        reasons.append(f"{DIFFICULTY_LABELS[topic.difficulty]} difficulty")
-    else:
-        reasons.append(f"{DIFFICULTY_LABELS[topic.difficulty]} difficulty")
+    reasons.append(f"{DIFFICULTY_LABELS[topic.difficulty]} difficulty")
     if topic.progress_confidence <= 2:
         reasons.append("low confidence")
     if topic.progress_status == "IN_PROGRESS":
         reasons.append("revision of current progress")
-    if not reasons:
-        reasons.append("unfinished topic in your selected course")
 
     return ScoredTopic(topic, round(score, 4), "; ".join(reasons), days)
 
@@ -121,17 +116,52 @@ def schedule_tasks(
     scored: list[ScoredTopic],
     study_dates: list[date],
     daily_capacity: int,
+    deferred_topic_ids: set[int] | None = None,
+    pinned_topic_dates: dict[int, date] | None = None,
 ) -> list[tuple[ScoredTopic, date, int]]:
+    """Pack recommendations while respecting live student decisions."""
     if not study_dates or daily_capacity <= 0:
         return []
 
+    deferred_topic_ids = deferred_topic_ids or set()
+    pinned_topic_dates = pinned_topic_dates or {}
     output: list[tuple[ScoredTopic, date, int]] = []
     day_used = {day: 0 for day in study_dates}
-    ordered = sorted(scored, key=lambda item: (-item.score, item.topic.estimated_minutes))
+    by_id = {item.topic.topic_id: item for item in scored}
+    pinned_ids: set[int] = set()
+
+    for topic_id, requested_date in sorted(pinned_topic_dates.items(), key=lambda item: item[1]):
+        item = by_id.get(topic_id)
+        if item is None:
+            continue
+        target_days = [day for day in study_dates if day >= requested_date]
+        remaining = max(1, item.topic.estimated_minutes)
+        for day in target_days:
+            available = daily_capacity - day_used[day]
+            if available <= 0:
+                continue
+            duration = min(remaining, available)
+            output.append((item, day, duration))
+            day_used[day] += duration
+            remaining -= duration
+            if remaining <= 0:
+                pinned_ids.add(topic_id)
+                break
+
+    ordered = sorted(
+        (item for item in scored if item.topic.topic_id not in pinned_ids),
+        key=lambda item: (
+            item.topic.topic_id in deferred_topic_ids,
+            -item.score,
+            item.topic.estimated_minutes,
+        ),
+    )
 
     for item in ordered:
         remaining = max(1, item.topic.estimated_minutes)
         for day in study_dates:
+            if item.topic.topic_id in deferred_topic_ids and day == study_dates[0]:
+                continue
             available = daily_capacity - day_used[day]
             if available <= 0:
                 continue

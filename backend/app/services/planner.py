@@ -6,7 +6,7 @@ from datetime import date, timedelta
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.db.models.curriculum import Chapter, Course, Topic, TopicRelationship
+from app.db.models.curriculum import Chapter, Topic, TopicRelationship
 from app.db.models.planner import StudyPlan, StudyTask
 from app.db.models.student import StudentCourse, StudentExam, StudentProfile, StudentTopicProgress
 from app.services.planner_engine import (
@@ -48,7 +48,13 @@ def _study_dates(student: StudentProfile, horizon_days: int, today: date) -> lis
     ] or [today]
 
 
-def generate_plan(db: Session, student_id: int, horizon_days: int = 7) -> StudyPlan:
+def generate_plan(
+    db: Session,
+    student_id: int,
+    horizon_days: int = 7,
+    deferred_topic_ids: set[int] | None = None,
+    pinned_topic_dates: dict[int, date] | None = None,
+) -> StudyPlan:
     student = db.get(StudentProfile, student_id)
     if not student:
         raise ValueError("Student profile not found")
@@ -63,16 +69,9 @@ def generate_plan(db: Session, student_id: int, horizon_days: int = 7) -> StudyP
         raise ValueError("Select at least one course before generating a plan")
 
     course_ids = [item.course_id for item in selected]
-
-    # A student's selected courses define planner scope. Do not let a legacy
-    # course/chapter status value make valid topics disappear.
-    chapters = list(db.scalars(
-        select(Chapter).where(Chapter.course_id.in_(course_ids))
-    ).all())
+    chapters = list(db.scalars(select(Chapter).where(Chapter.course_id.in_(course_ids))).all())
     chapter_ids = [chapter.id for chapter in chapters]
 
-    # Curriculum status is matched case-insensitively so existing records such
-    # as "active" are treated correctly instead of appearing to have no topics.
     topics = list(db.scalars(
         select(Topic).where(
             Topic.chapter_id.in_(chapter_ids),
@@ -89,7 +88,10 @@ def generate_plan(db: Session, student_id: int, horizon_days: int = 7) -> StudyP
                 "Your selected courses have topics, but they are not marked ACTIVE. "
                 "Activate those topics in the curriculum before generating a plan."
             )
-        raise ValueError("No topics are registered for your selected courses. The academic database needs course chapters and topics before Havan can generate recommendations.")
+        raise ValueError(
+            "No topics are registered for your selected courses. "
+            "The academic database needs course chapters and topics before Havan can generate recommendations."
+        )
 
     chapter_to_course = {chapter.id: chapter.course_id for chapter in chapters}
     course_confidence = {item.course_id: item.confidence for item in selected}
@@ -101,9 +103,7 @@ def generate_plan(db: Session, student_id: int, horizon_days: int = 7) -> StudyP
     completed_ids = {row.topic_id for row in progress_rows if row.status == "COMPLETED"}
 
     today = date.today()
-    exams = list(db.scalars(
-        select(StudentExam).where(StudentExam.student_id == student_id)
-    ).all())
+    exams = list(db.scalars(select(StudentExam).where(StudentExam.student_id == student_id)).all())
     exam_by_course: dict[int, list[StudentExam]] = defaultdict(list)
     for exam in exams:
         if exam.exam_date >= today:
@@ -181,7 +181,13 @@ def generate_plan(db: Session, student_id: int, horizon_days: int = 7) -> StudyP
         raise ValueError("Available study time must be greater than zero.")
 
     daily_capacity = int(round(student.study_hours_per_day * 60))
-    scheduled = schedule_tasks(scored, study_dates, daily_capacity)
+    scheduled = schedule_tasks(
+        scored,
+        study_dates,
+        daily_capacity,
+        deferred_topic_ids=deferred_topic_ids,
+        pinned_topic_dates=pinned_topic_dates,
+    )
 
     if not scheduled:
         raise ValueError("There is not enough available study time to schedule a task.")
@@ -206,6 +212,50 @@ def generate_plan(db: Session, student_id: int, horizon_days: int = 7) -> StudyP
     db.commit()
     db.refresh(plan)
     return plan
+
+
+def replan_remaining(
+    db: Session,
+    student_id: int,
+    horizon_days: int = 7,
+    deferred_topic_ids: set[int] | None = None,
+    pinned_topic_dates: dict[int, date] | None = None,
+) -> StudyPlan:
+    """Create a fresh plan from the student's current state.
+
+    The previous plan remains as history. Only still-recommended sessions are
+    marked REPLANNED; completed and skipped records remain untouched.
+    """
+    current = load_plan(db, student_id)
+    if current:
+        current_tasks = list(db.scalars(
+            select(StudyTask).where(StudyTask.plan_id == current.id)
+        ).all())
+        for task in current_tasks:
+            if task.status == "RECOMMENDED":
+                task.status = "REPLANNED"
+        db.flush()
+
+    try:
+        return generate_plan(
+            db,
+            student_id,
+            horizon_days,
+            deferred_topic_ids=deferred_topic_ids,
+            pinned_topic_dates=pinned_topic_dates,
+        )
+    except ValueError as exc:
+        if str(exc) != "There are no unfinished active topics in your selected courses.":
+            raise
+
+        # A student can complete the final remaining topic. The action itself
+        # succeeded, so return an explicit empty plan instead of turning that
+        # successful action into a 400 response.
+        plan = StudyPlan(student_id=student_id, horizon_days=horizon_days)
+        db.add(plan)
+        db.commit()
+        db.refresh(plan)
+        return plan
 
 
 def load_plan(db: Session, student_id: int, plan_id: int | None = None) -> StudyPlan | None:

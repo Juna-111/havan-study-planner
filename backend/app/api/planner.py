@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session
 from app.db.models.planner import StudyTask
 from app.db.models.student import StudentTopicProgress
 from app.db.session import get_db
-from app.schemas.planner import PlanGenerateRequest, StudyPlanDay, StudyPlanRead, StudyTaskAction, StudyTaskRead
-from app.services.planner import generate_plan, load_plan
+from app.schemas.planner import PlanGenerateRequest, StudyPlanDay, StudyPlanRead, StudyTaskAction
+from app.services.planner import generate_plan, load_plan, replan_remaining
 
 router = APIRouter(prefix="/api/v1/planner", tags=["planner"])
 
@@ -39,17 +39,20 @@ def _plan_response(plan, tasks) -> dict:
     }
 
 
+def _tasks_for_plan(db: Session, plan_id: int):
+    return list(db.scalars(
+        select(StudyTask)
+        .where(StudyTask.plan_id == plan_id)
+        .order_by(StudyTask.planned_date, StudyTask.priority.desc())
+    ).all())
+
+
 def _generate(db: Session, student_id: int, horizon_days: int) -> StudyPlanRead:
     try:
         plan = generate_plan(db, student_id, horizon_days)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
-    tasks = list(db.scalars(
-        select(StudyTask)
-        .where(StudyTask.plan_id == plan.id)
-        .order_by(StudyTask.planned_date, StudyTask.priority.desc())
-    ).all())
-    return _plan_response(plan, tasks)
+    return _plan_response(plan, _tasks_for_plan(db, plan.id))
 
 
 @router.post("/generate", response_model=StudyPlanRead)
@@ -71,8 +74,20 @@ def create_plan(
     return _generate(db, student_id, payload.horizon_days)
 
 
+@router.post("/students/{student_id}/replan", response_model=StudyPlanRead)
+def replan_student(
+    student_id: int,
+    payload: PlanGenerateRequest,
+    db: Session = Depends(get_db),
+):
+    try:
+        plan = replan_remaining(db, student_id, horizon_days=payload.horizon_days)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return _plan_response(plan, _tasks_for_plan(db, plan.id))
 
-@router.post("/students/{student_id}/tasks/{task_id}/action", response_model=StudyTaskRead)
+
+@router.post("/students/{student_id}/tasks/{task_id}/action", response_model=StudyPlanRead)
 def act_on_task(
     student_id: int,
     task_id: int,
@@ -88,7 +103,8 @@ def act_on_task(
     if task is None:
         raise HTTPException(status_code=404, detail="Study task not found")
 
-    if payload.action == "MOVE":
+    action = payload.action
+    if action == "MOVE":
         if payload.target_date is None:
             raise HTTPException(status_code=400, detail="A target date is required when moving a task")
         if payload.target_date < date.today():
@@ -96,17 +112,17 @@ def act_on_task(
         task.planned_date = payload.target_date
         task.status = "RECOMMENDED"
 
-    elif payload.action == "START":
+    elif action == "START":
         if task.status == "COMPLETED":
             raise HTTPException(status_code=400, detail="Completed tasks cannot be started again")
         task.status = "IN_PROGRESS"
 
-    elif payload.action == "SKIP":
+    elif action == "SKIP":
         if task.status == "COMPLETED":
             raise HTTPException(status_code=400, detail="Completed tasks cannot be skipped")
         task.status = "SKIPPED"
 
-    elif payload.action == "COMPLETE":
+    elif action == "COMPLETE":
         task.status = "COMPLETED"
         progress = db.scalar(
             select(StudentTopicProgress).where(
@@ -127,8 +143,27 @@ def act_on_task(
             progress.last_studied_at = datetime.now(timezone.utc)
 
     db.commit()
-    db.refresh(task)
-    return task
+
+    if action == "START":
+        current = load_plan(db, student_id, task.plan_id)
+        if current is None:
+            raise HTTPException(status_code=404, detail="Study plan not found")
+        return _plan_response(current, _tasks_for_plan(db, current.id))
+
+    try:
+        deferred = {task.topic_id} if action == "SKIP" else set()
+        pinned = {task.topic_id: task.planned_date} if action == "MOVE" else {}
+        plan = replan_remaining(
+            db,
+            student_id,
+            horizon_days=7,
+            deferred_topic_ids=deferred,
+            pinned_topic_dates=pinned,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    return _plan_response(plan, _tasks_for_plan(db, plan.id))
 
 
 @router.get("/students/{student_id}/latest", response_model=StudyPlanRead)
@@ -136,9 +171,4 @@ def latest_plan(student_id: int, db: Session = Depends(get_db)):
     plan = load_plan(db, student_id)
     if not plan:
         raise HTTPException(status_code=404, detail="No study plan has been generated yet")
-    tasks = list(db.scalars(
-        select(StudyTask)
-        .where(StudyTask.plan_id == plan.id)
-        .order_by(StudyTask.planned_date, StudyTask.priority.desc())
-    ).all())
-    return _plan_response(plan, tasks)
+    return _plan_response(plan, _tasks_for_plan(db, plan.id))
