@@ -165,3 +165,41 @@
   .dashboard-kpi>strong{font-size:21px}
   .dashboard-welcome h1{font-size:34px}
 }
+
+/* Havan control system */
+.havan-select,.havan-date-picker{position:relative;width:100%;margin-top:7px}
+.havan-select-trigger,.havan-date-trigger{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:48px;padding:0 13px;border:1px solid #e3e3ec;border-radius:13px;background:#fff;color:#77778a;font:inherit;text-align:left;cursor:pointer;box-sizing:border-box}
+.havan-select-trigger .has-value,.havan-date-trigger .has-value{color:#151526;font-weight:700}
+.havan-select-trigger i{color:#01017e;font-style:normal;font-size:17px;font-weight:900}
+.havan-date-icon{display:grid;place-items:center;width:26px;height:26px;border-radius:8px;background:#f0f0f7;color:#01017e;font-size:13px}
+.havan-select.disabled .havan-select-trigger{opacity:.5;cursor:not-allowed}
+.havan-select-menu{position:absolute;z-index:40;top:calc(100% + 6px);left:0;right:0;max-height:260px;overflow:auto;padding:6px;border:1px solid #dedee9;border-radius:14px;background:#fff;box-shadow:0 18px 40px rgba(1,1,126,.12)}
+.havan-select-option{display:flex;align-items:center;justify-content:space-between;width:100%;padding:11px 12px;border:0;border-radius:10px;background:#fff;color:#3f3f52;font:inherit;text-align:left;cursor:pointer}
+.havan-select-option:hover,.havan-select-option.selected{background:#f0f0ff;color:#01017e}
+.havan-select-option b{color:#fa0302}
+.havan-select-empty{padding:12px;color:#8a8a98;font-size:12px}
+.havan-date-picker{z-index:30}
+.havan-calendar{position:absolute;z-index:45;top:calc(100% + 6px);left:0;width:min(320px,calc(100vw - 36px));padding:14px;border:1px solid #dedee9;border-radius:16px;background:#fff;box-shadow:0 18px 40px rgba(1,1,126,.14)}
+.havan-calendar-head{display:grid;grid-template-columns:34px 1fr 34px;align-items:center;gap:8px;margin-bottom:12px}
+.havan-calendar-head strong{text-align:center;color:#01017e;font-size:13px}
+.havan-calendar-head button{height:32px;border:0;border-radius:9px;background:#f0f0f7;color:#01017e;font-size:20px;cursor:pointer}
+.havan-calendar-week,.havan-calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.havan-calendar-week{margin-bottom:5px;color:#9999a7;font-size:9px;font-weight:900;text-align:center}
+.havan-calendar-grid button,.havan-calendar-grid span{height:34px;display:grid;place-items:center;border-radius:9px}
+.havan-calendar-grid button{border:0;background:#fff;color:#383849;font:inherit;font-size:11px;cursor:pointer}
+.havan-calendar-grid button:hover{background:#f0f0ff;color:#01017e}
+.havan-calendar-grid button.selected{background:#01017e;color:#fff}
+.havan-calendar-grid button:disabled{color:#c6c6cf;cursor:not-allowed}
+.havan-stepper{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:48px;margin-top:7px;padding:4px;border:1px solid #e3e3ec;border-radius:13px;background:#fff;box-sizing:border-box}
+.havan-stepper button{width:40px;height:40px;border:0;border-radius:10px;background:#f0f0f7;color:#01017e;font-size:20px;font-weight:800;cursor:pointer}
+.havan-stepper button:disabled{opacity:.35;cursor:not-allowed}
+.havan-stepper span{display:flex;align-items:baseline;gap:6px;color:#01017e}
+.havan-stepper b{font-size:16px}.havan-stepper small{color:#77778a;font-size:10px;font-weight:700}
+.course-position-panel{border-top:1px solid #eeeef3;padding:0 15px 15px}
+.position-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin:14px 0 8px}
+.position-heading div{display:grid;gap:3px}.position-heading b{color:#01017e;font-size:12px}
+.position-heading span{color:#8a8a98;font-size:10px;line-height:1.45}.position-heading em{color:#b1b1bd;font-size:9px;font-style:normal;font-weight:900;letter-spacing:1px}
+.position-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.position-grid .havan-select{margin-top:0}
+.position-hint{margin:9px 0 0;color:#77778a;font-size:10px;line-height:1.5}
+@media(max-width:760px){.position-grid{grid-template-columns:1fr}.havan-calendar{left:auto;right:0}}
+@media(max-width:480px){.havan-select-menu{max-height:220px}.position-heading{display:block}.position-heading em{display:none}.havan-calendar{width:calc(100vw - 36px)}}
