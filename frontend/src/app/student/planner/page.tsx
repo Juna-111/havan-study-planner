@@ -151,7 +151,8 @@ export default function PlannerPage() {
     const topicItems = (
       await Promise.all(
         chapters.map((chapter: Item) =>
-          apiList('/topics?chapter_id=' + chapter.id + '&page=1&page_size=100'),
+          apiList('/topics?chapter_id=' + chapter.id + '&page=1&page_size=100')
+            .then((items: Item[]) => items.map((topic) => ({ ...topic, course_id: chapter.course_id }))),
         ),
       )
     ).flat()
@@ -301,10 +302,7 @@ export default function PlannerPage() {
   const examReadiness = useMemo(() => {
     const exams = (context?.exams ?? [])
       .map((exam: Item) => {
-        const courseTopics = topics.filter((topic) => topic.chapter_course_id === exam.course_id || topic.course_id === exam.course_id)
-        const scopedTopics = courseTopics.length
-          ? courseTopics
-          : topics.filter((topic) => topicMap.get(topic.id)?.course_id === exam.course_id)
+        const scopedTopics = topics.filter((topic) => topic.course_id === exam.course_id)
         const total = scopedTopics.reduce((sum, topic) => sum + Number(topic.estimated_study_minutes || 0), 0)
         const completed = scopedTopics.reduce((sum, topic) => {
           const progress = progressMap.get(topic.id)
