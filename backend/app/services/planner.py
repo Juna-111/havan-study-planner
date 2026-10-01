@@ -231,6 +231,19 @@ def replan_remaining(
         current_tasks = list(db.scalars(
             select(StudyTask).where(StudyTask.plan_id == current.id)
         ).all())
+
+        # Preserve explicit student decisions when the week is rebuilt.
+        remembered_deferred = {
+            task.topic_id for task in current_tasks if task.status == "SKIPPED"
+        }
+        remembered_pinned = {
+            task.topic_id: task.planned_date
+            for task in current_tasks
+            if task.status == "MOVED"
+        }
+        deferred_topic_ids = (deferred_topic_ids or set()) | remembered_deferred
+        pinned_topic_dates = {**remembered_pinned, **(pinned_topic_dates or {})}
+
         for task in current_tasks:
             if task.status == "RECOMMENDED":
                 task.status = "REPLANNED"
