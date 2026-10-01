@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect, useMemo, useState } from 'react'
 import {
   buildPlan,
@@ -21,8 +23,8 @@ import {
   type PlanMode,
   type StudentProfile,
   type StudyStream,
-} from './domain/plan'
-import { getTelegramIdentity, initialiseTelegram } from './lib/telegram'
+} from '../domain/plan'
+import { getTelegramIdentity, initialiseTelegram } from '../lib/telegram'
 import {
   clearLocalSession,
   createBrowserIdentity,
@@ -31,8 +33,7 @@ import {
   migrateState,
   readPlannerStorage,
   type AppIdentity,
-} from './lib/session'
-import './index.css'
+} from '../lib/session'
 
 type PlannerState = {
   ready: boolean
