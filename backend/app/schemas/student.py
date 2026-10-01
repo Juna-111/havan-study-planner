@@ -73,8 +73,17 @@ class ExamRead(ExamCreate):
     student_id: int
 
 
+class CourseTopicStatus(BaseModel):
+    course_id: int
+    course_code: str
+    course_name: str
+    chapter_count: int
+    active_topic_count: int
+
+
 class StudentContext(BaseModel):
     profile: StudentRead
     courses: list[StudentCourseRead]
     progress: list[ProgressRead]
     exams: list[ExamRead]
+    course_topic_status: list[CourseTopicStatus]
