@@ -108,6 +108,24 @@ export default function PlannerPage() {
     }
   }
 
+  async function rebalancePlan(id: number) {
+    setGenerating(true)
+    setError('')
+    try {
+      const next = await apiFetch<Item>('/planner/students/' + id + '/replan', {
+        method: 'POST',
+        body: JSON.stringify({ horizon_days: 7 }),
+      })
+      setPlan(next)
+      setSelectedDate(next.days?.[0]?.date ?? dateKey(today()))
+      setToast('Your week was rebalanced using your current progress, decisions, and study capacity.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not rebalance your study plan.')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
   async function loadContext(id: number) {
     const data = await apiFetch<Item>('/students/profiles/' + id + '/context')
     const courseIds = (data.courses ?? []).map((course: Item) => course.course_id)
@@ -162,34 +180,11 @@ export default function PlannerPage() {
     setActionBusy(true)
     setError('')
     try {
-      const updated = await apiFetch<Task>('/planner/students/' + studentId + '/tasks/' + task.id + '/action', {
+      const updatedPlan = await apiFetch<Item>('/planner/students/' + studentId + '/tasks/' + task.id + '/action', {
         method: 'POST',
         body: JSON.stringify({ action, target_date: targetDate || null }),
       })
-      setPlan((current: Item | null) => {
-        if (!current) return current
-        const nextTasks = (current.tasks ?? []).map((item: Task) =>
-          item.id === updated.id ? updated : item,
-        )
-        const byDate: Record<string, Task[]> = {}
-        nextTasks.forEach((item: Task) => {
-          byDate[item.planned_date] = byDate[item.planned_date] ?? []
-          byDate[item.planned_date].push(item)
-        })
-        const nextDays = Object.entries(byDate)
-          .sort(([a], [b]) => a.localeCompare(b))
-          .map(([date, dayTasks]) => ({
-            date,
-            total_minutes: dayTasks.reduce((sum, item) => sum + item.estimated_minutes, 0),
-            tasks: dayTasks,
-          }))
-        return {
-          ...current,
-          tasks: nextTasks,
-          total_minutes: nextTasks.reduce((sum: number, item: Task) => sum + item.estimated_minutes, 0),
-          days: nextDays,
-        }
-      })
+      setPlan(updatedPlan)
       if (action === 'START') {
         setFocusTaskId(task.id)
         setFocusSeconds(25 * 60)
@@ -198,15 +193,15 @@ export default function PlannerPage() {
       } else if (action === 'COMPLETE') {
         setFocusTaskId(null)
         setSelectedTaskId(null)
-        setToast('Session completed. Havan recorded the progress.')
+        setToast('Session completed. Havan recorded the progress and recalculated what comes next.')
       } else if (action === 'SKIP') {
         setSelectedTaskId(null)
-        setToast('Skipped and recorded. Your plan is allowed to reflect real life.')
+        setToast('Skipped and recorded. Havan rebuilt the remaining week around that decision.')
       } else {
         setSelectedDate(updated.planned_date)
         setMoveDate('')
         setSelectedTaskId(null)
-        setToast('Session moved. The rest of your plan stays untouched for now.')
+        setToast('Session moved. Havan rebuilt the remaining week around the new date.')
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not update this study session.')
