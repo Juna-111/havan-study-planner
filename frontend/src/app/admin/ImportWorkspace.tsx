@@ -28,6 +28,14 @@ export default function ImportWorkspace({onImported}:{onImported:()=>Promise<voi
     await Promise.all(map.map(async ([key,endpoint])=>{
       try{out[key]=(await apiFetch<C>('/'+endpoint+'?page=1&page_size=100')).items}catch{out[key]=[]}
     }))
+    if((out.university??[]).length===0){
+      try{
+        await apiFetch('/curriculum-import/bootstrap-demo',{method:'POST'})
+        await Promise.all(map.map(async ([key,endpoint])=>{
+          try{out[key]=(await apiFetch<C>('/'+endpoint+'?page=1&page_size=100')).items}catch{out[key]=[]}
+        }))
+      }catch{}
+    }
     setParents(out)
   }
 

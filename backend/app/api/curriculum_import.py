@@ -123,3 +123,48 @@ def commit_curriculum_import(payload: CurriculumImportPreview, db: Session = DB)
         "created_chapters": created_chapters,
         "created_topics": created_topics,
     }
+
+
+@router.post("/curriculum-import/bootstrap-demo", status_code=201)
+def bootstrap_demo_academic_structure(db: Session = DB):
+    """Create a small linked academic structure for Phase 3 testing when the database is empty."""
+    if db.query(University).count() > 0:
+        return {"created": False, "message": "Academic structure already exists."}
+
+    demo = [
+        ("Havan Demo University", "HAVAN-DEMO-1"),
+        ("Havan Science University", "HAVAN-DEMO-2"),
+        ("Havan Technology University", "HAVAN-DEMO-3"),
+    ]
+    created = []
+    try:
+        for index, (name, code) in enumerate(demo, start=1):
+            university = University(name=name, code=code, description="Phase 3 testing data.", status="ACTIVE")
+            db.add(university)
+            db.flush()
+            curriculum = Curriculum(
+                university_id=university.id,
+                name="Freshman Curriculum",
+                version="2026.1",
+                academic_year="2026/27",
+                description="Demo curriculum for Phase 3 testing.",
+                status="ACTIVE",
+            )
+            db.add(curriculum)
+            db.flush()
+            stream = Stream(
+                curriculum_id=curriculum.id,
+                name="Natural Science",
+                code="NAT-SCI",
+                description="Demo stream for curriculum import testing.",
+                status="ACTIVE",
+            )
+            db.add(stream)
+            db.flush()
+            created.append({"university_id": university.id, "curriculum_id": curriculum.id, "stream_id": stream.id})
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Demo academic structure could not be created.") from exc
+
+    return {"created": True, "items": created}
