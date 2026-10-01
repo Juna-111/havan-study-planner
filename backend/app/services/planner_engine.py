@@ -93,7 +93,7 @@ def score_topic(topic: PlannerTopic, exam: PlannerExam | None, today: date) -> S
     elif topic.progress_status == "NOT_STARTED":
         reasons.append("it is not started yet")
     if topic.progress_confidence <= 2:
-        reasons.append("your current confidence is low")
+        reasons.append("low confidence; your current confidence is low")
     elif topic.progress_confidence >= 4:
         reasons.append("your current confidence is already strong")
 
