@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { apiFetch } from '../../lib/api'
+import { clearAuth, getAuthToken, getSavedAccount } from '../../lib/auth'
 import './student.css'
 
 type Item = Record<string, any>
@@ -88,6 +90,8 @@ function HavanStepper({ value, min, max, step, onChange, suffix }: { value: numb
 }
 
 export default function StudentPage() {
+  const router = useRouter()
+  const [account, setAccount] = useState(getSavedAccount())
   const [studentId, setStudentId] = useState<number | null>(null)
   const [profile, setProfile] = useState<Item | null>(null)
   const [context, setContext] = useState<Item | null>(null)
@@ -168,21 +172,25 @@ export default function StudentPage() {
 
   useEffect(() => {
     const run = async () => {
+      if (!getAuthToken()) {
+        router.replace('/auth')
+        return
+      }
       try {
-        const existing = await apiFetch<Item>(
-          `/students/profiles/by-client/${encodeURIComponent(clientKey())}`,
-        )
-        await loadContext(existing.id)
-      } catch (err) {
-        if (!(err instanceof Error && err.message.includes('404'))) {
-          setError(err instanceof Error ? err.message : 'Could not load your study space.')
+        const current = await apiFetch<Item>('/auth/me')
+        setAccount(current)
+        if (current.student_profile_id) {
+          await loadContext(current.student_profile_id)
         }
+      } catch (err) {
+        clearAuth()
+        router.replace('/auth')
       } finally {
         setLoading(false)
       }
     }
     run()
-  }, [])
+  }, [router])
 
   useEffect(() => {
     if (step === 0 && !universities.length) {
