@@ -103,15 +103,18 @@ def generate_plan(db: Session, student_id: int, horizon_days: int = 7) -> StudyP
         if not reason_parts:
             reason_parts.append("unfinished topic in your selected course")
 
+        # A topic with unfinished prerequisites is not eligible for scheduling yet.
+        if blocked:
+            continue
+
         candidates.append({
             "topic": topic,
             "course_id": course_id,
             "priority": round(priority, 4),
             "reason": "; ".join(reason_parts),
-            "blocked": bool(blocked),
         })
 
-    candidates.sort(key=lambda x: (-x["blocked"], -x["priority"]))
+    candidates.sort(key=lambda x: -x["priority"])
     study_days = set(student.study_days or [])
     # Stored day values are expected to be lowercase weekday names.
     dates = [today + timedelta(days=i) for i in range(horizon_days) if (today + timedelta(days=i)).strftime("%a").lower()[:3] in study_days or (today + timedelta(days=i)).strftime("%A").lower() in study_days]
