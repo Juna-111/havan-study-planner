@@ -177,7 +177,10 @@ def generate_plan(db: Session, student_id: int, horizon_days: int = 7) -> StudyP
         scored.append(item)
 
     study_dates = _study_dates(student, horizon_days, today)
-    if student.study_hours_per_day <= 0:\n        raise ValueError("Available study time must be greater than zero.")\n    daily_capacity = int(round(student.study_hours_per_day * 60))
+    if student.study_hours_per_day <= 0:
+        raise ValueError("Available study time must be greater than zero.")
+
+    daily_capacity = int(round(student.study_hours_per_day * 60))
     scheduled = schedule_tasks(scored, study_dates, daily_capacity)
 
     if not scheduled:
