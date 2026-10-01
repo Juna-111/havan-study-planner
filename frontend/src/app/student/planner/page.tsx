@@ -189,6 +189,7 @@ export default function PlannerPage() {
       if (action === 'START') {
         setFocusTaskId(task.id)
         setFocusSeconds(25 * 60)
+        setFocusMode('normal')
         setSelectedTaskId(null)
         setToast('Focus mode started. One session, one topic, no heroic promises required.')
       } else if (action === 'COMPLETE') {
