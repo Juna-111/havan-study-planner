@@ -1,0 +1,83 @@
+'use client'
+
+import {useEffect, useMemo, useState} from 'react'
+import {apiFetch} from '../../lib/api'
+
+type Severity = 'error' | 'warning' | 'info'
+type Issue = {
+  severity: Severity
+  entity_type: string
+  entity_id: number
+  title: string
+  message: string
+}
+type Quality = {
+  summary: {total_records:number; issues:number; errors:number; warnings:number; info:number; active_curriculums:number}
+  counts: Record<string, number>
+  issues: Issue[]
+}
+
+export default function AcademicQuality(){
+  const [data,setData]=useState<Quality|null>(null)
+  const [filter,setFilter]=useState<'all'|Severity>('all')
+  const [loading,setLoading]=useState(true)
+  const [error,setError]=useState('')
+
+  async function load(){
+    setLoading(true)
+    setError('')
+    try{setData(await apiFetch<Quality>('/academic-quality'))}
+    catch(err){setError(err instanceof Error?err.message:'Could not load academic quality data.')}
+    finally{setLoading(false)}
+  }
+
+  useEffect(()=>{load()},[])
+
+  const issues=useMemo(
+    ()=>data?.issues.filter(item=>filter==='all'||item.severity===filter)??[],
+    [data,filter]
+  )
+
+  const health = !data ? 'Checking academic data…'
+    : data.summary.errors ? 'Action needed'
+    : data.summary.warnings ? 'Review recommended'
+    : 'Academic data is clean'
+
+  return <div className="qualityPage">
+    <header className="qualityHeader">
+      <div><span>HAVAN STUDY PLANNER</span><h1>Academic Quality</h1><p>Check the academic data that feeds Havan’s deterministic planner.</p></div>
+      <button className="primary" onClick={load} disabled={loading}>{loading?'Checking…':'↻ Refresh checks'}</button>
+    </header>
+
+    {error&&<div className="alert">{error}</div>}
+
+    {loading&&!data?<div className="qualityLoading">Running academic checks…</div>:data&&<>
+      <section className="qualityHero">
+        <div><span>ACADEMIC HEALTH</span><h2>{health}</h2><p>Quality checks inspect structure, completeness, relationships, and planner-relevant consistency.</p></div>
+        <strong>{data.summary.issues}<small>issues found</small></strong>
+      </section>
+
+      <section className="qualityStats">
+        <article><span>Errors</span><b>{data.summary.errors}</b><small>Needs correction</small></article>
+        <article><span>Warnings</span><b>{data.summary.warnings}</b><small>Review recommended</small></article>
+        <article><span>Info</span><b>{data.summary.info}</b><small>Data gaps</small></article>
+        <article><span>Records</span><b>{data.summary.total_records}</b><small>Across academic data</small></article>
+      </section>
+
+      <section className="qualityGrid">
+        <article className="qualityCard">
+          <header><div><span>ACADEMIC STRUCTURE</span><h2>Records in the system</h2></div><b>{data.summary.active_curriculums} active curricula</b></header>
+          <div className="countGrid">{Object.entries(data.counts).map(([key,value])=><div key={key}><span>{key.replaceAll('_',' ')}</span><strong>{value}</strong></div>)}</div>
+        </article>
+
+        <article className="qualityCard">
+          <header><div><span>ISSUE REVIEW</span><h2>What needs attention?</h2></div></header>
+          <div className="qualityFilters">{(['all','error','warning','info'] as const).map(value=><button key={value} className={filter===value?'selected':''} onClick={()=>setFilter(value)}>{value==='all'?'All':value[0].toUpperCase()+value.slice(1)}</button>)}</div>
+          {issues.length===0?<div className="qualityEmpty"><b>✓</b><strong>No matching issues</strong><span>The academic structure passed the selected checks.</span></div>:<div className="issueList">{issues.map((issue,index)=><article className="issue" key={issue.entity_type+'-'+issue.entity_id+'-'+issue.title+'-'+index}><span className={'severity '+issue.severity}>{issue.severity}</span><div><strong>{issue.title}</strong><p>{issue.message}</p><small>{issue.entity_type} #{issue.entity_id}</small></div></article>)}</div>}
+        </article>
+      </section>
+
+      <div className="qualityNote"><strong>How this fits Havan</strong><span>Academic Data → Quality Checks → Admin Review → Clean Data → Planner Engine → Student Plan</span></div>
+    </>}
+  </div>
+}
