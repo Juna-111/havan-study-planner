@@ -41,10 +41,12 @@ class StudentCourseAdd(BaseModel):
     starting_topic_id: Optional[int] = Field(default=None, gt=0)
 
 
-class StudentCourseRead(StudentCourseAdd):
+class StudentCourseRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     student_id: int
+    course_id: int
+    confidence: int
     status: str
 
 
