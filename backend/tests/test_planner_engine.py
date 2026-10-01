@@ -108,3 +108,10 @@ def test_short_topic_duration_is_not_inflated():
     scheduled = schedule_tasks([item], [TODAY], 60)
     assert len(scheduled) == 1
     assert scheduled[0][2] == 10
+
+
+def test_senior_difficulty_affects_priority():
+    easy = score_topic(topic(1, difficulty=1), None, TODAY)
+    expert = score_topic(topic(2, difficulty=5), None, TODAY)
+    assert expert.score > easy.score
+    assert "Expert difficulty" in expert.reason
