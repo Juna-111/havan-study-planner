@@ -67,6 +67,7 @@ export default function StudentPage() {
     date: '',
     importance: 4,
   })
+  const [editingExamId, setEditingExamId] = useState<number | null>(null)
 
   async function loadContext(id: number) {
     const data = await apiFetch<Item>(`/students/profiles/${id}/context`)
@@ -245,23 +246,58 @@ export default function StudentPage() {
     }
   }
 
-  async function addExam() {
+  async function saveExam() {
     if (!studentId || !examForm.courseId || !examForm.date) return
     setSaving(true)
+    setError('')
     try {
-      await apiFetch(`/students/profiles/${studentId}/exams`, {
-        method: 'POST',
-        body: JSON.stringify({
-          course_id: Number(examForm.courseId),
-          exam_type: examForm.type,
-          exam_date: examForm.date,
-          importance: examForm.importance,
-        }),
-      })
+      await apiFetch(
+        `/students/profiles/${studentId}/exams${editingExamId ? '/' + editingExamId : ''}`,
+        {
+          method: editingExamId ? 'PATCH' : 'POST',
+          body: JSON.stringify({
+            course_id: Number(examForm.courseId),
+            exam_type: examForm.type,
+            exam_date: examForm.date,
+            importance: examForm.importance,
+          }),
+        },
+      )
       setExamForm({ courseId: '', type: 'FINAL', date: '', importance: 4 })
+      setEditingExamId(null)
       await loadContext(studentId)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not add the exam.')
+      setError(err instanceof Error ? err.message : 'Could not save the exam.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  function beginEditExam(exam: Item) {
+    setEditingExamId(exam.id)
+    setExamForm({
+      courseId: String(exam.course_id),
+      type: exam.exam_type,
+      date: exam.exam_date,
+      importance: Number(exam.importance ?? 3),
+    })
+  }
+
+  function cancelExamEdit() {
+    setEditingExamId(null)
+    setExamForm({ courseId: '', type: 'FINAL', date: '', importance: 4 })
+  }
+
+  async function deleteExam(examId: number) {
+    if (!studentId || saving) return
+    setSaving(true)
+    setError('')
+    try {
+      await apiFetch(`/students/profiles/${studentId}/exams/${examId}`, { method: 'DELETE' })
+      if (editingExamId === examId) cancelExamEdit()
+      await loadContext(studentId)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not remove the exam.')
     } finally {
       setSaving(false)
     }
@@ -594,14 +630,31 @@ export default function StudentPage() {
           <div className="panel-heading"><div><span className="student-eyebrow">ASSESSMENTS</span><h2>Exam dates</h2></div></div>
           {context?.exams?.length ? context.exams.map((exam: Item) => {
             const course = courses.find((item) => item.id === exam.course_id)
-            return <div className="exam-row" key={exam.id}><div><b>{course?.code ?? 'Course'}</b><span>{exam.exam_type}</span></div><strong>{exam.exam_date}</strong></div>
+            const days = Math.max(0, Math.ceil((new Date(exam.exam_date + 'T00:00:00').getTime() - new Date(new Date().toDateString()).getTime()) / 86400000))
+            return (
+              <div className="exam-row exam-row-managed" key={exam.id}>
+                <div>
+                  <b>{course?.code ?? 'Course'}</b>
+                  <span>{exam.exam_type} · Importance {exam.importance}/5 · {days === 0 ? 'Today' : days + 'd left'}</span>
+                </div>
+                <div className="exam-row-actions">
+                  <strong>{exam.exam_date}</strong>
+                  <button type="button" onClick={() => beginEditExam(exam)}>Edit</button>
+                  <button type="button" onClick={() => deleteExam(exam.id)} disabled={saving}>Remove</button>
+                </div>
+              </div>
+            )
           }) : <p className="muted">No exam dates yet. Add the dates you know so Havan can account for urgency.</p>}
 
           <div className="exam-form">
             <select value={examForm.courseId} onChange={(e) => setExamForm({ ...examForm, courseId: e.target.value })}><option value="">Course</option>{courses.map((course) => <option key={course.id} value={course.id}>{course.code}</option>)}</select>
             <select value={examForm.type} onChange={(e) => setExamForm({ ...examForm, type: e.target.value })}><option>FINAL</option><option>MIDTERM</option><option>QUIZ</option></select>
             <input type="date" min={new Date().toISOString().slice(0, 10)} value={examForm.date} onChange={(e) => setExamForm({ ...examForm, date: e.target.value })} />
-            <button disabled={saving || !examForm.courseId || !examForm.date} onClick={addExam}>Add</button>
+            <select value={examForm.importance} onChange={(e) => setExamForm({ ...examForm, importance: Number(e.target.value) })}><option value={5}>Critical</option><option value={4}>Important</option><option value={3}>Normal</option><option value={2}>Low</option><option value={1}>Minor</option></select>
+            <div className="exam-form-actions">
+              <button type="button" className="student-secondary" disabled={saving || !examForm.courseId || !examForm.date} onClick={saveExam}>{saving ? 'Saving…' : editingExamId ? 'Save changes' : 'Add exam'}</button>
+              {editingExamId && <button type="button" className="student-secondary" onClick={cancelExamEdit}>Cancel</button>}
+            </div>
           </div>
         </div>
       </section>
