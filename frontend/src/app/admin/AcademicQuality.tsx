@@ -14,6 +14,7 @@ type Issue = {
 type Quality = {
   summary: {total_records:number; issues:number; errors:number; warnings:number; info:number; active_curriculums:number}
   counts: Record<string, number>
+  readiness: {status: "ready"|"warning"|"error"; active_courses:number; ready_courses:number; active_topics:number; invalid_topics:number; prerequisite_cycle_topics:number}
   issues: Issue[]
 }
 
@@ -58,6 +59,7 @@ export default function AcademicQuality(){
       </section>
 
       <section className="qualityStats">
+        <article><span>Planner readiness</span><b>{data.readiness.status === 'ready' ? 'Ready' : data.readiness.status === 'warning' ? 'Review' : 'Blocked'}</b><small>{data.readiness.ready_courses}/{data.readiness.active_courses} active courses ready</small></article>
         <article><span>Errors</span><b>{data.summary.errors}</b><small>Needs correction</small></article>
         <article><span>Warnings</span><b>{data.summary.warnings}</b><small>Review recommended</small></article>
         <article><span>Info</span><b>{data.summary.info}</b><small>Data gaps</small></article>
