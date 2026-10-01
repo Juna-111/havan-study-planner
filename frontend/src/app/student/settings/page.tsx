@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { apiFetch } from '../../../lib/api'
-import { clearAuth, getAuthToken, getSavedAccount } from '../../../lib/auth'
+import { clearAuth, getAuthToken, getSavedAccount, type AuthAccount } from '../../../lib/auth'
 import '../student.css'
 
 type Item = Record<string, any>
@@ -36,7 +36,7 @@ export default function StudentSettings() {
   useEffect(()=>{(async()=>{
     if(!getAuthToken()){router.replace('/auth');return}
     try{
-      const me=await apiFetch<Item>('/auth/me'); setAccount(me)
+      const me=await apiFetch<AuthAccount>('/auth/me'); setAccount(me)
       if(!me.student_profile_id){router.replace('/student');return}
       const p=await apiFetch<Item>('/students/profiles/'+me.student_profile_id)
       setProfile(p); setForm({name:p.name,universityId:String(p.university_id),curriculumId:String(p.curriculum_id),streamId:String(p.stream_id),studyHours:p.study_hours_per_day,studyDays:p.study_days})
