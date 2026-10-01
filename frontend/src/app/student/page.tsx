@@ -166,6 +166,9 @@ export default function StudentPage() {
     context?.progress?.filter((item: Item) => item.status === 'COMPLETED').length ?? 0
   const inProgressTopics =
     context?.progress?.filter((item: Item) => item.status === 'IN_PROGRESS').length ?? 0
+  const courseTopicStatus: Item[] = context?.course_topic_status ?? []
+  const coursesWithoutTopics = courseTopicStatus.filter((item: Item) => item.active_topic_count === 0)
+  const hasRegisteredTopics = courseTopicStatus.some((item: Item) => item.active_topic_count > 0)
 
   async function createProfile() {
     setSaving(true)
@@ -530,6 +533,53 @@ export default function StudentPage() {
         <article><b>{completedTopics}</b><span>topics complete</span></article>
         <article><b>{context?.exams?.length ?? 0}</b><span>exam dates</span></article>
       </section>
+
+      {!hasRegisteredTopics && context?.courses?.length > 0 && (
+        <section className="panel topic-registration-warning">
+          <div className="panel-heading">
+            <div>
+              <span className="student-eyebrow">ACADEMIC DATA STATUS</span>
+              <h2>No topics registered in the database</h2>
+            </div>
+          </div>
+          <p>
+            Your selected courses are registered, but there are currently no active topics
+            registered under those courses. Havan cannot generate recommendations until the
+            academic database contains the course chapters and topics.
+          </p>
+          <div className="topic-status-list">
+            {courseTopicStatus.map((item: Item) => (
+              <div className="topic-status-row" key={item.course_id}>
+                <div><b>{item.course_code}</b><span>{item.course_name}</span></div>
+                <strong>{item.chapter_count} chapters · {item.active_topic_count} topics</strong>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {hasRegisteredTopics && coursesWithoutTopics.length > 0 && (
+        <section className="panel topic-registration-warning">
+          <div className="panel-heading">
+            <div>
+              <span className="student-eyebrow">ACADEMIC DATA STATUS</span>
+              <h2>Some courses have no registered topics</h2>
+            </div>
+          </div>
+          <p>
+            Havan can recommend from courses that have topics, while these selected courses
+            still need their academic content registered.
+          </p>
+          <div className="topic-status-list">
+            {coursesWithoutTopics.map((item: Item) => (
+              <div className="topic-status-row" key={item.course_id}>
+                <div><b>{item.course_code}</b><span>{item.course_name}</span></div>
+                <strong>{item.chapter_count} chapters · 0 topics</strong>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="dashboard-grid">
         <div className="panel">
