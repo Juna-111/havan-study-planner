@@ -16,8 +16,9 @@ class FakeDB:
         self.data = {key: list(value) for key, value in data.items()}
 
     def scalars(self, statement):
-        model_name = statement.column_descriptions[0]["type"].__name__.lower() + "s"
-        return FakeResult(self.data[model_name])
+        model = statement.column_descriptions[0]["type"].__name__
+        names = {"University": "universities", "Curriculum": "curriculums", "Stream": "streams", "Course": "courses", "Chapter": "chapters", "Topic": "topics", "TopicRelationship": "relationships"}
+        return FakeResult(self.data[names[model]])
 
 
 def university(id=1, status="ACTIVE"):
