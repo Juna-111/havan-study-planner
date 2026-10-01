@@ -28,6 +28,11 @@ function clientKey() {
   return key
 }
 
+function initials(name: string): string {
+  const letters = name.trim().split(/\\s+/).filter(Boolean).map((part) => part[0]).join('').slice(0, 2).toUpperCase()
+  return letters || 'ST'
+}
+
 export default function StudentPage() {
   const [studentId, setStudentId] = useState<number | null>(null)
   const [profile, setProfile] = useState<Item | null>(null)
@@ -497,8 +502,7 @@ export default function StudentPage() {
                 move, skip, complete, or regenerate tasks later.
               </p>
 
-              <label>Study hours per day
-                <input type="number" min="0.5" max="12" step="0.5" value={draft.studyHours} onChange={(e) => setDraft({ ...draft, studyHours: Number(e.target.value) })} />
+              <label>Study hours per day                <input type="number" min="0.5" max="12" step="0.5" value={draft.studyHours} onChange={(e) => setDraft({ ...draft, studyHours: Number(e.target.value) })} />
               </label>
 
               <span className="day-label">Normal study days</span>
@@ -848,7 +852,7 @@ export default function StudentPage() {
           <span>{courseCards.length} selected</span>
         </div>
         <div className="dashboard-course-grid">
-          {courseCards.map((item) => (
+          {courseCards.map((item: any) => (
             <article className="dashboard-course-card" key={item.id}>
               <div className="dashboard-course-top">
                 <span>{item.course?.code ?? 'COURSE'}</span>
