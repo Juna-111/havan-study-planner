@@ -6,6 +6,7 @@ import '../student.css'
 import './planner.css'
 
 type Item = Record<string, any>
+type Task = Item & { estimated_minutes: number }
 
 const KEY = 'havan_student_key'
 
@@ -142,10 +143,10 @@ export default function PlannerPage() {
         <section className="planner-day panel" key={date}>
           <div className="planner-day-heading">
             <div><span className="student-eyebrow">{new Date(date + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'long' }).toUpperCase()}</span><h2>{new Date(date + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</h2></div>
-            <span>{grouped[date].reduce((sum, task) => sum + task.estimated_minutes, 0)} min planned</span>
+            <span>{grouped[date].reduce((sum: number, task: Task) => sum + task.estimated_minutes, 0)} min planned</span>
           </div>
 
-          {grouped[date].map((task) => {
+          {grouped[date].map((task: Task) => {
             const topic = topicMap.get(task.topic_id)
             const course = courseMap.get(task.course_id)
             return (
