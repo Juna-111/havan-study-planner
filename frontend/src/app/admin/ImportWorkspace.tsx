@@ -20,23 +20,23 @@ export default function ImportWorkspace({onImported}:{onImported:()=>Promise<voi
   const [busy,setBusy]=useState(false)
   const [message,setMessage]=useState('')
   const [error,setError]=useState('')
+  const [loadingParents,setLoadingParents]=useState(true)
 
   useEffect(()=>{loadParents()},[])
   async function loadParents(){
-    const map=[['university','universities'],['curriculum','curriculums'],['stream','streams']]
-    const out:Record<string,R[]>={}
-    await Promise.all(map.map(async ([key,endpoint])=>{
-      try{out[key]=(await apiFetch<C>('/'+endpoint+'?page=1&page_size=100')).items}catch{out[key]=[]}
-    }))
-    if((out.university??[]).length===0){
-      try{
-        await apiFetch('/curriculum-import/bootstrap-demo',{method:'POST'})
-        await Promise.all(map.map(async ([key,endpoint])=>{
-          try{out[key]=(await apiFetch<C>('/'+endpoint+'?page=1&page_size=100')).items}catch{out[key]=[]}
-        }))
-      }catch{}
+    setLoadingParents(true)
+    setError('')
+    try{
+      const universities=(await apiFetch<C>('/universities?page=1&page_size=100')).items
+      const curriculums=(await apiFetch<C>('/curriculums?page=1&page_size=100')).items
+      const streams=(await apiFetch<C>('/streams?page=1&page_size=100')).items
+      setParents({university:universities,curriculum:curriculums,stream:streams})
+    }catch(err){
+      setParents({university:[],curriculum:[],stream:[]})
+      setError(err instanceof Error?err.message:'Could not load universities, curriculums, and streams.')
+    }finally{
+      setLoadingParents(false)
     }
-    setParents(out)
   }
 
   const curricula=(parents.curriculum??[]).filter(x=>!universityId||String(x.university_id)===universityId)
@@ -69,9 +69,9 @@ export default function ImportWorkspace({onImported}:{onImported:()=>Promise<voi
     <section className="importHero"><div><span>PRIMARY CURRICULUM WORKFLOW</span><h2>Upload once. Review the structure. Save it.</h2><p>Admins provide a simple bullet-formatted file. Havan converts it into courses, chapters, and topics.</p></div><div className="importSteps"><b>01 Upload</b><b>02 Preview</b><b>03 Confirm</b></div></section>
     <section className="importGrid">
       <div className="importCard"><h3>1. Choose where it belongs</h3><p className="muted">Select the existing academic container. You do not manually enter every course and topic.</p>
-        <label><span>University</span><select value={universityId} onChange={e=>{setUniversityId(e.target.value);setCurriculumId('');setStreamId('');setPreview(null)}}><option value="">Select university…</option>{(parents.university??[]).map(r=><option key={String(r.id)} value={String(r.id)}>{String(r.name)}</option>)}</select></label>
-        <label><span>Curriculum</span><select value={curriculumId} onChange={e=>{setCurriculumId(e.target.value);setStreamId('');setPreview(null)}}><option value="">Select curriculum…</option>{curricula.map(r=><option key={String(r.id)} value={String(r.id)}>{String(r.name)} · v{String(r.version)}</option>)}</select></label>
-        <label><span>Stream</span><select value={streamId} onChange={e=>{setStreamId(e.target.value);setPreview(null)}}><option value="">Select stream…</option>{streams.map(r=><option key={String(r.id)} value={String(r.id)}>{String(r.name)}</option>)}</select></label>
+        <label><span>University</span><select disabled={loadingParents} value={universityId} onChange={e=>{setUniversityId(e.target.value);setCurriculumId('');setStreamId('');setPreview(null)}}><option value="">{loadingParents?'Loading universities…':'Select university…'}</option>{(parents.university??[]).map(r=><option key={String(r.id)} value={String(r.id)}>{String(r.name)}</option>)}</select></label>
+        <label><span>Curriculum</span><select disabled={loadingParents||!universityId} value={curriculumId} onChange={e=>{setCurriculumId(e.target.value);setStreamId('');setPreview(null)}}><option value="">{loadingParents?'Loading curriculums…':'Select curriculum…'}</option>{curricula.map(r=><option key={String(r.id)} value={String(r.id)}>{String(r.name)} · v{String(r.version)}</option>)}</select></label>
+        <label><span>Stream</span><select disabled={loadingParents||!curriculumId} value={streamId} onChange={e=>{setStreamId(e.target.value);setPreview(null)}}><option value="">{loadingParents?'Loading streams…':'Select stream…'}</option>{streams.map(r=><option key={String(r.id)} value={String(r.id)}>{String(r.name)}</option>)}</select></label>
       </div>
       <div className="importCard"><h3>2. Upload the bullet file</h3>
         <div className="dropzone"><input type="file" accept=".txt,.md,text/plain,text/markdown" onChange={e=>{setFile(e.target.files?.[0]??null);setPreview(null)}}/><strong>{file?file.name:'Choose .txt or .md file'}</strong><small>UTF-8 · maximum 2 MB</small></div>
