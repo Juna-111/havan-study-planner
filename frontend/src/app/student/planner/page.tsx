@@ -71,6 +71,11 @@ export default function PlannerPage() {
   const [selectedDate, setSelectedDate] = useState(dateKey(today()))
   const [courseFilter, setCourseFilter] = useState('ALL')
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null)
+  const [actionBusy, setActionBusy] = useState(false)
+  const [toast, setToast] = useState('')
+  const [moveDate, setMoveDate] = useState('')
+  const [focusTaskId, setFocusTaskId] = useState<number | null>(null)
+  const [focusSeconds, setFocusSeconds] = useState(25 * 60)
 
   const courseMap = useMemo(
     () => new Map(courses.map((course) => [course.id, course])),
@@ -132,6 +137,77 @@ export default function PlannerPage() {
     setCourses(selected)
     setTopics(topicItems.filter((topic: Item) => String(topic.status).toUpperCase() === 'ACTIVE'))
     await generatePlan(id)
+  }
+
+  useEffect(() => {
+    if (!focusTaskId) return
+    if (focusSeconds <= 0) {
+      setToast('Focus session complete. Nice. Your brain may now file a formal complaint about having to work.')
+      return
+    }
+    const timer = window.setInterval(() => {
+      setFocusSeconds((seconds) => Math.max(0, seconds - 1))
+    }, 1000)
+    return () => window.clearInterval(timer)
+  }, [focusTaskId, focusSeconds])
+
+  function formatFocusTime(seconds: number) {
+    const minutes = Math.floor(seconds / 60)
+    const rest = seconds % 60
+    return String(minutes).padStart(2, '0') + ':' + String(rest).padStart(2, '0')
+  }
+
+  async function actOnTask(task: Task, action: 'START' | 'COMPLETE' | 'SKIP' | 'MOVE', targetDate?: string) {
+    if (!studentId || actionBusy) return
+    setActionBusy(true)
+    setError('')
+    try {
+      const updated = await apiFetch<Task>('/planner/students/' + studentId + '/tasks/' + task.id + '/action', {
+        method: 'POST',
+        body: JSON.stringify({ action, target_date: targetDate || null }),
+      })
+      setPlan((current: Item | null) => {
+        if (!current) return current
+        return {
+          ...current,
+          tasks: (current.tasks ?? []).map((item: Task) => item.id === updated.id ? updated : item),
+          days: (current.days ?? []).map((day: Item) => ({
+            ...day,
+            tasks: (day.tasks ?? []).filter((item: Task) => item.id !== updated.id),
+          })).concat(
+            action === 'MOVE'
+              ? [{
+                  date: updated.planned_date,
+                  total_minutes: 0,
+                  tasks: [updated],
+                }]
+              : []
+          ),
+        }
+      })
+      if (action === 'START') {
+        setFocusTaskId(task.id)
+        setFocusSeconds(25 * 60)
+        setSelectedTaskId(null)
+        setToast('Focus mode started. One session, one topic, no heroic promises required.')
+      } else if (action === 'COMPLETE') {
+        setFocusTaskId(null)
+        setSelectedTaskId(null)
+        setToast('Session completed. Havan recorded the progress.')
+      } else if (action === 'SKIP') {
+        setSelectedTaskId(null)
+        setToast('Skipped and recorded. Your plan is allowed to reflect real life.')
+      } else {
+        setSelectedDate(updated.planned_date)
+        setMoveDate('')
+        setSelectedTaskId(null)
+        setToast('Session moved. The rest of your plan stays untouched for now.')
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not update this study session.')
+    } finally {
+      setActionBusy(false)
+    }
   }
 
   useEffect(() => {
@@ -524,6 +600,32 @@ export default function PlannerPage() {
         </section>
       )}
 
+      {focusTaskId && (() => {
+        const focusTask = tasks.find((task) => task.id === focusTaskId)
+        const focusTopic = focusTask ? topicMap.get(focusTask.topic_id) : null
+        const focusCourse = focusTask ? courseMap.get(focusTask.course_id) : null
+        if (!focusTask) return null
+        return (
+          <div className="planner-focus-backdrop" role="presentation">
+            <section className="planner-focus-mode" role="dialog" aria-modal="true" aria-labelledby="focus-mode-title">
+              <span className="student-eyebrow">FOCUS MODE · 25 MINUTES</span>
+              <span className="planner-focus-course">{focusCourse?.code ?? 'COURSE'}</span>
+              <h2 id="focus-mode-title">{focusTopic?.name ?? 'Study session'}</h2>
+              <p>{focusTask.reason}</p>
+              <div className="planner-focus-timer" aria-live="polite">{formatFocusTime(focusSeconds)}</div>
+              <div className="planner-focus-progress">
+                <span style={{ width: Math.max(0, Math.min(100, ((25 * 60 - focusSeconds) / (25 * 60)) * 100)) + '%' }} />
+              </div>
+              <div className="planner-focus-actions">
+                <button type="button" className="student-secondary" disabled={actionBusy} onClick={() => setFocusTaskId(null)}>Pause & close</button>
+                <button type="button" className="student-primary" disabled={actionBusy} onClick={() => actOnTask(focusTask, 'COMPLETE')}>Complete session</button>
+              </div>
+              <small>Havan records your progress. It does not grade how you studied.</small>
+            </section>
+          </div>
+        )
+      })()}
+
       {selectedTask && (
         <div className="planner-detail-backdrop" role="presentation" onClick={() => setSelectedTaskId(null)}>
           <section
@@ -536,7 +638,7 @@ export default function PlannerPage() {
             <div className="planner-detail-handle" aria-hidden="true" />
             <div className="planner-detail-header">
               <div>
-                <span className="student-eyebrow">RECOMMENDED SESSION</span>
+                <span className="student-eyebrow">YOUR NEXT MOVE</span>
                 <h2 id="planner-detail-title">{selectedTopic?.name ?? 'Recommended topic'}</h2>
               </div>
               <button
@@ -583,10 +685,75 @@ export default function PlannerPage() {
               </div>
             </div>
 
-            <p className="planner-detail-note">
-              This phase is recommendation-focused. Completing, skipping, moving, and rescheduling sessions belong to Phase 6.2.
-            </p>
+            <div className="planner-action-preview">
+              <span className="student-eyebrow">BEFORE YOU CHANGE IT</span>
+              <p>
+                Havan will record the action exactly as you choose. Moving changes only this session;
+                completing updates your topic progress; skipping records that you intentionally did not study it today.
+              </p>
+            </div>
+
+            <div className="planner-action-grid">
+              <button
+                type="button"
+                className="planner-action planner-action-primary"
+                disabled={actionBusy || selectedTask.status === 'COMPLETED'}
+                onClick={() => actOnTask(selectedTask, 'START')}
+              >
+                <strong>Start focus</strong>
+                <span>25-minute study session</span>
+              </button>
+              <button
+                type="button"
+                className="planner-action"
+                disabled={actionBusy}
+                onClick={() => actOnTask(selectedTask, 'COMPLETE')}
+              >
+                <strong>Complete</strong>
+                <span>Record the topic as finished</span>
+              </button>
+              <button
+                type="button"
+                className="planner-action"
+                disabled={actionBusy || selectedTask.status === 'COMPLETED'}
+                onClick={() => actOnTask(selectedTask, 'SKIP')}
+              >
+                <strong>Skip today</strong>
+                <span>Keep the decision explicit</span>
+              </button>
+            </div>
+
+            <div className="planner-move-row">
+              <div>
+                <span className="student-eyebrow">MOVE SESSION</span>
+                <p>Choose a future date without touching your other sessions.</p>
+              </div>
+              <div className="planner-move-controls">
+                <input
+                  type="date"
+                  min={dateKey(today())}
+                  value={moveDate}
+                  onChange={(event) => setMoveDate(event.target.value)}
+                  aria-label="New study date"
+                />
+                <button
+                  type="button"
+                  className="student-secondary"
+                  disabled={actionBusy || !moveDate || selectedTask.status === 'COMPLETED'}
+                  onClick={() => actOnTask(selectedTask, 'MOVE', moveDate)}
+                >
+                  Move
+                </button>
+              </div>
+            </div>
           </section>
+        </div>
+      )}
+
+      {toast && (
+        <div className="planner-toast" role="status">
+          <span>{toast}</span>
+          <button type="button" aria-label="Dismiss notification" onClick={() => setToast('')}>×</button>
         </div>
       )}
 
