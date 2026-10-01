@@ -108,7 +108,6 @@ export default function PlannerPage() {
 
   const tasks: Task[] = plan?.tasks ?? []
   const recommended = tasks.filter((task) => task.status === 'RECOMMENDED')
-  const completed = tasks.filter((task) => task.status === 'COMPLETED')
   const totalMinutes = tasks.reduce((sum: number, task: Task) => sum + task.estimated_minutes, 0)
 
   const grouped = tasks.reduce((groups: Record<string, Task[]>, task: Task) => {
