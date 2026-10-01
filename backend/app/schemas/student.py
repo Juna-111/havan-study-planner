@@ -69,6 +69,13 @@ class ExamCreate(BaseModel):
     importance: int = Field(default=3, ge=1, le=5)
 
 
+class ExamUpdate(BaseModel):
+    course_id: Optional[int] = Field(default=None, gt=0)
+    exam_type: Optional[str] = Field(default=None, min_length=2, max_length=30)
+    exam_date: Optional[date] = None
+    importance: Optional[int] = Field(default=None, ge=1, le=5)
+
+
 class ExamRead(ExamCreate):
     model_config = ConfigDict(from_attributes=True)
     id: int
