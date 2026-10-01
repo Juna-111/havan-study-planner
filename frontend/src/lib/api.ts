@@ -8,10 +8,15 @@ const API_BASE_URL = rawApiBaseUrl
     ? ''
     : 'http://localhost:8000'
 
+const API_V1_PREFIX = '/api/v1'
+
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   if (!API_BASE_URL) {
     throw new Error('NEXT_PUBLIC_API_URL is not configured for the deployed frontend.')
   }
+
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  const url = `${API_BASE_URL}${API_V1_PREFIX}${normalizedPath}`
 
   const isFormData = typeof FormData !== 'undefined' && init?.body instanceof FormData
   const headers = new Headers(init?.headers)
@@ -19,7 +24,7 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
 
   let response: Response
   try {
-    response = await fetch(API_BASE_URL + path, {...init, headers})
+    response = await fetch(url, {...init, headers})
   } catch {
     throw new Error('Cannot reach the Havan backend. Check NEXT_PUBLIC_API_URL and the backend CORS settings.')
   }
