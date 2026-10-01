@@ -168,21 +168,26 @@ export default function PlannerPage() {
       })
       setPlan((current: Item | null) => {
         if (!current) return current
+        const nextTasks = (current.tasks ?? []).map((item: Task) =>
+          item.id === updated.id ? updated : item,
+        )
+        const byDate: Record<string, Task[]> = {}
+        nextTasks.forEach((item: Task) => {
+          byDate[item.planned_date] = byDate[item.planned_date] ?? []
+          byDate[item.planned_date].push(item)
+        })
+        const nextDays = Object.entries(byDate)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([date, dayTasks]) => ({
+            date,
+            total_minutes: dayTasks.reduce((sum, item) => sum + item.estimated_minutes, 0),
+            tasks: dayTasks,
+          }))
         return {
           ...current,
-          tasks: (current.tasks ?? []).map((item: Task) => item.id === updated.id ? updated : item),
-          days: (current.days ?? []).map((day: Item) => ({
-            ...day,
-            tasks: (day.tasks ?? []).filter((item: Task) => item.id !== updated.id),
-          })).concat(
-            action === 'MOVE'
-              ? [{
-                  date: updated.planned_date,
-                  total_minutes: 0,
-                  tasks: [updated],
-                }]
-              : []
-          ),
+          tasks: nextTasks,
+          total_minutes: nextTasks.reduce((sum: number, item: Task) => sum + item.estimated_minutes, 0),
+          days: nextDays,
         }
       })
       if (action === 'START') {
