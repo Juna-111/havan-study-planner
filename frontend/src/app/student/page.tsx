@@ -8,13 +8,13 @@ type Item = Record<string, any>
 type Collection = { items: Item[]; total: number }
 
 const DAYS = [
-  { id: 0, short: 'Sun', label: 'Sunday' },
-  { id: 1, short: 'Mon', label: 'Monday' },
-  { id: 2, short: 'Tue', label: 'Tuesday' },
-  { id: 3, short: 'Wed', label: 'Wednesday' },
-  { id: 4, short: 'Thu', label: 'Thursday' },
-  { id: 5, short: 'Fri', label: 'Friday' },
-  { id: 6, short: 'Sat', label: 'Saturday' },
+  { id: 0, short: 'Sun' },
+  { id: 1, short: 'Mon' },
+  { id: 2, short: 'Tue' },
+  { id: 3, short: 'Wed' },
+  { id: 4, short: 'Thu' },
+  { id: 5, short: 'Fri' },
+  { id: 6, short: 'Sat' },
 ]
 
 const apiList = async (path: string) => (await apiFetch<Collection>(path)).items
@@ -30,12 +30,12 @@ function clientKey() {
 
 export default function StudentPage() {
   const [studentId, setStudentId] = useState<number | null>(null)
+  const [profile, setProfile] = useState<Item | null>(null)
+  const [context, setContext] = useState<Item | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [step, setStep] = useState(0)
-  const [profile, setProfile] = useState<Item | null>(null)
-  const [context, setContext] = useState<any>(null)
 
   const [universities, setUniversities] = useState<Item[]>([])
   const [curriculums, setCurriculums] = useState<Item[]>([])
@@ -49,90 +49,128 @@ export default function StudentPage() {
     curriculumId: '',
     streamId: '',
     courseIds: [] as string[],
+    confidence: {} as Record<string, number>,
     studyHours: 2,
     studyDays: [1, 2, 3, 4, 5],
   })
 
-  const [examForm, setExamForm] = useState({ courseId: '', type: 'FINAL', date: '', importance: 3 })
+  const [draftExams, setDraftExams] = useState<Array<{
+    courseId: string
+    type: string
+    date: string
+    importance: number
+  }>>([])
 
-  async function loadCurriculum(path: string, setter: (items: Item[]) => void) {
-    setter(await apiList(path))
-  }
-
-  async function loadExisting() {
-    setLoading(true)
-    setError('')
-    try {
-      const key = clientKey()
-      const existing = await apiFetch<Item>(`/students/profiles/by-client/${encodeURIComponent(key)}`)
-      setStudentId(existing.id)
-      setProfile(existing)
-      await loadContext(existing.id)
-    } catch (err) {
-      if (!(err instanceof Error && err.message.includes('404'))) {
-        setError(err instanceof Error ? err.message : 'Could not load your study profile.')
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
+  const [examForm, setExamForm] = useState({
+    courseId: '',
+    type: 'FINAL',
+    date: '',
+    importance: 4,
+  })
 
   async function loadContext(id: number) {
-    const data = await apiFetch<any>(`/students/profiles/${id}/context`)
+    const data = await apiFetch<Item>(`/students/profiles/${id}/context`)
     setContext(data)
     setProfile(data.profile)
     setStudentId(id)
-    await loadTopics(data.courses.map((item: Item) => item.course_id))
-  }
 
-  async function loadTopics(courseIds: number[]) {
-    if (!courseIds.length) {
-      setTopics([])
-      return
-    }
-    const chapters = (await Promise.all(courseIds.map((id) => apiList(`/chapters?course_id=${id}&page=1&page_size=100`)))).flat()
-    const topicGroups = await Promise.all(chapters.map((chapter) => apiList(`/topics?chapter_id=${chapter.id}&page=1&page_size=100`)))
-    setTopics(topicGroups.flat())
+    const courseItems = await apiList(
+      `/courses?stream_id=${data.profile.stream_id}&page=1&page_size=100`,
+    )
+    const selected = courseItems.filter((course: Item) =>
+      (data.courses ?? []).some((item: Item) => item.course_id === course.id),
+    )
+    setCourses(selected)
+
+    const chapters = (
+      await Promise.all(
+        selected.map((course: Item) =>
+          apiList(`/chapters?course_id=${course.id}&page=1&page_size=100`),
+        ),
+      )
+    ).flat()
+
+    const topicItems = (
+      await Promise.all(
+        chapters.map((chapter: Item) =>
+          apiList(`/topics?chapter_id=${chapter.id}&page=1&page_size=100`),
+        ),
+      )
+    ).flat()
+
+    setTopics(topicItems)
   }
 
   useEffect(() => {
-    loadExisting()
+    const run = async () => {
+      try {
+        const existing = await apiFetch<Item>(
+          `/students/profiles/by-client/${encodeURIComponent(clientKey())}`,
+        )
+        await loadContext(existing.id)
+      } catch (err) {
+        if (!(err instanceof Error && err.message.includes('404'))) {
+          setError(err instanceof Error ? err.message : 'Could not load your study space.')
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+    run()
   }, [])
 
   useEffect(() => {
-    if (step !== 0 || !draft.universityId) return
-    loadCurriculum(`/curriculums?university_id=${draft.universityId}&page=1&page_size=100`, setCurriculums)
-  }, [draft.universityId, step])
-
-  useEffect(() => {
-    if (step !== 0 || !draft.curriculumId) return
-    loadCurriculum(`/streams?curriculum_id=${draft.curriculumId}&page=1&page_size=100`, setStreams)
-  }, [draft.curriculumId, step])
-
-  useEffect(() => {
-    if (step !== 0 || !draft.streamId) return
-    loadCurriculum(`/courses?stream_id=${draft.streamId}&page=1&page_size=100`, setCourses)
-  }, [draft.streamId, step])
-
-  useEffect(() => {
     if (step === 0 && !universities.length) {
-      loadCurriculum('/universities?page=1&page_size=100', setUniversities).catch((err) =>
-        setError(err instanceof Error ? err.message : 'Could not load universities.')
-      )
+      apiList('/universities?page=1&page_size=100')
+        .then(setUniversities)
+        .catch((err) => setError(err instanceof Error ? err.message : 'Could not load universities.'))
     }
-  }, [step])
+  }, [step, universities.length])
+
+  useEffect(() => {
+    if (!draft.universityId) {
+      setCurriculums([])
+      return
+    }
+    apiList(
+      `/curriculums?university_id=${draft.universityId}&page=1&page_size=100`,
+    ).then(setCurriculums).catch((err) => setError(err instanceof Error ? err.message : 'Could not load curricula.'))
+  }, [draft.universityId])
+
+  useEffect(() => {
+    if (!draft.curriculumId) {
+      setStreams([])
+      return
+    }
+    apiList(
+      `/streams?curriculum_id=${draft.curriculumId}&page=1&page_size=100`,
+    ).then(setStreams).catch((err) => setError(err instanceof Error ? err.message : 'Could not load streams.'))
+  }, [draft.curriculumId])
+
+  useEffect(() => {
+    if (!draft.streamId) {
+      setCourses([])
+      return
+    }
+    apiList(
+      `/courses?stream_id=${draft.streamId}&page=1&page_size=100`,
+    ).then(setCourses).catch((err) => setError(err instanceof Error ? err.message : 'Could not load courses.'))
+  }, [draft.streamId])
 
   const selectedCourses = useMemo(
     () => courses.filter((course) => draft.courseIds.includes(String(course.id))),
     [courses, draft.courseIds],
   )
 
-  const completedTopics = context?.progress?.filter((item: Item) => item.status === 'COMPLETED').length ?? 0
-  const inProgressTopics = context?.progress?.filter((item: Item) => item.status === 'IN_PROGRESS').length ?? 0
+  const completedTopics =
+    context?.progress?.filter((item: Item) => item.status === 'COMPLETED').length ?? 0
+  const inProgressTopics =
+    context?.progress?.filter((item: Item) => item.status === 'IN_PROGRESS').length ?? 0
 
   async function createProfile() {
     setSaving(true)
     setError('')
+
     try {
       const created = await apiFetch<Item>('/students/profiles', {
         method: 'POST',
@@ -146,16 +184,43 @@ export default function StudentPage() {
           study_days: draft.studyDays,
         }),
       })
+
       for (const courseId of draft.courseIds) {
         await apiFetch(`/students/profiles/${created.id}/courses`, {
           method: 'POST',
-          body: JSON.stringify({ course_id: Number(courseId), confidence: 3 }),
+          body: JSON.stringify({
+            course_id: Number(courseId),
+            confidence: draft.confidence[courseId] ?? 3,
+          }),
         })
       }
-      setStudentId(created.id)
+
+      for (const exam of draftExams) {
+        await apiFetch(`/students/profiles/${created.id}/exams`, {
+          method: 'POST',
+          body: JSON.stringify({
+            course_id: Number(exam.courseId),
+            exam_type: exam.type,
+            exam_date: exam.date,
+            importance: exam.importance,
+          }),
+        })
+      }
+
+      // Generate the first recommendation immediately. The student should
+      // arrive at a useful planner, not an empty calendar waiting for a button.
+      try {
+        await apiFetch(`/planner/students/${created.id}/generate`, {
+          method: 'POST',
+          body: JSON.stringify({ horizon_days: 7 }),
+        })
+      } catch {
+        // The profile is still valid even if the first plan needs a retry.
+      }
+
       await loadContext(created.id)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save your profile.')
+      setError(err instanceof Error ? err.message : 'Could not save your study profile.')
     } finally {
       setSaving(false)
     }
@@ -187,7 +252,7 @@ export default function StudentPage() {
           importance: examForm.importance,
         }),
       })
-      setExamForm({ courseId: '', type: 'FINAL', date: '', importance: 3 })
+      setExamForm({ courseId: '', type: 'FINAL', date: '', importance: 4 })
       await loadContext(studentId)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not add the exam.')
@@ -196,63 +261,236 @@ export default function StudentPage() {
     }
   }
 
-  if (loading) return <main className="student-shell"><div className="student-loading">Loading your study space…</div></main>
+  if (loading) {
+    return <main className="student-shell"><div className="student-loading">Building your Havan study space…</div></main>
+  }
 
   if (!studentId) {
+    const selectedCount = draft.courseIds.length
+
     return (
       <main className="student-shell">
-        <header className="student-brand"><span className="student-mark">H</span><strong>havan</strong><span>Study Planner</span></header>
+        <header className="student-brand">
+          <span className="student-mark">H</span>
+          <strong>havan</strong>
+          <span>Study Planner</span>
+        </header>
+
         <section className="onboard">
-          <div className="student-progress"><span className="active" /><span className={step > 0 ? 'active' : ''} /><span className={step > 1 ? 'active' : ''} /><span className={step > 2 ? 'active' : ''} /></div>
+          <div className="student-progress">
+            {[0, 1, 2, 3].map((item) => (
+              <span key={item} className={item <= step ? 'active' : ''} />
+            ))}
+          </div>
 
           {step === 0 && (
             <>
-              <span className="student-eyebrow">YOUR STARTING POINT</span>
-              <h1>Build your study space around your real curriculum.</h1>
-              <p className="student-lead">Tell Havan who you are and where you study. Your choices become the academic context for everything that comes later.</p>
-              <label>Name<input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder="Your name" /></label>
-              <label>University<select value={draft.universityId} onChange={(e) => setDraft({ ...draft, universityId: e.target.value, curriculumId: '', streamId: '', courseIds: [] })}><option value="">Select university</option>{universities.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}</select></label>
-              <label>Curriculum<select disabled={!draft.universityId} value={draft.curriculumId} onChange={(e) => setDraft({ ...draft, curriculumId: e.target.value, streamId: '', courseIds: [] })}><option value="">Select curriculum</option>{curriculums.map((c) => <option key={c.id} value={c.id}>{c.name} · v{c.version}</option>)}</select></label>
-              <label>Stream<select disabled={!draft.curriculumId} value={draft.streamId} onChange={(e) => setDraft({ ...draft, streamId: e.target.value, courseIds: [] })}><option value="">Select stream</option>{streams.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
+              <span className="student-eyebrow">01 · ACADEMIC IDENTITY</span>
+              <h1>Let Havan understand where you actually study.</h1>
+              <p className="student-lead">
+                Your university and curriculum determine the academic knowledge Havan can use.
+                No generic calendar pretending every student has the same workload.
+              </p>
+
+              <label>Your name
+                <input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder="e.g. Hana" required />
+              </label>
+              <label>University
+                <select value={draft.universityId} onChange={(e) => setDraft({ ...draft, universityId: e.target.value, curriculumId: '', streamId: '', courseIds: [], confidence: {} })}>
+                  <option value="">Select university</option>
+                  {universities.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                </select>
+              </label>
+              <label>Curriculum
+                <select disabled={!draft.universityId} value={draft.curriculumId} onChange={(e) => setDraft({ ...draft, curriculumId: e.target.value, streamId: '', courseIds: [], confidence: {} })}>
+                  <option value="">Select curriculum</option>
+                  {curriculums.map((item) => <option key={item.id} value={item.id}>{item.name} · v{item.version}</option>)}
+                </select>
+              </label>
+              <label>Stream
+                <select disabled={!draft.curriculumId} value={draft.streamId} onChange={(e) => setDraft({ ...draft, streamId: e.target.value, courseIds: [], confidence: {} })}>
+                  <option value="">Select stream</option>
+                  {streams.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                </select>
+              </label>
+
               {error && <div className="student-error">{error}</div>}
-              <button className="student-primary" disabled={!draft.name.trim() || !draft.streamId} onClick={() => setStep(1)}>Continue</button>
+              <div className="student-actions">
+                <button className="student-primary" disabled={!draft.name.trim() || !draft.streamId} onClick={() => setStep(1)}>Continue</button>
+              </div>
             </>
           )}
 
           {step === 1 && (
             <>
-              <span className="student-eyebrow">YOUR COURSES</span>
-              <h1>Choose what you are actually studying.</h1>
-              <p className="student-lead">Select the courses that belong to your current workload. Havan will use these as your planning scope.</p>
-              <div className="course-pick-list">{courses.map((course) => {
-                const selected = draft.courseIds.includes(String(course.id))
-                return <button key={course.id} className={selected ? 'course-pick selected' : 'course-pick'} onClick={() => setDraft({ ...draft, courseIds: selected ? draft.courseIds.filter((id) => id !== String(course.id)) : [...draft.courseIds, String(course.id)] })}><span><b>{course.code}</b>{course.name}</span><i>{selected ? '✓' : '+'}</i></button>
-              })}</div>
-              <div className="student-actions"><button className="student-secondary" onClick={() => setStep(0)}>Back</button><button className="student-primary" disabled={!draft.courseIds.length} onClick={() => setStep(2)}>Continue</button></div>
+              <span className="student-eyebrow">02 · COURSE SCOPE</span>
+              <h1>Tell Havan what you are carrying this term.</h1>
+              <p className="student-lead">
+                Pick the courses you genuinely need to study. Then rate your confidence.
+                That gives the recommendation engine a much better starting signal.
+              </p>
+
+              <div className="course-pick-list">
+                {courses.map((course) => {
+                  const id = String(course.id)
+                  const selected = draft.courseIds.includes(id)
+                  return (
+                    <div className={selected ? 'course-pick selected' : 'course-pick'} key={course.id}>
+                      <button
+                        className="course-pick-main"
+                        onClick={() => setDraft({
+                          ...draft,
+                          courseIds: selected
+                            ? draft.courseIds.filter((value) => value !== id)
+                            : [...draft.courseIds, id],
+                          confidence: {
+                            ...draft.confidence,
+                            [id]: draft.confidence[id] ?? 3,
+                          },
+                        })}
+                      >
+                        <span><b>{course.code}</b>{course.name}</span>
+                        <i>{selected ? '✓' : '+'}</i>
+                      </button>
+
+                      {selected && (
+                        <div className="confidence-pick">
+                          <span>Confidence</span>
+                          {[1, 2, 3, 4, 5].map((value) => (
+                            <button
+                              key={value}
+                              className={draft.confidence[id] === value ? 'confidence-dot selected' : 'confidence-dot'}
+                              onClick={() => setDraft({
+                                ...draft,
+                                confidence: { ...draft.confidence, [id]: value },
+                              })}
+                            >
+                              {value}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+
+              <div className="selection-note"><b>{selectedCount}</b> course{selectedCount === 1 ? '' : 's'} selected</div>
+
+              <div className="student-actions">
+                <button className="student-secondary" onClick={() => setStep(0)}>Back</button>
+                <button className="student-primary" disabled={!selectedCount} onClick={() => setStep(2)}>Continue</button>
+              </div>
             </>
           )}
 
           {step === 2 && (
             <>
-              <span className="student-eyebrow">YOUR CAPACITY</span>
-              <h1>How much time can you really give it?</h1>
-              <p className="student-lead">This is availability, not a promise. The planner will use it as a boundary.</p>
-              <label>Study hours per day<input type="number" min="0.5" max="12" step="0.5" value={draft.studyHours} onChange={(e) => setDraft({ ...draft, studyHours: Number(e.target.value) })} /></label>
-              <span className="day-label">Normal study days</span>
-              <div className="day-pick">{DAYS.map((day) => <button key={day.id} className={draft.studyDays.includes(day.id) ? 'day selected' : 'day'} onClick={() => setDraft({ ...draft, studyDays: draft.studyDays.includes(day.id) ? draft.studyDays.filter((id) => id !== day.id) : [...draft.studyDays, day.id] })}>{day.short}</button>)}</div>
-              <div className="capacity"><b>{(draft.studyHours * draft.studyDays.length).toFixed(1)}h</b><span>available in a normal week</span></div>
-              <div className="student-actions"><button className="student-secondary" onClick={() => setStep(1)}>Back</button><button className="student-primary" disabled={!draft.studyDays.length || saving} onClick={() => setStep(3)}>Continue</button></div>
+              <span className="student-eyebrow">03 · EXAM PRESSURE</span>
+              <h1>Deadlines change what deserves attention.</h1>
+              <p className="student-lead">
+                Add the exams you already know. Havan will use their distance and importance
+                to move relevant topics higher in your recommendations.
+              </p>
+
+              <div className="exam-builder">
+                <select value={examForm.courseId} onChange={(e) => setExamForm({ ...examForm, courseId: e.target.value })}>
+                  <option value="">Course</option>
+                  {selectedCourses.map((course) => <option key={course.id} value={course.id}>{course.code} · {course.name}</option>)}
+                </select>
+                <select value={examForm.type} onChange={(e) => setExamForm({ ...examForm, type: e.target.value })}>
+                  <option>FINAL</option>
+                  <option>MIDTERM</option>
+                  <option>QUIZ</option>
+                </select>
+                <input type="date" min={new Date().toISOString().slice(0, 10)} value={examForm.date} onChange={(e) => setExamForm({ ...examForm, date: e.target.value })} />
+                <select value={examForm.importance} onChange={(e) => setExamForm({ ...examForm, importance: Number(e.target.value) })}>
+                  <option value={5}>Critical</option>
+                  <option value={4}>Important</option>
+                  <option value={3}>Normal</option>
+                  <option value={2}>Low</option>
+                  <option value={1}>Minor</option>
+                </select>
+                <button
+                  className="student-secondary"
+                  disabled={!examForm.courseId || !examForm.date}
+                  onClick={() => {
+                    setDraftExams([...draftExams, { ...examForm }])
+                    setExamForm({ ...examForm, courseId: '', date: '' })
+                  }}
+                >
+                  Add exam
+                </button>
+              </div>
+
+              {draftExams.length > 0 ? (
+                <div className="draft-exams">
+                  {draftExams.map((exam, index) => {
+                    const course = selectedCourses.find((item) => String(item.id) === exam.courseId)
+                    return (
+                      <div className="draft-exam" key={index}>
+                        <div><b>{course?.code}</b><span>{exam.type} · {exam.date}</span></div>
+                        <button onClick={() => setDraftExams(draftExams.filter((_, i) => i !== index))}>Remove</button>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="exam-empty">No exams added yet. You can continue and add them later.</div>
+              )}
+
+              <div className="student-actions">
+                <button className="student-secondary" onClick={() => setStep(1)}>Back</button>
+                <button className="student-primary" onClick={() => setStep(3)}>Continue</button>
+              </div>
             </>
           )}
 
           {step === 3 && (
             <>
-              <span className="student-eyebrow">READY TO START</span>
-              <h1>One profile. Then the work gets practical.</h1>
-              <p className="student-lead">Havan will save your academic context. It will not create recommendations in this phase. That comes after the student data is trustworthy.</p>
-              <div className="review-card"><b>{draft.name}</b><span>{universities.find((x) => String(x.id) === draft.universityId)?.name}</span><span>{streams.find((x) => String(x.id) === draft.streamId)?.name}</span><span>{selectedCourses.length} courses selected</span><span>{draft.studyHours}h/day · {draft.studyDays.length} days/week</span></div>
+              <span className="student-eyebrow">04 · REALISTIC CAPACITY</span>
+              <h1>Give the planner a boundary, not a fantasy.</h1>
+              <p className="student-lead">
+                Havan will recommend work inside this capacity. You remain in control and can
+                move, skip, complete, or regenerate tasks later.
+              </p>
+
+              <label>Study hours per day
+                <input type="number" min="0.5" max="12" step="0.5" value={draft.studyHours} onChange={(e) => setDraft({ ...draft, studyHours: Number(e.target.value) })} />
+              </label>
+
+              <span className="day-label">Normal study days</span>
+              <div className="day-pick">
+                {DAYS.map((day) => (
+                  <button key={day.id} className={draft.studyDays.includes(day.id) ? 'day selected' : 'day'} onClick={() => setDraft({
+                    ...draft,
+                    studyDays: draft.studyDays.includes(day.id)
+                      ? draft.studyDays.filter((id) => id !== day.id)
+                      : [...draft.studyDays, day.id],
+                  })}>{day.short}</button>
+                ))}
+              </div>
+
+              <div className="capacity">
+                <b>{(draft.studyHours * draft.studyDays.length).toFixed(1)}h</b>
+                <span>normal weekly study capacity</span>
+              </div>
+
+              <div className="review-card">
+                <b>{draft.name}</b>
+                <span>{universities.find((item) => String(item.id) === draft.universityId)?.name}</span>
+                <span>{streams.find((item) => String(item.id) === draft.streamId)?.name}</span>
+                <span>{selectedCount} courses · {draftExams.length} exams · {draft.studyHours}h/day</span>
+              </div>
+
               {error && <div className="student-error">{error}</div>}
-              <div className="student-actions"><button className="student-secondary" onClick={() => setStep(2)}>Back</button><button className="student-primary" disabled={saving} onClick={createProfile}>{saving ? 'Saving…' : 'Create my study space'}</button></div>
+
+              <div className="student-actions">
+                <button className="student-secondary" onClick={() => setStep(2)}>Back</button>
+                <button className="student-primary" disabled={saving || !draft.studyDays.length} onClick={createProfile}>
+                  {saving ? 'Building your plan…' : 'Create my study space'}
+                </button>
+              </div>
             </>
           )}
         </section>
@@ -262,21 +500,80 @@ export default function StudentPage() {
 
   return (
     <main className="student-shell dashboard-shell">
-      <header className="student-topbar"><div className="student-brand"><span className="student-mark">H</span><strong>havan</strong><span>Study Planner</span></div><div className="student-nav"><a href="/student/planner">Study plan</a><span className="student-context">{profile?.name} · {profile?.study_hours_per_day}h/day</span></div></header>
+      <header className="student-topbar">
+        <a className="student-brand" href="/student">
+          <span className="student-mark">H</span><strong>havan</strong><span>Study Planner</span>
+        </a>
+        <div className="student-nav">
+          <a className="student-plan-link" href="/student/planner">View my recommendations →</a>
+          <span className="student-context">{profile?.name} · {profile?.study_hours_per_day}h/day</span>
+        </div>
+      </header>
+
       {error && <div className="student-error top-error">{error}<button onClick={() => setError('')}>×</button></div>}
-      <section className="dashboard-hero"><div><span className="student-eyebrow">YOUR ACADEMIC CONTEXT</span><h1>{profile?.name}, this is your starting point.</h1><p>{profile?.university_id ? universities.find((x) => x.id === profile.university_id)?.name ?? 'Your university' : 'Your university'} · {profile?.study_hours_per_day} hours per study day</p></div></section>
 
-      <section className="stats"><article><b>{context?.courses?.length ?? 0}</b><span>courses</span></article><article><b>{topics.length}</b><span>topics in scope</span></article><article><b>{completedTopics}</b><span>topics complete</span></article><article><b>{context?.exams?.length ?? 0}</b><span>exam dates</span></article></section>
-
-      <section className="dashboard-grid">
-        <div className="panel"><div className="panel-heading"><div><span className="student-eyebrow">COURSE SCOPE</span><h2>Your courses</h2></div></div>{context?.courses?.map((sc: Item) => { const course = courses.find((c) => c.id === sc.course_id); return <div className="course-row" key={sc.id}><div><b>{course?.code ?? `Course #${sc.course_id}`}</b><span>{course?.name ?? 'Course'}</span></div><span className="confidence">Confidence {sc.confidence}/5</span></div> })}</div>
-
-        <div className="panel"><div className="panel-heading"><div><span className="student-eyebrow">ASSESSMENTS</span><h2>Exam dates</h2></div></div>{context?.exams?.length ? context.exams.map((exam: Item) => { const course = courses.find((c) => c.id === exam.course_id); return <div className="exam-row" key={exam.id}><div><b>{course?.code ?? 'Course'}</b><span>{exam.exam_type}</span></div><strong>{exam.exam_date}</strong></div> }) : <p className="muted">No exam dates yet. Add the dates you already know.</p>}<div className="exam-form"><select value={examForm.courseId} onChange={(e) => setExamForm({ ...examForm, courseId: e.target.value })}><option value="">Course</option>{courses.filter((c) => context?.courses?.some((sc: Item) => sc.course_id === c.id)).map((c) => <option key={c.id} value={c.id}>{c.code}</option>)}</select><select value={examForm.type} onChange={(e) => setExamForm({ ...examForm, type: e.target.value })}><option>FINAL</option><option>MIDTERM</option><option>QUIZ</option></select><input type="date" value={examForm.date} onChange={(e) => setExamForm({ ...examForm, date: e.target.value })}/><button disabled={saving || !examForm.courseId || !examForm.date} onClick={addExam}>Add</button></div></div>
+      <section className="dashboard-hero">
+        <div>
+          <span className="student-eyebrow">HAVAN STUDY INTELLIGENCE</span>
+          <h1>{profile?.name}, your study system is ready.</h1>
+          <p>Havan turns your curriculum, confidence, progress, capacity, and exam pressure into recommendations. You decide what to follow.</p>
+          <a className="hero-action" href="/student/planner">Open my study plan</a>
+        </div>
       </section>
 
-      <section className="panel progress-panel"><div className="panel-heading"><div><span className="student-eyebrow">TOPIC PROGRESS</span><h2>What you know</h2></div><span className="progress-summary">{completedTopics} complete · {inProgressTopics} in progress</span></div>{topics.slice(0, 30).map((topic) => { const p = context?.progress?.find((item: Item) => item.topic_id === topic.id); const status = p?.status ?? 'NOT_STARTED'; return <div className="topic-row" key={topic.id}><div><b>{topic.name}</b><span>{topic.estimated_study_minutes} min · difficulty {topic.difficulty}/5</span></div><button className={status === 'COMPLETED' ? 'progress-button complete' : status === 'IN_PROGRESS' ? 'progress-button active' : 'progress-button'} onClick={() => updateProgress(topic.id, status === 'NOT_STARTED' ? 'IN_PROGRESS' : status === 'IN_PROGRESS' ? 'COMPLETED' : 'NOT_STARTED')}>{status === 'NOT_STARTED' ? 'Start' : status === 'IN_PROGRESS' ? 'Complete' : 'Completed'}</button></div>})}</section>
+      <section className="stats">
+        <article><b>{context?.courses?.length ?? 0}</b><span>courses</span></article>
+        <article><b>{topics.length}</b><span>topics in scope</span></article>
+        <article><b>{completedTopics}</b><span>topics complete</span></article>
+        <article><b>{context?.exams?.length ?? 0}</b><span>exam dates</span></article>
+      </section>
 
-      <p className="student-footer">Havan recommends later. For now, you define the academic context and keep control of your progress.</p>
+      <section className="dashboard-grid">
+        <div className="panel">
+          <div className="panel-heading"><div><span className="student-eyebrow">COURSE SCOPE</span><h2>Your courses</h2></div></div>
+          {context?.courses?.map((item: Item) => {
+            const course = courses.find((courseItem) => courseItem.id === item.course_id)
+            return <div className="course-row" key={item.id}><div><b>{course?.code ?? `Course #${item.course_id}`}</b><span>{course?.name ?? 'Course'}</span></div><span className="confidence">Confidence {item.confidence}/5</span></div>
+          })}
+        </div>
+
+        <div className="panel">
+          <div className="panel-heading"><div><span className="student-eyebrow">ASSESSMENTS</span><h2>Exam dates</h2></div></div>
+          {context?.exams?.length ? context.exams.map((exam: Item) => {
+            const course = courses.find((item) => item.id === exam.course_id)
+            return <div className="exam-row" key={exam.id}><div><b>{course?.code ?? 'Course'}</b><span>{exam.exam_type}</span></div><strong>{exam.exam_date}</strong></div>
+          }) : <p className="muted">No exam dates yet. Add the dates you know so Havan can account for urgency.</p>}
+
+          <div className="exam-form">
+            <select value={examForm.courseId} onChange={(e) => setExamForm({ ...examForm, courseId: e.target.value })}><option value="">Course</option>{courses.map((course) => <option key={course.id} value={course.id}>{course.code}</option>)}</select>
+            <select value={examForm.type} onChange={(e) => setExamForm({ ...examForm, type: e.target.value })}><option>FINAL</option><option>MIDTERM</option><option>QUIZ</option></select>
+            <input type="date" min={new Date().toISOString().slice(0, 10)} value={examForm.date} onChange={(e) => setExamForm({ ...examForm, date: e.target.value })} />
+            <button disabled={saving || !examForm.courseId || !examForm.date} onClick={addExam}>Add</button>
+          </div>
+        </div>
+      </section>
+
+      <section className="panel progress-panel">
+        <div className="panel-heading">
+          <div><span className="student-eyebrow">TOPIC PROGRESS</span><h2>What you know</h2></div>
+          <span className="progress-summary">{completedTopics} complete · {inProgressTopics} in progress</span>
+        </div>
+
+        {topics.slice(0, 30).map((topic) => {
+          const progress = context?.progress?.find((item: Item) => item.topic_id === topic.id)
+          const status = progress?.status ?? 'NOT_STARTED'
+          return (
+            <div className="topic-row" key={topic.id}>
+              <div><b>{topic.name}</b><span>{topic.estimated_study_minutes} min · difficulty {topic.difficulty}/5</span></div>
+              <button className={status === 'COMPLETED' ? 'progress-button complete' : status === 'IN_PROGRESS' ? 'progress-button active' : 'progress-button'} onClick={() => updateProgress(topic.id, status === 'NOT_STARTED' ? 'IN_PROGRESS' : status === 'IN_PROGRESS' ? 'COMPLETED' : 'NOT_STARTED')}>
+                {status === 'NOT_STARTED' ? 'Start' : status === 'IN_PROGRESS' ? 'Complete' : 'Completed'}
+              </button>
+            </div>
+          )
+        })}
+      </section>
+
+      <p className="student-footer">Havan recommends. You decide what actually happens.</p>
     </main>
   )
 }
