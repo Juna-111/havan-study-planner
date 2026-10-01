@@ -144,8 +144,75 @@ def add_course(student_id: int, payload: StudentCourseAdd, db: DB):
         db.commit()
         db.refresh(existing)
         return existing
-    item = StudentCourse(student_id=student_id, **payload.model_dump())
+
+    item = StudentCourse(
+        student_id=student_id,
+        course_id=payload.course_id,
+        confidence=payload.confidence,
+    )
     db.add(item)
+    db.flush()
+
+    # A selected starting position means the student is telling Havan where
+    # they are in the course. Topics before that position are treated as
+    # already covered; the selected topic remains the first active target.
+    if payload.starting_chapter_id is not None or payload.starting_topic_id is not None:
+        chapters = list(db.scalars(
+            select(Chapter)
+            .where(Chapter.course_id == course.id)
+            .order_by(Chapter.order_index, Chapter.id)
+        ).all())
+        chapter_by_id = {chapter.id: chapter for chapter in chapters}
+
+        if payload.starting_chapter_id is not None and payload.starting_chapter_id not in chapter_by_id:
+            raise HTTPException(status_code=400, detail="Starting chapter does not belong to the selected course")
+
+        selected_topic = None
+        if payload.starting_topic_id is not None:
+            selected_topic = db.get(Topic, payload.starting_topic_id)
+            if selected_topic is None:
+                raise HTTPException(status_code=400, detail="Starting topic not found")
+            if selected_topic.chapter_id not in chapter_by_id:
+                raise HTTPException(status_code=400, detail="Starting topic does not belong to the selected course")
+            if payload.starting_chapter_id is not None and selected_topic.chapter_id != payload.starting_chapter_id:
+                raise HTTPException(status_code=400, detail="Starting topic must belong to the selected starting chapter")
+
+        target_chapter_id = payload.starting_chapter_id or selected_topic.chapter_id
+        target_chapter = chapter_by_id[target_chapter_id]
+        topic_rows = list(db.scalars(
+            select(Topic)
+            .where(Topic.chapter_id.in_([chapter.id for chapter in chapters]))
+            .order_by(Topic.chapter_id, Topic.order_index, Topic.id)
+        ).all())
+        chapter_position = {chapter.id: index for index, chapter in enumerate(chapters)}
+        selected_topic_position = None
+        if selected_topic is not None:
+            selected_topic_position = (chapter_position[selected_topic.chapter_id], selected_topic.order_index, selected_topic.id)
+
+        for topic in topic_rows:
+            topic_position = (chapter_position[topic.chapter_id], topic.order_index, topic.id)
+            if topic_position < (chapter_position[target_chapter.id], -1, -1) or (
+                selected_topic_position is not None and topic_position < selected_topic_position
+            ):
+                db.add(StudentTopicProgress(
+                    student_id=student_id,
+                    topic_id=topic.id,
+                    status="COMPLETED",
+                    confidence=payload.confidence,
+                    completed_minutes=topic.estimated_study_minutes,
+                    study_sessions=1,
+                ))
+
+        if selected_topic is not None:
+            db.add(StudentTopicProgress(
+                student_id=student_id,
+                topic_id=selected_topic.id,
+                status="IN_PROGRESS",
+                confidence=payload.confidence,
+                completed_minutes=0,
+                study_sessions=0,
+            ))
+
     db.commit()
     db.refresh(item)
     return item
