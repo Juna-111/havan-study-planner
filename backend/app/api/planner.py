@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.models.planner import StudyTask
+from app.db.models.student import StudentTopicProgress
 from app.db.session import get_db
 from app.schemas.planner import PlanGenerateRequest, StudyPlanRead, StudyTaskRead, StudyTaskUpdate
 from app.services.planner import generate_plan, load_plan
@@ -39,6 +40,24 @@ def update_task(student_id: int, task_id: int, payload: StudyTaskUpdate, db: Ses
     task.status = payload.status
     if payload.planned_date:
         task.planned_date = payload.planned_date
+
+    # Keep planner actions and academic progress synchronized.
+    if payload.status == "COMPLETED":
+        progress = db.scalar(select(StudentTopicProgress).where(
+            StudentTopicProgress.student_id == student_id,
+            StudentTopicProgress.topic_id == task.topic_id,
+        ))
+        if progress is None:
+            progress = StudentTopicProgress(
+                student_id=student_id,
+                topic_id=task.topic_id,
+                status="COMPLETED",
+                confidence=3,
+            )
+            db.add(progress)
+        else:
+            progress.status = "COMPLETED"
+
     db.commit()
     db.refresh(task)
     return task
