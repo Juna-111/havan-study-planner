@@ -49,7 +49,7 @@ def score_topic(topic: PlannerTopic, exam: PlannerExam | None, today: date) -> S
     exam_weight = (exam.importance / 5) if exam else 0.0
     importance = max(0.0, min(1.0, topic.exam_importance * 0.65 + topic.conceptual_importance * 0.35))
     difficulty = max(0.0, min(1.0, topic.difficulty / 5))
-    time_efficiency = 1.0 - min(max(topic.estimated_minutes, 15), 180) / 180
+    time_efficiency = 1.0 - min(max(topic.estimated_minutes, 1), 180) / 180
     confidence_need = max(0.0, min(1.0, (4 - topic.progress_confidence) / 3))
     revision_need = 1.0 if topic.progress_status == "IN_PROGRESS" else 0.0
 
@@ -119,14 +119,12 @@ def schedule_tasks(
     ordered = sorted(scored, key=lambda item: (-item.score, item.topic.estimated_minutes))
 
     for item in ordered:
-        remaining = max(15, item.topic.estimated_minutes)
+        remaining = max(1, item.topic.estimated_minutes)
         for day in study_dates:
             available = daily_capacity - day_used[day]
             if available <= 0:
                 continue
             duration = min(remaining, available)
-            if duration < 15 and remaining > 15:
-                continue
             output.append((item, day, duration))
             day_used[day] += duration
             remaining -= duration
