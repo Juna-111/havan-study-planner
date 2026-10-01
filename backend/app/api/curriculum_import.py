@@ -21,7 +21,7 @@ async def preview_curriculum_import(
     db: Session = DB,
 ):
     if not file.filename or not file.filename.lower().endswith((".txt", ".md")):
-        raise HTTPException(status_code=415, detail="Upload a .txt or .md bullet-formatted file.")
+        raise HTTPException(status_code=415, detail="Upload a .txt or .md curriculum file.")
 
     university = get_or_404(db, University, university_id)
     curriculum = get_or_404(db, Curriculum, curriculum_id)
@@ -51,7 +51,13 @@ async def preview_curriculum_import(
                 "name": course.name,
                 "code": course.code,
                 "chapters": [
-                    {"name": chapter.name, "topics": [{"name": topic.name} for topic in chapter.topics]}
+                    {
+                        "name": chapter.name,
+                        "topics": [
+                            {"name": topic.name, "difficulty": topic.difficulty}
+                            for topic in chapter.topics
+                        ],
+                    }
                     for chapter in course.chapters
                 ],
             }
@@ -100,6 +106,7 @@ def commit_curriculum_import(payload: CurriculumImportPreview, db: Session = DB)
                         Topic(
                             chapter_id=chapter.id,
                             name=topic_payload.name,
+                            difficulty=topic_payload.difficulty,
                             order_index=topic_index,
                             status="ACTIVE",
                         )

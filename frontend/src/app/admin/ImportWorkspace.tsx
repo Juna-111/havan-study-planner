@@ -5,7 +5,7 @@ import {apiFetch} from '../../lib/api'
 
 type R=Record<string,string|number|null|undefined>
 type C={items:R[];total:number}
-type Topic={name:string}
+type Topic={name:string;difficulty:number}
 type Chapter={name:string;topics:Topic[]}
 type Course={name:string;code:string;chapters:Chapter[]}
 type Preview={university_id:number;curriculum_id:number;stream_id:number;courses:Course[];created_courses?:number;created_chapters?:number;created_topics?:number}
@@ -88,7 +88,7 @@ export default function ImportWorkspace({onImported}:{onImported:()=>Promise<voi
     {message&&<div className="notice importNotice">{message}</div>}
     {error&&<div className="alert importNotice">{error}<button onClick={()=>setError('')}>×</button></div>}
     {preview&&<section className="previewCard"><header><div><span>NOT SAVED YET</span><h2>Review imported structure</h2></div><strong>{preview.courses.length} courses</strong></header>
-      <div className="tree">{preview.courses.map((course,ci)=><div className="treeCourse" key={ci}><b>{course.name}</b><small>{course.code}</small>{course.chapters.map((chapter,hi)=><div className="treeChapter" key={hi}><b>{chapter.name}</b><span>{chapter.topics.length} topics</span>{chapter.topics.map((topic,ti)=><div className="treeTopic" key={ti}>{topic.name}</div>)}</div>)}</div>)}</div>
+      <div className="tree">{preview.courses.map((course,ci)=><div className="treeCourse" key={ci}><b>{course.name}</b><small>{course.code}</small>{course.chapters.map((chapter,hi)=><div className="treeChapter" key={hi}><b>{chapter.name}</b><span>{chapter.topics.length} topics</span>{chapter.topics.map((topic,ti)=><div className="treeTopic" key={ti}>{topic.name} <small>[{topic.difficulty}]</small></div>)}</div>)}</div>)}</div>
       <footer><button onClick={()=>setPreview(null)}>Cancel</button><button className="primary" disabled={busy} onClick={commit}>{busy?'Saving…':'Confirm and save'}</button></footer>
     </section>}
   </div>

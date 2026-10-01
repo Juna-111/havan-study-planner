@@ -37,8 +37,3 @@ class StudyPlanRead(BaseModel):
     total_minutes: int
     days: list[StudyPlanDay]
     tasks: list[StudyTaskRead]
-
-
-class StudyTaskUpdate(BaseModel):
-    status: str = Field(pattern="^(RECOMMENDED|COMPLETED|SKIPPED|RESCHEDULED)$")
-    planned_date: date | None = None

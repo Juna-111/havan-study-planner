@@ -102,29 +102,12 @@ export default function PlannerPage() {
     if (studentId) await generatePlan(studentId)
   }
 
-  async function updateTask(task: Item, status: string, plannedDate?: string) {
-    if (!studentId) return
-    try {
-      const updated = await apiFetch<Item>(`/planner/students/${studentId}/tasks/${task.id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status, planned_date: plannedDate }),
-      })
-      setPlan((current: Item | null) => current ? {
-        ...current,
-        tasks: current.tasks.map((item: Item) => item.id === updated.id ? updated : item),
-      } : current)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not update the study task.')
-    }
-  }
-
   if (loading) {
     return <main className="student-shell"><div className="student-loading">Building your recommendations…</div></main>
   }
 
   const tasks: Task[] = plan?.tasks ?? []
   const recommended = tasks.filter((task) => task.status === 'RECOMMENDED')
-  const completed = tasks.filter((task) => task.status === 'COMPLETED')
   const totalMinutes = tasks.reduce((sum: number, task: Task) => sum + task.estimated_minutes, 0)
 
   const grouped = tasks.reduce((groups: Record<string, Task[]>, task: Task) => {
@@ -158,8 +141,8 @@ export default function PlannerPage() {
         <section className="planner-insights">
           <article><span>RECOMMENDED</span><b>{recommended.length}</b><small>active study tasks</small></article>
           <article><span>STUDY TIME</span><b>{totalMinutes}m</b><small>planned this week</small></article>
-          <article><span>COMPLETED</span><b>{completed.length}</b><small>tasks already done</small></article>
-          <article className="planner-principle"><span>PRINCIPLE</span><b>Student decides</b><small>move, skip, complete, repeat</small></article>
+          <article><span>TOPICS</span><b>{topics.length}</b><small>active academic topics</small></article>
+          <article className="planner-principle"><span>PHASE 5</span><b>Deterministic</b><small>recommendations only</small></article>
         </section>
       )}
 
@@ -217,19 +200,7 @@ export default function PlannerPage() {
                 <div className="task-meta">
                   <span>{task.estimated_minutes} min</span>
                   <span>Priority {Number(task.priority).toFixed(2)}</span>
-                  {task.status === 'COMPLETED' ? (
-                    <button className="task-complete" onClick={() => updateTask(task, 'RECOMMENDED')}>Completed</button>
-                  ) : (
-                    <div className="task-actions">
-                      <button onClick={() => updateTask(task, 'COMPLETED')}>Complete</button>
-                      <button onClick={() => updateTask(task, 'SKIPPED')}>Skip</button>
-                      <button onClick={() => {
-                        const next = new Date(task.planned_date + 'T00:00:00')
-                        next.setDate(next.getDate() + 1)
-                        updateTask(task, 'RESCHEDULED', next.toISOString().slice(0, 10))
-                      }}>Move +1 day</button>
-                    </div>
-                  )}
+                  <span>Recommended</span>
                 </div>
               </article>
             )
