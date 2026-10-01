@@ -37,3 +37,8 @@ class StudyPlanRead(BaseModel):
     total_minutes: int
     days: list[StudyPlanDay]
     tasks: list[StudyTaskRead]
+
+
+class StudyTaskAction(BaseModel):
+    action: str = Field(pattern=r"^(START|COMPLETE|SKIP|MOVE)$")
+    target_date: date | None = None
