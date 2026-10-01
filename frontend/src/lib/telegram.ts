@@ -22,6 +22,8 @@ declare global {
 }
 
 export function initialiseTelegram() {
+  if (typeof window === 'undefined') return
+
   const webApp = window.Telegram?.WebApp
   if (!webApp) return
 
@@ -32,6 +34,8 @@ export function initialiseTelegram() {
 }
 
 export function getTelegramIdentity(): AppIdentity | null {
+  if (typeof window === 'undefined') return null
+
   const user = window.Telegram?.WebApp?.initDataUnsafe?.user
   if (!user || !Number.isSafeInteger(user.id) || !user.first_name.trim()) return null
 
