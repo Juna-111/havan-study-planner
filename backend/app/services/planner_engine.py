@@ -74,16 +74,28 @@ def score_topic(topic: PlannerTopic, exam: PlannerExam | None, today: date) -> S
 
     reasons: list[str] = []
     if days is not None:
-        reasons.append(f"{exam.exam_type.title()} in {days} day(s)")
+        reasons.append(
+            f"{exam.exam_type.title()} is in {days} day(s)"
+        )
+    else:
+        reasons.append("no upcoming exam is driving this recommendation")
     if exam and exam.importance >= 4:
-        reasons.append("important assessment")
+        reasons.append("the assessment has high importance")
+    elif exam:
+        reasons.append(f"the assessment importance is {exam.importance}/5")
     if topic.exam_importance >= 0.70:
-        reasons.append("high exam importance")
-    reasons.append(f"{DIFFICULTY_LABELS[topic.difficulty]} difficulty")
-    if topic.progress_confidence <= 2:
-        reasons.append("low confidence")
+        reasons.append("the topic has high exam importance")
+    elif topic.exam_importance >= 0.50:
+        reasons.append("the topic has moderate exam importance")
+    reasons.append(f"senior-student difficulty is {DIFFICULTY_LABELS[topic.difficulty]}")
     if topic.progress_status == "IN_PROGRESS":
-        reasons.append("revision of current progress")
+        reasons.append("you have already started it, so this session continues your progress")
+    elif topic.progress_status == "NOT_STARTED":
+        reasons.append("it is not started yet")
+    if topic.progress_confidence <= 2:
+        reasons.append("your current confidence is low")
+    elif topic.progress_confidence >= 4:
+        reasons.append("your current confidence is already strong")
 
     return ScoredTopic(topic, round(score, 4), "; ".join(reasons), days)
 

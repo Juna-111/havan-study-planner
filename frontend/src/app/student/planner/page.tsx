@@ -287,6 +287,69 @@ export default function PlannerPage() {
   const selectedTopic = selectedTask ? topicMap.get(selectedTask.topic_id) : null
   const selectedCourse = selectedTask ? courseMap.get(selectedTask.course_id) : null
 
+  const selectedExam = useMemo(() => {
+    if (!selectedTask) return null
+    return (context?.exams ?? [])
+      .filter((exam: Item) => exam.course_id === selectedTask.course_id)
+      .map((exam: Item) => ({ ...exam, dateObject: toDate(exam.exam_date) }))
+      .filter((exam: Item) => exam.dateObject >= today())
+      .sort((a: Item, b: Item) => a.dateObject.getTime() - b.dateObject.getTime())[0] ?? null
+  }, [context, selectedTask])
+
+  const recommendationReasons = useMemo(() => {
+    if (!selectedTask || !selectedTopic) return []
+    const progress = progressMap.get(selectedTask.topic_id)
+    const totalMinutes = Number(selectedTopic.estimated_study_minutes || 0)
+    const completedMinutes = Math.min(
+      Number(progress?.completed_minutes || 0),
+      totalMinutes,
+    )
+    const reasons: string[] = []
+
+    if (selectedExam) {
+      const days = Math.max(
+        0,
+        Math.ceil((selectedExam.dateObject.getTime() - today().getTime()) / 86400000),
+      )
+      reasons.push(
+        days === 0
+          ? `Your ${selectedExam.exam_type} is today, so exam urgency is high.`
+          : `Your ${selectedExam.exam_type} is in ${days} day${days === 1 ? '' : 's'}, which increases its priority.`,
+      )
+      reasons.push(`This assessment has importance ${selectedExam.importance}/5.`)
+    } else {
+      reasons.push('There is no upcoming exam for this course, so Havan is using the other academic signals.')
+    }
+
+    reasons.push(
+      Number(selectedTopic.exam_importance || 0) >= 0.7
+        ? 'This topic has high exam importance in the curriculum.'
+        : 'This topic contributes to the curriculum importance score.',
+    )
+    reasons.push(
+      `Senior-student academic difficulty is ${selectedTopic.difficulty ?? 'not set'}/5.`,
+    )
+
+    if (completedMinutes > 0 && completedMinutes < totalMinutes) {
+      reasons.push(
+        `You have already studied ${completedMinutes} of ${totalMinutes} minutes, so Havan plans the remaining work instead of restarting the topic.`,
+      )
+    } else if (!completedMinutes) {
+      reasons.push('You have not recorded study time for this topic yet.')
+    }
+
+    if (progress?.confidence && Number(progress.confidence) <= 2) {
+      reasons.push(`Your recorded confidence is ${progress.confidence}/5, so the planner gives this topic additional attention.`)
+    }
+    if (selectedTask.estimated_minutes < totalMinutes) {
+      reasons.push(`The ${selectedTask.estimated_minutes}-minute session is a portion of the remaining work and fits the planner's available study capacity.`)
+    } else {
+      reasons.push(`The ${selectedTask.estimated_minutes}-minute session fits the planner's available study capacity.`)
+    }
+
+    return reasons
+  }, [selectedTask, selectedTopic, selectedExam, context, progressMap])
+
   const upcomingExam = useMemo(() => {
     const now = today()
     return (context?.exams ?? [])
@@ -770,8 +833,18 @@ export default function PlannerPage() {
             </div>
 
             <div className="planner-detail-reason">
-              <span className="student-eyebrow">WHY IT IS HERE</span>
+              <span className="student-eyebrow">WHY HAVAN RECOMMENDS IT</span>
               <p>{selectedTask.reason}</p>
+              {recommendationReasons.length > 0 && (
+                <ul className="planner-reason-list">
+                  {recommendationReasons.map((reason, index) => (
+                    <li key={index}>
+                      <span aria-hidden="true">✓</span>
+                      <span>{reason}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
 
             <div className="planner-progress-meter">
