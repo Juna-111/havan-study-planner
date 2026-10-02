@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
@@ -119,9 +119,7 @@ def act_on_task(
             raise HTTPException(status_code=404, detail="Study plan or student profile not found")
 
         horizon_start = plan.created_at.date()
-        horizon_end = horizon_start.fromordinal(
-            horizon_start.toordinal() + plan.horizon_days - 1
-        )
+        horizon_end = horizon_start + timedelta(days=plan.horizon_days - 1)
         if payload.target_date < horizon_start or payload.target_date > horizon_end:
             raise HTTPException(
                 status_code=400,
