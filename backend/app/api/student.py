@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.db.models.curriculum import Chapter, Course, Curriculum, FreshmanCurriculumMapping, FreshmanStreamCourseAssignment, FreshmanTemplateCourse, FreshmanTemplateSemester, FreshmanCurriculumTemplate, Stream, Topic, University
+from app.db.models.curriculum import Chapter, Course, Curriculum, FreshmanCurriculumMapping, FreshmanStreamCourseAssignment, FreshmanTemplateCourse, FreshmanTemplateSemester, FreshmanCurriculumTemplate, Stream, Topic, University, UniversityCourseOverride
 from app.db.models.student import StudentCourse, StudentExam, StudentProfile, StudentTopicProgress
 from app.db.session import get_db
 from app.schemas.student import (
@@ -25,18 +25,18 @@ def profile_or_404(db: Session, student_id: int) -> StudentProfile:
 
 
 def course_available_to_stream(db: Session, course_id: int, stream_id: int) -> bool:
+    stream = db.get(Stream, stream_id)
+    if stream is None:
+        return False
+
     direct = db.scalar(
         select(Course.id).where(
             Course.id == course_id,
             Course.stream_id == stream_id,
+            Course.status == "ACTIVE",
         )
     )
-    if direct is not None:
-        return True
-
-    stream = db.get(Stream, stream_id)
-    if stream is None:
-        return False
+    available = direct is not None
 
     mapping = db.scalar(
         select(FreshmanCurriculumMapping).where(
@@ -44,24 +44,44 @@ def course_available_to_stream(db: Session, course_id: int, stream_id: int) -> b
             FreshmanCurriculumMapping.status == "ACTIVE",
         )
     )
-    if mapping is None:
-        return False
-
-    freshman_course = db.scalar(
-        select(Course.id)
-        .join(FreshmanTemplateCourse, FreshmanTemplateCourse.course_id == Course.id)
-        .join(FreshmanTemplateSemester, FreshmanTemplateSemester.id == FreshmanTemplateCourse.semester_id)
-        .join(FreshmanStreamCourseAssignment, FreshmanStreamCourseAssignment.template_course_id == FreshmanTemplateCourse.id)
-        .join(FreshmanCurriculumTemplate, FreshmanCurriculumTemplate.id == FreshmanTemplateSemester.template_id)
-        .where(
-            Course.id == course_id,
-            FreshmanStreamCourseAssignment.stream_id == stream_id,
-            FreshmanStreamCourseAssignment.status == "ACTIVE",
-            FreshmanCurriculumTemplate.id == mapping.template_id,
-            FreshmanCurriculumTemplate.status == "ACTIVE",
+    if mapping is not None:
+        freshman_course = db.scalar(
+            select(Course.id)
+            .join(FreshmanTemplateCourse, FreshmanTemplateCourse.course_id == Course.id)
+            .join(FreshmanTemplateSemester, FreshmanTemplateSemester.id == FreshmanTemplateCourse.semester_id)
+            .join(FreshmanStreamCourseAssignment, FreshmanStreamCourseAssignment.template_course_id == FreshmanTemplateCourse.id)
+            .join(FreshmanCurriculumTemplate, FreshmanCurriculumTemplate.id == FreshmanTemplateSemester.template_id)
+            .where(
+                Course.id == course_id,
+                Course.status == "ACTIVE",
+                FreshmanStreamCourseAssignment.stream_id == stream_id,
+                FreshmanStreamCourseAssignment.status == "ACTIVE",
+                FreshmanCurriculumTemplate.id == mapping.template_id,
+                FreshmanCurriculumTemplate.status == "ACTIVE",
+            )
         )
-    )
-    return freshman_course is not None
+        available = available or freshman_course is not None
+
+    overrides = list(db.scalars(
+        select(UniversityCourseOverride).where(
+            UniversityCourseOverride.curriculum_id == stream.curriculum_id,
+            UniversityCourseOverride.status == "ACTIVE",
+        )
+    ).all())
+
+    for override in overrides:
+        if override.override_type == "ADD" and override.target_stream_id == stream_id and override.local_course_id == course_id:
+            available = True
+        elif override.override_type == "REMOVE" and override.national_course_id == course_id:
+            if override.source_stream_id is None or override.source_stream_id == stream_id:
+                available = False
+        elif override.override_type == "CHANGE_STREAM" and override.national_course_id == course_id:
+            if override.source_stream_id is None or override.source_stream_id == stream_id:
+                available = False
+            if override.target_stream_id == stream_id:
+                available = True
+
+    return available
 
 
 def validate_curriculum_context(db: Session, university_id: int, curriculum_id: int, stream_id: int) -> None:
