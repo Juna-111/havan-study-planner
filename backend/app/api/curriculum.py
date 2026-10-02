@@ -57,7 +57,12 @@ def delete_stream(item_id:int,db:DB): delete_item(db,get_or_404(db,Stream,item_i
 def courses(db:DB,stream_id:int|None=None,page:int=Query(1,ge=1),page_size:int=Query(20,ge=1,le=100)):
     return collection(db,Course,CourseRead,page,page_size,{"stream_id":stream_id})
 @router.post("/courses",response_model=CourseRead,status_code=201)
-def create_course(payload:CourseCreate,db:DB): return create_item(db,Course,payload.model_dump())
+def create_course(payload:CourseCreate,db:DB):
+    data = payload.model_dump()
+    data['academic_scope'] = 'UNIVERSITY'
+    data['content_version'] = '1.0'
+    data['registry_key'] = f'UNIVERSITY:{payload.stream_id}:{payload.code.strip()}'
+    return create_item(db,Course,data)
 @router.get("/courses/{item_id}",response_model=CourseRead)
 def get_course(item_id:int,db:DB): return get_or_404(db,Course,item_id)
 @router.patch("/courses/{item_id}",response_model=CourseRead)
