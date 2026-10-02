@@ -414,10 +414,16 @@ export default function PlannerPage() {
         </a>
         <nav className="planner-nav" aria-label="Student navigation">
           <a className="planner-dashboard-link" href="/student">Dashboard</a>
-          <span className="planner-user">
+          <button
+            type="button"
+            className="planner-user planner-profile-button"
+            onClick={() => window.location.href = '/student/settings'}
+            aria-label="Open your Havan profile settings"
+            title="Profile settings"
+          >
             <span className="planner-avatar">{initials(profile?.name ?? '')}</span>
             <span>{profile?.name ?? 'Student'}</span>
-          </span>
+          </button>
         </nav>
       </header>
 
