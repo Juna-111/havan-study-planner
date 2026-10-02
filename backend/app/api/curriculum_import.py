@@ -78,37 +78,60 @@ def commit_curriculum_import(payload: CurriculumImportPreview, db: Session = DB)
     if stream.curriculum_id != curriculum.id:
         raise HTTPException(status_code=422, detail="The stream does not belong to the selected curriculum.")
 
-    created_courses = created_chapters = created_topics = 0
+    created_courses = reused_courses = 0
+    created_chapters = reused_chapters = 0
+    created_topics = skipped_topics = 0
+
     try:
         for course_payload in payload.courses:
-            course = Course(
-                stream_id=stream.id,
-                code=course_payload.code,
-                name=course_payload.name,
-                status="ACTIVE",
-            )
-            db.add(course)
-            db.flush()
-            created_courses += 1
-
-            for chapter_index, chapter_payload in enumerate(course_payload.chapters, start=1):
-                chapter = Chapter(
-                    course_id=course.id,
-                    name=chapter_payload.name,
-                    order_index=chapter_index,
+            course = _find_course(db, stream.id, course_payload.code)
+            if course is None:
+                course = Course(
+                    stream_id=stream.id,
+                    code=course_payload.code,
+                    name=course_payload.name,
                     status="ACTIVE",
                 )
-                db.add(chapter)
+                db.add(course)
                 db.flush()
-                created_chapters += 1
+                created_courses += 1
+            else:
+                if course.name != course_payload.name:
+                    raise HTTPException(
+                        status_code=409,
+                        detail=f"Course code '{course_payload.code}' already belongs to '{course.name}'.",
+                    )
+                reused_courses += 1
 
-                for topic_index, topic_payload in enumerate(chapter_payload.topics, start=1):
+            for chapter_payload in course_payload.chapters:
+                chapter = _find_chapter(db, course.id, chapter_payload.name)
+                if chapter is None:
+                    existing_chapter_count = db.query(Chapter).filter(Chapter.course_id == course.id).count()
+                    chapter = Chapter(
+                        course_id=course.id,
+                        name=chapter_payload.name,
+                        order_index=existing_chapter_count + 1,
+                        status="ACTIVE",
+                    )
+                    db.add(chapter)
+                    db.flush()
+                    created_chapters += 1
+                else:
+                    reused_chapters += 1
+
+                for topic_payload in chapter_payload.topics:
+                    topic = _find_topic(db, chapter.id, topic_payload.name)
+                    if topic is not None:
+                        skipped_topics += 1
+                        continue
+
+                    existing_topic_count = db.query(Topic).filter(Topic.chapter_id == chapter.id).count()
                     db.add(
                         Topic(
                             chapter_id=chapter.id,
                             name=topic_payload.name,
                             difficulty=topic_payload.difficulty,
-                            order_index=topic_index,
+                            order_index=existing_topic_count + 1,
                             status="ACTIVE",
                         )
                     )
@@ -119,7 +142,7 @@ def commit_curriculum_import(payload: CurriculumImportPreview, db: Session = DB)
         db.rollback()
         raise HTTPException(
             status_code=409,
-            detail="Import was not saved because a course, chapter, or topic already exists.",
+            detail="Import was not saved because a duplicate record exists.",
         ) from exc
 
     return {
@@ -131,7 +154,6 @@ def commit_curriculum_import(payload: CurriculumImportPreview, db: Session = DB)
         "created_chapters": created_chapters,
         "created_topics": created_topics,
     }
-
 
 @router.post("/curriculum-import/bootstrap-demo", status_code=201)
 def bootstrap_demo_academic_structure(db: Session = DB):
