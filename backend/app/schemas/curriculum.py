@@ -59,6 +59,60 @@ class StreamRead(ORMModel):
     id: int; curriculum_id: int; name: str; code: str; description: Optional[str]; status: str
 
 
+class FreshmanCourseCategoryBase(BaseModel):
+    code: str = Field(min_length=2, max_length=30, pattern=r"^[A-Z0-9_-]+$")
+    name: str = Field(min_length=2, max_length=100)
+    description: Optional[str] = None
+
+class FreshmanCourseCategoryCreate(FreshmanCourseCategoryBase): pass
+
+class FreshmanCourseCategoryUpdate(BaseModel):
+    code: Optional[str] = Field(default=None, min_length=2, max_length=30, pattern=r"^[A-Z0-9_-]+$")
+    name: Optional[str] = Field(default=None, min_length=2, max_length=100)
+    description: Optional[str] = None
+
+class FreshmanCourseCategoryRead(ORMModel):
+    id: int
+    code: str
+    name: str
+    description: Optional[str]
+    created_at: datetime
+    updated_at: datetime
+
+
+class FreshmanCourseCreate(BaseModel):
+    code: str = Field(min_length=1, max_length=40, pattern=r"^[A-Za-z0-9_.-]+$")
+    name: str = Field(min_length=2, max_length=150)
+    description: Optional[str] = None
+    credit_hours: Optional[int] = Field(default=None, ge=0, le=30)
+    content_version: str = Field(default="1.0", min_length=1, max_length=30)
+    status: str = Field(default="ACTIVE", pattern=r"^(ACTIVE|INACTIVE)$")
+    category_codes: list[str] = Field(default_factory=list, max_length=3)
+
+
+class FreshmanCourseUpdate(BaseModel):
+    code: Optional[str] = Field(default=None, min_length=1, max_length=40, pattern=r"^[A-Za-z0-9_.-]+$")
+    name: Optional[str] = Field(default=None, min_length=2, max_length=150)
+    description: Optional[str] = None
+    credit_hours: Optional[int] = Field(default=None, ge=0, le=30)
+    content_version: Optional[str] = Field(default=None, min_length=1, max_length=30)
+    status: Optional[str] = Field(default=None, pattern=r"^(ACTIVE|INACTIVE)$")
+    category_codes: Optional[list[str]] = Field(default=None, max_length=3)
+
+
+class FreshmanCourseRead(ORMModel):
+    id: int
+    code: str
+    name: str
+    description: Optional[str]
+    credit_hours: Optional[int]
+    academic_scope: str
+    registry_key: str
+    content_version: str
+    status: str
+    category_codes: list[str] = Field(default_factory=list)
+
+
 class CourseBase(BaseModel):
     stream_id: int = Field(gt=0)
     code: str = Field(min_length=1, max_length=40, pattern=r"^[A-Za-z0-9_.-]+$")
