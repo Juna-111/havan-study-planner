@@ -8,6 +8,7 @@ from app.api.curriculum_import import router as curriculum_import_router
 from app.api.health import router as health_router
 from app.api.freshman_registry import router as freshman_registry_router
 from app.api.freshman_registry_import import router as freshman_registry_import_router
+from app.api.freshman_templates import router as freshman_templates_router
 from app.api.student import router as student_router
 from app.api.planner import router as planner_router
 from app.core.config import get_settings
