@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.models.planner import StudyPlan, StudyTask
-from app.db.models.curriculum import Topic
+from app.db.models.curriculum import Chapter, Topic
 from app.db.models.student import StudentProfile, StudentTopicProgress
 from app.services.academic_resolver import resolved_course_ids
 from app.db.session import get_db
@@ -178,13 +178,13 @@ def act_on_task(
                 raise HTTPException(status_code=400, detail="The selected topic is not active")
             if topic.chapter_id is None:
                 raise HTTPException(status_code=400, detail="The selected topic is not attached to a chapter")
-            chapter = db.get(__import__("app.db.models.curriculum", fromlist=["Chapter"]).Chapter, topic.chapter_id)
+            chapter = db.get(Chapter, topic.chapter_id)
             if chapter is None or chapter.course_id not in resolved_course_ids(db, student_id):
                 raise HTTPException(status_code=400, detail="The selected topic is outside the student's active curriculum")
             existing = list(db.scalars(select(StudyTask).where(
                 StudyTask.plan_id == plan.id,
                 StudyTask.topic_id == topic.id,
-                StudyTask.status.not_in(["SKIPPED", "REPLANNED"]),
+                ~StudyTask.status.in_([ "SKIPPED", "REPLANNED" ]),
             )).all())
             if existing:
                 raise HTTPException(status_code=400, detail="This topic is already represented in the current study plan")
