@@ -7,9 +7,11 @@ import FreshmanTemplateWorkspace from './FreshmanTemplateWorkspace'
 import FreshmanMappingWorkspace from './FreshmanMappingWorkspace'
 import FreshmanStreamAssignmentWorkspace from './FreshmanStreamAssignmentWorkspace'
 import UniversityOverrideWorkspace from './UniversityOverrideWorkspace'
+import UniversitySetupWorkspace from './UniversitySetupWorkspace'
 import AcademicQuality from './AcademicQuality'
 
 type Mode =
+  | 'setup'
   | 'quality'
   | 'freshman'
   | 'templates'
@@ -18,6 +20,7 @@ type Mode =
   | 'universityOverrides'
 
 const navigation: Array<{mode: Mode; label: string; icon: string}> = [
+  {mode: 'setup', label: 'University setup', icon: '⌂'},
   {mode: 'quality', label: 'Academic quality', icon: '✓'},
   {mode: 'freshman', label: 'Freshman registry', icon: '▣'},
   {mode: 'templates', label: 'Freshman templates', icon: '▤'},
@@ -27,7 +30,7 @@ const navigation: Array<{mode: Mode; label: string; icon: string}> = [
 ]
 
 export default function Admin() {
-  const [mode, setMode] = useState<Mode>('quality')
+  const [mode, setMode] = useState<Mode>('setup')
   const [mobileNav, setMobileNav] = useState(false)
 
   const selectMode = (next: Mode) => {
@@ -36,6 +39,7 @@ export default function Admin() {
   }
 
   const workspace = {
+    setup: <UniversitySetupWorkspace />,
     quality: <AcademicQuality />,
     freshman: <FreshmanRegistryWorkspace />,
     templates: <FreshmanTemplateWorkspace />,
