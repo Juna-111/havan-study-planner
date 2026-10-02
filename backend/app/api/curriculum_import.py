@@ -4,9 +4,9 @@ from sqlalchemy.orm import Session
 
 from app.db.models.curriculum import Chapter, Course, Curriculum, Stream, Topic, University
 from app.db.session import get_db
-from app.schemas.curriculum_import import CurriculumImportPreview, CurriculumImportResult
+from app.schemas.curriculum_import import CurriculumImportPreview, CurriculumImportResult, FullStructurePreview, FullStructureResult
 from app.services.curriculum import get_or_404
-from app.services.curriculum_import import parse_bullet_curriculum
+from app.services.curriculum_import import parse_bullet_curriculum, parse_full_structure
 
 router = APIRouter(prefix="/api/v1", tags=["curriculum-import"])
 DB = Depends(get_db)
@@ -33,8 +33,8 @@ async def preview_curriculum_import(
         raise HTTPException(status_code=422, detail="The stream does not belong to the selected curriculum.")
 
     raw = await file.read()
-    if len(raw) > 2 * 1024 * 1024:
-        raise HTTPException(status_code=413, detail="The curriculum file must be 2 MB or smaller.")
+    if len(raw) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="The curriculum file must be 5 MB or smaller.")
 
     try:
         content = raw.decode("utf-8-sig")
@@ -175,3 +175,119 @@ def bootstrap_demo_academic_structure(db: Session = DB):
         raise HTTPException(status_code=409, detail="Demo academic structure could not be created.") from exc
 
     return {"created": True, "items": created}
+
+
+@router.post("/academic-structure-import/preview", response_model=FullStructurePreview)
+async def preview_full_structure_import(file: UploadFile = File(...)):
+    if not file.filename or not file.filename.lower().endswith((".txt", ".md")):
+        raise HTTPException(status_code=415, detail="Upload a .txt or .md academic structure file.")
+    raw = await file.read()
+    if len(raw) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="The academic structure file must be 5 MB or smaller.")
+    try:
+        content = raw.decode("utf-8-sig")
+    except UnicodeDecodeError as exc:
+        raise HTTPException(status_code=422, detail="The academic structure file must be UTF-8 text.") from exc
+    parsed = parse_full_structure(content)
+    return {
+        "university_name": parsed["university_name"],
+        "university_code": parsed["university_code"],
+        "curriculum_name": parsed["curriculum_name"],
+        "curriculum_version": parsed["curriculum_version"],
+        "academic_year": parsed["academic_year"],
+        "stream_name": parsed["stream_name"],
+        "stream_code": parsed["stream_code"],
+        "courses": [
+            {
+                "name": course.name,
+                "code": course.code,
+                "chapters": [
+                    {
+                        "name": chapter.name,
+                        "topics": [{"name": topic.name, "difficulty": topic.difficulty} for topic in chapter.topics],
+                    }
+                    for chapter in course.chapters
+                ],
+            }
+            for course in parsed["courses"]
+        ],
+    }
+
+
+@router.post("/academic-structure-import/commit", response_model=FullStructureResult, status_code=201)
+def commit_full_structure_import(payload: FullStructurePreview, db: Session = DB):
+    existing_university = db.query(University).filter(University.code == payload.university_code).first()
+    if existing_university:
+        raise HTTPException(status_code=409, detail="A university with this code already exists.")
+    university = University(
+        name=payload.university_name,
+        code=payload.university_code,
+        status="ACTIVE",
+    )
+    db.add(university)
+    db.flush()
+
+    curriculum = Curriculum(
+        university_id=university.id,
+        name=payload.curriculum_name,
+        version=payload.curriculum_version,
+        academic_year=payload.academic_year,
+        status="ACTIVE",
+    )
+    db.add(curriculum)
+    db.flush()
+
+    stream = Stream(
+        curriculum_id=curriculum.id,
+        name=payload.stream_name,
+        code=payload.stream_code,
+        status="ACTIVE",
+    )
+    db.add(stream)
+    db.flush()
+
+    created_courses = created_chapters = created_topics = 0
+    try:
+        for course_payload in payload.courses:
+            course = Course(
+                stream_id=stream.id,
+                code=course_payload.code,
+                name=course_payload.name,
+                status="ACTIVE",
+            )
+            db.add(course)
+            db.flush()
+            created_courses += 1
+            for chapter_index, chapter_payload in enumerate(course_payload.chapters, start=1):
+                chapter = Chapter(
+                    course_id=course.id,
+                    name=chapter_payload.name,
+                    order_index=chapter_index,
+                    status="ACTIVE",
+                )
+                db.add(chapter)
+                db.flush()
+                created_chapters += 1
+                for topic_index, topic_payload in enumerate(chapter_payload.topics, start=1):
+                    db.add(Topic(
+                        chapter_id=chapter.id,
+                        name=topic_payload.name,
+                        difficulty=topic_payload.difficulty,
+                        order_index=topic_index,
+                        status="ACTIVE",
+                    ))
+                    created_topics += 1
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="The academic structure was not saved because a duplicate record exists.") from exc
+
+    return {
+        **payload.model_dump(),
+        "university_id": university.id,
+        "curriculum_id": curriculum.id,
+        "stream_id": stream.id,
+        "created_courses": created_courses,
+        "created_chapters": created_chapters,
+        "created_topics": created_topics,
+    }
