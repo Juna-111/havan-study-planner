@@ -697,7 +697,7 @@ export default function PlannerPage() {
                         >
                           <span className="agenda-time">{minutesLabel(task.estimated_minutes)}</span>
                           <span className="agenda-copy">
-                            <span>{course?.code ?? 'Course'}</span>
+                            <span>{course?.code ?? 'Course'} · {course?.name ?? 'Course'}</span>
                             <strong>{topic?.name ?? 'Recommended topic'}</strong>
                             <small>{task.reason}</small>
                           </span>
@@ -894,8 +894,8 @@ export default function PlannerPage() {
             </div>
 
             <div className="planner-detail-meta">
-              <span>{selectedCourse?.code ?? 'Course'}</span>
-              <strong>{minutesLabel(selectedTask.estimated_minutes)}</strong>
+              <span>{selectedCourse?.code ?? 'Course'} · {selectedCourse?.name ?? 'Course'}</span>
+              <strong>{minutesLabel(selectedTask.estimated_minutes)}{selectedCourse?.credit_hours != null ? ' · ' + selectedCourse.credit_hours + ' cr' : ''}</strong>
               <span>Priority {Number(selectedTask.priority).toFixed(2)}</span>
             </div>
 
@@ -943,6 +943,10 @@ export default function PlannerPage() {
                     ? Math.round(Number(selectedTopic.exam_importance) * 100) + '%'
                     : '—'}
                 </strong>
+              </div>
+              <div>
+                <span>Course identity</span>
+                <strong>{selectedCourse?.code ?? '—'} · {selectedCourse?.name ?? '—'}</strong>
               </div>
               <div>
                 <span>Plan status</span>
