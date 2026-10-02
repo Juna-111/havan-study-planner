@@ -10,6 +10,7 @@ from app.services.curriculum_import import parse_bullet_curriculum, parse_full_s
 
 router = APIRouter(prefix="/api/v1", tags=["curriculum-import"])
 DB = Depends(get_db)
+MAX_FILE_SIZE = 5 * 1024 * 1024
 
 
 @router.post("/curriculum-import/preview", response_model=CurriculumImportPreview)
@@ -33,7 +34,7 @@ async def preview_curriculum_import(
         raise HTTPException(status_code=422, detail="The stream does not belong to the selected curriculum.")
 
     raw = await file.read()
-    if len(raw) > 5 * 1024 * 1024:
+    if len(raw) > MAX_FILE_SIZE:
         raise HTTPException(status_code=413, detail="The curriculum file must be 5 MB or smaller.")
 
     try:
@@ -145,7 +146,7 @@ def bootstrap_demo_academic_structure(db: Session = DB):
     ]
     created = []
     try:
-        for index, (name, code) in enumerate(demo, start=1):
+        for name, code in demo:
             university = University(name=name, code=code, description="Phase 3 testing data.", status="ACTIVE")
             db.add(university)
             db.flush()
@@ -182,7 +183,7 @@ async def preview_full_structure_import(file: UploadFile = File(...)):
     if not file.filename or not file.filename.lower().endswith((".txt", ".md")):
         raise HTTPException(status_code=415, detail="Upload a .txt or .md academic structure file.")
     raw = await file.read()
-    if len(raw) > 5 * 1024 * 1024:
+    if len(raw) > MAX_FILE_SIZE:
         raise HTTPException(status_code=413, detail="The academic structure file must be 5 MB or smaller.")
     try:
         content = raw.decode("utf-8-sig")
@@ -204,7 +205,8 @@ async def preview_full_structure_import(file: UploadFile = File(...)):
                 "chapters": [
                     {
                         "name": chapter.name,
-                        "topics": [{"name": topic.name, "difficulty": topic.difficulty} for topic in chapter.topics],
+                        "topics": [{"name": topic.name, "difficulty": topic.difficulty}
+                                   for topic in chapter.topics],
                     }
                     for chapter in course.chapters
                 ],
@@ -212,6 +214,18 @@ async def preview_full_structure_import(file: UploadFile = File(...)):
             for course in parsed["courses"]
         ],
     }
+
+
+def _find_course(db: Session, stream_id: int, code: str) -> Course | None:
+    return db.query(Course).filter(Course.stream_id == stream_id, Course.code == code).first()
+
+
+def _find_chapter(db: Session, course_id: int, name: str) -> Chapter | None:
+    return db.query(Chapter).filter(Chapter.course_id == course_id, Chapter.name == name).first()
+
+
+def _find_topic(db: Session, chapter_id: int, name: str) -> Topic | None:
+    return db.query(Topic).filter(Topic.chapter_id == chapter_id, Topic.name == name).first()
 
 
 @router.post("/academic-structure-import/commit", response_model=FullStructureResult, status_code=201)
@@ -231,63 +245,95 @@ def commit_full_structure_import(payload: FullStructurePreview, db: Session = DB
     elif university.name != payload.university_name:
         raise HTTPException(status_code=409, detail="The university code already belongs to a different university.")
 
-    existing_curriculum = db.query(Curriculum).filter(
+    curriculum = db.query(Curriculum).filter(
         Curriculum.university_id == university.id,
         Curriculum.name == payload.curriculum_name,
         Curriculum.version == payload.curriculum_version,
     ).first()
-    if existing_curriculum:
-        raise HTTPException(status_code=409, detail="This curriculum version already exists for the selected university.")
+    reused_curriculum = curriculum is not None
 
     try:
-        curriculum = Curriculum(
-            university_id=university.id,
-            name=payload.curriculum_name,
-            version=payload.curriculum_version,
-            academic_year=payload.academic_year,
-            status="ACTIVE",
-        )
-        db.add(curriculum)
-        db.flush()
-
-        stream = Stream(
-            curriculum_id=curriculum.id,
-            name=payload.stream_name,
-            code=payload.stream_code,
-            status="ACTIVE",
-        )
-        db.add(stream)
-        db.flush()
-
-        created_courses = created_chapters = created_topics = 0
-        for course_payload in payload.courses:
-            course = Course(
-                stream_id=stream.id,
-                code=course_payload.code,
-                name=course_payload.name,
+        if curriculum is None:
+            curriculum = Curriculum(
+                university_id=university.id,
+                name=payload.curriculum_name,
+                version=payload.curriculum_version,
+                academic_year=payload.academic_year,
                 status="ACTIVE",
             )
-            db.add(course)
+            db.add(curriculum)
             db.flush()
-            created_courses += 1
 
-            for chapter_index, chapter_payload in enumerate(course_payload.chapters, start=1):
-                chapter = Chapter(
-                    course_id=course.id,
-                    name=chapter_payload.name,
-                    order_index=chapter_index,
+        stream = db.query(Stream).filter(
+            Stream.curriculum_id == curriculum.id,
+            Stream.code == payload.stream_code,
+        ).first()
+        reused_stream = stream is not None
+
+        if stream is None:
+            stream = Stream(
+                curriculum_id=curriculum.id,
+                name=payload.stream_name,
+                code=payload.stream_code,
+                status="ACTIVE",
+            )
+            db.add(stream)
+            db.flush()
+        elif stream.name != payload.stream_name:
+            raise HTTPException(status_code=409, detail="The stream code already belongs to a different stream in this curriculum.")
+
+        created_courses = reused_courses = 0
+        created_chapters = reused_chapters = 0
+        created_topics = skipped_topics = 0
+
+        for course_payload in payload.courses:
+            course = _find_course(db, stream.id, course_payload.code)
+            if course is None:
+                course = Course(
+                    stream_id=stream.id,
+                    code=course_payload.code,
+                    name=course_payload.name,
                     status="ACTIVE",
                 )
-                db.add(chapter)
+                db.add(course)
                 db.flush()
-                created_chapters += 1
+                created_courses += 1
+            else:
+                if course.name != course_payload.name:
+                    raise HTTPException(
+                        status_code=409,
+                        detail=f"Course code '{course_payload.code}' already belongs to '{course.name}'.",
+                    )
+                reused_courses += 1
+
+            for chapter_index, chapter_payload in enumerate(course_payload.chapters, start=1):
+                chapter = _find_chapter(db, course.id, chapter_payload.name)
+                if chapter is None:
+                    existing_chapter_count = db.query(Chapter).filter(Chapter.course_id == course.id).count()
+                    chapter = Chapter(
+                        course_id=course.id,
+                        name=chapter_payload.name,
+                        order_index=existing_chapter_count + 1,
+                        status="ACTIVE",
+                    )
+                    db.add(chapter)
+                    db.flush()
+                    created_chapters += 1
+                else:
+                    reused_chapters += 1
 
                 for topic_index, topic_payload in enumerate(chapter_payload.topics, start=1):
+                    topic = _find_topic(db, chapter.id, topic_payload.name)
+                    if topic is not None:
+                        skipped_topics += 1
+                        continue
+
+                    existing_topic_count = db.query(Topic).filter(Topic.chapter_id == chapter.id).count()
                     db.add(Topic(
                         chapter_id=chapter.id,
                         name=topic_payload.name,
                         difficulty=topic_payload.difficulty,
-                        order_index=topic_index,
+                        order_index=existing_topic_count + 1,
                         status="ACTIVE",
                     ))
                     created_topics += 1
@@ -295,15 +341,23 @@ def commit_full_structure_import(payload: FullStructurePreview, db: Session = DB
         db.commit()
     except IntegrityError as exc:
         db.rollback()
-        raise HTTPException(status_code=409, detail="The academic structure was not saved because a duplicate record exists.") from exc
+        raise HTTPException(
+            status_code=409,
+            detail="The academic structure was not saved because a duplicate record exists.",
+        ) from exc
 
     return {
         **payload.model_dump(),
         "university_id": university.id,
         "curriculum_id": curriculum.id,
         "stream_id": stream.id,
+        "created_university": created_university,
+        "reused_curriculum": reused_curriculum,
+        "reused_stream": reused_stream,
         "created_courses": created_courses,
+        "reused_courses": reused_courses,
         "created_chapters": created_chapters,
+        "reused_chapters": reused_chapters,
         "created_topics": created_topics,
+        "skipped_topics": skipped_topics,
     }
-
