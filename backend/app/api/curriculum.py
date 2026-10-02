@@ -57,8 +57,8 @@ def delete_stream(item_id:int,db:DB): delete_item(db,get_or_404(db,Stream,item_i
 @router.get("/courses")
 def courses(
     db: DB,
-    stream_id: int | None = None,
-    include_freshman: bool = False,
+    stream_id: int | None = Query(None),
+    include_freshman: bool = Query(False),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
 ):
