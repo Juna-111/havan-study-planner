@@ -1,7 +1,7 @@
 from typing import Annotated, Any
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
+from sqlalchemy import func, select
 from app.db.session import get_db
 from app.db.models.curriculum import Chapter, Course, Curriculum, FreshmanCurriculumMapping, FreshmanStreamCourseAssignment, FreshmanTemplateCourse, FreshmanTemplateSemester, FreshmanCurriculumTemplate, Stream, Topic, TopicRelationship, University
 from app.schemas.curriculum import *
