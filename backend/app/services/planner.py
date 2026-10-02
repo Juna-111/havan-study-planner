@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.db.models.curriculum import Chapter, Topic, TopicRelationship
 from app.db.models.planner import StudyPlan, StudyTask
 from app.db.models.student import StudentCourse, StudentExam, StudentProfile, StudentTopicProgress
+from app.services.academic_resolver import resolved_course_ids
 from app.services.planner_engine import (
     PlannerExam,
     PlannerTopic,
@@ -68,15 +69,26 @@ def generate_plan(
     if not selected:
         raise ValueError("Select at least one course before generating a plan")
 
+    effective_course_ids = resolved_course_ids(db, student_id)
+    selected = [item for item in selected if item.course_id in effective_course_ids]
+    if not selected:
+        raise ValueError("Your selected courses are no longer available in the active university curriculum.")
+
     course_ids = [item.course_id for item in selected]
-    chapters = list(db.scalars(select(Chapter).where(Chapter.course_id.in_(course_ids))).all())
+    chapters = list(
+        db.scalars(
+            select(Chapter)
+            .where(Chapter.course_id.in_(course_ids), func.upper(Chapter.status) == "ACTIVE")
+            .order_by(Chapter.course_id, Chapter.order_index, Chapter.id)
+        ).all()
+    )
     chapter_ids = [chapter.id for chapter in chapters]
 
     topics = list(db.scalars(
         select(Topic).where(
             Topic.chapter_id.in_(chapter_ids),
             func.upper(Topic.status) == "ACTIVE",
-        )
+        ).order_by(Topic.chapter_id, Topic.order_index, Topic.id)
     ).all()) if chapter_ids else []
 
     if not topics:
