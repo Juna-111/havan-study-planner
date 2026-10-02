@@ -360,7 +360,7 @@ export default function PlannerPage() {
   const selectedTopic = selectedTask ? topicMap.get(selectedTask.topic_id) : null
   const selectedCourse = selectedTask ? courseMap.get(selectedTask.course_id) : null
 
-  const selectedExam = useMemo(() => {
+  const _selectedExam = useMemo(() => {
     if (!selectedTask) return null
     return (context?.exams ?? [])
       .filter((exam: Item) => exam.course_id === selectedTask.course_id)
