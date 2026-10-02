@@ -344,7 +344,7 @@ def update_exam(student_id: int, exam_id: int, payload: ExamUpdate, db: DB):
     course = db.get(Course, course_id)
     if not course:
         raise HTTPException(status_code=404, detail="Exam course not found")
-    if course.stream_id != profile.stream_id:
+    if not course_available_to_stream(db, course.id, profile.stream_id):
         raise HTTPException(status_code=400, detail="Exam course is outside the student's selected stream")
 
     for key, value in data.items():
