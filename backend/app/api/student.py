@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.db.models.curriculum import Chapter, Course, Curriculum, FreshmanCurriculumMapping, FreshmanStreamCourseAssignment, FreshmanTemplateCourse, FreshmanTemplateSemester, FreshmanCurriculumTemplate, Stream, Topic, University, UniversityCourseOverride
 from app.db.models.student import StudentCourse, StudentExam, StudentProfile, StudentTopicProgress
 from app.db.session import get_db
-from app.services.academic_resolver import resolve_stream_courses
+from app.services.academic_resolver import resolve_stream_courses, resolved_course_ids
 from app.schemas.student import (
     CourseTopicStatus, ExamCreate, ExamRead, ExamUpdate, ProgressRead, ProgressUpsert, StudentContext,
     StudentCourseAdd, StudentCourseRead, StudentCreate, StudentRead, StudentUpdate,
@@ -86,9 +86,14 @@ def update_profile(student_id: int, payload: StudentUpdate, db: DB):
 @router.get("/profiles/{student_id}/context", response_model=StudentContext)
 def get_context(student_id: int, db: DB):
     profile = profile_or_404(db, student_id)
-    student_courses = list(db.scalars(
-        select(StudentCourse).where(StudentCourse.student_id == student_id)
-    ).all())
+    effective_course_ids = resolved_course_ids(db, student_id)
+    student_courses = [
+        item
+        for item in db.scalars(
+            select(StudentCourse).where(StudentCourse.student_id == student_id)
+        ).all()
+        if item.course_id in effective_course_ids
+    ]
 
     course_topic_status = []
     for student_course in student_courses:
