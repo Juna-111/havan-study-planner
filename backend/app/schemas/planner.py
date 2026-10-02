@@ -40,5 +40,7 @@ class StudyPlanRead(BaseModel):
 
 
 class StudyTaskAction(BaseModel):
-    action: str = Field(pattern=r"^(START|COMPLETE|SKIP|MOVE)$")
+    action: str = Field(pattern=r"^(START|COMPLETE|SKIP|MOVE|ADD|RESCHEDULE|REPEAT)$")
+    target_topic_id: int | None = Field(default=None, gt=0)
+    estimated_minutes: int | None = Field(default=None, gt=0)
     target_date: date | None = None
