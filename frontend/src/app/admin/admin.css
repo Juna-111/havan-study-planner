@@ -12,3 +12,12 @@
 
 .importModeTabs{max-width:1250px;margin:0 auto 18px;display:flex;gap:8px;padding:5px;border:1px solid #e7e7ef;border-radius:12px;background:#fff;width:max-content;max-width:100%}.importModeTabs button{padding:9px 13px;border:0;border-radius:8px;background:transparent;color:#66667a;font-size:10px;font-weight:700}.importModeTabs button.sel{background:#01017e;color:#fff}.structureBadge{display:flex;flex-wrap:wrap;gap:7px;margin-top:20px}.structureBadge span{width:100%;color:#8b8b9b;font-size:9px;text-transform:uppercase;letter-spacing:.8px}.structureBadge b{padding:9px 11px;border-radius:9px;background:#e9ebff;color:#01017e;font-size:10px}.importHierarchy{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:20px}.importHierarchy div{padding:13px;border-radius:11px;background:#f7f7fb}.importHierarchy span{display:block;color:#8b8b9b;font-size:9px;text-transform:uppercase}.importHierarchy b{display:block;margin-top:5px;color:#151526;font-size:11px}.previewCard .tree{margin-top:16px}
 @media(max-width:760px){.importModeTabs{width:100%}.importModeTabs button{flex:1}.importHierarchy{grid-template-columns:1fr}}
+
+
+.issueActionCard{width:100%;display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;text-align:left;border:1px solid #e5e6ef;border-radius:14px;background:#fff;padding:15px 16px;cursor:pointer;color:inherit;transition:border-color .15s ease,box-shadow .15s ease,transform .15s ease}
+.issueActionCard:hover{border-color:#01017e;box-shadow:0 8px 24px rgba(1,1,126,.08);transform:translateY(-1px)}
+.issueActionCard:focus-visible{outline:3px solid rgba(1,1,126,.16);outline-offset:2px}
+.issueActionCard .issueBody{min-width:0}
+.issueActionCard .issueFix{white-space:nowrap;color:#01017e;font-size:12px;font-weight:800}
+.issueActionCard .issueFix b{font-size:15px}
+@media(max-width:640px){.issueActionCard{grid-template-columns:auto 1fr}.issueActionCard .issueFix{grid-column:2}}
