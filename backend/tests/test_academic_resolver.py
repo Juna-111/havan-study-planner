@@ -12,7 +12,15 @@ class FakeResult:
 
 
 class FakeDB:
-    def __init__(self, stream, direct_courses, mapping, freshman_rows, overrides, courses=None):
+    def __init__(
+        self,
+        stream,
+        direct_courses,
+        mapping,
+        freshman_rows,
+        overrides,
+        courses=None,
+    ):
         self.stream = stream
         self.direct_courses = direct_courses
         self.mapping = mapping
@@ -23,6 +31,7 @@ class FakeDB:
 
     def get(self, model, item_id):
         from app.db.models.curriculum import Course, Stream
+
         if model is Stream:
             return self.stream if item_id == self.stream.id else None
         if model is Course:
@@ -42,6 +51,41 @@ class FakeDB:
         return FakeResult(self.freshman_rows)
 
 
+class StatusAwareFreshmanDB(FakeDB):
+    def __init__(
+        self,
+        stream,
+        national,
+        mapping_status="ACTIVE",
+        assignment_status="ACTIVE",
+        template_status="ACTIVE",
+    ):
+        super().__init__(
+            stream=stream,
+            direct_courses=[],
+            mapping=SimpleNamespace(template_id=30, status=mapping_status),
+            freshman_rows=[],
+            overrides=[],
+        )
+        self.national = national
+        self.mapping_status = mapping_status
+        self.assignment_status = assignment_status
+        self.template_status = template_status
+
+    def scalar(self, query):
+        if self.mapping_status.upper() != "ACTIVE":
+            return None
+        return self.mapping
+
+    def execute(self, query):
+        if (
+            self.assignment_status.upper() != "ACTIVE"
+            or self.template_status.upper() != "ACTIVE"
+        ):
+            return FakeResult([])
+        return FakeResult([(self.national, 1, 1, "REQUIRED")])
+
+
 def test_resolver_applies_stream_mapping_and_university_overrides() -> None:
     stream = SimpleNamespace(id=10, curriculum_id=20)
 
@@ -52,12 +96,7 @@ def test_resolver_applies_stream_mapping_and_university_overrides() -> None:
         id=202, code="BIO-L", name="Local Biology", credit_hours=3, status="ACTIVE"
     )
 
-    mapping = SimpleNamespace(template_id=30, status="ACTIVE")
-    semester = SimpleNamespace(semester_number=1)
-    placement = SimpleNamespace(
-        id=301, order_index=2, requirement_type="REQUIRED"
-    )
-
+    placement = SimpleNamespace(id=301, order_index=2, requirement_type="REQUIRED")
     freshman_row = (national, 1, placement.order_index, placement.requirement_type)
 
     overrides = [
@@ -102,7 +141,7 @@ def test_resolver_applies_stream_mapping_and_university_overrides() -> None:
     db = FakeDB(
         stream=stream,
         direct_courses=[],
-        mapping=mapping,
+        mapping=SimpleNamespace(template_id=30, status="ACTIVE"),
         freshman_rows=[freshman_row],
         overrides=overrides,
         courses={202: local},
@@ -124,7 +163,6 @@ def test_resolver_remove_override_removes_inherited_course() -> None:
     national = SimpleNamespace(
         id=101, code="PHY101", name="Physics", credit_hours=4, status="ACTIVE"
     )
-    mapping = SimpleNamespace(template_id=30, status="ACTIVE")
     overrides = [
         SimpleNamespace(
             override_type="REMOVE",
@@ -143,7 +181,7 @@ def test_resolver_remove_override_removes_inherited_course() -> None:
     db = FakeDB(
         stream=stream,
         direct_courses=[],
-        mapping=mapping,
+        mapping=SimpleNamespace(template_id=30, status="ACTIVE"),
         freshman_rows=[(national, 1, 1, "REQUIRED")],
         overrides=overrides,
     )
@@ -156,7 +194,6 @@ def test_resolver_change_stream_removes_course_from_source_stream() -> None:
     national = SimpleNamespace(
         id=101, code="PHY101", name="Physics", credit_hours=4, status="ACTIVE"
     )
-    mapping = SimpleNamespace(template_id=30, status="ACTIVE")
     override = SimpleNamespace(
         override_type="CHANGE_STREAM",
         national_course_id=101,
@@ -173,7 +210,7 @@ def test_resolver_change_stream_removes_course_from_source_stream() -> None:
     db = FakeDB(
         stream=source_stream,
         direct_courses=[],
-        mapping=mapping,
+        mapping=SimpleNamespace(template_id=30, status="ACTIVE"),
         freshman_rows=[(national, 1, 1, "REQUIRED")],
         overrides=[override],
     )
@@ -186,7 +223,6 @@ def test_resolver_change_stream_adds_course_to_target_stream() -> None:
     national = SimpleNamespace(
         id=101, code="PHY101", name="Physics", credit_hours=4, status="ACTIVE"
     )
-    mapping = SimpleNamespace(template_id=30, status="ACTIVE")
     override = SimpleNamespace(
         override_type="CHANGE_STREAM",
         national_course_id=101,
@@ -203,7 +239,7 @@ def test_resolver_change_stream_adds_course_to_target_stream() -> None:
     db = FakeDB(
         stream=target_stream,
         direct_courses=[],
-        mapping=mapping,
+        mapping=SimpleNamespace(template_id=30, status="ACTIVE"),
         freshman_rows=[],
         overrides=[override],
         courses={101: national},
@@ -218,3 +254,48 @@ def test_resolver_change_stream_adds_course_to_target_stream() -> None:
     assert resolved[0].display_code == "PHY101"
     assert resolved[0].display_name == "Physics"
     assert resolved[0].credit_hours == 4
+
+
+def test_resolver_ignores_inactive_curriculum_mapping() -> None:
+    stream = SimpleNamespace(id=10, curriculum_id=20)
+    national = SimpleNamespace(
+        id=101, code="PHY101", name="Physics", credit_hours=4, status="ACTIVE"
+    )
+
+    db = StatusAwareFreshmanDB(
+        stream=stream,
+        national=national,
+        mapping_status="ARCHIVED",
+    )
+
+    assert resolve_stream_courses(db, stream.id) == []
+
+
+def test_resolver_ignores_inactive_stream_assignment() -> None:
+    stream = SimpleNamespace(id=10, curriculum_id=20)
+    national = SimpleNamespace(
+        id=101, code="PHY101", name="Physics", credit_hours=4, status="ACTIVE"
+    )
+
+    db = StatusAwareFreshmanDB(
+        stream=stream,
+        national=national,
+        assignment_status="ARCHIVED",
+    )
+
+    assert resolve_stream_courses(db, stream.id) == []
+
+
+def test_resolver_ignores_inactive_curriculum_template() -> None:
+    stream = SimpleNamespace(id=10, curriculum_id=20)
+    national = SimpleNamespace(
+        id=101, code="PHY101", name="Physics", credit_hours=4, status="ACTIVE"
+    )
+
+    db = StatusAwareFreshmanDB(
+        stream=stream,
+        national=national,
+        template_status="ARCHIVED",
+    )
+
+    assert resolve_stream_courses(db, stream.id) == []
