@@ -81,12 +81,16 @@ export default function PlannerPage() {
   const [actionBusy, setActionBusy] = useState(false)
   const [toast, setToast] = useState('')
   const [lastDecision, setLastDecision] = useState<{
-    action: 'START' | 'COMPLETE' | 'SKIP' | 'MOVE'
+    action: 'START' | 'COMPLETE' | 'SKIP' | 'MOVE' | 'RESCHEDULE' | 'ADD' | 'REPEAT'
     topicName: string
     summary: string
     impact: string
   } | null>(null)
   const [moveDate, setMoveDate] = useState('')
+  const [rescheduleDate, setRescheduleDate] = useState('')
+  const [repeatDate, setRepeatDate] = useState('')
+  const [addDate, setAddDate] = useState('')
+  const [addTopicId, setAddTopicId] = useState('')
   const [focusTaskId, setFocusTaskId] = useState<number | null>(null)
   const [focusSeconds, setFocusSeconds] = useState(25 * 60)
   const [focusMode, setFocusMode] = useState<'compact' | 'normal' | 'fullscreen' | 'minimized'>('normal')
@@ -190,7 +194,7 @@ export default function PlannerPage() {
     return String(minutes).padStart(2, '0') + ':' + String(rest).padStart(2, '0')
   }
 
-  async function actOnTask(task: Task, action: 'START' | 'COMPLETE' | 'SKIP' | 'MOVE', targetDate?: string) {
+  async function actOnTask(task: Task, action: 'START' | 'COMPLETE' | 'SKIP' | 'MOVE' | 'RESCHEDULE' | 'REPEAT', targetDate?: string) {
     if (!studentId || actionBusy) return
     setActionBusy(true)
     setError('')
@@ -234,6 +238,20 @@ export default function PlannerPage() {
         })
         setSelectedTaskId(null)
         setToast('Skipped and recorded. Havan rebuilt the remaining week around that decision.')
+      } else if (action === 'RESCHEDULE') {
+        const nextDate = targetDate || selectedDate
+        setLastDecision({ action, topicName, summary: `You rescheduled ${topicName} to ${formatDate(toDate(nextDate), { weekday: 'long', month: 'long', day: 'numeric' })}.`, impact: 'Havan keeps the session inside the current plan horizon and checks the destination capacity before saving it.' })
+        setSelectedDate(nextDate)
+        setRescheduleDate('')
+        setSelectedTaskId(null)
+        setToast('Session rescheduled. Havan kept the rest of your plan intact.')
+      } else if (action === 'REPEAT') {
+        const nextDate = targetDate || selectedDate
+        setLastDecision({ action, topicName, summary: `You scheduled another practice session for ${topicName}.`, impact: 'The original session remains part of your history. This creates a separate practice session on the date you chose.' })
+        setSelectedDate(nextDate)
+        setRepeatDate('')
+        setSelectedTaskId(null)
+        setToast('Practice session added to your plan.')
       } else {
         const nextDate = targetDate || updatedPlan.days?.[0]?.date || selectedDate
         setLastDecision({
@@ -249,6 +267,30 @@ export default function PlannerPage() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not update this study session.')
+    } finally {
+      setActionBusy(false)
+    }
+  }
+
+
+  async function addStudySession() {
+    if (!studentId || actionBusy || !addTopicId || !addDate || !plan) return
+    const sourceTask = tasks[0]
+    if (!sourceTask) return
+    setActionBusy(true)
+    setError('')
+    try {
+      const updatedPlan = await apiFetch<Item>('/planner/students/' + studentId + '/tasks/' + sourceTask.id + '/action', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'ADD', target_date: addDate, target_topic_id: Number(addTopicId) }),
+      })
+      setPlan(updatedPlan)
+      setSelectedDate(addDate)
+      setAddTopicId('')
+      setAddDate('')
+      setToast('Study session added. Havan checked the destination capacity first.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not add this study session.')
     } finally {
       setActionBusy(false)
     }
@@ -918,57 +960,47 @@ export default function PlannerPage() {
               </p>
             </div>
 
+
             <div className="planner-action-grid">
-              <button
-                type="button"
-                className="planner-action planner-action-primary"
-                disabled={actionBusy || selectedTask.status === 'COMPLETED'}
-                onClick={() => actOnTask(selectedTask, 'START')}
-              >
-                <strong>Start focus</strong>
-                <span>25-minute study session</span>
+              <button type="button" className="planner-action planner-action-primary" disabled={actionBusy || selectedTask.status === 'COMPLETED'} onClick={() => actOnTask(selectedTask, 'START')}>
+                <strong>Start focus</strong><span>25-minute study session</span>
               </button>
-              <button
-                type="button"
-                className="planner-action"
-                disabled={actionBusy}
-                onClick={() => actOnTask(selectedTask, 'COMPLETE')}
-              >
-                <strong>Complete</strong>
-                <span>Record the topic as finished</span>
+              <button type="button" className="planner-action" disabled={actionBusy || selectedTask.status === 'COMPLETED'} onClick={() => actOnTask(selectedTask, 'COMPLETE')}>
+                <strong>Complete</strong><span>Record this session as finished</span>
               </button>
-              <button
-                type="button"
-                className="planner-action"
-                disabled={actionBusy || selectedTask.status === 'COMPLETED'}
-                onClick={() => actOnTask(selectedTask, 'SKIP')}
-              >
-                <strong>Skip today</strong>
-                <span>Record the decision and adapt the week</span>
+              <button type="button" className="planner-action" disabled={actionBusy || selectedTask.status === 'COMPLETED'} onClick={() => actOnTask(selectedTask, 'SKIP')}>
+                <strong>Skip today</strong><span>Record the decision and adapt the week</span>
               </button>
             </div>
 
-            <div className="planner-move-row">
-              <div>
-                <span className="student-eyebrow">MOVE SESSION</span>
-                <p>Choose a future date without touching your other sessions.</p>
+            <div className="planner-action-stack">
+              <div className="planner-move-row">
+                <div><span className="student-eyebrow">MOVE SESSION</span><p>Move this session to another date inside the current plan horizon.</p></div>
+                <div className="planner-move-controls"><input type="date" min={dateKey(today())} value={moveDate} onChange={(event) => setMoveDate(event.target.value)} aria-label="Move study date" /><button type="button" className="student-secondary" disabled={actionBusy || !moveDate || selectedTask.status === 'COMPLETED'} onClick={() => actOnTask(selectedTask, 'MOVE', moveDate)}>Move</button></div>
               </div>
-              <div className="planner-move-controls">
-                <input
-                  type="date"
-                  min={dateKey(today())}
-                  value={moveDate}
-                  onChange={(event) => setMoveDate(event.target.value)}
-                  aria-label="New study date"
-                />
-                <button
-                  type="button"
-                  className="student-secondary"
-                  disabled={actionBusy || !moveDate || selectedTask.status === 'COMPLETED'}
-                  onClick={() => actOnTask(selectedTask, 'MOVE', moveDate)}
-                >
-                  Move
-                </button>
+              <div className="planner-move-row">
+                <div><span className="student-eyebrow">RESCHEDULE SESSION</span><p>Reschedule explicitly when you want Havan to record that change as a planning decision.</p></div>
+                <div className="planner-move-controls"><input type="date" min={dateKey(today())} value={rescheduleDate} onChange={(event) => setRescheduleDate(event.target.value)} aria-label="Reschedule study date" /><button type="button" className="student-secondary" disabled={actionBusy || !rescheduleDate || selectedTask.status === 'COMPLETED'} onClick={() => actOnTask(selectedTask, 'RESCHEDULE', rescheduleDate)}>Reschedule</button></div>
+              </div>
+              {(selectedTask.status === 'COMPLETED' || selectedTask.status === 'SKIPPED') && (
+                <div className="planner-move-row">
+                  <div><span className="student-eyebrow">REPEAT PRACTICE</span><p>Create a separate practice session without rewriting the original record.</p></div>
+                  <div className="planner-move-controls"><input type="date" min={dateKey(today())} value={repeatDate} onChange={(event) => setRepeatDate(event.target.value)} aria-label="Repeat practice date" /><button type="button" className="student-secondary" disabled={actionBusy || !repeatDate} onClick={() => actOnTask(selectedTask, 'REPEAT', repeatDate)}>Repeat</button></div>
+                </div>
+              )}
+            </div>
+
+            <div className="planner-add-panel">
+              <div><span className="student-eyebrow">ADD A SESSION</span><p>Add another active topic to this week's plan. Havan checks curriculum membership and available capacity first.</p></div>
+              <div className="planner-add-controls">
+                <select value={addTopicId} onChange={(event) => setAddTopicId(event.target.value)} aria-label="Topic to add">
+                  <option value="">Choose an active topic…</option>
+                  {topics.filter((topic) => !tasks.some((task) => task.topic_id === topic.id && !['SKIPPED','REPLANNED'].includes(task.status))).map((topic) => (
+                    <option key={topic.id} value={topic.id}>{courseMap.get(topic.course_id)?.code ?? 'Course'} · {topic.name}</option>
+                  ))}
+                </select>
+                <input type="date" min={dateKey(today())} value={addDate} onChange={(event) => setAddDate(event.target.value)} aria-label="Added session date" />
+                <button type="button" className="student-primary" disabled={actionBusy || !addTopicId || !addDate} onClick={addStudySession}>Add session</button>
               </div>
             </div>
           </section>
