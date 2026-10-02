@@ -85,15 +85,15 @@ export default function FreshmanTemplateWorkspace(){
     finally{setBusy(false)}
   }
 
-  return <div className='importPage'>
-    <header className='importHeader'>
+  return <div className='workspacePage'>
+    <header className='workspaceHeader'>
       <div><span>HAVAN ACADEMIC TEMPLATES</span><h1>Freshman curriculum templates</h1><p className='muted'>Build national Semester I and Semester II baselines from reusable registry courses. Universities are not mapped here.</p></div>
     </header>
     {message&&<div className='notice importNotice'>{message}</div>}
     {error&&<div className='alert importNotice'>{error}<button onClick={()=>setError('')}>×</button></div>}
 
-    <section className='importGrid'>
-      <div className='importCard'>
+    <section className='workspaceGrid'>
+      <div className='workspaceCard'>
         <h3>1. Create a template</h3>
         <p className='muted'>The same template code can have multiple versions, but each code + version must be unique.</p>
         {(['code','name','version','academic_year'] as const).map(key=><label key={key}><span>{key==='academic_year'?'Academic year':key.replace('_',' ')}</span><input value={form[key]} onChange={e=>setForm({...form,[key]:e.target.value})}/></label>)}
@@ -101,7 +101,7 @@ export default function FreshmanTemplateWorkspace(){
         <button className='primary importButton' disabled={busy} onClick={createTemplate}>{busy?'Saving…':'Create two-semester template'}</button>
       </div>
 
-      <div className='importCard'>
+      <div className='workspaceCard'>
         <h3>2. Assign registry courses</h3>
         <p className='muted'>A course is referenced by ID. Its Chapter → Topic content is never duplicated into the template.</p>
         {selected?<><label><span>Template</span><select value={String(selected.id)} onChange={e=>setSelected(templates.find(item=>item.id===Number(e.target.value))??null)}>{templates.map(item=><option key={item.id} value={item.id}>{item.code} · v{item.version}</option>)}</select></label>
@@ -114,9 +114,9 @@ export default function FreshmanTemplateWorkspace(){
       </div>
     </section>
 
-    <section className='previewCard' style={{marginTop:18}}>
+    <section className='workspacePanel'>
       <header><div><span>VERSIONED NATIONAL BASELINE</span><h2>{selected?selected.name:'Freshman templates'}</h2></div><strong>{templates.length} templates</strong></header>
-      {selected?<div className='importGrid'>{selected.semesters.map(semester=><div className='importCard' key={semester.id}><h3>{semester.name}</h3><p className='muted'>{semester.courses.length} referenced courses</p>{semester.courses.length===0?<div className='empty'>No courses assigned.</div>:semester.courses.map(course=><div className='detail' key={course.id}><b>{course.course_code} · {course.course_name}</b><span>{course.requirement_type} · order {course.order_index}</span><button className='danger' disabled={busy} onClick={()=>removeCourse(course.id)}>Remove from template</button></div>)}</div>)}</div>:<div className='empty'>No Freshman curriculum templates yet.</div>}
+      {selected?<div className='workspaceGrid'>{selected.semesters.map(semester=><div className='workspaceCard' key={semester.id}><h3>{semester.name}</h3><p className='muted'>{semester.courses.length} referenced courses</p>{semester.courses.length===0?<div className='empty'>No courses assigned.</div>:semester.courses.map(course=><div className='workspacePlacement' key={course.id}><b>{course.course_code} · {course.course_name}</b><span>{course.requirement_type} · order {course.order_index}</span><button className='danger' disabled={busy} onClick={()=>removeCourse(course.id)}>Remove from template</button></div>)}</div>)}</div>:<div className='empty'>No Freshman curriculum templates yet.</div>}
     </section>
   </div>
 }
