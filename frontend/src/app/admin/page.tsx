@@ -1,37 +1,94 @@
 'use client'
-import {useEffect,useMemo,useState} from 'react'
-import {apiFetch} from '../../lib/api'
+
+import {useState} from 'react'
 import './admin.css'
-import ImportWorkspace from './ImportWorkspace'
 import FreshmanRegistryWorkspace from './FreshmanRegistryWorkspace'
 import FreshmanTemplateWorkspace from './FreshmanTemplateWorkspace'
 import FreshmanMappingWorkspace from './FreshmanMappingWorkspace'
 import FreshmanStreamAssignmentWorkspace from './FreshmanStreamAssignmentWorkspace'
 import UniversityOverrideWorkspace from './UniversityOverrideWorkspace'
 import AcademicQuality from './AcademicQuality'
-type E='universities'|'curriculums'|'streams'|'courses'|'chapters'|'topics'|'relationships';type R=Record<string,string|number|null|undefined>;type C={items:R[];total:number}
-const nav:E[]=['universities','curriculums','streams','courses','chapters','topics','relationships']
-const pretty=(e:E)=>e==='relationships'?'Topic relationships':e[0].toUpperCase()+e.slice(1)
-const api=(e:E)=>e==='relationships'?'/topic-relationships':'/'+e
-const cfg:Record<E,{key:string;label:string;type?:string;options?:string[]}[]>={
-universities:[{key:'name',label:'Name'},{key:'code',label:'Code'},{key:'description',label:'Description',type:'textarea'},{key:'status',label:'Status',options:['ACTIVE','INACTIVE']}],
-curriculums:[{key:'university_id',label:'University',type:'university'},{key:'name',label:'Name'},{key:'version',label:'Version'},{key:'academic_year',label:'Academic year'},{key:'description',label:'Description',type:'textarea'},{key:'status',label:'Status',options:['DRAFT','ACTIVE','ARCHIVED']}],
-streams:[{key:'curriculum_id',label:'Curriculum',type:'curriculum'},{key:'name',label:'Name'},{key:'code',label:'Code'},{key:'description',label:'Description',type:'textarea'},{key:'status',label:'Status',options:['ACTIVE','INACTIVE']}],
-courses:[{key:'stream_id',label:'Stream',type:'stream'},{key:'code',label:'Code'},{key:'name',label:'Name'},{key:'description',label:'Description',type:'textarea'},{key:'credit_hours',label:'Credit hours',type:'number'},{key:'status',label:'Status',options:['ACTIVE','INACTIVE']}],
-chapters:[{key:'course_id',label:'Course',type:'course'},{key:'name',label:'Name'},{key:'description',label:'Description',type:'textarea'},{key:'order_index',label:'Order',type:'number'},{key:'status',label:'Status',options:['ACTIVE','INACTIVE']}],
-topics:[{key:'chapter_id',label:'Chapter',type:'chapter'},{key:'name',label:'Name'},{key:'description',label:'Description',type:'textarea'},{key:'difficulty',label:'Difficulty 1–5',type:'number'},{key:'estimated_study_minutes',label:'Study minutes',type:'number'},{key:'exam_importance',label:'Exam importance 0–1',type:'number'},{key:'conceptual_importance',label:'Conceptual importance 0–1',type:'number'},{key:'order_index',label:'Order',type:'number'},{key:'status',label:'Status',options:['ACTIVE','INACTIVE']}],
-relationships:[{key:'source_topic_id',label:'Source topic',type:'topic'},{key:'target_topic_id',label:'Target topic',type:'topic'},{key:'relationship_type',label:'Relationship',options:['prerequisite','conceptual','cross_course','related','revision']},{key:'strength',label:'Strength 0–1',type:'number'},{key:'notes',label:'Notes',type:'textarea'}]}
-const empty:Record<E,R>={universities:{status:'ACTIVE'},curriculums:{status:'DRAFT'},streams:{status:'ACTIVE'},courses:{status:'ACTIVE'},chapters:{order_index:1,status:'ACTIVE'},topics:{difficulty:3,estimated_study_minutes:60,exam_importance:.5,conceptual_importance:.5,order_index:1,status:'ACTIVE'},relationships:{relationship_type:'prerequisite',strength:1}}
-export default function Admin(){
-const[e,setE]=useState<E>('universities'),[mobileNav,setMobileNav]=useState(false),[rows,setRows]=useState<R[]>([]),[p,setP]=useState<Record<string,R[]>>({}),[q,setQ]=useState(''),[loading,setLoading]=useState(true),[error,setError]=useState(''),[note,setNote]=useState(''),[mode,setMode]=useState<'quality'|'freshman'|'templates'|'mapping'|'streamAssignments'|'universityOverrides'|'manage'>('quality'),[edit,setEdit]=useState<{row:R;editing:boolean}|null>(null),[detail,setDetail]=useState<R|null>(null),[editId,setEditId]=useState<number|null>(null)
-const load=async(x:E=e)=>{setLoading(true);try{setRows((await apiFetch<C>(api(x)+'?page=1&page_size=100')).items)}catch{setError('Could not load curriculum data.')}finally{setLoading(false)}}
-const parents=async()=>{const m:{n:string;e:E}[]=[{n:'university',e:'universities'},{n:'curriculum',e:'curriculums'},{n:'stream',e:'streams'},{n:'course',e:'courses'},{n:'chapter',e:'chapters'},{n:'topic',e:'topics'}];const out:Record<string,R[]>={};await Promise.all(m.map(async x=>{try{out[x.n]=(await apiFetch<C>(api(x.e)+'?page=1&page_size=100')).items}catch{out[x.n]=[]}}));setP(out)}
-useEffect(()=>{parents();const params=new URLSearchParams(window.location.search);const requestedMode=params.get('mode');const requestedEntity=params.get('entity') as E|null;const requestedEdit=Number(params.get('edit'));if(requestedEntity&&nav.includes(requestedEntity))setE(requestedEntity);if(Number.isInteger(requestedEdit)&&requestedEdit>0)setEditId(requestedEdit)},[]);useEffect(()=>{setQ('');load()},[e]);useEffect(()=>{if(editId===null||loading)return;const row=rows.find(item=>Number(item.id)===editId);if(row){setMode('manage');setEdit({editing:true,row:{...row}});setEditId(null)}},[editId,loading,rows])
-const shown=useMemo(()=>q?rows.filter(r=>Object.values(r).some(v=>String(v??'').toLowerCase().includes(q.toLowerCase()))):rows,[rows,q])
-const title=pretty(e)
-const titleOf=(r:R)=>e==='courses'?r.code+' · '+r.name:e==='curriculums'?r.name+' · v'+r.version:e==='relationships'?r.relationship_type+' · '+r.source_topic_id+' → '+r.target_topic_id:r.name??'Untitled'
-const save=async()=>{if(!edit)return;const body:R={};cfg[e].forEach(f=>{const v=edit.row[f.key];if(v!==''&&v!=null)body[f.key]=f.type==='number'||f.key.endsWith('_id')?Number(v):v});try{await apiFetch(edit.editing?api(e)+'/'+edit.row.id:api(e),{method:edit.editing?'PATCH':'POST',body:JSON.stringify(body)});setEdit(null);setNote(edit.editing?'Changes saved.':'Record created.');await Promise.all([load(),parents()])}catch{setError('Could not save this record. Check the required fields.')}} 
-const remove=async(r:R)=>{if(!r.id||!confirm('Delete this record? This cannot be undone.'))return;try{await apiFetch(api(e)+'/'+r.id,{method:'DELETE'});setDetail(null);setNote('Record deleted.');await Promise.all([load(),parents()])}catch{setError('Could not delete this record. Related records may prevent deletion.')}}
-const toggle=async(r:R)=>{if(!r.id||!r.status)return;const n=r.status==='ACTIVE'?'INACTIVE':r.status==='INACTIVE'?'ACTIVE':r.status==='DRAFT'?'ACTIVE':'DRAFT';try{await apiFetch(api(e)+'/'+r.id,{method:'PATCH',body:JSON.stringify({status:n})});load();setNote('Status updated.')}catch{setError('Could not update status.')}}
-return <div className="ad"><button className="mobileMenu" aria-label="Open admin navigation" onClick={()=>setMobileNav(true)}>☰</button>{mobileNav&&<button className="mobileScrim" aria-label="Close navigation" onClick={()=>setMobileNav(false)}/>}<aside className={mobileNav?'mobileOpen':''}><div className="brand"><b>H</b><strong>havan</strong><small>Study Planner</small></div><label>ACADEMIC CONTROL</label><button className={mode==='quality'?'sel':''} onClick={()=>{setMode('quality');setMobileNav(false)}}>✓ Academic quality</button><button className={mode==='freshman'?'sel':''} onClick={()=>{setMode('freshman');setMobileNav(false)}}>▣ Freshman registry</button><button className={mode==='templates'?'sel':''} onClick={()=>{setMode('templates');setMobileNav(false)}}>▤ Freshman templates</button><button className={mode==='mapping'?'sel':''} onClick={()=>{setMode('mapping');setMobileNav(false)}}>↔ Freshman mapping</button><button className={mode==='streamAssignments'?'sel':''} onClick={()=>{setMode('streamAssignments');setMobileNav(false)}}>⊞ Stream courses</button><button className={mode==='universityOverrides'?'sel':''} onClick={()=>{setMode('universityOverrides');setMobileNav(false)}}>⚙ University overrides</button>{mode==='manage'&&nav.map(x=><button className={x===e?'sel':''} key={x} onClick={()=>{setE(x);setMobileNav(false)}}>{pretty(x)}</button>)}<footer>Havan academic workspace<br/><small>MVP</small></footer></aside><main>{mode==='quality'?<AcademicQuality/>:mode==='freshman'?<FreshmanRegistryWorkspace/>:mode==='templates'?<FreshmanTemplateWorkspace/>:mode==='mapping'?<FreshmanMappingWorkspace/>:mode==='streamAssignments'?<FreshmanStreamAssignmentWorkspace/>:mode==='universityOverrides'?<UniversityOverrideWorkspace/>:<><header><div><span>HAVAN STUDY PLANNER</span><h1>{title}</h1></div><button className="primary" onClick={()=>setEdit({editing:false,row:{...empty[e]}})}>+ Add</button></header><section className="hero"><div><span>ACADEMIC KNOWLEDGE</span><h2>Keep the curriculum clean.</h2><p>This structure powers Havan's future planning and recommendation engine.</p></div><strong>{rows.length}<small>{title.toLowerCase()} in view</small></strong></section><div className="toolbar"><input value={q} onChange={x=>setQ(x.target.value)} placeholder={'Search '+title.toLowerCase()}/><small>{shown.length} records</small></div>{error&&<div className="alert">{error}<button onClick={()=>setError('')}>×</button></div>}{note&&<div className="notice">{note}<button onClick={()=>setNote('')}>×</button></div>}<section className="table">{loading?<div className="empty">Loading curriculum…</div>:shown.length===0?<div className="empty"><b>+</b><h3>{q?'No matches':'Nothing here yet'}</h3><p>Create the first record for this section.</p></div>:<table><thead><tr><th>Record</th><th>Details</th><th>Status</th><th>Actions</th></tr></thead><tbody>{shown.map(r=><tr key={String(r.id)}><td><button className="record" onClick={()=>setDetail(r)}><b>{String(titleOf(r))}</b><small>#{r.id}</small></button></td><td>{cfg[e].slice(0,3).map(f=><span className="detail" key={f.key}><b>{f.label}</b>{String(r[f.key]??'—')}</span>)}</td><td>{r.status?<button className="pill" onClick={()=>toggle(r)}>{String(r.status)}</button>:'—'}</td><td><button onClick={()=>setEdit({editing:true,row:{...r}})}>Edit</button><button className="danger" onClick={()=>remove(r)}>Delete</button></td></tr>)}</tbody></table>}</section></>}</main>{edit&&<div className="overlay"><section className="modal"><header><div><span>{edit.editing?'EDIT RECORD':'NEW RECORD'}</span><h2>{edit.editing?'Edit ':'Add '}{label(e)}</h2></div><button onClick={()=>setEdit(null)}>×</button></header><div className="form">{cfg[e].map(f=>{const v=edit.row[f.key]??'',src=f.type?p[f.type]??[]:[];return <label key={f.key}><span>{f.label}</span>{src.length?<select value={String(v)} onChange={x=>setEdit({...edit,row:{...edit.row,[f.key]:x.target.value}})}><option value="">Select…</option>{src.map(r=><option key={String(r.id)} value={String(r.id)}>{String(r.name??r.code??r.id)}{r.version?' · v'+r.version:''}</option>)}</select>:f.options?<select value={String(v)} onChange={x=>setEdit({...edit,row:{...edit.row,[f.key]:x.target.value}})}>{f.options.map(o=><option key={o}>{o}</option>)}</select>:f.type==='textarea'?<textarea rows={4} value={String(v)} onChange={x=>setEdit({...edit,row:{...edit.row,[f.key]:x.target.value}})}/>:<input type={f.type==='number'?'number':'text'} value={String(v)} onChange={x=>setEdit({...edit,row:{...edit.row,[f.key]:x.target.value}})}/>}</label>})}</div><footer><button onClick={()=>setEdit(null)}>Cancel</button><button className="primary" onClick={save}>Save</button></footer></section></div>}{detail&&<div className="overlay"><section className="modal"><header><div><span>RECORD DETAILS</span><h2>{String(titleOf(detail))}</h2></div><button onClick={()=>setDetail(null)}>×</button></header><div className="detailgrid">{Object.entries(detail).map(([k,v])=><div key={k}><span>{k.replaceAll('_',' ')}</span><b>{String(v??'—')}</b></div>)}</div><footer><button className="primary" onClick={()=>{setDetail(null);setEdit({editing:true,row:{...detail}})}}>Edit record</button></footer></section></div>}</div>}
-function label(e:E){return e==='relationships'?'Relationship':e.slice(0,-1).replace(/^./,x=>x.toUpperCase())}
+
+type Mode =
+  | 'quality'
+  | 'freshman'
+  | 'templates'
+  | 'mapping'
+  | 'streamAssignments'
+  | 'universityOverrides'
+
+const navigation: Array<{mode: Mode; label: string; icon: string}> = [
+  {mode: 'quality', label: 'Academic quality', icon: '✓'},
+  {mode: 'freshman', label: 'Freshman registry', icon: '▣'},
+  {mode: 'templates', label: 'Freshman templates', icon: '▤'},
+  {mode: 'mapping', label: 'Freshman mapping', icon: '↔'},
+  {mode: 'streamAssignments', label: 'Stream courses', icon: '⊞'},
+  {mode: 'universityOverrides', label: 'University overrides', icon: '⚙'},
+]
+
+export default function Admin() {
+  const [mode, setMode] = useState<Mode>('quality')
+  const [mobileNav, setMobileNav] = useState(false)
+
+  const selectMode = (next: Mode) => {
+    setMode(next)
+    setMobileNav(false)
+  }
+
+  const workspace = {
+    quality: <AcademicQuality />,
+    freshman: <FreshmanRegistryWorkspace />,
+    templates: <FreshmanTemplateWorkspace />,
+    mapping: <FreshmanMappingWorkspace />,
+    streamAssignments: <FreshmanStreamAssignmentWorkspace />,
+    universityOverrides: <UniversityOverrideWorkspace />,
+  }[mode]
+
+  return (
+    <div className="ad">
+      <button
+        className="mobileMenu"
+        aria-label="Open admin navigation"
+        onClick={() => setMobileNav(true)}
+      >
+        ☰
+      </button>
+
+      {mobileNav && (
+        <button
+          className="mobileScrim"
+          aria-label="Close navigation"
+          onClick={() => setMobileNav(false)}
+        />
+      )}
+
+      <aside className={mobileNav ? 'mobileOpen' : ''}>
+        <div className="brand">
+          <b>H</b>
+          <strong>havan</strong>
+          <small>Study Planner</small>
+        </div>
+
+        <label>ACADEMIC CONTROL</label>
+
+        {navigation.map(item => (
+          <button
+            key={item.mode}
+            className={mode === item.mode ? 'sel' : ''}
+            onClick={() => selectMode(item.mode)}
+          >
+            {item.icon} {item.label}
+          </button>
+        ))}
+
+        <footer>
+          Havan academic workspace
+          <br />
+          <small>MVP</small>
+        </footer>
+      </aside>
+
+      <main>{workspace}</main>
+    </div>
+  )
+}
