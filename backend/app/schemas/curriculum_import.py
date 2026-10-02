@@ -66,6 +66,12 @@ class FullStructureResult(FullStructurePreview):
     university_id: int
     curriculum_id: int
     stream_id: int
+    created_university: bool = False
+    reused_curriculum: bool = False
+    reused_stream: bool = False
     created_courses: int
+    reused_courses: int = 0
     created_chapters: int
+    reused_chapters: int = 0
     created_topics: int
+    skipped_topics: int = 0
