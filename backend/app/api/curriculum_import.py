@@ -318,6 +318,9 @@ def commit_full_structure_import(payload: FullStructurePreview, db: Session = DB
                     stream_id=stream.id,
                     code=course_payload.code,
                     name=course_payload.name,
+                    academic_scope="UNIVERSITY",
+                    registry_key="UNIVERSITY:" + str(stream.id) + ":" + course_payload.code.strip(),
+                    content_version="1.0",
                     status="ACTIVE",
                 )
                 db.add(course)
