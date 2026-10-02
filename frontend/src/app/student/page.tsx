@@ -630,7 +630,16 @@ export default function StudentPage() {
         </a>
         <nav className="dashboard-nav" aria-label="Student navigation">
           <span className="student-context">{profile?.study_hours_per_day ?? 0}h/day</span>
-          <span className="dashboard-avatar">{initials(profile?.name ?? '')}</span>
+          <button
+            type="button"
+            className="dashboard-profile-button"
+            onClick={() => router.push('/student/settings')}
+            aria-label="Open your Havan profile settings"
+            title="Profile settings"
+          >
+            <span className="dashboard-avatar">{initials(profile?.name ?? '')}</span>
+            <span>{profile?.name ?? 'Student'}</span>
+          </button>
         </nav>
       </header>
 
