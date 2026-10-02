@@ -52,3 +52,50 @@ def test_resolved_student_courses_returns_no_stale_courses(monkeypatch) -> None:
     )
 
     assert student_api.resolved_student_courses(db, 7) == []
+
+def test_student_course_read_uses_resolved_display_metadata(monkeypatch):
+    student_course = SimpleNamespace(
+        id=11,
+        student_id=7,
+        course_id=101,
+        confidence=4,
+        status="ACTIVE",
+    )
+    effective = SimpleNamespace(
+        course_id=101,
+        display_code="LOCAL-101",
+        display_name="Local Physics",
+        credit_hours=4,
+    )
+
+    data = student_api.student_course_read_data(
+        FakeDB([]),
+        student_course,
+        metadata={101: effective},
+    )
+
+    assert data["course_id"] == 101
+    assert data["course_code"] == "LOCAL-101"
+    assert data["course_name"] == "Local Physics"
+    assert data["credit_hours"] == 4
+
+
+def test_student_course_read_rejects_missing_resolved_metadata():
+    student_course = SimpleNamespace(
+        id=11,
+        student_id=7,
+        course_id=101,
+        confidence=4,
+        status="ACTIVE",
+    )
+
+    try:
+        student_api.student_course_read_data(
+            FakeDB([]),
+            student_course,
+            metadata={},
+        )
+    except Exception as exc:
+        assert str(exc.detail) == "Student course is no longer available in the active university curriculum"
+    else:
+        raise AssertionError("Expected unresolved student course to be rejected")
