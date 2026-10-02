@@ -1,20 +1,54 @@
 from __future__ import annotations
 
-import base64, hashlib, hmac, secrets
+import base64, hashlib, hmac, secrets, smtplib
 from datetime import datetime, timedelta, timezone
+from email.message import EmailMessage
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.orm import Session
 from app.core.config import get_settings
-from app.db.models.student import StudentAccount, StudentProfile
+from app.db.models.student import PasswordResetToken, StudentAccount, StudentProfile
 from app.db.session import get_db
-from app.schemas.student import AuthAccountRead, AuthLogin, AuthResponse, AuthSignup, PasswordChange
+from app.schemas.student import AuthAccountRead, AuthLogin, AuthResponse, AuthSignup, ForgotPasswordRequest, PasswordChange, ResetPasswordRequest, VerifyResetCodeRequest
 
 router = APIRouter(prefix="/api/v1/auth", tags=["authentication"])
 DB = Annotated[Session, Depends(get_db)]
 bearer = HTTPBearer(auto_error=False)
+
+
+def _reset_code_hash(code: str) -> str:
+    secret = get_settings().auth_secret.encode()
+    return hmac.new(secret, code.encode(), hashlib.sha256).hexdigest()
+
+
+def _ensure_reset_table(db: Session) -> None:
+    PasswordResetToken.__table__.create(bind=db.get_bind(), checkfirst=True)
+
+
+def _send_reset_email(email: str, code: str) -> None:
+    settings = get_settings()
+    if not settings.smtp_user or not settings.smtp_password:
+        raise HTTPException(status_code=503, detail='Password recovery email is not configured yet.')
+
+    message = EmailMessage()
+    message['Subject'] = 'Havan Study Planner password reset code'
+    message['From'] = settings.smtp_from or settings.smtp_user
+    message['To'] = email
+    message.set_content(
+        'Your Havan Study Planner verification code is: ' + code + '\n\n'
+        'This code expires in ' + str(settings.password_reset_ttl_minutes) + ' minutes. '
+        'If you did not request a password reset, you can ignore this email.'
+    )
+
+    try:
+        with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=20) as smtp:
+            smtp.starttls()
+            smtp.login(settings.smtp_user, settings.smtp_password)
+            smtp.send_message(message)
+    except (OSError, smtplib.SMTPException) as exc:
+        raise HTTPException(status_code=503, detail='We could not send the verification email. Please try again later.') from exc
 
 def _hash_password(password: str) -> str:
     salt = secrets.token_bytes(16); rounds = 240_000
@@ -76,3 +110,67 @@ def change_password(payload: PasswordChange, account: Annotated[StudentAccount, 
     if not _verify_password(payload.current_password, account.password_hash): raise HTTPException(status_code=400, detail='Current password is incorrect.')
     account.password_hash = _hash_password(payload.new_password); db.commit()
     return account_read(db, account)
+
+@router.post('/forgot-password')
+def forgot_password(payload: ForgotPasswordRequest, db: DB):
+    _ensure_reset_table(db)
+    email = payload.email.strip().lower()
+    account = db.scalar(select(StudentAccount).where(StudentAccount.email == email))
+    if account is None:
+        return {'message': 'If an account exists for this email, a verification code has been sent.'}
+
+    db.execute(delete(PasswordResetToken).where(
+        PasswordResetToken.account_id == account.id,
+        PasswordResetToken.used_at.is_(None),
+    ))
+    code = f'{secrets.randbelow(1_000_000):06d}'
+    token = PasswordResetToken(
+        account_id=account.id,
+        code_hash=_reset_code_hash(code),
+        expires_at=datetime.now(timezone.utc) + timedelta(minutes=get_settings().password_reset_ttl_minutes),
+    )
+    db.add(token)
+    db.commit()
+    try:
+        _send_reset_email(email, code)
+    except HTTPException:
+        db.delete(token)
+        db.commit()
+        raise
+    return {'message': 'If an account exists for this email, a verification code has been sent.'}
+
+
+def _get_reset_token(email: str, code: str, db: Session) -> PasswordResetToken:
+    account = db.scalar(select(StudentAccount).where(StudentAccount.email == email.strip().lower()))
+    if account is None:
+        raise HTTPException(status_code=400, detail='The verification code is invalid or expired.')
+    token = db.scalar(select(PasswordResetToken).where(
+        PasswordResetToken.account_id == account.id,
+        PasswordResetToken.used_at.is_(None),
+    ).order_by(PasswordResetToken.created_at.desc()))
+    now = datetime.now(timezone.utc)
+    if token is None or token.expires_at < now or token.attempts >= 5:
+        raise HTTPException(status_code=400, detail='The verification code is invalid or expired.')
+    if not hmac.compare_digest(token.code_hash, _reset_code_hash(code)):
+        token.attempts += 1
+        db.commit()
+        raise HTTPException(status_code=400, detail='The verification code is invalid or expired.')
+    return token
+
+
+@router.post('/verify-reset-code')
+def verify_reset_code(payload: VerifyResetCodeRequest, db: DB):
+    _ensure_reset_table(db)
+    _get_reset_token(payload.email, payload.code, db)
+    return {'message': 'Verification code accepted.'}
+
+
+@router.post('/reset-password')
+def reset_password(payload: ResetPasswordRequest, db: DB):
+    _ensure_reset_table(db)
+    token = _get_reset_token(payload.email, payload.code, db)
+    account = db.get(StudentAccount, token.account_id)
+    account.password_hash = _hash_password(payload.new_password)
+    token.used_at = datetime.now(timezone.utc)
+    db.commit()
+    return {'message': 'Password reset successfully. You can now sign in.'}
