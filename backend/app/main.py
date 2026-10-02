@@ -11,6 +11,7 @@ from app.api.freshman_registry_import import router as freshman_registry_import_
 from app.api.freshman_templates import router as freshman_templates_router
 from app.api.freshman_mappings import router as freshman_mappings_router
 from app.api.freshman_stream_assignments import router as freshman_stream_assignments_router
+from app.api.university_overrides import router as university_overrides_router
 from app.api.student import router as student_router
 from app.api.planner import router as planner_router
 from app.core.config import get_settings
@@ -42,6 +43,7 @@ app.include_router(freshman_registry_import_router)
 app.include_router(freshman_templates_router)
 app.include_router(freshman_mappings_router)
 app.include_router(freshman_stream_assignments_router)
+app.include_router(university_overrides_router)
 app.include_router(student_router)
 app.include_router(planner_router)
 app.include_router(academic_quality_router)
