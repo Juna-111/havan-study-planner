@@ -1,4 +1,4 @@
-from app.db.models.curriculum import Chapter, Course, Curriculum, FreshmanCourseCategory, Stream, Topic, TopicRelationship, University
+from app.db.models.curriculum import Chapter, Course, Curriculum, FreshmanCourseCategory, FreshmanCurriculumTemplate, FreshmanTemplateCourse, FreshmanTemplateSemester, Stream, Topic, TopicRelationship, University
 from app.db.models.student import StudentAccount, StudentCourse, StudentExam, StudentProfile, StudentTopicProgress
 from app.db.models.planner import StudyPlan, StudyTask
 
