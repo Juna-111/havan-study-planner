@@ -149,3 +149,72 @@ def test_resolver_remove_override_removes_inherited_course() -> None:
     )
 
     assert resolve_stream_courses(db, stream.id) == []
+
+
+def test_resolver_change_stream_removes_course_from_source_stream() -> None:
+    source_stream = SimpleNamespace(id=10, curriculum_id=20)
+    national = SimpleNamespace(
+        id=101, code="PHY101", name="Physics", credit_hours=4, status="ACTIVE"
+    )
+    mapping = SimpleNamespace(template_id=30, status="ACTIVE")
+    override = SimpleNamespace(
+        override_type="CHANGE_STREAM",
+        national_course_id=101,
+        source_stream_id=10,
+        target_stream_id=20,
+        semester_number=2,
+        order_index=4,
+        local_course_id=None,
+        local_code=None,
+        local_title=None,
+        local_credit_hours=None,
+    )
+
+    db = FakeDB(
+        stream=source_stream,
+        direct_courses=[],
+        mapping=mapping,
+        freshman_rows=[(national, 1, 1, "REQUIRED")],
+        overrides=[override],
+    )
+
+    assert resolve_stream_courses(db, source_stream.id) == []
+
+
+def test_resolver_change_stream_adds_course_to_target_stream() -> None:
+    target_stream = SimpleNamespace(id=20, curriculum_id=20)
+    national = SimpleNamespace(
+        id=101, code="PHY101", name="Physics", credit_hours=4, status="ACTIVE"
+    )
+    mapping = SimpleNamespace(template_id=30, status="ACTIVE")
+    override = SimpleNamespace(
+        override_type="CHANGE_STREAM",
+        national_course_id=101,
+        source_stream_id=10,
+        target_stream_id=20,
+        semester_number=2,
+        order_index=4,
+        local_course_id=None,
+        local_code=None,
+        local_title=None,
+        local_credit_hours=None,
+    )
+
+    db = FakeDB(
+        stream=target_stream,
+        direct_courses=[],
+        mapping=mapping,
+        freshman_rows=[],
+        overrides=[override],
+        courses={101: national},
+    )
+
+    resolved = resolve_stream_courses(db, target_stream.id)
+
+    assert len(resolved) == 1
+    assert resolved[0].course_id == 101
+    assert resolved[0].semester_number == 2
+    assert resolved[0].order_index == 4
+    assert resolved[0].display_code == "PHY101"
+    assert resolved[0].display_name == "Physics"
+    assert resolved[0].credit_hours == 4
