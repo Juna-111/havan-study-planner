@@ -128,7 +128,7 @@ class CourseUpdate(BaseModel):
     credit_hours: Optional[int] = Field(default=None, ge=0, le=30)
     status: Optional[str] = Field(default=None, pattern=r"^(ACTIVE|INACTIVE)$")
 class CourseRead(ORMModel):
-    id: int; stream_id: int; code: str; name: str; description: Optional[str]; credit_hours: Optional[int]; status: str
+    id: int; stream_id: Optional[int]; code: str; name: str; description: Optional[str]; credit_hours: Optional[int]; status: str
 
 
 class ChapterBase(BaseModel):
