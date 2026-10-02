@@ -11,6 +11,22 @@ type Issue = {
   title: string
   message: string
 }
+
+const entityPath: Record<string, string> = {
+  university: 'universities',
+  curriculum: 'curriculums',
+  stream: 'streams',
+  course: 'courses',
+  chapter: 'chapters',
+  topic: 'topics',
+  relationship: 'relationships',
+}
+
+function issueAction(issue: Issue) {
+  if (issue.title === 'Missing academic content') return 'Open parent'
+  if (issue.title.includes('relationship')) return 'Fix relationship'
+  return 'Edit record'
+}
 type Quality = {
   summary: {total_records:number; issues:number; errors:number; warnings:number; info:number; active_curriculums:number}
   counts: Record<string, number>
@@ -38,6 +54,11 @@ export default function AcademicQuality(){
     ()=>data?.issues.filter(item=>filter==='all'||item.severity===filter)??[],
     [data,filter]
   )
+
+  function openIssue(issue: Issue) {
+    const entity = entityPath[issue.entity_type] ?? 'topics'
+    window.location.href = `/admin?mode=manage&entity=${encodeURIComponent(entity)}&edit=${issue.entity_id}`
+  }
 
   const health = !data ? 'Checking academic data…'
     : data.summary.errors ? 'Action needed'
@@ -75,7 +96,7 @@ export default function AcademicQuality(){
         <article className="qualityCard">
           <header><div><span>ISSUE REVIEW</span><h2>What needs attention?</h2></div></header>
           <div className="qualityFilters">{(['all','error','warning','info'] as const).map(value=><button key={value} className={filter===value?'selected':''} onClick={()=>setFilter(value)}>{value==='all'?'All':value[0].toUpperCase()+value.slice(1)}</button>)}</div>
-          {issues.length===0?<div className="qualityEmpty"><b>✓</b><strong>No matching issues</strong><span>The academic structure passed the selected checks.</span></div>:<div className="issueList">{issues.map((issue,index)=><article className="issue" key={issue.entity_type+'-'+issue.entity_id+'-'+issue.title+'-'+index}><span className={'severity '+issue.severity}>{issue.severity}</span><div><strong>{issue.title}</strong><p>{issue.message}</p><small>{issue.entity_type} #{issue.entity_id}</small></div></article>)}</div>}
+          {issues.length===0?<div className="qualityEmpty"><b>✓</b><strong>No matching issues</strong><span>The academic structure passed the selected checks.</span></div>:<div className="issueList">{issues.map((issue,index)=><button type="button" className="issue issueActionCard" key={issue.entity_type+'-'+issue.entity_id+'-'+issue.title+'-'+index} onClick={()=>openIssue(issue)}><span className={'severity '+issue.severity}>{issue.severity}</span><div className="issueBody"><strong>{issue.title}</strong><p>{issue.message}</p><small>{issue.entity_type} #{issue.entity_id}</small></div><span className="issueFix">{issueAction(issue)} <b>→</b></span></button>)}</div>}
         </article>
       </section>
 
