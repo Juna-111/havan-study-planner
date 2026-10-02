@@ -1,1 +1,80 @@
-'use client'\n\nimport {useEffect, useState} from 'react'\nimport {apiFetch} from '../../lib/api'\n\ntype Category={id:number;code:string;name:string;description?:string|null}\ntype Course={id:number;code:string;name:string;description?:string|null;credit_hours?:number|null;academic_scope:string;registry_key:string;content_version:string;status:string;category_codes:string[]}\ntype Preview={code:string;name:string;content_version:string;category_codes:string[];chapters:{name:string;topics:{name:string;difficulty:number}[]}[]}\n\nexport default function FreshmanRegistryWorkspace(){\n  const [courses,setCourses]=useState<Course[]>([])\n  const [categories,setCategories]=useState<Category[]>([])\n  const [form,setForm]=useState({code:'',name:'',content_version:'1.0',category_codes:[] as string[]})\n  const [file,setFile]=useState<File|null>(null)\n  const [preview,setPreview]=useState<Preview[]>([])\n  const [busy,setBusy]=useState(false)\n  const [message,setMessage]=useState('')\n  const [error,setError]=useState('')\n\n  async function load(){\n    try{\n      const [nextCourses,nextCategories]=await Promise.all([apiFetch<Course[]>('/freshman-registry/courses'),apiFetch<Category[]>('/freshman-registry/categories')])\n      setCourses(nextCourses);setCategories(nextCategories)\n    }catch(err){setError(err instanceof Error?err.message:'Could not load the Freshman registry.')}\n  }\n  useEffect(()=>{load()},[])\n  function toggleCategory(code:string){setForm(x=>({...x,category_codes:x.category_codes.includes(code)?x.category_codes.filter(c=>c!==code):[...x.category_codes,code]}))}\n  async function createCourse(){\n    if(!form.code||!form.name){setError('Course code and name are required.');return}\n    setBusy(true);setError('');setMessage('')\n    try{await apiFetch<Course>('/freshman-registry/courses',{method:'POST',body:JSON.stringify(form)});setForm({code:'',name:'',content_version:'1.0',category_codes:[]});setMessage('Freshman course created in the national registry.');await load()}\n    catch(err){setError(err instanceof Error?err.message:'Could not create the course.')}\n    finally{setBusy(false)}\n  }\n  async function previewFile(){\n    if(!file){setError('Choose a .txt or .md course file first.');return}\n    setBusy(true);setError('');setMessage('')\n    try{const fd=new FormData();fd.append('file',file);const data=await apiFetch<Preview[]>('/freshman-registry-import/preview?content_version='+encodeURIComponent(form.content_version||'1.0'),{method:'POST',body:fd});setPreview(data);setMessage('Preview ready. Nothing has been saved yet.')}\n    catch(err){setError(err instanceof Error?err.message:'Could not parse the course file.')}\n    finally{setBusy(false)}\n  }\n  async function commitPreview(){\n    if(!preview.length)return\n    setBusy(true);setError('')\n    try{await apiFetch('/freshman-registry-import/commit',{method:'POST',body:JSON.stringify(preview.map(x=>({...x,category_codes:form.category_codes})))});setPreview([]);setFile(null);setMessage('Freshman course content imported into the reusable registry.');await load()}\n    catch(err){setError(err instanceof Error?err.message:'Could not save the import.')}\n    finally{setBusy(false)}\n  }\n  return <div className='importPage'>\n    <header className='importHeader'><div><span>HAVAN ACADEMIC REGISTRY</span><h1>Freshman course registry</h1><p className='muted'>Create reusable national course content once. Universities will reference it later instead of duplicating it.</p></div></header>\n    {message&&<div className='notice importNotice'>{message}</div>}\n    {error&&<div className='alert importNotice'>{error}<button onClick={()=>setError('')}>×</button></div>}\n    <section className='importGrid'>\n      <div className='importCard'><h3>1. Create a national course</h3><p className='muted'>No university or stream is selected here. That is intentional.</p>\n        <label><span>Course code</span><input value={form.code} onChange={e=>setForm(x=>({...x,code:e.target.value}))} placeholder='Math 1011'/></label>\n        <label><span>Course name</span><input value={form.name} onChange={e=>setForm(x=>({...x,name:e.target.value}))} placeholder='Applied Mathematics I'/></label>\n        <label><span>Content version</span><input value={form.content_version} onChange={e=>setForm(x=>({...x,content_version:e.target.value}))} placeholder='1.0'/></label>\n        <div className='categoryPicker'><span>Freshman classification</span><div className='structureBadge'>{categories.map(c=><button type='button' key={c.code} className={form.category_codes.includes(c.code)?'selCat':''} onClick={()=>toggleCategory(c.code)}>{c.name}</button>)}</div></div>\n        <button className='primary importButton' disabled={busy} onClick={createCourse}>{busy?'Saving…':'Create registry course'}</button>\n      </div>\n      <div className='importCard'><h3>2. Import course hierarchy</h3><p className='muted'>Use the same Course → Chapter → Topic format already supported by Havan.</p>\n        <div className='dropzone'><input type='file' accept='.txt,.md,text/plain,text/markdown' onChange={e=>{setFile(e.target.files?.[0]??null);setPreview([])}}/><strong>{file?file.name:'Choose .txt or .md file'}</strong><small>UTF-8 · maximum 5 MB</small></div>\n        <pre>{'Course: [Math 1011] Applied Mathematics I\nChapter: Measurement\n  • Physical quantities [3]\n  • Units and dimensions [2]\n\nChapter: Vectors\n  • Scalars and vectors [3]\n  • Vector operations [4]'}</pre>\n        <button className='primary importButton' disabled={busy||!file} onClick={previewFile}>{busy?'Working…':'Preview course'}</button>\n      </div>\n    </section>\n    {preview.length>0&&<section className='previewCard'><header><div><span>NOT SAVED YET</span><h2>Review registry content</h2></div><strong>{preview.length} course{preview.length===1?'':'s'}</strong></header>\n      <div className='tree'>{preview.map((course,i)=><div className='treeCourse' key={i}><b>{course.code} · {course.name}</b>{course.chapters.map((chapter,j)=><div className='treeChapter' key={j}><b>{chapter.name}</b><span>{chapter.topics.length} topics</span>{chapter.topics.map((topic,k)=><div className='treeTopic' key={k}>{topic.name} <small>[difficulty {topic.difficulty}]</small></div>)}</div>)}</div>)}</div>\n      <footer><button onClick={()=>setPreview([])}>Cancel</button><button className='primary' disabled={busy} onClick={commitPreview}>{busy?'Saving…':'Confirm and save'}</button></footer></section>}\n    <section className='previewCard' style={{marginTop:18}}><header><div><span>REUSABLE CONTENT</span><h2>National freshman courses</h2></div><strong>{courses.length} courses</strong></header>\n      {courses.length===0?<div className='empty'><b>+</b><h3>No national courses yet</h3><p>Create or import the first Freshman course.</p></div>:<div className='tree'>{courses.map(course=><div className='treeCourse' key={course.id}><b>{course.code} · {course.name}</b><small>Registry: {course.registry_key} · Content v{course.content_version}</small><div className='structureBadge'>{course.category_codes.map(code=><b key={code}>{categories.find(c=>c.code===code)?.name??code}</b>)}</div></div>)}</div>}</section>\n  </div>\n}
+'use client'
+
+import {useEffect, useState} from 'react'
+import {apiFetch} from '../../lib/api'
+
+type Category={id:number;code:string;name:string;description?:string|null}
+type Course={id:number;code:string;name:string;description?:string|null;credit_hours?:number|null;academic_scope:string;registry_key:string;content_version:string;status:string;category_codes:string[]}
+type Preview={code:string;name:string;content_version:string;category_codes:string[];chapters:{name:string;topics:{name:string;difficulty:number}[]}[]}
+
+export default function FreshmanRegistryWorkspace(){
+  const [courses,setCourses]=useState<Course[]>([])
+  const [categories,setCategories]=useState<Category[]>([])
+  const [form,setForm]=useState({code:'',name:'',content_version:'1.0',category_codes:[] as string[]})
+  const [file,setFile]=useState<File|null>(null)
+  const [preview,setPreview]=useState<Preview[]>([])
+  const [busy,setBusy]=useState(false)
+  const [message,setMessage]=useState('')
+  const [error,setError]=useState('')
+
+  async function load(){
+    try{
+      const [nextCourses,nextCategories]=await Promise.all([apiFetch<Course[]>('/freshman-registry/courses'),apiFetch<Category[]>('/freshman-registry/categories')])
+      setCourses(nextCourses);setCategories(nextCategories)
+    }catch(err){setError(err instanceof Error?err.message:'Could not load the Freshman registry.')}
+  }
+  useEffect(()=>{load()},[])
+  function toggleCategory(code:string){setForm(x=>({...x,category_codes:x.category_codes.includes(code)?x.category_codes.filter(c=>c!==code):[...x.category_codes,code]}))}
+  async function createCourse(){
+    if(!form.code||!form.name){setError('Course code and name are required.');return}
+    setBusy(true);setError('');setMessage('')
+    try{await apiFetch<Course>('/freshman-registry/courses',{method:'POST',body:JSON.stringify(form)});setForm({code:'',name:'',content_version:'1.0',category_codes:[]});setMessage('Freshman course created in the national registry.');await load()}
+    catch(err){setError(err instanceof Error?err.message:'Could not create the course.')}
+    finally{setBusy(false)}
+  }
+  async function previewFile(){
+    if(!file){setError('Choose a .txt or .md course file first.');return}
+    setBusy(true);setError('');setMessage('')
+    try{const fd=new FormData();fd.append('file',file);const data=await apiFetch<Preview[]>('/freshman-registry-import/preview?content_version='+encodeURIComponent(form.content_version||'1.0'),{method:'POST',body:fd});setPreview(data);setMessage('Preview ready. Nothing has been saved yet.')}
+    catch(err){setError(err instanceof Error?err.message:'Could not parse the course file.')}
+    finally{setBusy(false)}
+  }
+  async function commitPreview(){
+    if(!preview.length)return
+    setBusy(true);setError('')
+    try{await apiFetch('/freshman-registry-import/commit',{method:'POST',body:JSON.stringify(preview.map(x=>({...x,category_codes:form.category_codes})))});setPreview([]);setFile(null);setMessage('Freshman course content imported into the reusable registry.');await load()}
+    catch(err){setError(err instanceof Error?err.message:'Could not save the import.')}
+    finally{setBusy(false)}
+  }
+  return <div className='importPage'>
+    <header className='importHeader'><div><span>HAVAN ACADEMIC REGISTRY</span><h1>Freshman course registry</h1><p className='muted'>Create reusable national course content once. Universities will reference it later instead of duplicating it.</p></div></header>
+    {message&&<div className='notice importNotice'>{message}</div>}
+    {error&&<div className='alert importNotice'>{error}<button onClick={()=>setError('')}>×</button></div>}
+    <section className='importGrid'>
+      <div className='importCard'><h3>1. Create a national course</h3><p className='muted'>No university or stream is selected here. That is intentional.</p>
+        <label><span>Course code</span><input value={form.code} onChange={e=>setForm(x=>({...x,code:e.target.value}))} placeholder='Math 1011'/></label>
+        <label><span>Course name</span><input value={form.name} onChange={e=>setForm(x=>({...x,name:e.target.value}))} placeholder='Applied Mathematics I'/></label>
+        <label><span>Content version</span><input value={form.content_version} onChange={e=>setForm(x=>({...x,content_version:e.target.value}))} placeholder='1.0'/></label>
+        <div className='categoryPicker'><span>Freshman classification</span><div className='structureBadge'>{categories.map(c=><button type='button' key={c.code} className={form.category_codes.includes(c.code)?'selCat':''} onClick={()=>toggleCategory(c.code)}>{c.name}</button>)}</div></div>
+        <button className='primary importButton' disabled={busy} onClick={createCourse}>{busy?'Saving…':'Create registry course'}</button>
+      </div>
+      <div className='importCard'><h3>2. Import course hierarchy</h3><p className='muted'>Use the same Course → Chapter → Topic format already supported by Havan.</p>
+        <div className='dropzone'><input type='file' accept='.txt,.md,text/plain,text/markdown' onChange={e=>{setFile(e.target.files?.[0]??null);setPreview([])}}/><strong>{file?file.name:'Choose .txt or .md file'}</strong><small>UTF-8 · maximum 5 MB</small></div>
+        <pre>{'Course: [Math 1011] Applied Mathematics I
+Chapter: Measurement
+  • Physical quantities [3]
+  • Units and dimensions [2]
+
+Chapter: Vectors
+  • Scalars and vectors [3]
+  • Vector operations [4]'}</pre>
+        <button className='primary importButton' disabled={busy||!file} onClick={previewFile}>{busy?'Working…':'Preview course'}</button>
+      </div>
+    </section>
+    {preview.length>0&&<section className='previewCard'><header><div><span>NOT SAVED YET</span><h2>Review registry content</h2></div><strong>{preview.length} course{preview.length===1?'':'s'}</strong></header>
+      <div className='tree'>{preview.map((course,i)=><div className='treeCourse' key={i}><b>{course.code} · {course.name}</b>{course.chapters.map((chapter,j)=><div className='treeChapter' key={j}><b>{chapter.name}</b><span>{chapter.topics.length} topics</span>{chapter.topics.map((topic,k)=><div className='treeTopic' key={k}>{topic.name} <small>[difficulty {topic.difficulty}]</small></div>)}</div>)}</div>)}</div>
+      <footer><button onClick={()=>setPreview([])}>Cancel</button><button className='primary' disabled={busy} onClick={commitPreview}>{busy?'Saving…':'Confirm and save'}</button></footer></section>}
+    <section className='previewCard' style={{marginTop:18}}><header><div><span>REUSABLE CONTENT</span><h2>National freshman courses</h2></div><strong>{courses.length} courses</strong></header>
+      {courses.length===0?<div className='empty'><b>+</b><h3>No national courses yet</h3><p>Create or import the first Freshman course.</p></div>:<div className='tree'>{courses.map(course=><div className='treeCourse' key={course.id}><b>{course.code} · {course.name}</b><small>Registry: {course.registry_key} · Content v{course.content_version}</small><div className='structureBadge'>{course.category_codes.map(code=><b key={code}>{categories.find(c=>c.code===code)?.name??code}</b>)}</div></div>)}</div>}</section>
+  </div>
+}
