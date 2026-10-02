@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import CheckConstraint, Column, DateTime, ForeignKey, Index, Integer, String, Table, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -60,24 +60,61 @@ class Stream(Base):
     courses: Mapped[list[Course]] = relationship(back_populates="stream", cascade="all, delete-orphan")
 
 
+freshman_course_category_links = Table(
+    "freshman_course_category_links",
+    Base.metadata,
+    Column("course_id", ForeignKey("courses.id", ondelete="CASCADE"), primary_key=True),
+    Column("category_id", ForeignKey("freshman_course_categories.id", ondelete="CASCADE"), primary_key=True),
+)
+
+
 class Course(Base):
     __tablename__ = "courses"
     __table_args__ = (
-        UniqueConstraint("stream_id", "code", name="uq_courses_stream_code"),
+        UniqueConstraint("registry_key", name="uq_courses_registry_key"),
         Index("ix_courses_stream_id", "stream_id"),
         Index("ix_courses_name", "name"),
+        Index("ix_courses_academic_scope", "academic_scope"),
         CheckConstraint("credit_hours >= 0", name="ck_courses_credit_hours_nonnegative"),
+        CheckConstraint("academic_scope IN ('UNIVERSITY', 'FRESHMAN', 'COC')", name="ck_courses_academic_scope"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    stream_id: Mapped[int] = mapped_column(ForeignKey("streams.id", ondelete="CASCADE"), nullable=False)
+    stream_id: Mapped[Optional[int]] = mapped_column(ForeignKey("streams.id", ondelete="CASCADE"), nullable=True)
     code: Mapped[str] = mapped_column(String(40), nullable=False)
     name: Mapped[str] = mapped_column(String(150), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text)
     credit_hours: Mapped[Optional[int]] = mapped_column(Integer)
+    academic_scope: Mapped[str] = mapped_column(String(20), nullable=False, default="UNIVERSITY", server_default="UNIVERSITY")
+    registry_key: Mapped[str] = mapped_column(String(120), nullable=False)
+    content_version: Mapped[str] = mapped_column(String(30), nullable=False, default="1.0", server_default="1.0")
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="ACTIVE", server_default="ACTIVE")
-    stream: Mapped[Stream] = relationship(back_populates="courses")
+    stream: Mapped[Optional[Stream]] = relationship(back_populates="courses")
+    freshman_categories: Mapped[list[FreshmanCourseCategory]] = relationship(
+        secondary=freshman_course_category_links,
+        back_populates="courses",
+    )
     chapters: Mapped[list[Chapter]] = relationship(back_populates="course", cascade="all, delete-orphan", order_by="Chapter.order_index")
+
+
+class FreshmanCourseCategory(Base):
+    __tablename__ = "freshman_course_categories"
+    __table_args__ = (
+        UniqueConstraint("code", name="uq_freshman_course_categories_code"),
+        UniqueConstraint("name", name="uq_freshman_course_categories_name"),
+        Index("ix_freshman_course_categories_code", "code"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    code: Mapped[str] = mapped_column(String(30), nullable=False)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    courses: Mapped[list[Course]] = relationship(
+        secondary=freshman_course_category_links,
+        back_populates="freshman_categories",
+    )
 
 
 class Chapter(Base):
