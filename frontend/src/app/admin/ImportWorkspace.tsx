@@ -59,7 +59,7 @@ export default function ImportWorkspace({onImported}:{onImported:()=>Promise<voi
     if(mode==='content'&&(!universityId||!curriculumId||!streamId)){setError('Select the university, curriculum, and stream first.');return}
     setBusy(true);setError('');setMessage('Parsing file…')
     try{
-      const url=mode==='full'?'/academic-structure-import/preview':\`/curriculum-import/preview?university_id=\${universityId}&curriculum_id=\${curriculumId}&stream_id=\${streamId}\`
+      const url=mode==='full'?'/academic-structure-import/preview':`/curriculum-import/preview?university_id=${universityId}&curriculum_id=${curriculumId}&stream_id=${streamId}`
       const form=new FormData();form.append('file',file)
       const data=await apiFetch<FullPreview|ExistingPreview>(url,{method:'POST',body:form})
       setPreview(data);setMessage('Preview ready. Nothing has been saved yet.')
@@ -73,7 +73,7 @@ export default function ImportWorkspace({onImported}:{onImported:()=>Promise<voi
     try{
       const url=mode==='full'?'/academic-structure-import/commit':'/curriculum-import/commit'
       const result=await apiFetch<FullPreview|ExistingPreview>(url,{method:'POST',body:JSON.stringify(preview)})
-      setMessage(\`Imported \${result.created_courses} courses, \${result.created_chapters} chapters, and \${result.created_topics} topics.\`)
+      setMessage(`Imported ${result.created_courses} courses, ${result.created_chapters} chapters, and ${result.created_topics} topics.`)
       setPreview(null);setFile(null);await onImported();await loadParents()
     }catch(err){setError(err instanceof Error?err.message:'Could not save the import.')}
     finally{setBusy(false)}
@@ -105,7 +105,7 @@ export default function ImportWorkspace({onImported}:{onImported:()=>Promise<voi
 
       <div className="importCard"><h3>{full?'2. Upload the hierarchy file':'2. Upload the content file'}</h3>
         <div className="dropzone"><input type="file" accept=".txt,.md,text/plain,text/markdown" onChange={e=>chooseFile(e.target.files?.[0]??null)}/><strong>{file?file.name:'Choose .txt or .md file'}</strong><small>UTF-8 · maximum 5 MB</small></div>
-        <pre>{full?String.raw\`University: Havan Demo University
+        <pre>{full?String.raw`University: Havan Demo University
 University Code: HAVAN-DEMO
 Curriculum: Bachelor of Science
 Version: 2026.1
@@ -124,13 +124,13 @@ Chapter: Vectors
 Course: [MATH101] Mathematics
 Chapter: Algebra
   • Functions [3]
-  • Equations [2]\`:String.raw\`Course: [PHY101] Physics
+  • Equations [2]`:String.raw`Course: [PHY101] Physics
 Chapter: Measurement
   • Physical quantities [3]
   • Units and dimensions [2]
 Chapter: Vectors
   • Scalars and vectors [3]
-  • Vector operations [4]\`}</pre>
+  • Vector operations [4]`}</pre>
         <button className="primary importButton" disabled={busy||!file} onClick={previewFile}>{busy?'Working…':'Preview structure'}</button>
       </div>
     </section>
