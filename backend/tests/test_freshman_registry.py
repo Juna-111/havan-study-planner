@@ -187,7 +187,7 @@ Chapter: Vectors
 def test_freshman_registry_import_parser_rejects_missing_difficulty() -> None:
     import pytest
     from fastapi import HTTPException
-    from app.services.curriculum_import import parse_bullet_curriculum
+    from app.services.freshman_registry_parser import parse_bullet_curriculum
 
     with pytest.raises(HTTPException):
         parse_bullet_curriculum(
@@ -200,7 +200,7 @@ Chapter: Mechanics
 
 def test_freshman_registry_import_parser_rejects_legacy_indented_format() -> None:
     from fastapi import HTTPException
-    from app.services.curriculum_import import parse_bullet_curriculum
+    from app.services.freshman_registry_parser import parse_bullet_curriculum
 
     try:
         parse_bullet_curriculum(
