@@ -95,6 +95,9 @@ class Course(Base):
         back_populates="courses",
     )
     chapters: Mapped[list[Chapter]] = relationship(back_populates="course", cascade="all, delete-orphan", order_by="Chapter.order_index")
+    freshman_template_placements: Mapped[list[FreshmanTemplateCourse]] = relationship(
+        back_populates="course", cascade="all, delete-orphan"
+    )
 
 
 class FreshmanCourseCategory(Base):
@@ -115,6 +118,67 @@ class FreshmanCourseCategory(Base):
         secondary=freshman_course_category_links,
         back_populates="freshman_categories",
     )
+
+
+class FreshmanCurriculumTemplate(Base):
+    __tablename__ = "freshman_curriculum_templates"
+    __table_args__ = (
+        UniqueConstraint("code", "version", name="uq_freshman_templates_code_version"),
+        Index("ix_freshman_templates_code", "code"),
+        Index("ix_freshman_templates_status", "status"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    code: Mapped[str] = mapped_column(String(50), nullable=False)
+    name: Mapped[str] = mapped_column(String(150), nullable=False)
+    version: Mapped[str] = mapped_column(String(30), nullable=False)
+    academic_year: Mapped[Optional[str]] = mapped_column(String(30))
+    description: Mapped[Optional[str]] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="DRAFT", server_default="DRAFT")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    semesters: Mapped[list[FreshmanTemplateSemester]] = relationship(
+        back_populates="template", cascade="all, delete-orphan", order_by="FreshmanTemplateSemester.semester_number"
+    )
+
+
+class FreshmanTemplateSemester(Base):
+    __tablename__ = "freshman_template_semesters"
+    __table_args__ = (
+        UniqueConstraint("template_id", "semester_number", name="uq_freshman_template_semester"),
+        CheckConstraint("semester_number IN (1, 2)", name="ck_freshman_template_semester_number"),
+        Index("ix_freshman_template_semesters_template", "template_id"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    template_id: Mapped[int] = mapped_column(ForeignKey("freshman_curriculum_templates.id", ondelete="CASCADE"), nullable=False)
+    semester_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text)
+    template: Mapped[FreshmanCurriculumTemplate] = relationship(back_populates="semesters")
+    courses: Mapped[list[FreshmanTemplateCourse]] = relationship(
+        back_populates="semester", cascade="all, delete-orphan", order_by="FreshmanTemplateCourse.order_index"
+    )
+
+
+class FreshmanTemplateCourse(Base):
+    __tablename__ = "freshman_template_courses"
+    __table_args__ = (
+        UniqueConstraint("semester_id", "course_id", name="uq_freshman_template_semester_course"),
+        CheckConstraint("requirement_type IN ('REQUIRED', 'ELECTIVE')", name="ck_freshman_template_course_requirement"),
+        CheckConstraint("order_index >= 1", name="ck_freshman_template_course_order"),
+        Index("ix_freshman_template_courses_semester", "semester_id"),
+        Index("ix_freshman_template_courses_course", "course_id"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    semester_id: Mapped[int] = mapped_column(ForeignKey("freshman_template_semesters.id", ondelete="CASCADE"), nullable=False)
+    course_id: Mapped[int] = mapped_column(ForeignKey("courses.id", ondelete="CASCADE"), nullable=False)
+    requirement_type: Mapped[str] = mapped_column(String(20), nullable=False, default="REQUIRED", server_default="REQUIRED")
+    order_index: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    notes: Mapped[Optional[str]] = mapped_column(Text)
+    semester: Mapped[FreshmanTemplateSemester] = relationship(back_populates="courses")
+    course: Mapped[Course] = relationship(back_populates="freshman_template_placements")
 
 
 class Chapter(Base):
