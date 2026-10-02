@@ -1,8 +1,9 @@
 from typing import Annotated, Any
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from app.db.session import get_db
-from app.db.models.curriculum import Chapter, Course, Curriculum, Stream, Topic, TopicRelationship, University
+from app.db.models.curriculum import Chapter, Course, Curriculum, FreshmanCurriculumMapping, FreshmanStreamCourseAssignment, FreshmanTemplateCourse, FreshmanTemplateSemester, FreshmanCurriculumTemplate, Stream, Topic, TopicRelationship, University
 from app.schemas.curriculum import *
 from app.services.curriculum import create_item, delete_item, get_or_404, list_items, update_item
 
@@ -54,8 +55,68 @@ def update_stream(item_id:int,payload:StreamUpdate,db:DB): return update_item(db
 def delete_stream(item_id:int,db:DB): delete_item(db,get_or_404(db,Stream,item_id))
 
 @router.get("/courses")
-def courses(db:DB,stream_id:int|None=None,page:int=Query(1,ge=1),page_size:int=Query(20,ge=1,le=100)):
-    return collection(db,Course,CourseRead,page,page_size,{"stream_id":stream_id})
+def courses(
+    db: DB,
+    stream_id: int | None = None,
+    include_freshman: bool = False,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+):
+    if not include_freshman or stream_id is None:
+        return collection(db, Course, CourseRead, page, page_size, {"stream_id": stream_id})
+
+    stream = db.get(Stream, stream_id)
+    if stream is None:
+        return {"items": [], "page": page, "page_size": page_size, "total": 0, "pages": 0}
+
+    direct_courses = list(db.scalars(
+        select(Course)
+        .where(Course.stream_id == stream_id)
+        .order_by(Course.id)
+    ).all())
+
+    mapping = db.scalar(
+        select(FreshmanCurriculumMapping)
+        .where(
+            FreshmanCurriculumMapping.curriculum_id == stream.curriculum_id,
+            func.upper(FreshmanCurriculumMapping.status) == "ACTIVE",
+        )
+    )
+    freshman_courses = []
+    if mapping:
+        freshman_courses = list(db.scalars(
+            select(Course)
+            .join(FreshmanTemplateCourse, FreshmanTemplateCourse.course_id == Course.id)
+            .join(FreshmanTemplateSemester, FreshmanTemplateSemester.id == FreshmanTemplateCourse.semester_id)
+            .join(FreshmanStreamCourseAssignment, FreshmanStreamCourseAssignment.template_course_id == FreshmanTemplateCourse.id)
+            .join(FreshmanCurriculumTemplate, FreshmanCurriculumTemplate.id == FreshmanTemplateSemester.template_id)
+            .where(
+                FreshmanStreamCourseAssignment.stream_id == stream_id,
+                func.upper(FreshmanStreamCourseAssignment.status) == "ACTIVE",
+                FreshmanCurriculumTemplate.id == mapping.template_id,
+                func.upper(FreshmanCurriculumTemplate.status) == "ACTIVE",
+            )
+            .order_by(FreshmanTemplateSemester.semester_number, FreshmanTemplateCourse.order_index, Course.id)
+        ).all())
+
+    seen = set()
+    available = []
+    for course in direct_courses + freshman_courses:
+        if course.id not in seen:
+            seen.add(course.id)
+            available.append(course)
+
+    total = len(available)
+    start = (page - 1) * page_size
+    items = available[start:start + page_size]
+    pages = (total + page_size - 1) // page_size if total else 0
+    return {
+        "items": [CourseRead.model_validate(item) for item in items],
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+        "pages": pages,
+    }
 @router.post("/courses",response_model=CourseRead,status_code=201)
 def create_course(payload:CourseCreate,db:DB):
     data = payload.model_dump()
