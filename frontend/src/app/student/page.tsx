@@ -144,7 +144,7 @@ export default function StudentPage() {
     setStudentId(id)
 
     const courseItems = await apiList(
-      `/courses?stream_id=${data.profile.stream_id}&page=1&page_size=100`,
+      `/courses?stream_id=${data.profile.stream_id}&include_freshman=true&page=1&page_size=100`,
     )
     const selected = courseItems.filter((course: Item) =>
       (data.courses ?? []).some((item: Item) => item.course_id === course.id),
@@ -226,7 +226,7 @@ export default function StudentPage() {
       return
     }
     apiList(
-      `/courses?stream_id=${draft.streamId}&page=1&page_size=100`,
+      `/courses?stream_id=${draft.streamId}&include_freshman=true&page=1&page_size=100`,
     ).then(setCourses).catch((err) => setError(err instanceof Error ? err.message : 'Could not load courses.'))
   }, [draft.streamId])
   useEffect(() => {
