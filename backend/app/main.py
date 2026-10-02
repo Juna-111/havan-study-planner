@@ -4,7 +4,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.academic_quality import router as academic_quality_router
 from app.api.auth import router as auth_router
 from app.api.curriculum import router as curriculum_router
-from app.api.curriculum_import import router as curriculum_import_router
 from app.api.health import router as health_router
 from app.api.freshman_registry import router as freshman_registry_router
 from app.api.freshman_registry_import import router as freshman_registry_import_router
@@ -37,7 +36,6 @@ app.add_middleware(
 app.include_router(health_router)
 app.include_router(auth_router)
 app.include_router(curriculum_router)
-app.include_router(curriculum_import_router)
 app.include_router(freshman_registry_router)
 app.include_router(freshman_registry_import_router)
 app.include_router(freshman_templates_router)

@@ -83,7 +83,7 @@ class Course(Base):
         Index("ix_courses_name", "name"),
         Index("ix_courses_academic_scope", "academic_scope"),
         CheckConstraint("credit_hours >= 0", name="ck_courses_credit_hours_nonnegative"),
-        CheckConstraint("academic_scope IN ('UNIVERSITY', 'FRESHMAN', 'COC')", name="ck_courses_academic_scope"),
+        CheckConstraint("academic_scope IN ('UNIVERSITY', 'FRESHMAN')", name="ck_courses_academic_scope"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)

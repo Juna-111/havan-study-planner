@@ -4,8 +4,8 @@ from sqlalchemy.orm import Session
 
 from app.db.models.curriculum import Chapter, Course, Topic
 from app.db.session import get_db
-from app.schemas.curriculum_import import FreshmanRegistryPreview, FreshmanRegistryResult
-from app.services.curriculum_import import parse_bullet_curriculum
+from app.schemas.freshman_registry_import import FreshmanRegistryPreview, FreshmanRegistryResult
+from app.services.freshman_registry_parser import parse_bullet_curriculum
 from app.services.freshman_registry import create_freshman_course, freshman_registry_key, set_categories
 
 router = APIRouter(prefix="/api/v1/freshman-registry-import", tags=["freshman-registry-import"])
