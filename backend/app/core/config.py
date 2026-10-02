@@ -16,6 +16,12 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     auth_secret: str = Field("change-this-secret-in-production", validation_alias="AUTH_SECRET")
     auth_token_ttl_days: int = Field(30, validation_alias="AUTH_TOKEN_TTL_DAYS")
+    smtp_host: str = Field("smtp.gmail.com", validation_alias="SMTP_HOST")
+    smtp_port: int = Field(587, validation_alias="SMTP_PORT")
+    smtp_user: str = Field("", validation_alias="SMTP_USER")
+    smtp_password: str = Field("", validation_alias="SMTP_PASSWORD")
+    smtp_from: str = Field("", validation_alias="SMTP_FROM")
+    password_reset_ttl_minutes: int = Field(10, validation_alias="PASSWORD_RESET_TTL_MINUTES")
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
