@@ -34,11 +34,14 @@ def course_available_to_stream(db: Session, course_id: int, stream_id: int) -> b
     if direct is not None:
         return True
 
+    stream = db.get(Stream, stream_id)
+    if stream is None:
+        return False
+
     mapping = db.scalar(
         select(FreshmanCurriculumMapping).where(
-            FreshmanCurriculumMapping.curriculum_id == Stream.curriculum_id,
+            FreshmanCurriculumMapping.curriculum_id == stream.curriculum_id,
             FreshmanCurriculumMapping.status == "ACTIVE",
-            Stream.id == stream_id,
         )
     )
     if mapping is None:
