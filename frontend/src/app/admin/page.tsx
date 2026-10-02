@@ -1,6 +1,6 @@
 'use client'
 
-import {useState} from 'react'
+import {useEffect,useState} from 'react'
 import './admin.css'
 import FreshmanRegistryWorkspace from './FreshmanRegistryWorkspace'
 import FreshmanTemplateWorkspace from './FreshmanTemplateWorkspace'
@@ -32,6 +32,11 @@ const navigation: Array<{mode: Mode; label: string; icon: string}> = [
 export default function Admin() {
   const [mode, setMode] = useState<Mode>('setup')
   const [mobileNav, setMobileNav] = useState(false)
+
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get('mode') as Mode | null
+    if (requested && navigation.some(item => item.mode === requested)) setMode(requested)
+  }, [])
 
   const selectMode = (next: Mode) => {
     setMode(next)
