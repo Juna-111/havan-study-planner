@@ -60,14 +60,14 @@ export default function FreshmanRegistryWorkspace(){
       </div>
       <div className='importCard'><h3>2. Import course hierarchy</h3><p className='muted'>Use the same Course → Chapter → Topic format already supported by Havan.</p>
         <div className='dropzone'><input type='file' accept='.txt,.md,text/plain,text/markdown' onChange={e=>{setFile(e.target.files?.[0]??null);setPreview([])}}/><strong>{file?file.name:'Choose .txt or .md file'}</strong><small>UTF-8 · maximum 5 MB</small></div>
-        <pre>{'Course: [Math 1011] Applied Mathematics I
+        <pre>{`Course: [Math 1011] Applied Mathematics I
 Chapter: Measurement
   • Physical quantities [3]
   • Units and dimensions [2]
 
 Chapter: Vectors
   • Scalars and vectors [3]
-  • Vector operations [4]'}</pre>
+  • Vector operations [4]`}</pre>
         <button className='primary importButton' disabled={busy||!file} onClick={previewFile}>{busy?'Working…':'Preview course'}</button>
       </div>
     </section>
