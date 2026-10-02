@@ -72,6 +72,11 @@ export default function AuthPage() {
         return
       }
 
+      if (password !== confirm) {
+        setError('Passwords do not match.')
+        return
+      }
+
       setBusy(true)
       try {
         await apiFetch<{ message: string }>('/auth/reset-password', {
