@@ -62,3 +62,27 @@
 .workspacePanel>header>strong{padding:10px 13px;border-radius:10px;background:#e9ebff;color:#01017e;font-size:11px;white-space:nowrap}
 .empty{min-height:280px;display:grid;place-content:center;justify-items:center;text-align:center;color:#77778a;font-size:12px}
 @media(max-width:760px){.workspaceGrid{grid-template-columns:1fr}.workspaceHeader{align-items:flex-start;flex-direction:column}.workspacePanel>header{align-items:flex-start}.workspacePanel>header>strong{white-space:normal}}
+
+.workspaceBaseline{display:grid;gap:3px;margin-top:15px;padding:13px;border-radius:11px;background:#f7f7fb}
+.workspaceBaseline b{color:#01017e;font-size:12px}
+.workspaceBaseline span{color:#555568;font-size:10px}
+.workspaceBaseline small{color:#8b8b9b;font-size:9px}
+.workspaceSemesterGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:20px}
+.workspaceSemester{padding:17px;border:1px solid #ececf2;border-radius:14px;background:#fafafd}
+.workspaceSemester>header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding-bottom:13px;border-bottom:1px solid #e9e9f0}
+.workspaceSemester>header small{color:#8b8b9b;font-size:8px;font-weight:800;letter-spacing:.8px}
+.workspaceSemester>header h3{margin:4px 0 0;color:#151526;font:700 17px Fraunces,Georgia,serif}
+.workspaceSemester>header>span{padding:6px 8px;border-radius:999px;background:#e9ebff;color:#01017e;font-size:8px;font-weight:800;white-space:nowrap}
+.workspaceCourseList{display:grid;gap:8px;margin-top:12px}
+.workspaceCourse{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid #e5e5ed;border-radius:11px;background:#fff}
+.workspaceCourse.assigned{border-color:#cce8da;background:#fbfffd}
+.workspaceCourse>div{min-width:0;display:grid;gap:2px}
+.workspaceCourse b{color:#01017e;font-size:10px}
+.workspaceCourse strong{color:#151526;font-size:11px}
+.workspaceCourse small{color:#8b8b9b;font-size:8px}
+.workspaceCourse button{flex-shrink:0;padding:8px 10px;border-radius:8px;font-size:9px;font-weight:800}
+.workspaceAdd{border:1px solid #d7d7e4;background:#fff;color:#01017e}
+.workspaceAdd:hover{border-color:#01017e}
+.workspaceAssigned{border:1px solid #bfe1cf;background:#eaf8f1;color:#26744e}
+.workspaceCourse button:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:760px){.workspaceSemesterGrid{grid-template-columns:1fr}.workspaceCourse{align-items:flex-start;flex-direction:column}.workspaceCourse button{width:100%}}
