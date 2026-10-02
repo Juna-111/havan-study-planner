@@ -15,6 +15,38 @@ from app.services.planner import generate_plan, load_plan, replan_remaining
 router = APIRouter(prefix="/api/v1/planner", tags=["planner"])
 
 
+def _validate_move_target(
+    plan: StudyPlan,
+    task: StudyTask,
+    target_date: date,
+    daily_capacity: int,
+    used_minutes: int,
+) -> None:
+    if target_date < date.today():
+        raise HTTPException(status_code=400, detail="A task cannot be moved to a past date")
+
+    horizon_start = plan.created_at.date()
+    horizon_end = horizon_start + timedelta(days=plan.horizon_days - 1)
+    if target_date < horizon_start or target_date > horizon_end:
+        raise HTTPException(
+            status_code=400,
+            detail="A task can only be moved within the current study plan horizon. Generate a new plan to use a later date.",
+        )
+
+    if task.estimated_minutes > daily_capacity:
+        raise HTTPException(
+            status_code=400,
+            detail="This task is longer than the student's available daily study time.",
+        )
+
+    if used_minutes + task.estimated_minutes > daily_capacity:
+        raise HTTPException(
+            status_code=400,
+            detail="The target date does not have enough available study time for this task.",
+        )
+
+
+
 def _plan_response(plan, tasks) -> dict:
     grouped = defaultdict(list)
     for task in tasks:
@@ -108,8 +140,6 @@ def act_on_task(
     if action == "MOVE":
         if payload.target_date is None:
             raise HTTPException(status_code=400, detail="A target date is required when moving a task")
-        if payload.target_date < date.today():
-            raise HTTPException(status_code=400, detail="A task cannot be moved to a past date")
         if task.status in {"COMPLETED", "SKIPPED"}:
             raise HTTPException(status_code=400, detail="Completed or skipped tasks cannot be moved")
 
@@ -117,14 +147,6 @@ def act_on_task(
         student = db.get(StudentProfile, student_id)
         if plan is None or student is None:
             raise HTTPException(status_code=404, detail="Study plan or student profile not found")
-
-        horizon_start = plan.created_at.date()
-        horizon_end = horizon_start + timedelta(days=plan.horizon_days - 1)
-        if payload.target_date < horizon_start or payload.target_date > horizon_end:
-            raise HTTPException(
-                status_code=400,
-                detail="A task can only be moved within the current study plan horizon. Generate a new plan to use a later date.",
-            )
 
         daily_capacity = int(round(student.study_hours_per_day * 60))
         if task.estimated_minutes > daily_capacity:
@@ -142,11 +164,13 @@ def act_on_task(
             )
         ).all())
         used_minutes = sum(item.estimated_minutes for item in same_day_tasks)
-        if used_minutes + task.estimated_minutes > daily_capacity:
-            raise HTTPException(
-                status_code=400,
-                detail="The target date does not have enough available study time for this task.",
-            )
+        _validate_move_target(
+            plan,
+            task,
+            payload.target_date,
+            daily_capacity,
+            used_minutes,
+        )
 
         task.planned_date = payload.target_date
         task.status = "MOVED"
