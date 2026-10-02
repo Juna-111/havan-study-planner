@@ -1,5 +1,7 @@
 from types import SimpleNamespace
 
+import pytest
+
 from app.api import student as student_api
 
 
@@ -89,13 +91,12 @@ def test_student_course_read_rejects_missing_resolved_metadata():
         status="ACTIVE",
     )
 
-    try:
+    with pytest.raises(
+        Exception,
+        match="Student course is no longer available in the active university curriculum",
+    ):
         student_api.student_course_read_data(
             FakeDB([]),
             student_course,
             metadata={},
         )
-    except Exception as exc:
-        assert str(exc.detail) == "Student course is no longer available in the active university curriculum"
-    else:
-        raise AssertionError("Expected unresolved student course to be rejected")
