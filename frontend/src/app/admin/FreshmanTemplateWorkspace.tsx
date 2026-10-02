@@ -89,8 +89,8 @@ export default function FreshmanTemplateWorkspace(){
     <header className='workspaceHeader'>
       <div><span>HAVAN ACADEMIC TEMPLATES</span><h1>Freshman curriculum templates</h1><p className='muted'>Build national Semester I and Semester II baselines from reusable registry courses. Universities are not mapped here.</p></div>
     </header>
-    {message&&<div className='notice importNotice'>{message}</div>}
-    {error&&<div className='alert importNotice'>{error}<button onClick={()=>setError('')}>×</button></div>}
+    {message&&<div className='notice workspaceNotice'>{message}</div>}
+    {error&&<div className='alert workspaceNotice'>{error}<button onClick={()=>setError('')}>×</button></div>}
 
     <section className='workspaceGrid'>
       <div className='workspaceCard'>
@@ -98,7 +98,7 @@ export default function FreshmanTemplateWorkspace(){
         <p className='muted'>The same template code can have multiple versions, but each code + version must be unique.</p>
         {(['code','name','version','academic_year'] as const).map(key=><label key={key}><span>{key==='academic_year'?'Academic year':key.replace('_',' ')}</span><input value={form[key]} onChange={e=>setForm({...form,[key]:e.target.value})}/></label>)}
         <label><span>Description</span><textarea rows={3} value={form.description} onChange={e=>setForm({...form,description:e.target.value})}/></label>
-        <button className='primary importButton' disabled={busy} onClick={createTemplate}>{busy?'Saving…':'Create two-semester template'}</button>
+        <button className='workspacePrimary' disabled={busy} onClick={createTemplate}>{busy?'Saving…':'Create two-semester template'}</button>
       </div>
 
       <div className='workspaceCard'>
@@ -109,7 +109,7 @@ export default function FreshmanTemplateWorkspace(){
         <label><span>Freshman registry course</span><select value={assignment.course_id} onChange={e=>setAssignment({...assignment,course_id:e.target.value})}><option value=''>Select course…</option>{courses.map(course=><option key={course.id} value={course.id}>{course.code} · {course.name} · v{course.content_version}</option>)}</select></label>
         <label><span>Requirement</span><select value={assignment.requirement_type} onChange={e=>setAssignment({...assignment,requirement_type:e.target.value})}><option value='REQUIRED'>Required</option><option value='ELECTIVE'>Elective</option></select></label>
         <label><span>Order</span><input type='number' min='1' value={assignment.order_index} onChange={e=>setAssignment({...assignment,order_index:e.target.value})}/></label>
-        <button className='primary importButton' disabled={busy||!assignment.course_id} onClick={assignCourse}>{busy?'Saving…':'Assign course'}</button>
+        <button className='workspacePrimary' disabled={busy||!assignment.course_id} onClick={assignCourse}>{busy?'Saving…':'Assign course'}</button>
         </>:<div className='empty'><h3>Create the first template</h3><p>Then assign reusable Freshman registry courses to either semester.</p></div>}
       </div>
     </section>
