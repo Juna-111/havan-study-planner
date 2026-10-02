@@ -320,3 +320,62 @@ class FreshmanStreamCourseAssignmentRead(ORMModel):
     order_index: int
     status: str
     notes: Optional[str]
+
+
+class UniversityCourseOverrideCreate(BaseModel):
+    curriculum_id: int = Field(gt=0)
+    national_course_id: Optional[int] = Field(default=None, gt=0)
+    local_course_id: Optional[int] = Field(default=None, gt=0)
+    source_stream_id: Optional[int] = Field(default=None, gt=0)
+    target_stream_id: Optional[int] = Field(default=None, gt=0)
+    override_type: str = Field(pattern=r"^(ADD|REMOVE|MOVE|CHANGE_STREAM|METADATA)$")
+    semester_number: Optional[int] = Field(default=None, ge=1, le=2)
+    order_index: Optional[int] = Field(default=None, ge=1)
+    local_code: Optional[str] = Field(default=None, min_length=1, max_length=40)
+    local_title: Optional[str] = Field(default=None, min_length=2, max_length=150)
+    local_credit_hours: Optional[int] = Field(default=None, ge=0, le=30)
+    reason: str = Field(min_length=3, max_length=2000)
+    source: Optional[str] = Field(default=None, max_length=255)
+    status: str = Field(default="DRAFT", pattern=r"^(DRAFT|ACTIVE|ARCHIVED)$")
+
+
+class UniversityCourseOverrideUpdate(BaseModel):
+    source_stream_id: Optional[int] = Field(default=None, gt=0)
+    target_stream_id: Optional[int] = Field(default=None, gt=0)
+    semester_number: Optional[int] = Field(default=None, ge=1, le=2)
+    order_index: Optional[int] = Field(default=None, ge=1)
+    local_code: Optional[str] = Field(default=None, min_length=1, max_length=40)
+    local_title: Optional[str] = Field(default=None, min_length=2, max_length=150)
+    local_credit_hours: Optional[int] = Field(default=None, ge=0, le=30)
+    reason: Optional[str] = Field(default=None, min_length=3, max_length=2000)
+    source: Optional[str] = Field(default=None, max_length=255)
+    status: Optional[str] = Field(default=None, pattern=r"^(DRAFT|ACTIVE|ARCHIVED)$")
+
+
+class UniversityCourseOverrideRead(ORMModel):
+    id: int
+    curriculum_id: int
+    curriculum_name: str
+    university_id: int
+    university_name: str
+    national_course_id: Optional[int]
+    national_course_code: Optional[str]
+    national_course_name: Optional[str]
+    local_course_id: Optional[int]
+    local_course_code: Optional[str]
+    local_course_name: Optional[str]
+    source_stream_id: Optional[int]
+    source_stream_name: Optional[str]
+    target_stream_id: Optional[int]
+    target_stream_name: Optional[str]
+    override_type: str
+    semester_number: Optional[int]
+    order_index: Optional[int]
+    local_code: Optional[str]
+    local_title: Optional[str]
+    local_credit_hours: Optional[int]
+    reason: str
+    source: Optional[str]
+    status: str
+    created_at: datetime
+    updated_at: datetime
