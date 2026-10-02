@@ -75,3 +75,18 @@ class FullStructureResult(FullStructurePreview):
     reused_chapters: int = 0
     created_topics: int
     skipped_topics: int = 0
+
+
+class FreshmanRegistryPreview(BaseModel):
+    code: str = Field(min_length=1, max_length=40)
+    name: str = Field(min_length=2, max_length=150)
+    content_version: str = Field(default="1.0", min_length=1, max_length=30)
+    category_codes: list[str] = Field(default_factory=list, max_length=3)
+    chapters: list[ImportChapter] = Field(min_length=1)
+
+
+class FreshmanRegistryResult(FreshmanRegistryPreview):
+    course_id: int
+    registry_key: str
+    created_chapters: int
+    created_topics: int
