@@ -5,6 +5,7 @@ from sqlalchemy import func, select
 from app.db.session import get_db
 from app.db.models.curriculum import Chapter, Course, Curriculum, FreshmanCurriculumMapping, FreshmanStreamCourseAssignment, FreshmanTemplateCourse, FreshmanTemplateSemester, FreshmanCurriculumTemplate, Stream, Topic, TopicRelationship, University, UniversityCourseOverride
 from app.schemas.curriculum import *
+from app.services.academic_resolver import resolve_stream_courses
 from app.services.curriculum import create_item, delete_item, get_or_404, list_items, update_item
 
 router = APIRouter(prefix="/api/v1", tags=["curriculum"])
@@ -65,110 +66,27 @@ def courses(
     if not include_freshman or stream_id is None:
         return collection(db, Course, CourseRead, page, page_size, {"stream_id": stream_id})
 
-    stream = db.get(Stream, stream_id)
-    if stream is None:
+    if db.get(Stream, stream_id) is None:
         return {"items": [], "page": page, "page_size": page_size, "total": 0, "pages": 0}
 
-    direct_courses = list(db.scalars(
-        select(Course)
-        .where(Course.stream_id == stream_id)
-        .order_by(Course.id)
-    ).all())
-
-    mapping = db.scalar(
-        select(FreshmanCurriculumMapping)
-        .where(
-            FreshmanCurriculumMapping.curriculum_id == stream.curriculum_id,
-            func.upper(FreshmanCurriculumMapping.status) == "ACTIVE",
-        )
-    )
-    freshman_courses = []
-    if mapping:
-        freshman_courses = list(db.scalars(
-            select(Course)
-            .join(FreshmanTemplateCourse, FreshmanTemplateCourse.course_id == Course.id)
-            .join(FreshmanTemplateSemester, FreshmanTemplateSemester.id == FreshmanTemplateCourse.semester_id)
-            .join(FreshmanStreamCourseAssignment, FreshmanStreamCourseAssignment.template_course_id == FreshmanTemplateCourse.id)
-            .join(FreshmanCurriculumTemplate, FreshmanCurriculumTemplate.id == FreshmanTemplateSemester.template_id)
-            .where(
-                FreshmanStreamCourseAssignment.stream_id == stream_id,
-                func.upper(FreshmanStreamCourseAssignment.status) == "ACTIVE",
-                FreshmanCurriculumTemplate.id == mapping.template_id,
-                func.upper(FreshmanCurriculumTemplate.status) == "ACTIVE",
-            )
-            .order_by(FreshmanTemplateSemester.semester_number, FreshmanTemplateCourse.order_index, Course.id)
-        ).all())
-
-    seen = set()
-    available = []
-    for course in direct_courses + freshman_courses:
-        if course.id not in seen:
-            seen.add(course.id)
-            available.append(course)
-
-    overrides = list(db.scalars(
-        select(UniversityCourseOverride).where(
-            UniversityCourseOverride.curriculum_id == stream.curriculum_id,
-            func.upper(UniversityCourseOverride.status) == "ACTIVE",
-        )
-    ).all())
-
-    by_id = {course.id: course for course in available}
-    for override in overrides:
-        if override.override_type == "ADD":
-            if override.target_stream_id == stream_id and override.local_course_id:
-                local_course = db.get(Course, override.local_course_id)
-                if local_course and local_course.status == "ACTIVE":
-                    by_id[local_course.id] = local_course
-        elif override.override_type == "REMOVE":
-            if override.national_course_id and (
-                override.source_stream_id is None or override.source_stream_id == stream_id
-            ):
-                by_id.pop(override.national_course_id, None)
-        elif override.override_type == "CHANGE_STREAM":
-            if override.national_course_id:
-                if override.source_stream_id is None or override.source_stream_id == stream_id:
-                    by_id.pop(override.national_course_id, None)
-                if override.target_stream_id == stream_id:
-                    national_course = db.get(Course, override.national_course_id)
-                    if national_course and national_course.status == "ACTIVE":
-                        by_id[national_course.id] = national_course
-
-    available = list(by_id.values())
-    metadata = {
-        item.national_course_id: item
-        for item in overrides
-        if item.override_type == "METADATA"
-        and item.national_course_id
-        and (item.source_stream_id is None or item.source_stream_id == stream_id)
-    }
-
-    effective = []
-    for course in available:
-        item = CourseRead.model_validate(course)
-        override = metadata.get(course.id)
-        if override:
-            item = item.model_copy(update={
-                "code": override.local_code or item.code,
-                "name": override.local_title or item.name,
-                "credit_hours": (
-                    override.local_credit_hours
-                    if override.local_credit_hours is not None
-                    else item.credit_hours
-                ),
-            })
-        effective.append(item)
-
-    total = len(effective)
-    start = (page - 1) * page_size
-    items = effective[start:start + page_size]
-    pages = (total + page_size - 1) // page_size if total else 0
+    resolved = resolve_stream_courses(db, stream_id)
+    total = len(resolved)
+    start_index = (page - 1) * page_size
+    selected = resolved[start_index:start_index + page_size]
+    items = [
+        CourseRead.model_validate(db.get(Course, item.course_id)).model_copy(update={
+            "code": item.display_code,
+            "name": item.display_name,
+            "credit_hours": item.credit_hours,
+        })
+        for item in selected
+    ]
     return {
         "items": items,
         "page": page,
         "page_size": page_size,
         "total": total,
-        "pages": pages,
+        "pages": (total + page_size - 1) // page_size if total else 0,
     }
 @router.post("/courses",response_model=CourseRead,status_code=201)
 def create_course(payload:CourseCreate,db:DB):
