@@ -121,6 +121,59 @@ def replan_student(
     return _plan_response(plan, _tasks_for_plan(db, plan.id))
 
 
+
+
+@router.post("/students/{student_id}/add", response_model=StudyPlanRead)
+def add_student_task(
+    student_id: int,
+    payload: StudyTaskAction,
+    db: Session = Depends(get_db),
+):
+    if payload.action != "ADD" or payload.target_topic_id is None or payload.target_date is None:
+        raise HTTPException(status_code=400, detail="ADD requires a topic and target date")
+    plan = load_plan(db, student_id)
+    student = db.get(StudentProfile, student_id)
+    topic = db.get(Topic, payload.target_topic_id)
+    if plan is None or student is None:
+        raise HTTPException(status_code=404, detail="Study plan or student profile not found")
+    if topic is None or str(topic.status).upper() != "ACTIVE":
+        raise HTTPException(status_code=400, detail="The selected topic is not active")
+    if payload.target_date < date.today():
+        raise HTTPException(status_code=400, detail="A task cannot be scheduled on a past date")
+    horizon_start = plan.created_at.date()
+    horizon_end = horizon_start + timedelta(days=plan.horizon_days - 1)
+    if payload.target_date < horizon_start or payload.target_date > horizon_end:
+        raise HTTPException(status_code=400, detail="This action must stay within the current study plan horizon. Generate a new plan for a later date.")
+    chapter = db.get(Chapter, topic.chapter_id)
+    if chapter is None or chapter.course_id not in resolved_course_ids(db, student_id):
+        raise HTTPException(status_code=400, detail="The selected topic is outside the student's active curriculum")
+    existing = list(db.scalars(select(StudyTask).where(
+        StudyTask.plan_id == plan.id,
+        StudyTask.topic_id == topic.id,
+        ~StudyTask.status.in_([ "SKIPPED", "REPLANNED" ]),
+    )).all())
+    if existing:
+        raise HTTPException(status_code=400, detail="This topic is already represented in the current study plan")
+    progress = db.scalar(select(StudentTopicProgress).where(
+        StudentTopicProgress.student_id == student_id,
+        StudentTopicProgress.topic_id == topic.id,
+    ))
+    remaining = max(1, int(topic.estimated_study_minutes) - int(progress.completed_minutes if progress else 0))
+    minutes = min(remaining, payload.estimated_minutes or remaining)
+    daily_capacity = int(round(student.study_hours_per_day * 60))
+    same_day = list(db.scalars(select(StudyTask).where(
+        StudyTask.plan_id == plan.id,
+        StudyTask.planned_date == payload.target_date,
+        StudyTask.status != "SKIPPED",
+    )).all())
+    if minutes > daily_capacity or sum(item.estimated_minutes for item in same_day) + minutes > daily_capacity:
+        raise HTTPException(status_code=400, detail="The target date does not have enough available study time for this added session.")
+    db.add(StudyTask(plan_id=plan.id, student_id=student_id, course_id=chapter.course_id, topic_id=topic.id,
+        planned_date=payload.target_date, estimated_minutes=minutes, priority=0.0,
+        reason="Added manually by the student", status="ADDED"))
+    db.commit()
+    return _plan_response(plan, _tasks_for_plan(db, plan.id))
+
 @router.post("/students/{student_id}/tasks/{task_id}/action", response_model=StudyPlanRead)
 def act_on_task(
     student_id: int,
