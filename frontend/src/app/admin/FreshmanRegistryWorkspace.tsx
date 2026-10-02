@@ -48,15 +48,15 @@ export default function FreshmanRegistryWorkspace(){
   }
   return <div className='workspacePage'>
     <header className='workspaceHeader'><div><span>HAVAN ACADEMIC REGISTRY</span><h1>Freshman course registry</h1><p className='muted'>Create reusable national course content once. Universities will reference it later instead of duplicating it.</p></div></header>
-    {message&&<div className='notice importNotice'>{message}</div>}
-    {error&&<div className='alert importNotice'>{error}<button onClick={()=>setError('')}>×</button></div>}
+    {message&&<div className='notice workspaceNotice'>{message}</div>}
+    {error&&<div className='alert workspaceNotice'>{error}<button onClick={()=>setError('')}>×</button></div>}
     <section className='workspaceGrid'>
       <div className='workspaceCard'><h3>1. Create a national course</h3><p className='muted'>No university or stream is selected here. That is intentional.</p>
         <label><span>Course code</span><input value={form.code} onChange={e=>setForm(x=>({...x,code:e.target.value}))} placeholder='Math 1011'/></label>
         <label><span>Course name</span><input value={form.name} onChange={e=>setForm(x=>({...x,name:e.target.value}))} placeholder='Applied Mathematics I'/></label>
         <label><span>Content version</span><input value={form.content_version} onChange={e=>setForm(x=>({...x,content_version:e.target.value}))} placeholder='1.0'/></label>
         <div className='workspaceField categoryPicker'><span>Freshman classification</span><div className='structureBadge'>{categories.map(c=><button type='button' key={c.code} className={form.category_codes.includes(c.code)?'selCat':''} onClick={()=>toggleCategory(c.code)}>{c.name}</button>)}</div></div>
-        <button className='primary importButton' disabled={busy} onClick={createCourse}>{busy?'Saving…':'Create registry course'}</button>
+        <button className='workspacePrimary' disabled={busy} onClick={createCourse}>{busy?'Saving…':'Create registry course'}</button>
       </div>
       <div className='workspaceCard'><h3>2. Import course hierarchy</h3><p className='muted'>Use the same Course → Chapter → Topic format already supported by Havan.</p>
         <div className='workspaceDropzone'><input type='file' accept='.txt,.md,text/plain,text/markdown' onChange={e=>{setFile(e.target.files?.[0]??null);setPreview([])}}/><strong>{file?file.name:'Choose .txt or .md file'}</strong><small>UTF-8 · maximum 5 MB</small></div>
@@ -68,7 +68,7 @@ Chapter: Measurement
 Chapter: Vectors
   • Scalars and vectors [3]
   • Vector operations [4]`}</pre>
-        <button className='primary importButton' disabled={busy||!file} onClick={previewFile}>{busy?'Working…':'Preview course'}</button>
+        <button className='workspacePrimary' disabled={busy||!file} onClick={previewFile}>{busy?'Working…':'Preview course'}</button>
       </div>
     </section>
     {preview.length>0&&<section className='workspacePanel'><header><div><span>NOT SAVED YET</span><h2>Review registry content</h2></div><strong>{preview.length} course{preview.length===1?'':'s'}</strong></header>
