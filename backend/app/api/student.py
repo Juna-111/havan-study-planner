@@ -29,6 +29,17 @@ def course_available_to_stream(db: Session, course_id: int, stream_id: int) -> b
     return any(item.course_id == course_id for item in resolve_stream_courses(db, stream_id))
 
 
+def resolved_student_courses(db: Session, student_id: int) -> list[StudentCourse]:
+    effective_course_ids = resolved_course_ids(db, student_id)
+    return [
+        item
+        for item in db.scalars(
+            select(StudentCourse).where(StudentCourse.student_id == student_id)
+        ).all()
+        if item.course_id in effective_course_ids
+    ]
+
+
 def validate_curriculum_context(db: Session, university_id: int, curriculum_id: int, stream_id: int) -> None:
     curriculum = db.get(Curriculum, curriculum_id)
     stream = db.get(Stream, stream_id)
@@ -86,14 +97,7 @@ def update_profile(student_id: int, payload: StudentUpdate, db: DB):
 @router.get("/profiles/{student_id}/context", response_model=StudentContext)
 def get_context(student_id: int, db: DB):
     profile = profile_or_404(db, student_id)
-    effective_course_ids = resolved_course_ids(db, student_id)
-    student_courses = [
-        item
-        for item in db.scalars(
-            select(StudentCourse).where(StudentCourse.student_id == student_id)
-        ).all()
-        if item.course_id in effective_course_ids
-    ]
+    student_courses = resolved_student_courses(db, student_id)
 
     course_topic_status = []
     for student_course in student_courses:
@@ -135,7 +139,7 @@ def get_context(student_id: int, db: DB):
 @router.get("/profiles/{student_id}/courses", response_model=list[StudentCourseRead])
 def list_courses(student_id: int, db: DB):
     profile_or_404(db, student_id)
-    return list(db.scalars(select(StudentCourse).where(StudentCourse.student_id == student_id)).all())
+    return resolved_student_courses(db, student_id)
 
 
 @router.post("/profiles/{student_id}/courses", response_model=StudentCourseRead, status_code=201)
