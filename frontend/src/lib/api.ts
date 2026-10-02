@@ -22,6 +22,11 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
   const headers = new Headers(init?.headers)
   if (!isFormData && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
 
+  if (typeof window !== 'undefined' && !headers.has('Authorization')) {
+    const token = window.localStorage.getItem('havan_auth_token')
+    if (token) headers.set('Authorization', `Bearer ${token}`)
+  }
+
   let response: Response
   try {
     response = await fetch(url, {...init, headers})
