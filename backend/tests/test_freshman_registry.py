@@ -33,3 +33,39 @@ def test_freshman_category_schema() -> None:
         name="Common Core",
     )
     assert item.code == "COMMON_CORE"
+
+
+def test_freshman_template_routes_are_registered() -> None:
+    paths = {route.path for route in app.routes}
+    assert "/api/v1/freshman-templates" in paths
+    assert "/api/v1/freshman-templates/{template_id}" in paths
+    assert "/api/v1/freshman-templates/{template_id}/courses" in paths
+    assert "/api/v1/freshman-templates/{template_id}/courses/{placement_id}" in paths
+
+
+def test_freshman_template_schema_requires_two_semesters() -> None:
+    from app.schemas.curriculum import FreshmanCurriculumTemplateCreate
+
+    item = FreshmanCurriculumTemplateCreate(
+        code="NATIONAL-2026",
+        name="National Freshman Curriculum",
+        version="1.0",
+        semesters=[
+            {"semester_number": 1, "name": "Semester I"},
+            {"semester_number": 2, "name": "Semester II"},
+        ],
+    )
+    assert [semester.semester_number for semester in item.semesters] == [1, 2]
+
+
+def test_freshman_template_course_is_a_registry_reference() -> None:
+    from app.schemas.curriculum import FreshmanTemplateCourseAssignment
+
+    assignment = FreshmanTemplateCourseAssignment(
+        semester_number=1,
+        course_id=42,
+        requirement_type="REQUIRED",
+        order_index=1,
+    )
+    assert assignment.course_id == 42
+    assert assignment.semester_number == 1

@@ -81,7 +81,7 @@ class FreshmanCourseCategoryRead(ORMModel):
 
 
 class FreshmanCourseCreate(BaseModel):
-    code: str = Field(min_length=1, max_length=40, pattern=r"^[A-Za-z0-9_.-]+$")
+    code: str = Field(min_length=1, max_length=40, pattern=r"^[A-Za-z0-9_. -]+$")
     name: str = Field(min_length=2, max_length=150)
     description: Optional[str] = None
     credit_hours: Optional[int] = Field(default=None, ge=0, le=30)
@@ -91,7 +91,7 @@ class FreshmanCourseCreate(BaseModel):
 
 
 class FreshmanCourseUpdate(BaseModel):
-    code: Optional[str] = Field(default=None, min_length=1, max_length=40, pattern=r"^[A-Za-z0-9_.-]+$")
+    code: Optional[str] = Field(default=None, min_length=1, max_length=40, pattern=r"^[A-Za-z0-9_. -]+$")
     name: Optional[str] = Field(default=None, min_length=2, max_length=150)
     description: Optional[str] = None
     credit_hours: Optional[int] = Field(default=None, ge=0, le=30)
@@ -191,3 +191,73 @@ class PageMeta(BaseModel):
     page_size: int
     total: int
     pages: int
+
+
+class FreshmanTemplateCourseBase(BaseModel):
+    course_id: int = Field(gt=0)
+    requirement_type: str = Field(default="REQUIRED", pattern=r"^(REQUIRED|ELECTIVE)$")
+    order_index: int = Field(default=1, ge=1)
+    notes: Optional[str] = None
+
+class FreshmanTemplateCourseCreate(FreshmanTemplateCourseBase):
+    pass
+
+class FreshmanTemplateCourseRead(ORMModel):
+    id: int
+    semester_id: int
+    course_id: int
+    course_code: str
+    course_name: str
+    requirement_type: str
+    order_index: int
+    notes: Optional[str]
+
+
+class FreshmanTemplateSemesterCreate(BaseModel):
+    semester_number: int = Field(ge=1, le=2)
+    name: str = Field(min_length=2, max_length=100)
+    description: Optional[str] = None
+    courses: list[FreshmanTemplateCourseCreate] = Field(default_factory=list)
+
+class FreshmanTemplateSemesterRead(ORMModel):
+    id: int
+    template_id: int
+    semester_number: int
+    name: str
+    description: Optional[str]
+    courses: list[FreshmanTemplateCourseRead] = Field(default_factory=list)
+
+
+class FreshmanCurriculumTemplateCreate(BaseModel):
+    code: str = Field(min_length=2, max_length=50, pattern=r"^[A-Za-z0-9_.-]+$")
+    name: str = Field(min_length=2, max_length=150)
+    version: str = Field(min_length=1, max_length=30)
+    academic_year: Optional[str] = Field(default=None, max_length=30)
+    description: Optional[str] = None
+    status: str = Field(default="DRAFT", pattern=r"^(DRAFT|ACTIVE|ARCHIVED)$")
+    semesters: list[FreshmanTemplateSemesterCreate] = Field(default_factory=list, max_length=2)
+
+class FreshmanCurriculumTemplateUpdate(BaseModel):
+    name: Optional[str] = Field(default=None, min_length=2, max_length=150)
+    version: Optional[str] = Field(default=None, min_length=1, max_length=30)
+    academic_year: Optional[str] = Field(default=None, max_length=30)
+    description: Optional[str] = None
+    status: Optional[str] = Field(default=None, pattern=r"^(DRAFT|ACTIVE|ARCHIVED)$")
+
+class FreshmanCurriculumTemplateRead(ORMModel):
+    id: int
+    code: str
+    name: str
+    version: str
+    academic_year: Optional[str]
+    description: Optional[str]
+    status: str
+    semesters: list[FreshmanTemplateSemesterRead] = Field(default_factory=list)
+
+
+class FreshmanTemplateCourseAssignment(BaseModel):
+    semester_number: int = Field(ge=1, le=2)
+    course_id: int = Field(gt=0)
+    requirement_type: str = Field(default="REQUIRED", pattern=r"^(REQUIRED|ELECTIVE)$")
+    order_index: int = Field(default=1, ge=1)
+    notes: Optional[str] = None
