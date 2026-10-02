@@ -76,6 +76,9 @@ class StudentCourseRead(BaseModel):
     course_id: int
     confidence: int
     status: str
+    course_code: str
+    course_name: str
+    credit_hours: Optional[int] = None
 
 
 class ProgressUpsert(BaseModel):
