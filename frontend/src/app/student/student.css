@@ -306,3 +306,12 @@
   .confidence-pick{flex-wrap:wrap}
   .confidence-pick>span{width:100%;margin-right:0;margin-bottom:2px}
 }
+
+
+/* Clickable Havan student identity */
+.dashboard-profile-button{display:flex;align-items:center;gap:9px;min-height:40px;padding:4px 9px 4px 5px;border:1px solid #e1e1eb;border-radius:12px;background:#fff;color:#01017e;font-size:11px;font-weight:800;cursor:pointer;transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease}
+.dashboard-profile-button:hover{border-color:#01017e;box-shadow:0 6px 18px rgba(1,1,126,.08);transform:translateY(-1px)}
+.dashboard-profile-button .dashboard-avatar{flex:0 0 auto}
+.planner-profile-button{border:1px solid #e1e1eb;border-radius:12px;background:#fff;color:#01017e;cursor:pointer;padding:4px 9px 4px 5px;transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease}
+.planner-profile-button:hover{border-color:#01017e;box-shadow:0 6px 18px rgba(1,1,126,.08);transform:translateY(-1px)}
+@media(max-width:640px){.dashboard-profile-button>span:last-child{display:none}.dashboard-profile-button{padding-right:5px}}
