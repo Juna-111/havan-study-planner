@@ -288,3 +288,35 @@ class FreshmanCurriculumMappingRead(ORMModel):
     template_academic_year: Optional[str]
     status: str
     notes: Optional[str]
+
+class FreshmanStreamCourseAssignmentCreate(BaseModel):
+    stream_id: int = Field(gt=0)
+    template_course_id: int = Field(gt=0)
+    status: str = Field(default="DRAFT", pattern=r"^(DRAFT|ACTIVE|ARCHIVED)$")
+    notes: Optional[str] = None
+
+
+class FreshmanStreamCourseAssignmentUpdate(BaseModel):
+    status: Optional[str] = Field(default=None, pattern=r"^(DRAFT|ACTIVE|ARCHIVED)$")
+    notes: Optional[str] = None
+
+
+class FreshmanStreamCourseAssignmentRead(ORMModel):
+    id: int
+    stream_id: int
+    stream_name: str
+    stream_code: str
+    curriculum_id: int
+    curriculum_name: str
+    university_id: int
+    university_name: str
+    template_course_id: int
+    semester_number: int
+    semester_name: str
+    course_id: int
+    course_code: str
+    course_name: str
+    requirement_type: str
+    order_index: int
+    status: str
+    notes: Optional[str]

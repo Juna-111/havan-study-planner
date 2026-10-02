@@ -87,3 +87,21 @@ def test_freshman_mapping_schema_links_university_curriculum_to_template() -> No
     )
     assert item.curriculum_id == 7
     assert item.template_id == 3
+
+
+def test_freshman_stream_assignment_routes_are_registered() -> None:
+    paths = {route.path for route in app.routes}
+    assert "/api/v1/freshman-stream-assignments" in paths
+    assert "/api/v1/freshman-stream-assignments/{assignment_id}" in paths
+
+
+def test_freshman_stream_assignment_schema_links_stream_to_template_course() -> None:
+    from app.schemas.curriculum import FreshmanStreamCourseAssignmentCreate
+
+    item = FreshmanStreamCourseAssignmentCreate(
+        stream_id=11,
+        template_course_id=22,
+        status="DRAFT",
+    )
+    assert item.stream_id == 11
+    assert item.template_course_id == 22

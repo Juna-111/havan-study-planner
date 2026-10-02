@@ -59,6 +59,9 @@ class Stream(Base):
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="ACTIVE", server_default="ACTIVE")
     curriculum: Mapped[Curriculum] = relationship(back_populates="streams")
     courses: Mapped[list[Course]] = relationship(back_populates="stream", cascade="all, delete-orphan")
+    freshman_course_assignments: Mapped[list[FreshmanStreamCourseAssignment]] = relationship(
+        back_populates="stream", cascade="all, delete-orphan"
+    )
 
 
 freshman_course_category_links = Table(
@@ -180,6 +183,30 @@ class FreshmanTemplateCourse(Base):
     notes: Mapped[Optional[str]] = mapped_column(Text)
     semester: Mapped[FreshmanTemplateSemester] = relationship(back_populates="courses")
     course: Mapped[Course] = relationship(back_populates="freshman_template_placements")
+    stream_assignments: Mapped[list[FreshmanStreamCourseAssignment]] = relationship(
+        back_populates="template_course", cascade="all, delete-orphan"
+    )
+
+
+class FreshmanStreamCourseAssignment(Base):
+    __tablename__ = "freshman_stream_course_assignments"
+    __table_args__ = (
+        UniqueConstraint("stream_id", "template_course_id", name="uq_freshman_stream_template_course"),
+        Index("ix_freshman_stream_assignment_stream", "stream_id"),
+        Index("ix_freshman_stream_assignment_template_course", "template_course_id"),
+        CheckConstraint("status IN ('DRAFT', 'ACTIVE', 'ARCHIVED')", name="ck_freshman_stream_assignment_status"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    stream_id: Mapped[int] = mapped_column(ForeignKey("streams.id", ondelete="CASCADE"), nullable=False)
+    template_course_id: Mapped[int] = mapped_column(ForeignKey("freshman_template_courses.id", ondelete="CASCADE"), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="DRAFT", server_default="DRAFT")
+    notes: Mapped[Optional[str]] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    stream: Mapped[Stream] = relationship(back_populates="freshman_course_assignments")
+    template_course: Mapped[FreshmanTemplateCourse] = relationship(back_populates="stream_assignments")
 
 
 class Chapter(Base):
