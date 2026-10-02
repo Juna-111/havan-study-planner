@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.db.models.curriculum import Chapter, Course, Curriculum, FreshmanCurriculumMapping, FreshmanStreamCourseAssignment, FreshmanTemplateCourse, FreshmanTemplateSemester, FreshmanCurriculumTemplate, Stream, Topic, University, UniversityCourseOverride
 from app.db.models.student import StudentCourse, StudentExam, StudentProfile, StudentTopicProgress
 from app.db.session import get_db
-from app.services.academic_resolver import resolve_stream_courses, resolved_course_ids
+from app.services.academic_resolver import resolve_stream_courses, resolve_student_courses, resolved_course_ids
 from app.schemas.student import (
     CourseTopicStatus, ExamCreate, ExamRead, ExamUpdate, ProgressRead, ProgressUpsert, StudentContext,
     StudentCourseAdd, StudentCourseRead, StudentCreate, StudentRead, StudentUpdate,
@@ -38,6 +38,29 @@ def resolved_student_courses(db: Session, student_id: int) -> list[StudentCourse
         ).all()
         if item.course_id in effective_course_ids
     ]
+
+
+def resolved_course_metadata(db: Session, student_id: int) -> dict[int, object]:
+    return {
+        item.course_id: item
+        for item in resolve_student_courses(db, student_id)
+    }
+
+
+def student_course_read_data(db: Session, student_course: StudentCourse, metadata: dict[int, object] | None = None) -> dict:
+    effective = (metadata or resolved_course_metadata(db, student_course.student_id)).get(student_course.course_id)
+    if effective is None:
+        raise HTTPException(status_code=400, detail="Student course is no longer available in the active university curriculum")
+    return {
+        "id": student_course.id,
+        "student_id": student_course.student_id,
+        "course_id": student_course.course_id,
+        "confidence": student_course.confidence,
+        "status": student_course.status,
+        "course_code": effective.display_code,
+        "course_name": effective.display_name,
+        "credit_hours": effective.credit_hours,
+    }
 
 
 def validate_curriculum_context(db: Session, university_id: int, curriculum_id: int, stream_id: int) -> None:
@@ -98,6 +121,8 @@ def update_profile(student_id: int, payload: StudentUpdate, db: DB):
 def get_context(student_id: int, db: DB):
     profile = profile_or_404(db, student_id)
     student_courses = resolved_student_courses(db, student_id)
+    metadata = resolved_course_metadata(db, student_id)
+    student_course_reads = [student_course_read_data(db, item, metadata) for item in student_courses]
 
     course_topic_status = []
     for student_course in student_courses:
@@ -121,15 +146,15 @@ def get_context(student_id: int, db: DB):
 
         course_topic_status.append(CourseTopicStatus(
             course_id=course.id,
-            course_code=course.code,
-            course_name=course.name,
+            course_code=metadata[course.id].display_code,
+            course_name=metadata[course.id].display_name,
             chapter_count=len(chapters),
             active_topic_count=active_topic_count,
         ))
 
     return StudentContext(
         profile=profile,
-        courses=student_courses,
+        courses=student_course_reads,
         progress=list(db.scalars(select(StudentTopicProgress).where(StudentTopicProgress.student_id == student_id)).all()),
         exams=list(db.scalars(select(StudentExam).where(StudentExam.student_id == student_id).order_by(StudentExam.exam_date)).all()),
         course_topic_status=course_topic_status,
@@ -139,7 +164,8 @@ def get_context(student_id: int, db: DB):
 @router.get("/profiles/{student_id}/courses", response_model=list[StudentCourseRead])
 def list_courses(student_id: int, db: DB):
     profile_or_404(db, student_id)
-    return resolved_student_courses(db, student_id)
+    metadata = resolved_course_metadata(db, student_id)
+    return [student_course_read_data(db, item, metadata) for item in resolved_student_courses(db, student_id)]
 
 
 @router.post("/profiles/{student_id}/courses", response_model=StudentCourseRead, status_code=201)
@@ -156,7 +182,7 @@ def add_course(student_id: int, payload: StudentCourseAdd, db: DB):
         existing.confidence = payload.confidence
         db.commit()
         db.refresh(existing)
-        return existing
+        return student_course_read_data(db, existing)
 
     item = StudentCourse(
         student_id=student_id,
@@ -228,7 +254,7 @@ def add_course(student_id: int, payload: StudentCourseAdd, db: DB):
 
     db.commit()
     db.refresh(item)
-    return item
+    return student_course_read_data(db, item)
 
 
 @router.delete("/profiles/{student_id}/courses/{course_id}", status_code=204)
