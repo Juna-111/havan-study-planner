@@ -216,38 +216,50 @@ async def preview_full_structure_import(file: UploadFile = File(...)):
 
 @router.post("/academic-structure-import/commit", response_model=FullStructureResult, status_code=201)
 def commit_full_structure_import(payload: FullStructurePreview, db: Session = DB):
-    existing_university = db.query(University).filter(University.code == payload.university_code).first()
-    if existing_university:
-        raise HTTPException(status_code=409, detail="A university with this code already exists.")
-    university = University(
-        name=payload.university_name,
-        code=payload.university_code,
-        status="ACTIVE",
-    )
-    db.add(university)
-    db.flush()
+    university = db.query(University).filter(University.code == payload.university_code).first()
+    created_university = False
 
-    curriculum = Curriculum(
-        university_id=university.id,
-        name=payload.curriculum_name,
-        version=payload.curriculum_version,
-        academic_year=payload.academic_year,
-        status="ACTIVE",
-    )
-    db.add(curriculum)
-    db.flush()
+    if university is None:
+        university = University(
+            name=payload.university_name,
+            code=payload.university_code,
+            status="ACTIVE",
+        )
+        db.add(university)
+        db.flush()
+        created_university = True
+    elif university.name != payload.university_name:
+        raise HTTPException(status_code=409, detail="The university code already belongs to a different university.")
 
-    stream = Stream(
-        curriculum_id=curriculum.id,
-        name=payload.stream_name,
-        code=payload.stream_code,
-        status="ACTIVE",
-    )
-    db.add(stream)
-    db.flush()
+    existing_curriculum = db.query(Curriculum).filter(
+        Curriculum.university_id == university.id,
+        Curriculum.name == payload.curriculum_name,
+        Curriculum.version == payload.curriculum_version,
+    ).first()
+    if existing_curriculum:
+        raise HTTPException(status_code=409, detail="This curriculum version already exists for the selected university.")
 
-    created_courses = created_chapters = created_topics = 0
     try:
+        curriculum = Curriculum(
+            university_id=university.id,
+            name=payload.curriculum_name,
+            version=payload.curriculum_version,
+            academic_year=payload.academic_year,
+            status="ACTIVE",
+        )
+        db.add(curriculum)
+        db.flush()
+
+        stream = Stream(
+            curriculum_id=curriculum.id,
+            name=payload.stream_name,
+            code=payload.stream_code,
+            status="ACTIVE",
+        )
+        db.add(stream)
+        db.flush()
+
+        created_courses = created_chapters = created_topics = 0
         for course_payload in payload.courses:
             course = Course(
                 stream_id=stream.id,
@@ -258,6 +270,7 @@ def commit_full_structure_import(payload: FullStructurePreview, db: Session = DB
             db.add(course)
             db.flush()
             created_courses += 1
+
             for chapter_index, chapter_payload in enumerate(course_payload.chapters, start=1):
                 chapter = Chapter(
                     course_id=course.id,
@@ -268,6 +281,7 @@ def commit_full_structure_import(payload: FullStructurePreview, db: Session = DB
                 db.add(chapter)
                 db.flush()
                 created_chapters += 1
+
                 for topic_index, topic_payload in enumerate(chapter_payload.topics, start=1):
                     db.add(Topic(
                         chapter_id=chapter.id,
@@ -277,6 +291,7 @@ def commit_full_structure_import(payload: FullStructurePreview, db: Session = DB
                         status="ACTIVE",
                     ))
                     created_topics += 1
+
         db.commit()
     except IntegrityError as exc:
         db.rollback()
@@ -291,3 +306,4 @@ def commit_full_structure_import(payload: FullStructurePreview, db: Session = DB
         "created_chapters": created_chapters,
         "created_topics": created_topics,
     }
+
