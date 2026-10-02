@@ -20,3 +20,33 @@
   .overrideCard{grid-template-columns:auto 1fr}
   .overrideMeta{grid-column:2;justify-content:flex-end}
 }
+
+.workspacePage{max-width:1250px;margin:0 auto}
+.workspaceHeader{margin-bottom:22px}
+.workspaceHeader span{display:block;color:#01017e;font-size:9px;font-weight:700;letter-spacing:1.3px}
+.workspaceHeader h1{margin:5px 0;color:#01017e;font:700 clamp(30px,4vw,43px) Fraunces,Georgia,serif;letter-spacing:-1.5px}
+.workspaceHeader p{max-width:760px;margin:8px 0 0;color:#77778a;font-size:12px;line-height:1.6}
+.workspaceGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.workspaceCard,.workspacePanel{padding:21px;border:1px solid #e7e7ef;border-radius:18px;background:#fff;box-shadow:0 10px 28px #14143909}
+.workspaceGrid>.workspaceCard:last-child{grid-column:1/-1}
+.workspaceCard h3{margin:0 0 15px;color:#151526;font:700 18px Fraunces,Georgia,serif}
+.workspaceCard label{display:grid;gap:6px;margin-top:11px}
+.workspaceCard label span{font-size:10px;color:#555568;font-weight:700}
+.workspaceCard input,.workspaceCard select,.workspaceCard textarea{width:100%;padding:10px 11px;border:1px solid #dfdfe8;border-radius:9px;outline:0;background:#fff;font-size:11px;box-sizing:border-box}
+.workspaceCard textarea{resize:vertical}
+.workspaceCard input:focus,.workspaceCard select:focus,.workspaceCard textarea:focus{border-color:#01017e;box-shadow:0 0 0 3px #01017e10}
+.workspacePrimary{min-height:42px;padding:0 14px;border:0;border-radius:10px;background:#01017e;color:#fff;font-weight:700}
+.workspacePrimary:disabled{opacity:.45;cursor:not-allowed}
+.workspaceBaseline{display:grid;gap:4px;margin-top:15px;padding:12px;border-radius:11px;background:#f3f4ff;color:#01017e}
+.workspaceBaseline span{font-size:10px;font-weight:700}
+.workspaceBaseline small{color:#77778a;font-size:9px}
+.workspacePanel{grid-column:1/-1;margin-top:16px}
+.workspacePanel>header{display:flex;justify-content:space-between;align-items:center;gap:15px}
+.workspacePanel>header h2{margin:4px 0 0;color:#151526;font:700 24px Fraunces,Georgia,serif}
+.workspacePanel>header strong{color:#01017e;font-size:11px}
+.workspaceStatusActive,.workspaceStatus{padding:5px 8px;border-radius:999px;font-size:8px;font-weight:800;letter-spacing:.5px}
+.workspaceStatusActive{background:#eaf8f1;color:#26744e}
+.workspaceStatus{background:#f0f0f6;color:#77778a}
+.workspaceList{display:grid;gap:8px;margin-top:15px;max-height:280px;overflow:auto}
+.workspaceNotice{max-width:none}
+@media(max-width:760px){.workspaceGrid{grid-template-columns:1fr}.workspaceGrid>.workspaceCard:last-child,.workspacePanel{grid-column:auto}.workspacePanel>header{align-items:flex-start}.workspacePanel>header h2{font-size:20px}}
