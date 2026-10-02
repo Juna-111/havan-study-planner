@@ -145,7 +145,7 @@ export default function PlannerPage() {
     const courseIds = (data.courses ?? []).map((course: Item) => course.course_id)
     const nextProfile = data.profile
     const courseItems = await apiList(
-      '/courses?stream_id=' + nextProfile.stream_id + '&page=1&page_size=100',
+      '/courses?stream_id=' + nextProfile.stream_id + '&include_freshman=true&page=1&page_size=100',
     )
     const selected = courseItems.filter((course: Item) => courseIds.includes(course.id))
     const chapters = (

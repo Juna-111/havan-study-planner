@@ -105,3 +105,21 @@ def test_freshman_stream_assignment_schema_links_stream_to_template_course() -> 
     )
     assert item.stream_id == 11
     assert item.template_course_id == 22
+
+
+def test_course_catalog_supports_resolved_freshman_stream_courses() -> None:
+    routes = {
+        route.path: route
+        for route in app.routes
+        if route.path == "/api/v1/courses"
+    }
+    assert "/api/v1/courses" in routes
+    params = {parameter.name for parameter in routes["/api/v1/courses"].dependant.query_params}
+    assert "stream_id" in params
+    assert "include_freshman" in params
+
+
+def test_student_course_api_keeps_freshman_stream_assignments_available() -> None:
+    paths = {route.path for route in app.routes}
+    assert "/api/v1/students/profiles/{student_id}/courses" in paths
+    assert "/api/v1/students/profiles/{student_id}/exams" in paths

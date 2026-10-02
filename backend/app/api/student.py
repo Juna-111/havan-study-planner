@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.db.models.curriculum import Chapter, Course, Curriculum, Stream, Topic, University
+from app.db.models.curriculum import Chapter, Course, Curriculum, FreshmanCurriculumMapping, FreshmanStreamCourseAssignment, FreshmanTemplateCourse, FreshmanTemplateSemester, FreshmanCurriculumTemplate, Stream, Topic, University
 from app.db.models.student import StudentCourse, StudentExam, StudentProfile, StudentTopicProgress
 from app.db.session import get_db
 from app.schemas.student import (
@@ -22,6 +22,46 @@ def profile_or_404(db: Session, student_id: int) -> StudentProfile:
     if profile is None:
         raise HTTPException(status_code=404, detail="Student profile not found")
     return profile
+
+
+def course_available_to_stream(db: Session, course_id: int, stream_id: int) -> bool:
+    direct = db.scalar(
+        select(Course.id).where(
+            Course.id == course_id,
+            Course.stream_id == stream_id,
+        )
+    )
+    if direct is not None:
+        return True
+
+    stream = db.get(Stream, stream_id)
+    if stream is None:
+        return False
+
+    mapping = db.scalar(
+        select(FreshmanCurriculumMapping).where(
+            FreshmanCurriculumMapping.curriculum_id == stream.curriculum_id,
+            FreshmanCurriculumMapping.status == "ACTIVE",
+        )
+    )
+    if mapping is None:
+        return False
+
+    freshman_course = db.scalar(
+        select(Course.id)
+        .join(FreshmanTemplateCourse, FreshmanTemplateCourse.course_id == Course.id)
+        .join(FreshmanTemplateSemester, FreshmanTemplateSemester.id == FreshmanTemplateCourse.semester_id)
+        .join(FreshmanStreamCourseAssignment, FreshmanStreamCourseAssignment.template_course_id == FreshmanTemplateCourse.id)
+        .join(FreshmanCurriculumTemplate, FreshmanCurriculumTemplate.id == FreshmanTemplateSemester.template_id)
+        .where(
+            Course.id == course_id,
+            FreshmanStreamCourseAssignment.stream_id == stream_id,
+            FreshmanStreamCourseAssignment.status == "ACTIVE",
+            FreshmanCurriculumTemplate.id == mapping.template_id,
+            FreshmanCurriculumTemplate.status == "ACTIVE",
+        )
+    )
+    return freshman_course is not None
 
 
 def validate_curriculum_context(db: Session, university_id: int, curriculum_id: int, stream_id: int) -> None:
@@ -134,8 +174,7 @@ def add_course(student_id: int, payload: StudentCourseAdd, db: DB):
     course = db.get(Course, payload.course_id)
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
-    stream = db.get(Stream, profile.stream_id)
-    if course.stream_id != profile.stream_id:
+    if not course_available_to_stream(db, course.id, profile.stream_id):
         raise HTTPException(status_code=400, detail="Course is outside the student's selected stream")
     existing = db.scalar(select(StudentCourse).where(StudentCourse.student_id == student_id, StudentCourse.course_id == payload.course_id))
     if existing:
@@ -282,7 +321,7 @@ def add_exam(student_id: int, payload: ExamCreate, db: DB):
     course = db.get(Course, payload.course_id)
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
-    if course.stream_id != profile.stream_id:
+    if not course_available_to_stream(db, course.id, profile.stream_id):
         raise HTTPException(status_code=400, detail="Exam course is outside the student's selected stream")
     item = StudentExam(student_id=student_id, **payload.model_dump())
     db.add(item)
@@ -308,7 +347,7 @@ def update_exam(student_id: int, exam_id: int, payload: ExamUpdate, db: DB):
     course = db.get(Course, course_id)
     if not course:
         raise HTTPException(status_code=404, detail="Exam course not found")
-    if course.stream_id != profile.stream_id:
+    if not course_available_to_stream(db, course.id, profile.stream_id):
         raise HTTPException(status_code=400, detail="Exam course is outside the student's selected stream")
 
     for key, value in data.items():
