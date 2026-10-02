@@ -197,3 +197,4 @@ export default function UniversitySetupWorkspace(){
 
     {loading&&<div className='empty'>Loading university setup…</div>}
   </div>
+}
