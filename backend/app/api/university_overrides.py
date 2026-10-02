@@ -204,14 +204,21 @@ def list_overrides(
 def create_override(payload: UniversityCourseOverrideCreate, db: Session = DB):
     curriculum, national, local = _validate(db, payload)
 
-    existing = db.scalar(
-        select(UniversityCourseOverride).where(
-            UniversityCourseOverride.curriculum_id == curriculum.id,
-            UniversityCourseOverride.national_course_id == (national.id if national else -1),
-            UniversityCourseOverride.local_course_id == (local.id if local else -1),
-            UniversityCourseOverride.status != "ARCHIVED",
-        )
+    duplicate_filters = [
+        UniversityCourseOverride.curriculum_id == curriculum.id,
+        UniversityCourseOverride.status != "ARCHIVED",
+    ]
+    duplicate_filters.append(
+        UniversityCourseOverride.national_course_id == national.id
+        if national is not None
+        else UniversityCourseOverride.national_course_id.is_(None)
     )
+    duplicate_filters.append(
+        UniversityCourseOverride.local_course_id == local.id
+        if local is not None
+        else UniversityCourseOverride.local_course_id.is_(None)
+    )
+    existing = db.scalar(select(UniversityCourseOverride).where(*duplicate_filters))
     if existing is not None:
         raise HTTPException(status_code=409, detail="An active or draft override already exists for this university course.")
 
