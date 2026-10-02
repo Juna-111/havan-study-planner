@@ -123,3 +123,42 @@ def test_student_course_api_keeps_freshman_stream_assignments_available() -> Non
     paths = {route.path for route in app.routes}
     assert "/api/v1/students/profiles/{student_id}/courses" in paths
     assert "/api/v1/students/profiles/{student_id}/exams" in paths
+
+
+def test_university_override_routes_are_registered() -> None:
+    paths = {route.path for route in app.routes}
+    assert "/api/v1/university-course-overrides" in paths
+    assert "/api/v1/university-course-overrides/{override_id}" in paths
+
+
+def test_university_override_schema_supports_local_exception() -> None:
+    from app.schemas.curriculum import UniversityCourseOverrideCreate
+
+    item = UniversityCourseOverrideCreate(
+        curriculum_id=7,
+        local_course_id=55,
+        target_stream_id=11,
+        override_type="ADD",
+        reason="University-specific course required by local curriculum.",
+        source="Senate curriculum document",
+    )
+    assert item.override_type == "ADD"
+    assert item.local_course_id == 55
+    assert item.target_stream_id == 11
+
+
+def test_university_override_schema_supports_national_metadata_override() -> None:
+    from app.schemas.curriculum import UniversityCourseOverrideCreate
+
+    item = UniversityCourseOverrideCreate(
+        curriculum_id=7,
+        national_course_id=42,
+        source_stream_id=11,
+        override_type="METADATA",
+        local_code="PSY101",
+        local_title="Introduction to Psychology",
+        local_credit_hours=3,
+        reason="University credit structure differs from the national baseline.",
+    )
+    assert item.national_course_id == 42
+    assert item.local_credit_hours == 3
