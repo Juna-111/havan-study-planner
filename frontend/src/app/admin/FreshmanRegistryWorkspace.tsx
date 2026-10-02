@@ -46,20 +46,20 @@ export default function FreshmanRegistryWorkspace(){
     catch(err){setError(err instanceof Error?err.message:'Could not save the import.')}
     finally{setBusy(false)}
   }
-  return <div className='importPage'>
-    <header className='importHeader'><div><span>HAVAN ACADEMIC REGISTRY</span><h1>Freshman course registry</h1><p className='muted'>Create reusable national course content once. Universities will reference it later instead of duplicating it.</p></div></header>
+  return <div className='workspacePage'>
+    <header className='workspaceHeader'><div><span>HAVAN ACADEMIC REGISTRY</span><h1>Freshman course registry</h1><p className='muted'>Create reusable national course content once. Universities will reference it later instead of duplicating it.</p></div></header>
     {message&&<div className='notice importNotice'>{message}</div>}
     {error&&<div className='alert importNotice'>{error}<button onClick={()=>setError('')}>×</button></div>}
-    <section className='importGrid'>
-      <div className='importCard'><h3>1. Create a national course</h3><p className='muted'>No university or stream is selected here. That is intentional.</p>
+    <section className='workspaceGrid'>
+      <div className='workspaceCard'><h3>1. Create a national course</h3><p className='muted'>No university or stream is selected here. That is intentional.</p>
         <label><span>Course code</span><input value={form.code} onChange={e=>setForm(x=>({...x,code:e.target.value}))} placeholder='Math 1011'/></label>
         <label><span>Course name</span><input value={form.name} onChange={e=>setForm(x=>({...x,name:e.target.value}))} placeholder='Applied Mathematics I'/></label>
         <label><span>Content version</span><input value={form.content_version} onChange={e=>setForm(x=>({...x,content_version:e.target.value}))} placeholder='1.0'/></label>
-        <div className='categoryPicker'><span>Freshman classification</span><div className='structureBadge'>{categories.map(c=><button type='button' key={c.code} className={form.category_codes.includes(c.code)?'selCat':''} onClick={()=>toggleCategory(c.code)}>{c.name}</button>)}</div></div>
+        <div className='workspaceField categoryPicker'><span>Freshman classification</span><div className='structureBadge'>{categories.map(c=><button type='button' key={c.code} className={form.category_codes.includes(c.code)?'selCat':''} onClick={()=>toggleCategory(c.code)}>{c.name}</button>)}</div></div>
         <button className='primary importButton' disabled={busy} onClick={createCourse}>{busy?'Saving…':'Create registry course'}</button>
       </div>
-      <div className='importCard'><h3>2. Import course hierarchy</h3><p className='muted'>Use the same Course → Chapter → Topic format already supported by Havan.</p>
-        <div className='dropzone'><input type='file' accept='.txt,.md,text/plain,text/markdown' onChange={e=>{setFile(e.target.files?.[0]??null);setPreview([])}}/><strong>{file?file.name:'Choose .txt or .md file'}</strong><small>UTF-8 · maximum 5 MB</small></div>
+      <div className='workspaceCard'><h3>2. Import course hierarchy</h3><p className='muted'>Use the same Course → Chapter → Topic format already supported by Havan.</p>
+        <div className='workspaceDropzone'><input type='file' accept='.txt,.md,text/plain,text/markdown' onChange={e=>{setFile(e.target.files?.[0]??null);setPreview([])}}/><strong>{file?file.name:'Choose .txt or .md file'}</strong><small>UTF-8 · maximum 5 MB</small></div>
         <pre>{`Course: [Math 1011] Applied Mathematics I
 Chapter: Measurement
   • Physical quantities [3]
@@ -71,10 +71,10 @@ Chapter: Vectors
         <button className='primary importButton' disabled={busy||!file} onClick={previewFile}>{busy?'Working…':'Preview course'}</button>
       </div>
     </section>
-    {preview.length>0&&<section className='previewCard'><header><div><span>NOT SAVED YET</span><h2>Review registry content</h2></div><strong>{preview.length} course{preview.length===1?'':'s'}</strong></header>
-      <div className='tree'>{preview.map((course,i)=><div className='treeCourse' key={i}><b>{course.code} · {course.name}</b>{course.chapters.map((chapter,j)=><div className='treeChapter' key={j}><b>{chapter.name}</b><span>{chapter.topics.length} topics</span>{chapter.topics.map((topic,k)=><div className='treeTopic' key={k}>{topic.name} <small>[difficulty {topic.difficulty}]</small></div>)}</div>)}</div>)}</div>
+    {preview.length>0&&<section className='workspacePanel'><header><div><span>NOT SAVED YET</span><h2>Review registry content</h2></div><strong>{preview.length} course{preview.length===1?'':'s'}</strong></header>
+      <div className='workspaceTree'>{preview.map((course,i)=><div className='workspaceTreeCourse' key={i}><b>{course.code} · {course.name}</b>{course.chapters.map((chapter,j)=><div className='workspaceTreeChapter' key={j}><b>{chapter.name}</b><span>{chapter.topics.length} topics</span>{chapter.topics.map((topic,k)=><div className='workspaceTreeTopic' key={k}>{topic.name} <small>[difficulty {topic.difficulty}]</small></div>)}</div>)}</div>)}</div>
       <footer><button onClick={()=>setPreview([])}>Cancel</button><button className='primary' disabled={busy} onClick={commitPreview}>{busy?'Saving…':'Confirm and save'}</button></footer></section>}
-    <section className='previewCard' style={{marginTop:18}}><header><div><span>REUSABLE CONTENT</span><h2>National freshman courses</h2></div><strong>{courses.length} courses</strong></header>
-      {courses.length===0?<div className='empty'><b>+</b><h3>No national courses yet</h3><p>Create or import the first Freshman course.</p></div>:<div className='tree'>{courses.map(course=><div className='treeCourse' key={course.id}><b>{course.code} · {course.name}</b><small>Registry: {course.registry_key} · Content v{course.content_version}</small><div className='structureBadge'>{course.category_codes.map(code=><b key={code}>{categories.find(c=>c.code===code)?.name??code}</b>)}</div></div>)}</div>}</section>
+    <section className='workspacePanel' ><header><div><span>REUSABLE CONTENT</span><h2>National freshman courses</h2></div><strong>{courses.length} courses</strong></header>
+      {courses.length===0?<div className='empty'><b>+</b><h3>No national courses yet</h3><p>Create or import the first Freshman course.</p></div>:<div className='workspaceTree'>{courses.map(course=><div className='workspaceTreeCourse' key={course.id}><b>{course.code} · {course.name}</b><small>Registry: {course.registry_key} · Content v{course.content_version}</small><div className='structureBadge'>{course.category_codes.map(code=><b key={code}>{categories.find(c=>c.code===code)?.name??code}</b>)}</div></div>)}</div>}</section>
   </div>
 }
