@@ -1,26 +1,74 @@
 # Havan Study Planner
 
-Production-oriented academic planning platform for Ethiopian university freshman students.
+Production-oriented academic planning platform for Ethiopian university Freshman students.
 
 **The system recommends. The student decides.**
 
-Architecture: Next.js frontend → REST API → FastAPI backend → planning services → PostgreSQL.
+## Current MVP architecture
 
-The existing planner UI, university catalog, curriculum preparation data, Telegram Mini App integration, and deterministic planning logic are preserved during the Vite-to-Next.js migration.
+National Freshman Course Registry
+        ↓
+National Freshman Curriculum Template
+        ↓
+University Curriculum Mapping
+        ↓
+University Stream Course Assignment
+        ↓
+University Overrides & Exceptions
+        ↓
+Student Course Resolution
+        ↓
+Editable Study Planner
 
-## Phase 0 / Phase 1
+The national Course → Chapter → Topic hierarchy is the canonical Freshman content source. Universities reuse that content through mappings and stream assignments instead of uploading duplicate copies of the same national courses.
 
-- Phase 0: architecture, boundaries, engineering rules, and migration strategy.
-- Phase 1: Next.js frontend, FastAPI backend, SQLAlchemy, PostgreSQL configuration, Alembic, CORS, logging, error handling, health endpoint, and tests.
-- Phase 2: curriculum and academic database.
-- Phase 3+: admin, student data, planning intelligence, examination intelligence, personalization, and Havan content.
+University-specific differences are represented through explicit overrides or local courses when a national equivalent does not exist.
 
-## Commands
+## MVP focus
 
-Frontend: `npm install`, `npm run dev`, `npm run build`, `npm test`, `npm run lint`.
+- Student registration and academic onboarding.
+- University, curriculum, and stream resolution.
+- National Freshman course resolution.
+- Current chapter/topic position.
+- Study availability and examination dates.
+- Dynamic study-plan generation.
+- Editable planner actions such as move, skip, add, reschedule, complete, and repeat.
+- University-specific academic exceptions.
+- Havan-branded student and admin experiences.
+- Reliable academic data import and validation.
 
-Backend: `cd backend`; create/activate a Python 3.12 virtual environment; `pip install -r requirements.txt`; copy `.env.example` to `.env`; `uvicorn app.main:app --reload`.
+## Data strategy
 
-Health endpoint: `GET /health`.
+Current chapter, topic, curriculum, and course content is development/sample data.
 
-Copy `frontend/.env.example` to `frontend/.env.local` and `backend/.env.example` to `backend/.env`. Never commit secrets.
+The architecture is designed so real institutional data can be introduced later without redesigning the national Freshman content model.
+
+## Engineering commands
+
+Frontend:
+
+npm install
+npm run dev
+npm run build
+npm test
+npm run lint
+
+Backend:
+
+cd backend
+
+Create/activate a Python 3.12 virtual environment, install requirements.txt, copy .env.example to .env, then run:
+
+uvicorn app.main:app --reload
+
+Health endpoint:
+
+GET /health
+
+Never commit secrets. Use the frontend and backend environment example files for local configuration.
+
+## MVP principle
+
+Keep the academic architecture powerful internally, but keep the student and administrator experience simple.
+
+Avoid duplicating national curriculum data for individual universities unless the university has a genuine local exception.
