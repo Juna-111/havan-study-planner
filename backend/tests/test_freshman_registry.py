@@ -69,3 +69,21 @@ def test_freshman_template_course_is_a_registry_reference() -> None:
     )
     assert assignment.course_id == 42
     assert assignment.semester_number == 1
+
+
+def test_freshman_mapping_routes_are_registered() -> None:
+    paths = {route.path for route in app.routes}
+    assert "/api/v1/freshman-mappings" in paths
+    assert "/api/v1/freshman-mappings/{mapping_id}" in paths
+
+
+def test_freshman_mapping_schema_links_university_curriculum_to_template() -> None:
+    from app.schemas.curriculum import FreshmanCurriculumMappingCreate
+
+    item = FreshmanCurriculumMappingCreate(
+        curriculum_id=7,
+        template_id=3,
+        status="DRAFT",
+    )
+    assert item.curriculum_id == 7
+    assert item.template_id == 3
