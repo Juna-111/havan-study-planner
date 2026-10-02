@@ -118,7 +118,7 @@ def test_recommendation_reason_explains_major_signals():
     )
     assert "FINAL is in 3 day(s)" in item.reason
     assert "high exam importance" in item.reason
-    assert "senior-student difficulty is Expert" in item.reason
+    assert "Expert difficulty (rated by senior students)" in item.reason
     assert "already started it" in item.reason
     assert "low confidence" in item.reason
 
