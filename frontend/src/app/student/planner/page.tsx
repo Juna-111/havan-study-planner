@@ -275,12 +275,10 @@ export default function PlannerPage() {
 
   async function addStudySession() {
     if (!studentId || actionBusy || !addTopicId || !addDate || !plan) return
-    const sourceTask = tasks[0]
-    if (!sourceTask) return
     setActionBusy(true)
     setError('')
     try {
-      const updatedPlan = await apiFetch<Item>('/planner/students/' + studentId + '/tasks/' + sourceTask.id + '/action', {
+      const updatedPlan = await apiFetch<Item>('/planner/students/' + studentId + '/add', {
         method: 'POST',
         body: JSON.stringify({ action: 'ADD', target_date: addDate, target_topic_id: Number(addTopicId) }),
       })
