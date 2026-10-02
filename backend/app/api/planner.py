@@ -5,9 +5,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db.models.planner import StudyTask
+from app.db.models.planner import StudyPlan, StudyTask
 from app.db.models.curriculum import Topic
-from app.db.models.student import StudentTopicProgress
+from app.db.models.student import StudentProfile, StudentTopicProgress
 from app.db.session import get_db
 from app.schemas.planner import PlanGenerateRequest, StudyPlanDay, StudyPlanRead, StudyTaskAction
 from app.services.planner import generate_plan, load_plan, replan_remaining
@@ -110,6 +110,46 @@ def act_on_task(
             raise HTTPException(status_code=400, detail="A target date is required when moving a task")
         if payload.target_date < date.today():
             raise HTTPException(status_code=400, detail="A task cannot be moved to a past date")
+        if task.status in {"COMPLETED", "SKIPPED"}:
+            raise HTTPException(status_code=400, detail="Completed or skipped tasks cannot be moved")
+
+        plan = db.get(StudyPlan, task.plan_id)
+        student = db.get(StudentProfile, student_id)
+        if plan is None or student is None:
+            raise HTTPException(status_code=404, detail="Study plan or student profile not found")
+
+        horizon_start = plan.created_at.date()
+        horizon_end = horizon_start.fromordinal(
+            horizon_start.toordinal() + plan.horizon_days - 1
+        )
+        if payload.target_date < horizon_start or payload.target_date > horizon_end:
+            raise HTTPException(
+                status_code=400,
+                detail="A task can only be moved within the current study plan horizon. Generate a new plan to use a later date.",
+            )
+
+        daily_capacity = int(round(student.study_hours_per_day * 60))
+        if task.estimated_minutes > daily_capacity:
+            raise HTTPException(
+                status_code=400,
+                detail="This task is longer than the student's available daily study time.",
+            )
+
+        same_day_tasks = list(db.scalars(
+            select(StudyTask).where(
+                StudyTask.plan_id == task.plan_id,
+                StudyTask.planned_date == payload.target_date,
+                StudyTask.id != task.id,
+                StudyTask.status != "SKIPPED",
+            )
+        ).all())
+        used_minutes = sum(item.estimated_minutes for item in same_day_tasks)
+        if used_minutes + task.estimated_minutes > daily_capacity:
+            raise HTTPException(
+                status_code=400,
+                detail="The target date does not have enough available study time for this task.",
+            )
+
         task.planned_date = payload.target_date
         task.status = "MOVED"
 
