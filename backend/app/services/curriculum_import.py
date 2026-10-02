@@ -9,6 +9,11 @@ from fastapi import HTTPException
 BULLET_RE = re.compile(r"^\s*(?:[-*•]|\d+[.)])\s+(.*)$")
 EXPLICIT_COURSE_RE = re.compile(r"^\s*Course:\s*(.+?)\s*$", re.IGNORECASE)
 EXPLICIT_CHAPTER_RE = re.compile(r"^\s*Chapter:\s*(.+?)\s*$", re.IGNORECASE)
+UNIVERSITY_RE = re.compile(r"^\s*University:\s*(.+?)\s*$", re.IGNORECASE)
+CURRICULUM_RE = re.compile(r"^\s*Curriculum:\s*(.+?)\s*$", re.IGNORECASE)
+STREAM_RE = re.compile(r"^\s*Stream:\s*(.+?)\s*$", re.IGNORECASE)
+VERSION_RE = re.compile(r"^\s*(?:Version|Curriculum Version):\s*(.+?)\s*$", re.IGNORECASE)
+ACADEMIC_YEAR_RE = re.compile(r"^\s*Academic Year:\s*(.+?)\s*$", re.IGNORECASE)
 DIFFICULTY_RE = re.compile(r"^(.*?)\s*\[([1-5])\]\s*$")
 
 
@@ -145,6 +150,99 @@ def _parse_legacy_bullets(content: str) -> list[ParsedCourse]:
         current_chapter.topics.append(ParsedTopic(name=name, difficulty=difficulty))
 
     return _validate_parsed(parsed)
+
+
+
+def parse_full_structure(content: str) -> dict:
+    """Parse University -> Curriculum -> Stream -> Course -> Chapter -> Topic."""
+    university_name = curriculum_name = curriculum_version = None
+    university_code = stream_name = stream_code = None
+    academic_year = None
+    courses: list[ParsedCourse] = []
+    current_course: ParsedCourse | None = None
+    current_chapter: ParsedChapter | None = None
+
+    for number, raw_line in enumerate(content.splitlines(), start=1):
+        line = raw_line.strip()
+        if not line:
+            continue
+
+        match = UNIVERSITY_RE.match(line)
+        if match:
+            university_name = match.group(1).strip()
+            continue
+        match = CURRICULUM_RE.match(line)
+        if match:
+            curriculum_name = match.group(1).strip()
+            continue
+        match = VERSION_RE.match(line)
+        if match:
+            curriculum_version = match.group(1).strip()
+            continue
+        match = ACADEMIC_YEAR_RE.match(line)
+        if match:
+            academic_year = match.group(1).strip()
+            continue
+        if line.lower().startswith("university code:"):
+            university_code = line.split(":", 1)[1].strip()
+            continue
+        match = STREAM_RE.match(line)
+        if match:
+            stream_text = match.group(1).strip()
+            stream_code = _course_code(stream_text)
+            stream_name = _course_name(stream_text)
+            continue
+        if line.lower().startswith("stream code:"):
+            stream_code = line.split(":", 1)[1].strip()
+            continue
+
+        course_match = EXPLICIT_COURSE_RE.match(line)
+        if course_match:
+            text = course_match.group(1).strip()
+            current_course = ParsedCourse(name=_course_name(text), code=_course_code(text), chapters=[])
+            courses.append(current_course)
+            current_chapter = None
+            continue
+
+        chapter_match = EXPLICIT_CHAPTER_RE.match(line)
+        if chapter_match:
+            if current_course is None:
+                raise HTTPException(status_code=422, detail=f"Line {number}: Chapter appears before a Course.")
+            current_chapter = ParsedChapter(name=chapter_match.group(1).strip(), topics=[])
+            current_course.chapters.append(current_chapter)
+            continue
+
+        bullet_match = BULLET_RE.match(line)
+        if bullet_match:
+            if current_chapter is None:
+                raise HTTPException(status_code=422, detail=f"Line {number}: topic appears before a Chapter.")
+            name, difficulty = _topic_name_and_difficulty(bullet_match.group(1), number)
+            current_chapter.topics.append(ParsedTopic(name=name, difficulty=difficulty))
+            continue
+
+        raise HTTPException(
+            status_code=422,
+            detail=f"Line {number}: expected University, Curriculum, Version, Stream, Course, Chapter, or topic.",
+        )
+
+    if not university_name or not university_code:
+        raise HTTPException(status_code=422, detail="University name and University Code are required.")
+    if not curriculum_name or not curriculum_version:
+        raise HTTPException(status_code=422, detail="Curriculum name and Version are required.")
+    if not stream_name or not stream_code:
+        raise HTTPException(status_code=422, detail="Stream name and Stream Code are required.")
+
+    _validate_parsed(courses)
+    return {
+        "university_name": university_name,
+        "university_code": university_code,
+        "curriculum_name": curriculum_name,
+        "curriculum_version": curriculum_version,
+        "academic_year": academic_year,
+        "stream_name": stream_name,
+        "stream_code": stream_code,
+        "courses": courses,
+    }
 
 
 def parse_bullet_curriculum(content: str) -> list[ParsedCourse]:
