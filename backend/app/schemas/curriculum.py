@@ -261,3 +261,30 @@ class FreshmanTemplateCourseAssignment(BaseModel):
     requirement_type: str = Field(default="REQUIRED", pattern=r"^(REQUIRED|ELECTIVE)$")
     order_index: int = Field(default=1, ge=1)
     notes: Optional[str] = None
+
+
+class FreshmanCurriculumMappingCreate(BaseModel):
+    curriculum_id: int = Field(gt=0)
+    template_id: int = Field(gt=0)
+    status: str = Field(default="DRAFT", pattern=r"^(DRAFT|ACTIVE|ARCHIVED)$")
+    notes: Optional[str] = None
+
+class FreshmanCurriculumMappingUpdate(BaseModel):
+    template_id: Optional[int] = Field(default=None, gt=0)
+    status: Optional[str] = Field(default=None, pattern=r"^(DRAFT|ACTIVE|ARCHIVED)$")
+    notes: Optional[str] = None
+
+class FreshmanCurriculumMappingRead(ORMModel):
+    id: int
+    curriculum_id: int
+    curriculum_name: str
+    curriculum_version: str
+    university_id: int
+    university_name: str
+    template_id: int
+    template_code: str
+    template_name: str
+    template_version: str
+    template_academic_year: Optional[str]
+    status: str
+    notes: Optional[str]
