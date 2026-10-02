@@ -3,6 +3,6 @@ from app.db.models.student import StudentAccount, StudentCourse, StudentExam, St
 from app.db.models.planner import StudyPlan, StudyTask
 
 __all__ = [
-    "University", "Curriculum", "Stream", "Course", "FreshmanCourseCategory", "Chapter", "Topic", "TopicRelationship",
+    "University", "Curriculum", "Stream", "Course", "FreshmanCourseCategory", "FreshmanCurriculumTemplate", "FreshmanTemplateSemester", "FreshmanTemplateCourse", "Chapter", "Topic", "TopicRelationship",
     "StudentAccount", "StudentProfile", "StudentCourse", "StudentTopicProgress", "StudentExam", "StudyPlan", "StudyTask",
 ]
