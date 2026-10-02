@@ -12,16 +12,6 @@ type Issue = {
   message: string
 }
 
-const entityPath: Record<string, string> = {
-  university: 'universities',
-  curriculum: 'curriculums',
-  stream: 'streams',
-  course: 'courses',
-  chapter: 'chapters',
-  topic: 'topics',
-  relationship: 'relationships',
-}
-
 function issueAction(issue: Issue) {
   if (issue.title === 'Missing academic content') return 'Review parent'
   if (issue.title.includes('relationship')) return 'Review mapping'
