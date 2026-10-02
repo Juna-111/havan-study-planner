@@ -81,7 +81,7 @@ class FreshmanCourseCategoryRead(ORMModel):
 
 
 class FreshmanCourseCreate(BaseModel):
-    code: str = Field(min_length=1, max_length=40, pattern=r"^[A-Za-z0-9_.-]+$")
+    code: str = Field(min_length=1, max_length=40, pattern=r"^[A-Za-z0-9_. -]+$")
     name: str = Field(min_length=2, max_length=150)
     description: Optional[str] = None
     credit_hours: Optional[int] = Field(default=None, ge=0, le=30)
@@ -91,7 +91,7 @@ class FreshmanCourseCreate(BaseModel):
 
 
 class FreshmanCourseUpdate(BaseModel):
-    code: Optional[str] = Field(default=None, min_length=1, max_length=40, pattern=r"^[A-Za-z0-9_.-]+$")
+    code: Optional[str] = Field(default=None, min_length=1, max_length=40, pattern=r"^[A-Za-z0-9_. -]+$")
     name: Optional[str] = Field(default=None, min_length=2, max_length=150)
     description: Optional[str] = None
     credit_hours: Optional[int] = Field(default=None, ge=0, le=30)
