@@ -23,9 +23,9 @@ const entityPath: Record<string, string> = {
 }
 
 function issueAction(issue: Issue) {
-  if (issue.title === 'Missing academic content') return 'Open parent'
-  if (issue.title.includes('relationship')) return 'Fix relationship'
-  return 'Edit record'
+  if (issue.title === 'Missing academic content') return 'Review parent'
+  if (issue.title.includes('relationship')) return 'Review mapping'
+  return 'Review workspace'
 }
 type Quality = {
   summary: {total_records:number; issues:number; errors:number; warnings:number; info:number; active_curriculums:number}
@@ -56,8 +56,12 @@ export default function AcademicQuality(){
   )
 
   function openIssue(issue: Issue) {
-    const entity = entityPath[issue.entity_type] ?? 'topics'
-    window.location.href = `/admin?mode=manage&entity=${encodeURIComponent(entity)}&edit=${issue.entity_id}`
+    const mode = issue.entity_type === 'university' || issue.entity_type === 'curriculum' || issue.entity_type === 'stream'
+      ? 'setup'
+      : issue.entity_type === 'relationship'
+        ? 'mapping'
+        : 'freshman'
+    window.location.href = `/admin?mode=${mode}`
   }
 
   const health = !data ? 'Checking academic data…'
