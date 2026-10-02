@@ -33,7 +33,7 @@ The current universities, curriculum versions, streams, courses, chapters, and t
 - Added a Havan-branded Academic Quality workspace to the admin area.
 - Added readiness status, issue filtering, summary cards, and refresh controls.
 - Added automated backend tests covering representative quality failures and a valid sample course.
-- Existing curriculum import and record-management workflows remain unchanged.
+- The later MVP cleanup removed the obsolete generic record-management workflow and the legacy full-tree curriculum importer. Academic Quality now routes administrators into the focused setup, mapping, or Freshman registry workspaces.
 - No planner-ranking or recommendation logic was changed.
 
 ## Planner readiness
