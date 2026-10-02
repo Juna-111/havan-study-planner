@@ -48,7 +48,8 @@ def resolved_course_metadata(db: Session, student_id: int) -> dict[int, object]:
 
 
 def student_course_read_data(db: Session, student_course: StudentCourse, metadata: dict[int, object] | None = None) -> dict:
-    effective = (metadata or resolved_course_metadata(db, student_course.student_id)).get(student_course.course_id)
+    effective_metadata = resolved_course_metadata(db, student_course.student_id) if metadata is None else metadata
+    effective = effective_metadata.get(student_course.course_id)
     if effective is None:
         raise HTTPException(status_code=400, detail="Student course is no longer available in the active university curriculum")
     return {
