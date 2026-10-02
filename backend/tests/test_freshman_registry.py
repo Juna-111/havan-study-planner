@@ -162,3 +162,53 @@ def test_university_override_schema_supports_national_metadata_override() -> Non
     )
     assert item.national_course_id == 42
     assert item.local_credit_hours == 3
+
+
+def test_freshman_registry_import_parser_accepts_canonical_hierarchy() -> None:
+    from app.services.curriculum_import import parse_bullet_curriculum
+
+    courses = parse_bullet_curriculum(
+        """Course: [PHY101] Physics
+Chapter: Measurement
+  • Physical quantities [3]
+  • Units and dimensions [2]
+Chapter: Vectors
+  • Scalars and vectors [3]
+  • Vector operations [4]
+"""
+    )
+
+    assert len(courses) == 1
+    assert courses[0].code == "PHY101"
+    assert courses[0].name == "Physics"
+    assert courses[0].chapters[1].topics[1].difficulty == 4
+
+
+def test_freshman_registry_import_parser_rejects_missing_difficulty() -> None:
+    import pytest
+    from fastapi import HTTPException
+    from app.services.curriculum_import import parse_bullet_curriculum
+
+    with pytest.raises(HTTPException):
+        parse_bullet_curriculum(
+            """Course: Physics
+Chapter: Mechanics
+  • Motion
+"""
+        )
+
+
+def test_freshman_registry_import_parser_rejects_legacy_indented_format() -> None:
+    from fastapi import HTTPException
+    from app.services.curriculum_import import parse_bullet_curriculum
+
+    try:
+        parse_bullet_curriculum(
+            """• [PHY101] Physics
+  • Measurement
+    • Physical quantities [3]
+"""
+        )
+    except HTTPException:
+        return
+    raise AssertionError("Legacy indented curriculum format must not be accepted.")
