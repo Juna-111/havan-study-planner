@@ -1,7 +1,7 @@
 import pytest
 from fastapi import HTTPException
 
-from app.services.curriculum_import import parse_bullet_curriculum
+from app.services.freshman_registry_parser import parse_bullet_curriculum
 
 
 def test_parse_canonical_havan_format_with_difficulty():
