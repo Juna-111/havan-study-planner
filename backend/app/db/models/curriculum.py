@@ -42,6 +42,9 @@ class Curriculum(Base):
     university: Mapped[University] = relationship(back_populates="curriculums")
     streams: Mapped[list[Stream]] = relationship(back_populates="curriculum", cascade="all, delete-orphan")
     freshman_mapping: Mapped[Optional[FreshmanCurriculumMapping]] = relationship(back_populates="curriculum", cascade="all, delete-orphan", uselist=False)
+    course_overrides: Mapped[list[UniversityCourseOverride]] = relationship(
+        back_populates="curriculum", cascade="all, delete-orphan"
+    )
 
 
 class Stream(Base):
@@ -207,6 +210,64 @@ class FreshmanStreamCourseAssignment(Base):
 
     stream: Mapped[Stream] = relationship(back_populates="freshman_course_assignments")
     template_course: Mapped[FreshmanTemplateCourse] = relationship(back_populates="stream_assignments")
+
+
+class UniversityCourseOverride(Base):
+    __tablename__ = "university_course_overrides"
+    __table_args__ = (
+        Index("ix_university_course_overrides_curriculum", "curriculum_id"),
+        Index("ix_university_course_overrides_national_course", "national_course_id"),
+        Index("ix_university_course_overrides_local_course", "local_course_id"),
+        Index("ix_university_course_overrides_target_stream", "target_stream_id"),
+        CheckConstraint(
+            "override_type IN ('ADD', 'REMOVE', 'MOVE', 'CHANGE_STREAM', 'METADATA')",
+            name="ck_university_course_override_type",
+        ),
+        CheckConstraint(
+            "status IN ('DRAFT', 'ACTIVE', 'ARCHIVED')",
+            name="ck_university_course_override_status",
+        ),
+        CheckConstraint(
+            "semester_number IS NULL OR semester_number IN (1, 2)",
+            name="ck_university_course_override_semester",
+        ),
+        CheckConstraint(
+            "order_index IS NULL OR order_index >= 1",
+            name="ck_university_course_override_order",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    curriculum_id: Mapped[int] = mapped_column(ForeignKey("curriculums.id", ondelete="CASCADE"), nullable=False)
+    national_course_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("courses.id", ondelete="RESTRICT"), nullable=True
+    )
+    local_course_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("courses.id", ondelete="RESTRICT"), nullable=True
+    )
+    source_stream_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("streams.id", ondelete="CASCADE"), nullable=True
+    )
+    target_stream_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("streams.id", ondelete="CASCADE"), nullable=True
+    )
+    override_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    semester_number: Mapped[Optional[int]] = mapped_column(Integer)
+    order_index: Mapped[Optional[int]] = mapped_column(Integer)
+    local_code: Mapped[Optional[str]] = mapped_column(String(40))
+    local_title: Mapped[Optional[str]] = mapped_column(String(150))
+    local_credit_hours: Mapped[Optional[int]] = mapped_column(Integer)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    source: Mapped[Optional[str]] = mapped_column(String(255))
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="DRAFT", server_default="DRAFT")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    curriculum: Mapped[Curriculum] = relationship(back_populates="course_overrides")
+    national_course: Mapped[Optional[Course]] = relationship(foreign_keys=[national_course_id])
+    local_course: Mapped[Optional[Course]] = relationship(foreign_keys=[local_course_id])
+    source_stream: Mapped[Optional[Stream]] = relationship(foreign_keys=[source_stream_id])
+    target_stream: Mapped[Optional[Stream]] = relationship(foreign_keys=[target_stream_id])
 
 
 class Chapter(Base):
