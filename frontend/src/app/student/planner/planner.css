@@ -2845,3 +2845,28 @@
 .planner-add-controls select:focus,.planner-add-controls input:focus{outline:0;border-color:#01017e;box-shadow:0 0 0 3px rgba(1,1,126,.07)}
 .planner-add-controls button{min-height:44px}
 @media(max-width:700px){.planner-add-controls{grid-template-columns:1fr}.planner-add-controls button{width:100%}}
+
+/* Havan mobile-first planner controls */
+@media(max-width:760px){
+  .planner-shell{font-size:14px}
+  .planner-hero h1{line-height:1.04}
+  .planner-hero p{font-size:13px;line-height:1.6}
+  .planner-hero-buttons button,.planner-regenerate{min-height:50px;font-size:12px;font-weight:800}
+  .planner-week-day{min-height:92px;padding:11px}
+  .planner-week-day strong{font-size:13px}
+  .planner-focus-task{min-height:76px}
+  .focus-content strong{font-size:13px;line-height:1.35}
+  .focus-time{font-size:11px}
+  .planner-agenda-item{min-height:72px}
+  .agenda-copy strong{font-size:12px;line-height:1.4}
+  .agenda-copy small{font-size:10px;line-height:1.4}
+  .planner-action{min-height:88px;padding:13px}
+  .planner-action strong{font-size:11px}
+  .planner-action span{font-size:10px;line-height:1.45}
+  .planner-move-controls input,.planner-move-controls button{min-height:50px;font-size:13px}
+  .planner-detail-header h2{line-height:1.15}
+  .planner-detail-meta span,.planner-detail-meta strong{font-size:10px}
+  .planner-detail-grid strong{font-size:11px}
+  .planner-detail-reason p{font-size:12px;line-height:1.6}
+  .planner-focus-actions button{min-height:50px;font-size:13px}
+}
