@@ -1,1 +1,71 @@
-.managementPage{padding:28px 30px 48px}.managementTabs{display:flex;gap:8px;overflow-x:auto;padding:6px;margin:18px 0 12px;border:1px solid #e4e4ee;border-radius:15px;background:#fff;-webkit-overflow-scrolling:touch}.managementTabs button{flex:0 0 auto;min-height:42px;padding:0 15px;border:0;border-radius:10px;background:transparent;color:#68687a;font-size:12px;font-weight:700;white-space:nowrap}.managementTabs button.active{color:#fff;background:#01017e}.managementToolbar{display:grid;grid-template-columns:minmax(180px,.8fr) minmax(220px,1.4fr) auto;gap:10px;margin-bottom:14px}.managementToolbar input,.managementToolbar select{width:100%;min-height:48px;padding:0 13px;border:1px solid #dedee9;border-radius:12px;background:#fff;color:#25253a}.managementToolbar>button{min-height:48px;padding:0 18px;border:1px solid #01017e;border-radius:12px;background:#01017e;color:#fff;font-weight:700}.managementGrid{display:grid;grid-template-columns:minmax(280px,.75fr) minmax(360px,1.25fr);gap:14px;align-items:start}.managementCard{min-width:0;padding:20px;border:1px solid #e4e4ee;border-radius:18px;background:#fff;box-shadow:0 8px 24px rgba(20,20,57,.05)}.managementCardHead{display:flex;justify-content:space-between;gap:12px;margin-bottom:15px}.managementCardHead span{color:#01017e;font-size:9px;font-weight:800;letter-spacing:1.1px}.managementCardHead h2{margin:5px 0 0;color:#171726;font-size:20px}.managementCard label{display:grid;gap:7px;margin-top:12px}.managementCard label span{color:#4c4c60;font-size:12px;font-weight:700}.managementCard input{width:100%;min-height:48px;padding:0 13px;border:1px solid #dedee9;border-radius:11px;color:#202033;background:#fff}.managementActions{display:flex;gap:9px;margin-top:18px}.managementActions button{min-height:46px;padding:0 15px;border:1px solid #dedee9;border-radius:11px;background:#fff;color:#333348;font-weight:700}.managementActions .workspacePrimary{border-color:#01017e;background:#01017e;color:#fff}.managementHint{display:block;margin-top:12px;color:#77778a;font-size:11px;line-height:1.5}.managementList{display:grid;gap:9px}.managementItem{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px;border:1px solid #e6e6ef;border-radius:13px;background:#fafafe}.managementItem b{color:#01017e;font-size:10px}.managementItem h3{margin:4px 0;color:#222237;font-size:14px}.managementItem small{color:#77778a;font-size:10px}.managementItemActions{display:flex;gap:6px}.managementItemActions button{min-height:40px;padding:0 10px;border:1px solid #dedee9;border-radius:9px;background:#fff;color:#01017e;font-size:11px;font-weight:700}.managementItemActions button.danger{color:#b22a27}@media(max-width:760px){.managementPage{padding:18px 12px 35px}.managementTabs{margin-top:14px;padding:5px}.managementToolbar{grid-template-columns:1fr;gap:8px}.managementToolbar>button{width:100%}.managementGrid{grid-template-columns:1fr}.managementCard{padding:15px;border-radius:16px}.managementListCard{order:2}.managementItem{grid-template-columns:1fr;gap:10px}.managementItemActions{display:grid;grid-template-columns:1fr 1fr}.managementItemActions button{width:100%;min-height:44px}.managementActions{display:grid;grid-template-columns:1fr 1.4fr}.managementActions button{width:100%;min-height:49px}}@media(max-width:380px){.managementPage{padding-inline:9px}.managementCard{padding:13px}.managementTabs button{padding-inline:12px}}
+.managementPage{width:min(100%,1280px);margin:0 auto;padding:10px 0 48px}
+.managementTabs{display:flex;gap:7px;overflow-x:auto;padding:6px;margin:18px 0 12px;border:1px solid #e4e4ee;border-radius:15px;background:#fff;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.managementTabs button{flex:0 0 auto;min-height:44px;padding:0 15px;border:0;border-radius:10px;background:transparent;color:#68687a;font-size:12px;font-weight:800;white-space:nowrap}
+.managementTabs button.active{color:#fff;background:#01017e}
+.hierarchyBar{display:flex;align-items:center;gap:10px;min-height:44px;padding:8px 12px;margin-bottom:12px;border:1px solid #e4e4ee;border-radius:12px;background:#f3f4ff;color:#01017e;font-size:11px}
+.hierarchyBar span{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:#77778a}
+.hierarchyBar b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hierarchyBar button{margin-left:auto;min-height:34px;padding:0 10px;border:1px solid #d9d9e7;border-radius:8px;background:#fff;color:#01017e;font-size:10px;font-weight:800}
+.managementToolbar{display:grid;grid-template-columns:minmax(180px,.8fr) minmax(220px,1.4fr) auto;gap:10px;margin-bottom:14px}
+.managementToolbar input,.managementToolbar select{width:100%;min-height:48px;box-sizing:border-box;padding:0 13px;border:1px solid #dedee9;border-radius:12px;background:#fff;color:#25253a;outline:0;font-size:12px}
+.managementToolbar input:focus,.managementToolbar select:focus{border-color:#01017e;box-shadow:0 0 0 3px #01017e10}
+.toolbarSpacer{min-width:0}
+.managementToolbar>button{min-height:48px;padding:0 18px;border:1px solid #01017e;border-radius:12px;background:#01017e;color:#fff;font-weight:800}
+.managementGrid{display:grid;grid-template-columns:minmax(290px,.75fr) minmax(360px,1.25fr);gap:14px;align-items:start}
+.managementCard{min-width:0;padding:20px;border:1px solid #e4e4ee;border-radius:18px;background:#fff;box-shadow:0 8px 24px rgba(20,20,57,.05)}
+.managementCardHead{display:flex;justify-content:space-between;gap:12px;margin-bottom:15px}
+.managementCardHead span{color:#01017e;font-size:9px;font-weight:800;letter-spacing:1.1px}
+.managementCardHead h2{margin:5px 0 0;color:#171726;font:700 20px Fraunces,Georgia,serif}
+.managementCardHead>small{color:#77778a;font-size:10px;white-space:nowrap}
+.managementCard label{display:grid;gap:7px;margin-top:12px}
+.managementCard label span{color:#4c4c60;font-size:11px;font-weight:800}
+.managementCard input,.managementCard select,.managementCard textarea{width:100%;min-height:48px;box-sizing:border-box;padding:0 13px;border:1px solid #dedee9;border-radius:11px;color:#202033;background:#fff;outline:0;font-size:13px}
+.managementCard textarea{padding-top:12px;resize:vertical}
+.managementCard input:focus,.managementCard select:focus,.managementCard textarea:focus{border-color:#01017e;box-shadow:0 0 0 3px #01017e10}
+.managementActions{display:grid;grid-template-columns:1fr 1.35fr;gap:9px;margin-top:18px}
+.managementActions button{min-height:48px;padding:0 15px;border:1px solid #dedee9;border-radius:11px;background:#fff;color:#333348;font-weight:800}
+.managementActions .workspacePrimary{border-color:#01017e;background:#01017e;color:#fff}
+.managementActions button:disabled{opacity:.55}
+.managementHint{display:block;margin-top:12px;color:#77778a;font-size:11px;line-height:1.5}
+.managementList{display:grid;gap:9px}
+.managementItem{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px;border:1px solid #e6e6ef;border-radius:13px;background:#fafafe}
+.managementItem>div:first-child{min-width:0}
+.managementItem b{display:block;color:#01017e;font-size:10px;overflow-wrap:anywhere}
+.managementItem h3{margin:4px 0;color:#222237;font:700 15px Fraunces,Georgia,serif;overflow-wrap:anywhere}
+.managementItem small{color:#77778a;font-size:10px;line-height:1.45;overflow-wrap:anywhere}
+.managementItemActions{display:flex;gap:6px;align-items:center}
+.managementItemActions button{min-height:42px;padding:0 11px;border:1px solid #dedee9;border-radius:9px;background:#fff;color:#01017e;font-size:11px;font-weight:800;white-space:nowrap}
+.managementItemActions button.danger{color:#b22a27}
+.pagination{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:15px;padding-top:13px;border-top:1px solid #ededf2}
+.pagination button{min-height:42px;padding:0 13px;border:1px solid #dedee9;border-radius:9px;background:#fff;color:#01017e;font-size:11px;font-weight:800}
+.pagination button:disabled{opacity:.4}
+.pagination span{color:#66667a;font-size:10px;font-weight:800}
+@media(max-width:900px){
+  .managementGrid{grid-template-columns:1fr}
+  .managementListCard{order:2}
+}
+@media(max-width:760px){
+  .managementPage{padding:0 0 35px}
+  .managementTabs{margin-top:14px}
+  .managementToolbar{grid-template-columns:1fr;gap:8px}
+  .managementToolbar>button{width:100%;min-height:50px}
+  .managementToolbar input,.managementToolbar select{min-height:50px;font-size:14px}
+  .managementCard{padding:15px;border-radius:16px}
+  .managementCardHead h2{font-size:19px}
+  .managementCard input,.managementCard select,.managementCard textarea{min-height:50px;font-size:14px}
+  .managementItem{grid-template-columns:1fr;gap:10px}
+  .managementItemActions{display:grid;grid-template-columns:1fr 1fr}
+  .managementItemActions button{width:100%;min-height:46px}
+  .hierarchyBar{align-items:flex-start;flex-wrap:wrap}
+  .hierarchyBar b{width:100%;order:3}
+  .hierarchyBar button{margin-left:0}
+  .pagination{justify-content:space-between}
+  .pagination button{min-height:46px}
+}
+@media(max-width:380px){
+  .managementPage{padding-inline:2px}
+  .managementCard{padding:13px}
+  .managementTabs button{padding-inline:12px}
+  .managementItemActions{grid-template-columns:1fr}
+  .managementActions{grid-template-columns:1fr}
+}
