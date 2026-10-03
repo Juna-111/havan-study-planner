@@ -17,7 +17,7 @@ class FakeDB:
 
     def scalars(self, statement):
         model = statement.column_descriptions[0]["type"].__name__
-        names = {"University": "universities", "Curriculum": "curriculums", "Stream": "streams", "Course": "courses", "Chapter": "chapters", "Topic": "topics", "TopicRelationship": "relationships"}
+        names = {"University": "universities", "Curriculum": "curriculums", "Stream": "streams", "Course": "courses", "Chapter": "chapters", "Topic": "topics", "TopicRelationship": "relationships", "UniversityCourseMapping": "mappings"}
         return FakeResult(self.data[names[model]])
 
 
@@ -84,6 +84,7 @@ def make_db(topics=(), relationships=(), **overrides):
         chapters=overrides.pop("chapters", [chapter()]),
         topics=topics,
         relationships=relationships,
+        mappings=overrides.pop("mappings", []),
         **overrides,
     )
 
