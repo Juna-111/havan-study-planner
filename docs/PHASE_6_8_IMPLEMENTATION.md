@@ -12,10 +12,10 @@ The current universities, curriculum versions, streams, courses, chapters, and t
 - Added deterministic checks for:
   - active universities without active curricula
   - active curricula without active streams
-  - active streams without active courses
+  - active streams without active mapped courses
   - active courses without active chapters
   - active chapters without active topics
-  - active records whose parent is inactive
+  - active records whose parent is inactive, including active university course mappings
   - missing course credit hours
   - empty active-topic names
   - invalid study duration
@@ -29,11 +29,11 @@ The current universities, curriculum versions, streams, courses, chapters, and t
   - unsupported relationship types
   - duplicate topic relationships
   - prerequisite cycles
-- Added a planner-readiness summary showing active courses, ready courses, active topics, invalid topics, and prerequisite-cycle topics.
+- Added a planner-readiness summary showing active courses, active university course mappings, ready courses, active topics, invalid topics, and prerequisite-cycle topics.
 - Added a Havan-branded Academic Quality workspace to the admin area.
 - Added readiness status, issue filtering, summary cards, and refresh controls.
 - Added automated backend tests covering representative quality failures and a valid sample course.
-- The later MVP cleanup removed the obsolete generic record-management workflow and the legacy full-tree curriculum importer. Academic Quality now routes administrators into the focused setup, mapping, or Freshman registry workspaces.
+- The later MVP cleanup removed the obsolete generic record-management workflow and the legacy full-tree curriculum importer. University semester placement is now handled by the direct University Course Mapping workspace. Academic Quality routes administrators into the focused setup, mapping, or Freshman registry workspaces.
 - No planner-ranking or recommendation logic was changed.
 
 ## Planner readiness
