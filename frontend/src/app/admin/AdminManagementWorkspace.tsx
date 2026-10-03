@@ -122,7 +122,6 @@ export default function AdminManagementWorkspace(){
     Object.entries(item).forEach(([key,value])=>{
       if(!['id','created_at','updated_at','registry_key','academic_scope','university_name','curriculum_name','curriculum_version','stream_name','stream_code','course_code','course_name','credit_hours'].includes(key)&&value!==null)next[key]=String(value)
     })
-    if(section==='mappings'){next.stream_id=String(item.stream_id);next.course_id=String(item.course_id)}
     if(section==='relationships'){next.source_topic_id=String(item.source_topic_id);next.target_topic_id=String(item.target_topic_id)}
     setForm(next)
   }
