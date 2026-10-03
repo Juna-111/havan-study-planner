@@ -6,14 +6,17 @@ import FreshmanRegistryWorkspace from './FreshmanRegistryWorkspace'
 import UniversitySetupWorkspace from './UniversitySetupWorkspace'
 import UniversityCourseMappingWorkspace from './UniversityCourseMappingWorkspace'
 import AcademicQuality from './AcademicQuality'
+import AdminManagementWorkspace from './AdminManagementWorkspace'
 
 type Mode =
   | 'setup'
   | 'quality'
+  | 'management'
   | 'freshman'
   | 'courseMapping'
 
 const navigation: Array<{mode: Mode; label: string; icon: string}> = [
+  {mode: 'management', label: 'Management', icon: '⚙'},
   {mode: 'setup', label: 'University setup', icon: '⌂'},
   {mode: 'courseMapping', label: 'Course mapping', icon: '↔'},
   {mode: 'freshman', label: 'Course registry', icon: '▣'},
@@ -39,6 +42,7 @@ export default function Admin() {
     courseMapping: <UniversityCourseMappingWorkspace />,
     freshman: <FreshmanRegistryWorkspace />,
     quality: <AcademicQuality />,
+    management: <AdminManagementWorkspace />,
   }[mode]
 
   return (
