@@ -313,3 +313,439 @@ button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
   .previewCard>footer{grid-template-columns:1fr}
   .structureBadge button{width:100%}
 }
+
+
+/* =========================================================
+   HAVAN ADMIN MOBILE-ONLY PASS
+   Admin is also a phone workflow. No tiny desktop controls.
+   ========================================================= */
+@media(max-width:760px){
+  .ad{
+    width:100%;
+    min-width:0;
+    overflow-x:clip;
+  }
+
+  .ad main{
+    width:100%;
+    min-width:0;
+    margin:0;
+    padding:70px 12px max(34px,env(safe-area-inset-bottom));
+  }
+
+  .mobileMenu{
+    top:max(10px,env(safe-area-inset-top));
+    right:10px;
+    width:48px;
+    height:48px;
+    border-radius:14px;
+    font-size:21px;
+    z-index:70;
+  }
+
+  .mobileScrim{
+    z-index:55;
+    background:rgba(7,7,30,.48);
+    backdrop-filter:blur(1px);
+  }
+
+  .ad aside{
+    width:min(84vw,330px);
+    max-width:330px;
+    padding:18px 14px max(18px,env(safe-area-inset-bottom));
+    z-index:65;
+    box-shadow:16px 0 45px rgba(1,1,40,.25);
+  }
+
+  .ad aside .brand{
+    padding:3px 4px;
+  }
+
+  .ad aside .brand strong{font-size:21px}
+  .ad aside label{
+    margin:30px 7px 10px;
+    font-size:10px;
+  }
+
+  .ad aside>button{
+    width:100%;
+    min-height:50px;
+    margin:3px 0;
+    padding:0 13px;
+    border-radius:12px;
+    font-size:13px;
+  }
+
+  .ad aside footer{
+    font-size:10px;
+    line-height:1.5;
+  }
+
+  .ad main>header,
+  .workspaceHeader,
+  .importHeader,
+  .qualityHeader{
+    width:100%;
+    min-width:0;
+  }
+
+  .ad main>header{
+    display:grid;
+    align-items:start;
+    gap:12px;
+  }
+
+  .ad h1,
+  .workspaceHeader h1,
+  .importHeader h1,
+  .qualityHeader h1{
+    font-size:clamp(27px,8.5vw,38px);
+    line-height:1.06;
+    overflow-wrap:anywhere;
+  }
+
+  .hero,
+  .workspaceCard,
+  .workspacePanel,
+  .importCard,
+  .previewCard,
+  .qualityCard{
+    min-width:0;
+    width:100%;
+    box-sizing:border-box;
+    border-radius:16px;
+    padding:16px;
+  }
+
+  .hero{
+    display:grid;
+    gap:13px;
+  }
+
+  .hero h2{font-size:22px;line-height:1.15}
+  .hero p{font-size:12px;line-height:1.6}
+  .hero>strong{width:100%;box-sizing:border-box}
+
+  .toolbar{
+    display:grid;
+    grid-template-columns:1fr;
+    width:100%;
+    margin:14px 0 10px;
+  }
+
+  .toolbar input{
+    width:100%;
+    min-height:48px;
+    box-sizing:border-box;
+    font-size:14px;
+  }
+
+  .toolbar small{display:none}
+
+  .workspaceGrid,
+  .importGrid,
+  .qualityGrid{
+    grid-template-columns:1fr;
+    gap:10px;
+    width:100%;
+  }
+
+  .workspaceGrid>.workspaceCard:last-child,
+  .workspacePanel{
+    grid-column:auto;
+  }
+
+  .workspaceCard h3,
+  .importCard h3{
+    font-size:18px;
+    line-height:1.2;
+  }
+
+  .workspaceCard label,
+  .importCard label{
+    gap:7px;
+    margin-top:13px;
+  }
+
+  .workspaceCard label span,
+  .importCard label span,
+  .categoryPicker>span{
+    font-size:11px;
+  }
+
+  .workspaceCard input,
+  .workspaceCard select,
+  .workspaceCard textarea,
+  .importCard input:not([type=file]){
+    min-height:50px;
+    box-sizing:border-box;
+    font-size:14px;
+  }
+
+  .workspaceCard textarea{
+    min-height:110px;
+  }
+
+  .workspacePrimary,
+  .workspaceActions button,
+  .importButton,
+  .primary{
+    width:100%;
+    min-height:50px;
+    box-sizing:border-box;
+    font-size:13px;
+  }
+
+  .workspaceActions{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+
+  .workspaceList{
+    max-height:none;
+    overflow:visible;
+  }
+
+  .overrideCard{
+    grid-template-columns:38px minmax(0,1fr);
+    gap:10px;
+    align-items:start;
+    padding:13px;
+  }
+
+  .overrideBody h3{
+    font-size:14px;
+    line-height:1.3;
+    overflow-wrap:anywhere;
+  }
+
+  .overrideBody p,
+  .overrideBody small{
+    font-size:10px;
+    line-height:1.45;
+    overflow-wrap:anywhere;
+  }
+
+  .overrideMeta{
+    grid-column:2;
+    width:100%;
+    display:grid;
+    grid-template-columns:1fr;
+    gap:6px;
+  }
+
+  .overrideMeta button{
+    width:100%;
+    min-height:44px;
+    border:1px solid #dedee9;
+    border-radius:9px;
+    background:#fff;
+    font-size:11px;
+  }
+
+  .workspaceSemesterGrid{
+    grid-template-columns:1fr;
+    gap:10px;
+  }
+
+  .workspaceSemester{
+    padding:13px;
+  }
+
+  .workspaceSemester>header{
+    align-items:flex-start;
+  }
+
+  .workspacePanel>header,
+  .previewCard>header,
+  .qualityCard>header{
+    align-items:flex-start;
+    flex-wrap:wrap;
+  }
+
+  .importHeader{
+    padding:18px 16px;
+  }
+
+  .importHeader p,
+  .workspaceHeader p{
+    font-size:12px;
+    line-height:1.6;
+  }
+
+  .dropzone{
+    padding:15px;
+  }
+
+  .importCard pre{
+    font-size:9px;
+    line-height:1.6;
+  }
+
+  .structureBadge{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+
+  .structureBadge button{
+    width:100%;
+    min-height:46px;
+    font-size:12px;
+  }
+
+  .treeTopic{
+    padding-left:9px;
+    font-size:11px;
+    line-height:1.5;
+  }
+
+  .previewCard>footer{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+
+  .previewCard>footer button{
+    width:100%;
+    min-height:50px;
+  }
+
+  .qualityHeader{
+    display:grid;
+    gap:11px;
+  }
+
+  .qualityHero{
+    padding:18px 16px;
+    border-radius:16px;
+  }
+
+  .qualityStats{
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+
+  .qualityStats article{
+    min-width:0;
+    padding:13px;
+  }
+
+  .qualityStats article:first-child{
+    grid-column:1/-1;
+  }
+
+  .qualityStats b{
+    font-size:22px;
+  }
+
+  .qualityGrid{
+    margin-top:10px;
+  }
+
+  .countGrid{
+    grid-template-columns:1fr;
+  }
+
+  .qualityFilters{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .qualityFilters button{
+    width:100%;
+    min-height:44px;
+  }
+
+  .issueActionCard{
+    grid-template-columns:1fr;
+    gap:8px;
+    padding:13px;
+  }
+
+  .severity{
+    justify-self:start;
+    min-height:30px;
+  }
+
+  .issueFix{
+    justify-self:start;
+    white-space:normal;
+    font-size:10px;
+  }
+
+  .qualityNote{
+    display:grid;
+    align-items:start;
+    font-size:10px;
+    line-height:1.5;
+  }
+
+  /* Tables remain usable without breaking the page width. */
+  .table{
+    width:100%;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .table table{
+    min-width:650px;
+  }
+
+  .overlay{
+    padding:10px;
+    align-items:end;
+  }
+
+  .modal{
+    width:100%;
+    max-height:94svh;
+    padding:17px;
+    border-radius:20px 20px 0 0;
+  }
+
+  .modal header h2{
+    font-size:22px;
+    line-height:1.15;
+  }
+
+  .form{
+    grid-template-columns:1fr;
+    gap:12px;
+    margin-top:18px;
+  }
+
+  .form input,
+  .form select,
+  .form textarea{
+    min-height:50px;
+    box-sizing:border-box;
+    font-size:14px;
+  }
+
+  .modal footer{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+
+  .modal footer button,
+  .modal footer .primary{
+    width:100%;
+    min-height:50px;
+  }
+
+  .detailgrid{
+    grid-template-columns:1fr;
+  }
+}
+
+@media(max-width:380px){
+  .ad main{padding-inline:9px}
+  .ad aside{width:88vw}
+  .workspaceCard,
+  .workspacePanel,
+  .importCard,
+  .previewCard,
+  .qualityCard{padding:13px}
+  .qualityStats{grid-template-columns:1fr}
+  .qualityStats article:first-child{grid-column:auto}
+  .qualityFilters{grid-template-columns:1fr}
+}
