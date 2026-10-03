@@ -171,21 +171,6 @@ class TopicRead(ORMModel):
     id: int; chapter_id: int; name: str; description: Optional[str]; difficulty: int; estimated_study_minutes: int; exam_importance: float; conceptual_importance: float; order_index: int; status: str
 
 
-class TopicRelationshipBase(BaseModel):
-    source_topic_id: int = Field(gt=0)
-    target_topic_id: int = Field(gt=0)
-    relationship_type: str = Field(pattern=r"^(prerequisite|conceptual|cross_course|related|revision)$")
-    strength: float = Field(default=1.0, ge=0, le=1)
-    notes: Optional[str] = None
-class TopicRelationshipCreate(TopicRelationshipBase): pass
-class TopicRelationshipUpdate(BaseModel):
-    relationship_type: Optional[str] = Field(default=None, pattern=r"^(prerequisite|conceptual|cross_course|related|revision)$")
-    strength: Optional[float] = Field(default=None, ge=0, le=1)
-    notes: Optional[str] = None
-class TopicRelationshipRead(ORMModel):
-    id: int; source_topic_id: int; target_topic_id: int; relationship_type: str; strength: float; notes: Optional[str]
-
-
 class PageMeta(BaseModel):
     page: int
     page_size: int

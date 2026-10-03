@@ -10,19 +10,18 @@ Principle: the system recommends, the student decides.
 Pipeline
 --------
 1. Normalise      completed / "already known" topics, pace factor, study days.
-2. Gate           hard prerequisites (with cycle detection) and soft prerequisites.
-3. Assess         exam workload against available time (earliest-deadline-first).
-4. Score          transparent 0..1 priority from named components.
+2. Assess         exam workload against available time (earliest-deadline-first).
+3. Score          transparent 0..1 priority from named components.
+4. Schedule       day by day: exam-aware, interleaved, capacity-safe, honouring the student's skips and pins.
 5. Schedule       day by day: dependency-aware, exam-aware, interleaved,
                   capacity-safe, honouring the student's skips and pins.
-6. Review         short spaced-revision sessions for completed topics.
-7. Report         sessions, blocked topics, exam readiness and warnings.
+5. Review         short spaced-revision sessions for completed topics.
+6. Report         sessions, exam readiness and warnings.
 
 Backward compatibility
 ----------------------
 ``PlannerTopic``, ``PlannerExam``, ``ScoredTopic``, ``exam_urgency``,
-``score_topic``, ``eligible_topics`` and ``schedule_tasks`` keep their original
-signatures, so the current service layer keeps working unchanged. New features
+``score_topic`` and ``schedule_tasks`` keep their original signatures. New features
 are opt-in through optional fields and through ``build_plan``.
 """
 from __future__ import annotations
@@ -72,7 +71,6 @@ class PlannerConfig:
     urgency_horizon_days: int = 30
     study_on_exam_day: bool = False
     tight_ratio: float = 0.85          # workload / time above this is "TIGHT"
-    prereq_override_days: int = 3      # near an exam a hard prerequisite becomes advice
 
     # Scheduling shape.
     min_session_minutes: int = 15      # never leave a fragment shorter than this
@@ -80,7 +78,6 @@ class PlannerConfig:
     interleave_penalty: float = 0.12   # spread a day across courses
     max_course_day_share: float = 0.60
     same_day_repeat_penalty: float = 0.25
-    soft_prereq_penalty: float = 0.04
     deferred_penalty: float = 0.10
 
     # Spaced revision.
@@ -131,10 +128,8 @@ MESSAGES: dict[str, dict[str, str]] = {
         "conf_high": "your confidence is already strong",
         "workload": "the work left before this exam is about {percent}% of your available study time",
         "early_chapter": "it comes early in the course sequence",
-        "soft_prereq": "it fits better after {count} related topic(s) you have not finished",
         "pinned": "you chose this date",
         "deferred": "you postponed it, so it is placed later",
-        "prereq_override": "a prerequisite is unfinished, but the exam is close so it is included",
         "review_due": "revision is due: {days} day(s) since you last studied it",
     },
 }
@@ -164,9 +159,6 @@ class PlannerTopic:
     conceptual_importance: float
     progress_status: str = "NOT_STARTED"
     progress_confidence: int = 3
-    prerequisite_ids: tuple[int, ...] = ()
-    # Optional v2 signals.
-    soft_prerequisite_ids: tuple[int, ...] = ()
     chapter_order: int = 0
     topic_order: int = 0
     last_studied_on: date | None = None
@@ -241,13 +233,6 @@ class PlannedSession:
 
 
 @dataclass(frozen=True)
-class BlockedTopic:
-    topic_id: int
-    waiting_on: tuple[int, ...]
-    scheduled_in_plan: bool
-
-
-@dataclass(frozen=True)
 class ExamReadiness:
     course_id: int
     exam_type: str
@@ -273,7 +258,6 @@ class PlanResult:
     engine_version: str
     today: date
     sessions: tuple[PlannedSession, ...]
-    blocked: tuple[BlockedTopic, ...]
     readiness: tuple[ExamReadiness, ...]
     warnings: tuple[PlanWarning, ...]
 
@@ -459,25 +443,6 @@ def score_topic(
     )
 
 
-def eligible_topics(
-    topics: Iterable[PlannerTopic],
-    completed_ids: set[int],
-) -> tuple[list[PlannerTopic], list[PlannerTopic]]:
-    """Legacy split into (eligible, blocked) by hard prerequisites."""
-    topics = list(topics)
-    known_ids = {topic.topic_id for topic in topics}
-    eligible: list[PlannerTopic] = []
-    blocked: list[PlannerTopic] = []
-    for topic in topics:
-        if topic.topic_id in completed_ids or topic.progress_status == "COMPLETED":
-            continue
-        unresolved = [
-            p for p in topic.prerequisite_ids if p in known_ids and p not in completed_ids
-        ]
-        (blocked if unresolved else eligible).append(topic)
-    return eligible, blocked
-
-
 # --------------------------------------------------------------------------
 # The planner
 # --------------------------------------------------------------------------
@@ -542,28 +507,7 @@ def build_plan(request: PlanRequest, config: PlannerConfig = DEFAULT_CONFIG) -> 
         warnings.append(PlanWarning(
             "NO_STUDY_TIME", "There is no free study time inside the planning window."))
 
-    # 2. Gate: hard prerequisites and cycles -------------------------------
-    hard = {
-        tid: tuple(p for p in by_id[tid].prerequisite_ids if p in by_id and p not in satisfied)
-        for tid in remaining_minutes
-    }
-    resolvable: set[int] = set()
-    changed = True
-    while changed:
-        changed = False
-        for tid, prerequisites in hard.items():
-            if tid not in resolvable and all(p in resolvable for p in prerequisites):
-                resolvable.add(tid)
-                changed = True
-    stuck = {tid for tid in remaining_minutes if tid not in resolvable}
-    if stuck:
-        warnings.append(PlanWarning(
-            "PREREQUISITE_CYCLE",
-            "These topics wait on each other and cannot be unlocked automatically: "
-            + ", ".join(str(t) for t in sorted(stuck)),
-        ))
-
-    # 3. Assess: exam workload (earliest-deadline-first) -------------------
+    # 2. Assess: exam workload (earliest-deadline-first) -------------------
     upcoming = sorted(
         (e for e in request.exams if e.exam_date >= today),
         key=lambda e: (e.exam_date, e.course_id, e.exam_type),
@@ -580,8 +524,6 @@ def build_plan(request: PlanRequest, config: PlannerConfig = DEFAULT_CONFIG) -> 
         return None
 
     for tid, minutes in remaining_minutes.items():
-        if tid in stuck:
-            continue
         info = exam_for(by_id[tid], today)
         if info:
             info.required += minutes
@@ -663,9 +605,6 @@ def build_plan(request: PlanRequest, config: PlannerConfig = DEFAULT_CONFIG) -> 
     multi_day = len(study_days) > 1
     finished_on: dict[int, date] = {}
 
-    def prerequisite_done(tid: int, day: date) -> bool:
-        return tid in finished_on and finished_on[tid] < day
-
     def evaluate(
         work: _Work, day: date, used_course: Mapping[int, int], placed_today: set[int],
         review_left: int, day_total: int,
@@ -708,12 +647,6 @@ def build_plan(request: PlanRequest, config: PlannerConfig = DEFAULT_CONFIG) -> 
                     "exam_type": info.exam.exam_type, "days": max(0, days_to_exam or 0)}))
             adjusted = base
         else:
-            unresolved = hard.get(tid, ())
-            if unresolved and not pinned_due and not all(prerequisite_done(p, day) for p in unresolved):
-                if info and (info.exam.exam_date - day).days <= cfg.prereq_override_days:
-                    extra.append(("prereq_override", {}))
-                else:
-                    return None
             scored = score_topic(
                 replace(topic, estimated_minutes=work.remaining),
                 info.exam if info else None,
@@ -726,13 +659,6 @@ def build_plan(request: PlanRequest, config: PlannerConfig = DEFAULT_CONFIG) -> 
             components = dict(scored.components)
             parts = list(scored.reason_parts)
             adjusted = base
-            soft = [
-                p for p in topic.soft_prerequisite_ids
-                if p in by_id and p not in satisfied and not prerequisite_done(p, day)
-            ]
-            if soft:
-                adjusted -= min(0.12, cfg.soft_prereq_penalty * len(soft))
-                extra.append(("soft_prereq", {"count": len(soft)}))
 
         if pinned_due:
             extra.append(("pinned", {}))
@@ -754,7 +680,6 @@ def build_plan(request: PlanRequest, config: PlannerConfig = DEFAULT_CONFIG) -> 
 
     # 6. Schedule, one day at a time ---------------------------------------
     placed: dict[tuple[date, int], dict] = {}
-    scheduled_ids: set[int] = set()
     for day in study_days:
         capacity = calendar.capacity(day)
         day_total = capacity
@@ -797,7 +722,6 @@ def build_plan(request: PlanRequest, config: PlannerConfig = DEFAULT_CONFIG) -> 
             capacity -= chunk
             used_course[work.topic.course_id] += chunk
             placed_today.add(tid)
-            scheduled_ids.add(tid)
             if work.kind == "REVIEW":
                 review_used += chunk
             elif work.remaining <= 0:
@@ -819,16 +743,10 @@ def build_plan(request: PlanRequest, config: PlannerConfig = DEFAULT_CONFIG) -> 
     )
 
     # 7. Report ------------------------------------------------------------
-    blocked = tuple(
-        BlockedTopic(tid, hard[tid], tid in scheduled_ids)
-        for tid in sorted(hard)
-        if hard[tid]
-    )
     return PlanResult(
         engine_version=ENGINE_VERSION,
         today=today,
         sessions=sessions,
-        blocked=blocked,
         readiness=tuple(readiness),
         warnings=tuple(warnings),
     )

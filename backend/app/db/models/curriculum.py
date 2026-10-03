@@ -191,31 +191,3 @@ class Topic(Base):
     order_index: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="ACTIVE", server_default="ACTIVE")
     chapter: Mapped[Chapter] = relationship(back_populates="topics")
-    outgoing_relationships: Mapped[list[TopicRelationship]] = relationship(
-        foreign_keys="TopicRelationship.source_topic_id", back_populates="source_topic", cascade="all, delete-orphan"
-    )
-    incoming_relationships: Mapped[list[TopicRelationship]] = relationship(
-        foreign_keys="TopicRelationship.target_topic_id", back_populates="target_topic", cascade="all, delete-orphan"
-    )
-
-
-class TopicRelationship(Base):
-    __tablename__ = "topic_relationships"
-    __table_args__ = (
-        UniqueConstraint("source_topic_id", "target_topic_id", "relationship_type", name="uq_topic_relationship"),
-        Index("ix_topic_relationships_source", "source_topic_id"),
-        Index("ix_topic_relationships_target", "target_topic_id"),
-        CheckConstraint("source_topic_id <> target_topic_id", name="ck_topic_relationships_not_self"),
-        CheckConstraint("strength BETWEEN 0 AND 1", name="ck_topic_relationships_strength_range"),
-    )
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    source_topic_id: Mapped[int] = mapped_column(ForeignKey("topics.id", ondelete="CASCADE"), nullable=False)
-    target_topic_id: Mapped[int] = mapped_column(ForeignKey("topics.id", ondelete="CASCADE"), nullable=False)
-    relationship_type: Mapped[str] = mapped_column(String(30), nullable=False)
-    strength: Mapped[float] = mapped_column(nullable=False, default=1.0, server_default="1.0")
-    notes: Mapped[Optional[str]] = mapped_column(Text)
-    source_topic: Mapped[Topic] = relationship(foreign_keys=[source_topic_id], back_populates="outgoing_relationships")
-    target_topic: Mapped[Topic] = relationship(foreign_keys=[target_topic_id], back_populates="incoming_relationships")
-
-
