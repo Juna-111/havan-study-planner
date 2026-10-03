@@ -2,6 +2,7 @@
 
 import {useEffect, useMemo, useState} from 'react'
 import {apiFetch} from '../../lib/api'
+import './management.css'
 
 type University={id:number;name:string;code:string;description:string|null;status:string}
 type Curriculum={id:number;university_id:number;name:string;version:string;academic_year:string|null;description:string|null;status:string}
