@@ -2,77 +2,73 @@
 
 ## Current MVP architecture
 
-Havan separates national Freshman academic content from university-specific configuration.
+Havan keeps the academic content catalog separate from the university structure that says which courses are actually taught.
 
 ```
-National Freshman Course Registry
-        ↓
-National Freshman Curriculum Template
-        ↓
-University Curriculum Mapping
-        ↓
-University Stream Course Assignment
-        ↓
-University Overrides & Exceptions
-        ↓
+Course Catalog
+    ↓
+University
+    ↓
+Curriculum
+    ↓
+Stream
+    ↓
+University Course Mapping
+    ↓
+Semester 1 / Semester 2
+    ↓
 Student Course Resolution
-        ↓
+    ↓
 Editable Study Planner
 ```
 
-### 1. National Freshman Course Registry
+### 1. Course Catalog
 
-The registry is the canonical Course → Chapter → Topic hierarchy.
+The course catalog contains every course available to Havan, regardless of whether a particular university teaches it in Semester 1, Semester 2, or not at all.
 
-A national course is stored once with its academic content, including topic difficulty and planner-relevant metadata. Universities do not copy the same chapters and topics into separate course trees.
+Freshman courses use the canonical Course → Chapter → Topic hierarchy. Universities do not copy that academic content when they use a course.
 
-### 2. National Freshman Curriculum Template
+Course content remains independent from semester placement.
 
-A curriculum template defines which national courses belong to each semester and whether each course is required or elective.
+### 2. University curriculum
 
-Templates are versioned so a newer curriculum can coexist with an older version.
+A university can have one or more curriculum versions. The curriculum identifies the academic structure students belong to.
 
-### 3. University Curriculum Mapping
+Curriculum versions are kept so historical and newer institutional structures can coexist when necessary.
 
-A university curriculum can map to an active national Freshman template.
+### 3. Stream
 
-The mapping says which national template is the default academic baseline for that university curriculum.
+A curriculum can contain streams such as Natural Science or Social Science.
 
-### 4. Stream Course Assignment
+The stream identifies which university course mapping applies to the student.
 
-Streams determine which template courses are available to students in that stream.
+### 4. University Course Mapping
 
-This keeps stream differences as configuration rather than duplicated academic content.
+The university course mapping is the single source of truth for semester placement.
 
-### 5. University Overrides & Exceptions
+For each university curriculum stream, an administrator selects courses from the full course catalog and places each course into:
 
-A university may have genuine local differences without copying the national content.
+- Semester 1
+- Semester 2
 
-Supported exceptions include:
+A course is mapped at most once per stream. Moving a course means changing its semester. Removing a course removes only the university mapping; the course and its Course → Chapter → Topic content remain in the catalog.
 
-- add a local course
-- remove an inherited course
-- move a course between semesters
-- change stream assignment
-- override local course code/title/credit information
-- use a local course when no national equivalent exists
+There is no separate university-to-national template mapping, stream assignment layer, or university override layer in the active MVP architecture.
 
-The override stores the reason/source so local differences remain explicit and auditable.
-
-### 6. Student Course Resolution
+### 5. Student Course Resolution
 
 During onboarding and planning, Havan resolves the student's available courses from:
 
 - university
-- curriculum version
+- curriculum
 - stream
-- national template
-- stream assignments
-- active university overrides
+- active university course mappings
+
+The resolver returns the effective course metadata and semester placement used by student course selection and the planner.
 
 The student can optionally provide a current chapter/topic position. If no starting position is supplied, the course starts from the beginning.
 
-### 7. Editable Study Planner
+### 6. Editable Study Planner
 
 The planner uses deterministic academic inputs such as:
 
@@ -90,8 +86,12 @@ AI/ML is not the source of truth for the MVP.
 
 ## Data policy
 
-Current academic content is development/sample data. The architecture is designed so real institutional data can replace or extend the sample dataset without redesigning the national Freshman content model.
+Current academic content is development/sample data. The real institutional course mappings and real Course → Chapter → Topic data can be loaded later without changing the core planner architecture.
 
 ## Engineering principle
 
-Keep the academic model powerful internally while keeping student and administrator workflows simple. Avoid duplicating national curriculum content unless a university has a genuine local exception.
+Keep the academic model powerful internally while making the administrator's job simple:
+
+**Find the university → choose the stream → put each course in Semester 1 or Semester 2.**
+
+No administrator should need to understand resolver internals to perform ordinary academic setup.
