@@ -193,189 +193,38 @@ class PageMeta(BaseModel):
     pages: int
 
 
-class FreshmanTemplateCourseBase(BaseModel):
+class UniversityCourseMappingCreate(BaseModel):
+    stream_id: int = Field(gt=0)
     course_id: int = Field(gt=0)
-    requirement_type: str = Field(default="REQUIRED", pattern=r"^(REQUIRED|ELECTIVE)$")
-    order_index: int = Field(default=1, ge=1)
-    notes: Optional[str] = None
-
-class FreshmanTemplateCourseCreate(FreshmanTemplateCourseBase):
-    pass
-
-class FreshmanTemplateCourseRead(ORMModel):
-    id: int
-    semester_id: int
-    course_id: int
-    course_code: str
-    course_name: str
-    requirement_type: str
-    order_index: int
-    notes: Optional[str]
-
-
-class FreshmanTemplateSemesterCreate(BaseModel):
     semester_number: int = Field(ge=1, le=2)
-    name: str = Field(min_length=2, max_length=100)
-    description: Optional[str] = None
-    courses: list[FreshmanTemplateCourseCreate] = Field(default_factory=list)
-
-class FreshmanTemplateSemesterRead(ORMModel):
-    id: int
-    template_id: int
-    semester_number: int
-    name: str
-    description: Optional[str]
-    courses: list[FreshmanTemplateCourseRead] = Field(default_factory=list)
-
-
-class FreshmanCurriculumTemplateCreate(BaseModel):
-    code: str = Field(min_length=2, max_length=50, pattern=r"^[A-Za-z0-9_.-]+$")
-    name: str = Field(min_length=2, max_length=150)
-    version: str = Field(min_length=1, max_length=30)
-    academic_year: Optional[str] = Field(default=None, max_length=30)
-    description: Optional[str] = None
+    order_index: int = Field(default=1, ge=1)
     status: str = Field(default="DRAFT", pattern=r"^(DRAFT|ACTIVE|ARCHIVED)$")
-    semesters: list[FreshmanTemplateSemesterCreate] = Field(default_factory=list, max_length=2)
 
-class FreshmanCurriculumTemplateUpdate(BaseModel):
-    name: Optional[str] = Field(default=None, min_length=2, max_length=150)
-    version: Optional[str] = Field(default=None, min_length=1, max_length=30)
-    academic_year: Optional[str] = Field(default=None, max_length=30)
-    description: Optional[str] = None
+
+class UniversityCourseMappingUpdate(BaseModel):
+    semester_number: Optional[int] = Field(default=None, ge=1, le=2)
+    order_index: Optional[int] = Field(default=None, ge=1)
     status: Optional[str] = Field(default=None, pattern=r"^(DRAFT|ACTIVE|ARCHIVED)$")
 
-class FreshmanCurriculumTemplateRead(ORMModel):
-    id: int
-    code: str
-    name: str
-    version: str
-    academic_year: Optional[str]
-    description: Optional[str]
-    status: str
-    semesters: list[FreshmanTemplateSemesterRead] = Field(default_factory=list)
 
-
-class FreshmanTemplateCourseAssignment(BaseModel):
-    semester_number: int = Field(ge=1, le=2)
-    course_id: int = Field(gt=0)
-    requirement_type: str = Field(default="REQUIRED", pattern=r"^(REQUIRED|ELECTIVE)$")
-    order_index: int = Field(default=1, ge=1)
-    notes: Optional[str] = None
-
-
-class FreshmanCurriculumMappingCreate(BaseModel):
-    curriculum_id: int = Field(gt=0)
-    template_id: int = Field(gt=0)
-    status: str = Field(default="DRAFT", pattern=r"^(DRAFT|ACTIVE|ARCHIVED)$")
-    notes: Optional[str] = None
-
-class FreshmanCurriculumMappingUpdate(BaseModel):
-    template_id: Optional[int] = Field(default=None, gt=0)
-    status: Optional[str] = Field(default=None, pattern=r"^(DRAFT|ACTIVE|ARCHIVED)$")
-    notes: Optional[str] = None
-
-class FreshmanCurriculumMappingRead(ORMModel):
+class UniversityCourseMappingRead(BaseModel):
     id: int
     curriculum_id: int
     curriculum_name: str
     curriculum_version: str
     university_id: int
     university_name: str
-    template_id: int
-    template_code: str
-    template_name: str
-    template_version: str
-    template_academic_year: Optional[str]
-    status: str
-    notes: Optional[str]
-
-class FreshmanStreamCourseAssignmentCreate(BaseModel):
-    stream_id: int = Field(gt=0)
-    template_course_id: int = Field(gt=0)
-    status: str = Field(default="DRAFT", pattern=r"^(DRAFT|ACTIVE|ARCHIVED)$")
-    notes: Optional[str] = None
-
-
-class FreshmanStreamCourseAssignmentUpdate(BaseModel):
-    status: Optional[str] = Field(default=None, pattern=r"^(DRAFT|ACTIVE|ARCHIVED)$")
-    notes: Optional[str] = None
-
-
-class FreshmanStreamCourseAssignmentRead(ORMModel):
-    id: int
     stream_id: int
     stream_name: str
     stream_code: str
-    curriculum_id: int
-    curriculum_name: str
-    university_id: int
-    university_name: str
-    template_course_id: int
-    semester_number: int
-    semester_name: str
     course_id: int
     course_code: str
     course_name: str
-    requirement_type: str
+    credit_hours: Optional[int]
+    semester_number: int
     order_index: int
-    status: str
-    notes: Optional[str]
-
-
-class UniversityCourseOverrideCreate(BaseModel):
-    curriculum_id: int = Field(gt=0)
-    national_course_id: Optional[int] = Field(default=None, gt=0)
-    local_course_id: Optional[int] = Field(default=None, gt=0)
-    source_stream_id: Optional[int] = Field(default=None, gt=0)
-    target_stream_id: Optional[int] = Field(default=None, gt=0)
-    override_type: str = Field(pattern=r"^(ADD|REMOVE|MOVE|CHANGE_STREAM|METADATA)$")
-    semester_number: Optional[int] = Field(default=None, ge=1, le=2)
-    order_index: Optional[int] = Field(default=None, ge=1)
-    local_code: Optional[str] = Field(default=None, min_length=1, max_length=40)
-    local_title: Optional[str] = Field(default=None, min_length=2, max_length=150)
-    local_credit_hours: Optional[int] = Field(default=None, ge=0, le=30)
-    reason: str = Field(min_length=3, max_length=2000)
-    source: Optional[str] = Field(default=None, max_length=255)
-    status: str = Field(default="DRAFT", pattern=r"^(DRAFT|ACTIVE|ARCHIVED)$")
-
-
-class UniversityCourseOverrideUpdate(BaseModel):
-    source_stream_id: Optional[int] = Field(default=None, gt=0)
-    target_stream_id: Optional[int] = Field(default=None, gt=0)
-    semester_number: Optional[int] = Field(default=None, ge=1, le=2)
-    order_index: Optional[int] = Field(default=None, ge=1)
-    local_code: Optional[str] = Field(default=None, min_length=1, max_length=40)
-    local_title: Optional[str] = Field(default=None, min_length=2, max_length=150)
-    local_credit_hours: Optional[int] = Field(default=None, ge=0, le=30)
-    reason: Optional[str] = Field(default=None, min_length=3, max_length=2000)
-    source: Optional[str] = Field(default=None, max_length=255)
-    status: Optional[str] = Field(default=None, pattern=r"^(DRAFT|ACTIVE|ARCHIVED)$")
-
-
-class UniversityCourseOverrideRead(ORMModel):
-    id: int
-    curriculum_id: int
-    curriculum_name: str
-    university_id: int
-    university_name: str
-    national_course_id: Optional[int]
-    national_course_code: Optional[str]
-    national_course_name: Optional[str]
-    local_course_id: Optional[int]
-    local_course_code: Optional[str]
-    local_course_name: Optional[str]
-    source_stream_id: Optional[int]
-    source_stream_name: Optional[str]
-    target_stream_id: Optional[int]
-    target_stream_name: Optional[str]
-    override_type: str
-    semester_number: Optional[int]
-    order_index: Optional[int]
-    local_code: Optional[str]
-    local_title: Optional[str]
-    local_credit_hours: Optional[int]
-    reason: str
-    source: Optional[str]
     status: str
     created_at: datetime
     updated_at: datetime
+
+

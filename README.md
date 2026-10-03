@@ -6,34 +6,42 @@ Production-oriented academic planning platform for Ethiopian university Freshman
 
 ## Current MVP architecture
 
-National Freshman Course Registry
+Course Catalog
         ↓
-National Freshman Curriculum Template
+University
         ↓
-University Curriculum Mapping
+Curriculum
         ↓
-University Stream Course Assignment
+Stream
         ↓
-University Overrides & Exceptions
+University Course Mapping
         ↓
 Student Course Resolution
         ↓
 Editable Study Planner
 
-The national Course → Chapter → Topic hierarchy is the canonical Freshman content source. Universities reuse that content through mappings and stream assignments instead of uploading duplicate copies of the same national courses.
+The course catalog contains all available courses. A university does not need to recreate a course just because it teaches that course in a particular semester.
 
-University-specific differences are represented through explicit overrides or local courses when a national equivalent does not exist.
+The administrator's academic setup is intentionally simple:
+
+1. Select the university.
+2. Select the curriculum.
+3. Select the stream.
+4. Choose courses from the full catalog.
+5. Place each course in Semester 1 or Semester 2.
+
+Moving a course changes only its university semester mapping. Removing a mapping does not delete the course or its Course → Chapter → Topic content.
 
 ## MVP focus
 
 - Student registration and academic onboarding.
 - University, curriculum, and stream resolution.
-- National Freshman course resolution.
+- Direct university course-to-semester mapping.
+- Canonical Freshman Course → Chapter → Topic content.
 - Current chapter/topic position.
 - Study availability and examination dates.
 - Dynamic study-plan generation.
 - Editable planner actions such as move, skip, add, reschedule, complete, and repeat.
-- University-specific academic exceptions.
 - Havan-branded student and admin experiences.
 - Reliable academic data import and validation.
 
@@ -41,7 +49,7 @@ University-specific differences are represented through explicit overrides or lo
 
 Current chapter, topic, curriculum, and course content is development/sample data.
 
-The architecture is designed so real institutional data can be introduced later without redesigning the national Freshman content model.
+The architecture is designed so real institutional course mappings and real academic content can be introduced later without redesigning the planner.
 
 ## Engineering commands
 
@@ -69,6 +77,6 @@ Never commit secrets. Use the frontend and backend environment example files for
 
 ## MVP principle
 
-Keep the academic architecture powerful internally, but keep the student and administrator experience simple.
+Keep the academic engine powerful internally, but keep the administrator experience simple.
 
-Avoid duplicating national curriculum data for individual universities unless the university has a genuine local exception.
+The administrator should manage **which courses a university teaches in Semester 1 and Semester 2**, not internal resolver mechanics.

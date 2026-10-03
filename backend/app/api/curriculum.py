@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func, select
 from app.db.session import get_db
-from app.db.models.curriculum import Chapter, Course, Curriculum, FreshmanCurriculumMapping, FreshmanStreamCourseAssignment, FreshmanTemplateCourse, FreshmanTemplateSemester, FreshmanCurriculumTemplate, Stream, Topic, TopicRelationship, University, UniversityCourseOverride
+from app.db.models.curriculum import Chapter, Course, Curriculum, Stream, Topic, TopicRelationship, University, UniversityCourseMapping
 from app.schemas.curriculum import *
 from app.services.academic_resolver import resolve_stream_courses
 from app.services.curriculum import create_item, delete_item, get_or_404, list_items, update_item

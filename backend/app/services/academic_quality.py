@@ -14,6 +14,7 @@ from app.db.models.curriculum import (
     Topic,
     TopicRelationship,
     University,
+    UniversityCourseMapping,
 )
 
 
@@ -38,6 +39,8 @@ def run_academic_quality_checks(db: Session) -> dict:
     chapters = list(db.scalars(select(Chapter)).all())
     topics = list(db.scalars(select(Topic)).all())
     relationships = list(db.scalars(select(TopicRelationship)).all())
+    mappings = list(db.scalars(select(UniversityCourseMapping)).all())
+    mappings = list(db.scalars(select(UniversityCourseMapping)).all())
 
     curriculum_by_id = {item.id: item for item in curriculums}
     stream_by_id = {item.id: item for item in streams}
@@ -67,8 +70,8 @@ def run_academic_quality_checks(db: Session) -> dict:
     active_streams_by_curriculum = Counter(
         item.curriculum_id for item in streams if item.status == "ACTIVE"
     )
-    active_courses_by_stream = Counter(
-        item.stream_id for item in courses if item.status == "ACTIVE"
+    active_mappings_by_stream = Counter(
+        item.stream_id for item in mappings if item.status == "ACTIVE"
     )
     active_chapters_by_course = Counter(
         item.course_id for item in chapters if item.status == "ACTIVE"
@@ -93,8 +96,8 @@ def run_academic_quality_checks(db: Session) -> dict:
             add_parent_child_issue("curriculum", curriculum.id, "stream", curriculum.name)
 
     for stream in streams:
-        if stream.status == "ACTIVE" and active_courses_by_stream[stream.id] == 0:
-            add_parent_child_issue("stream", stream.id, "course", stream.name)
+        if stream.status == "ACTIVE" and active_mappings_by_stream[stream.id] == 0:
+            add_parent_child_issue("stream", stream.id, "mapped course", stream.name)
 
     for course in courses:
         if course.status == "ACTIVE" and active_chapters_by_course[course.id] == 0:
@@ -133,18 +136,6 @@ def run_academic_quality_checks(db: Session) -> dict:
                 )
             )
 
-    for course in courses:
-        if course.status == "ACTIVE" and course.stream_id not in active_streams:
-            issues.append(
-                _issue(
-                    "error",
-                    "course",
-                    course.id,
-                    "Inactive or missing stream",
-                    f"{course.code} is active but its stream is not active.",
-                )
-            )
-
     for chapter in chapters:
         if chapter.status == "ACTIVE" and chapter.course_id not in active_courses:
             issues.append(
@@ -166,6 +157,41 @@ def run_academic_quality_checks(db: Session) -> dict:
                     topic.id,
                     "Inactive or missing chapter",
                     f"{topic.name} is active but its chapter is not active.",
+                )
+            )
+
+    for mapping in mappings:
+        if mapping.status != "ACTIVE":
+            continue
+        if mapping.stream_id not in active_streams:
+            issues.append(
+                _issue(
+                    "error",
+                    "course_mapping",
+                    mapping.id,
+                    "Inactive or missing stream",
+                    f"Mapping #{mapping.id} points to a stream that is not active.",
+                )
+            )
+        if mapping.curriculum_id not in active_curriculums:
+            issues.append(
+                _issue(
+                    "error",
+                    "course_mapping",
+                    mapping.id,
+                    "Inactive or missing curriculum",
+                    f"Mapping #{mapping.id} points to a curriculum that is not active.",
+                )
+            )
+        course = course_by_id.get(mapping.course_id)
+        if course is None or course.status != "ACTIVE":
+            issues.append(
+                _issue(
+                    "error",
+                    "course_mapping",
+                    mapping.id,
+                    "Inactive or missing course",
+                    f"Mapping #{mapping.id} points to an inactive or missing course.",
                 )
             )
 
@@ -402,6 +428,7 @@ def run_academic_quality_checks(db: Session) -> dict:
         "active_courses": len(active_courses),
         "ready_courses": ready_courses,
         "active_topics": len(active_topics),
+        "active_course_mappings": sum(1 for item in mappings if item.status == "ACTIVE"),
         "invalid_topics": len(invalid_topic_ids),
         "prerequisite_cycle_topics": len(cycle_nodes),
     }
@@ -419,6 +446,7 @@ def run_academic_quality_checks(db: Session) -> dict:
         "chapters": len(chapters),
         "topics": len(topics),
         "relationships": len(relationships),
+        "course_mappings": len(mappings),
     }
     severity_counts = Counter(item.severity for item in issues)
 
