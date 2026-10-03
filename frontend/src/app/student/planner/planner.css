@@ -2835,3 +2835,13 @@
     margin-inline: 0;
   }
 }
+
+
+.planner-action-stack{display:grid;gap:10px;margin-top:12px}
+.planner-add-panel{margin-top:14px;padding:15px;border:1px solid #e3e3ec;border-radius:14px;background:#fafaff}
+.planner-add-panel p{margin:5px 0 0;color:#77778a;font-size:11px;line-height:1.5}
+.planner-add-controls{display:grid;grid-template-columns:1.4fr .8fr auto;gap:8px;margin-top:12px}
+.planner-add-controls select,.planner-add-controls input{min-height:44px;padding:0 11px;border:1px solid #e3e3ec;border-radius:11px;background:#fff;color:#151526;font:inherit}
+.planner-add-controls select:focus,.planner-add-controls input:focus{outline:0;border-color:#01017e;box-shadow:0 0 0 3px rgba(1,1,126,.07)}
+.planner-add-controls button{min-height:44px}
+@media(max-width:700px){.planner-add-controls{grid-template-columns:1fr}.planner-add-controls button{width:100%}}

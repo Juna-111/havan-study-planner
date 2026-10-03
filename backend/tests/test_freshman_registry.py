@@ -108,13 +108,13 @@ def test_freshman_stream_assignment_schema_links_stream_to_template_course() -> 
 
 
 def test_course_catalog_supports_resolved_freshman_stream_courses() -> None:
-    routes = {
-        route.path: route
-        for route in app.routes
-        if route.path == "/api/v1/courses"
+    routes = [route for route in app.routes if route.path == "/api/v1/courses"]
+    assert routes
+    params = {
+        parameter.name
+        for route in routes
+        for parameter in route.dependant.query_params
     }
-    assert "/api/v1/courses" in routes
-    params = {parameter.name for parameter in routes["/api/v1/courses"].dependant.query_params}
     assert "stream_id" in params
     assert "include_freshman" in params
 
@@ -165,7 +165,7 @@ def test_university_override_schema_supports_national_metadata_override() -> Non
 
 
 def test_freshman_registry_import_parser_accepts_canonical_hierarchy() -> None:
-    from app.services.curriculum_import import parse_bullet_curriculum
+    from app.services.freshman_registry_parser import parse_bullet_curriculum
 
     courses = parse_bullet_curriculum(
         """Course: [PHY101] Physics
@@ -187,7 +187,7 @@ Chapter: Vectors
 def test_freshman_registry_import_parser_rejects_missing_difficulty() -> None:
     import pytest
     from fastapi import HTTPException
-    from app.services.curriculum_import import parse_bullet_curriculum
+    from app.services.freshman_registry_parser import parse_bullet_curriculum
 
     with pytest.raises(HTTPException):
         parse_bullet_curriculum(
@@ -200,7 +200,7 @@ Chapter: Mechanics
 
 def test_freshman_registry_import_parser_rejects_legacy_indented_format() -> None:
     from fastapi import HTTPException
-    from app.services.curriculum_import import parse_bullet_curriculum
+    from app.services.freshman_registry_parser import parse_bullet_curriculum
 
     try:
         parse_bullet_curriculum(

@@ -50,3 +50,5 @@
 .workspaceList{display:grid;gap:8px;margin-top:15px;max-height:280px;overflow:auto}
 .workspaceNotice{max-width:none}
 @media(max-width:760px){.workspaceGrid{grid-template-columns:1fr}.workspaceGrid>.workspaceCard:last-child,.workspacePanel{grid-column:auto}.workspacePanel>header{align-items:flex-start}.workspacePanel>header h2{font-size:20px}}
+
+.adminStudentLink{display:block;margin-bottom:9px;color:#fff;text-decoration:none;font-weight:800}.adminStudentLink:hover{text-decoration:underline}

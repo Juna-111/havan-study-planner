@@ -91,9 +91,10 @@ export default function Admin() {
         ))}
 
         <footer>
+          <a href="/student" className="adminStudentLink">Open student surface ↗</a>
           Havan academic workspace
           <br />
-          <small>MVP</small>
+          <small>Registry → template → mapping → stream → override → student</small>
         </footer>
       </aside>
 

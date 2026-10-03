@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.db.models.curriculum import Chapter, Course, Curriculum, FreshmanCurriculumMapping, FreshmanStreamCourseAssignment, FreshmanTemplateCourse, FreshmanTemplateSemester, FreshmanCurriculumTemplate, Stream, Topic, University, UniversityCourseOverride
 from app.db.models.student import StudentCourse, StudentExam, StudentProfile, StudentTopicProgress
 from app.db.session import get_db
+from app.services.academic_resolver import resolve_stream_courses, resolve_student_courses, resolved_course_ids
 from app.schemas.student import (
     CourseTopicStatus, ExamCreate, ExamRead, ExamUpdate, ProgressRead, ProgressUpsert, StudentContext,
     StudentCourseAdd, StudentCourseRead, StudentCreate, StudentRead, StudentUpdate,
@@ -25,63 +26,42 @@ def profile_or_404(db: Session, student_id: int) -> StudentProfile:
 
 
 def course_available_to_stream(db: Session, course_id: int, stream_id: int) -> bool:
-    stream = db.get(Stream, stream_id)
-    if stream is None:
-        return False
+    return any(item.course_id == course_id for item in resolve_stream_courses(db, stream_id))
 
-    direct = db.scalar(
-        select(Course.id).where(
-            Course.id == course_id,
-            Course.stream_id == stream_id,
-            Course.status == "ACTIVE",
-        )
-    )
-    available = direct is not None
 
-    mapping = db.scalar(
-        select(FreshmanCurriculumMapping).where(
-            FreshmanCurriculumMapping.curriculum_id == stream.curriculum_id,
-            FreshmanCurriculumMapping.status == "ACTIVE",
-        )
-    )
-    if mapping is not None:
-        freshman_course = db.scalar(
-            select(Course.id)
-            .join(FreshmanTemplateCourse, FreshmanTemplateCourse.course_id == Course.id)
-            .join(FreshmanTemplateSemester, FreshmanTemplateSemester.id == FreshmanTemplateCourse.semester_id)
-            .join(FreshmanStreamCourseAssignment, FreshmanStreamCourseAssignment.template_course_id == FreshmanTemplateCourse.id)
-            .join(FreshmanCurriculumTemplate, FreshmanCurriculumTemplate.id == FreshmanTemplateSemester.template_id)
-            .where(
-                Course.id == course_id,
-                Course.status == "ACTIVE",
-                FreshmanStreamCourseAssignment.stream_id == stream_id,
-                FreshmanStreamCourseAssignment.status == "ACTIVE",
-                FreshmanCurriculumTemplate.id == mapping.template_id,
-                FreshmanCurriculumTemplate.status == "ACTIVE",
-            )
-        )
-        available = available or freshman_course is not None
+def resolved_student_courses(db: Session, student_id: int) -> list[StudentCourse]:
+    effective_course_ids = resolved_course_ids(db, student_id)
+    return [
+        item
+        for item in db.scalars(
+            select(StudentCourse).where(StudentCourse.student_id == student_id)
+        ).all()
+        if item.course_id in effective_course_ids
+    ]
 
-    overrides = list(db.scalars(
-        select(UniversityCourseOverride).where(
-            UniversityCourseOverride.curriculum_id == stream.curriculum_id,
-            UniversityCourseOverride.status == "ACTIVE",
-        )
-    ).all())
 
-    for override in overrides:
-        if override.override_type == "ADD" and override.target_stream_id == stream_id and override.local_course_id == course_id:
-            available = True
-        elif override.override_type == "REMOVE" and override.national_course_id == course_id:
-            if override.source_stream_id is None or override.source_stream_id == stream_id:
-                available = False
-        elif override.override_type == "CHANGE_STREAM" and override.national_course_id == course_id:
-            if override.source_stream_id is None or override.source_stream_id == stream_id:
-                available = False
-            if override.target_stream_id == stream_id:
-                available = True
+def resolved_course_metadata(db: Session, student_id: int) -> dict[int, object]:
+    return {
+        item.course_id: item
+        for item in resolve_student_courses(db, student_id)
+    }
 
-    return available
+
+def student_course_read_data(db: Session, student_course: StudentCourse, metadata: dict[int, object] | None = None) -> dict:
+    effective_metadata = resolved_course_metadata(db, student_course.student_id) if metadata is None else metadata
+    effective = effective_metadata.get(student_course.course_id)
+    if effective is None:
+        raise HTTPException(status_code=400, detail="Student course is no longer available in the active university curriculum")
+    return {
+        "id": student_course.id,
+        "student_id": student_course.student_id,
+        "course_id": student_course.course_id,
+        "confidence": student_course.confidence,
+        "status": student_course.status,
+        "course_code": effective.display_code,
+        "course_name": effective.display_name,
+        "credit_hours": effective.credit_hours,
+    }
 
 
 def validate_curriculum_context(db: Session, university_id: int, curriculum_id: int, stream_id: int) -> None:
@@ -141,9 +121,9 @@ def update_profile(student_id: int, payload: StudentUpdate, db: DB):
 @router.get("/profiles/{student_id}/context", response_model=StudentContext)
 def get_context(student_id: int, db: DB):
     profile = profile_or_404(db, student_id)
-    student_courses = list(db.scalars(
-        select(StudentCourse).where(StudentCourse.student_id == student_id)
-    ).all())
+    student_courses = resolved_student_courses(db, student_id)
+    metadata = resolved_course_metadata(db, student_id)
+    student_course_reads = [student_course_read_data(db, item, metadata) for item in student_courses]
 
     course_topic_status = []
     for student_course in student_courses:
@@ -167,15 +147,15 @@ def get_context(student_id: int, db: DB):
 
         course_topic_status.append(CourseTopicStatus(
             course_id=course.id,
-            course_code=course.code,
-            course_name=course.name,
+            course_code=metadata[course.id].display_code,
+            course_name=metadata[course.id].display_name,
             chapter_count=len(chapters),
             active_topic_count=active_topic_count,
         ))
 
     return StudentContext(
         profile=profile,
-        courses=student_courses,
+        courses=student_course_reads,
         progress=list(db.scalars(select(StudentTopicProgress).where(StudentTopicProgress.student_id == student_id)).all()),
         exams=list(db.scalars(select(StudentExam).where(StudentExam.student_id == student_id).order_by(StudentExam.exam_date)).all()),
         course_topic_status=course_topic_status,
@@ -185,7 +165,8 @@ def get_context(student_id: int, db: DB):
 @router.get("/profiles/{student_id}/courses", response_model=list[StudentCourseRead])
 def list_courses(student_id: int, db: DB):
     profile_or_404(db, student_id)
-    return list(db.scalars(select(StudentCourse).where(StudentCourse.student_id == student_id)).all())
+    metadata = resolved_course_metadata(db, student_id)
+    return [student_course_read_data(db, item, metadata) for item in resolved_student_courses(db, student_id)]
 
 
 @router.post("/profiles/{student_id}/courses", response_model=StudentCourseRead, status_code=201)
@@ -202,7 +183,7 @@ def add_course(student_id: int, payload: StudentCourseAdd, db: DB):
         existing.confidence = payload.confidence
         db.commit()
         db.refresh(existing)
-        return existing
+        return student_course_read_data(db, existing)
 
     item = StudentCourse(
         student_id=student_id,
@@ -274,7 +255,7 @@ def add_course(student_id: int, payload: StudentCourseAdd, db: DB):
 
     db.commit()
     db.refresh(item)
-    return item
+    return student_course_read_data(db, item)
 
 
 @router.delete("/profiles/{student_id}/courses/{course_id}", status_code=204)
