@@ -815,3 +815,270 @@
     font-size:20px;
   }
 }
+
+
+/* =========================================================
+   HAVAN MOBILE-ONLY PRODUCT PASS
+   The student surface is designed for Android phones first.
+   Keep every control readable, reachable and non-stressful.
+   ========================================================= */
+@media (max-width:760px){
+  .student-shell{
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    overflow-x:clip;
+    padding:14px 12px max(44px,env(safe-area-inset-bottom));
+  }
+
+  .dashboard-shell{
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    padding-bottom:32px;
+  }
+
+  .student-topbar{
+    width:100%;
+    gap:10px;
+    align-items:stretch;
+  }
+
+  .student-brand{
+    width:100%;
+    min-height:44px;
+    padding:4px 0;
+  }
+
+  .student-brand strong{font-size:19px}
+  .student-brand>span:last-child{font-size:10px}
+
+  .student-nav{
+    width:100%;
+    display:grid;
+    grid-template-columns:1fr;
+    gap:7px;
+  }
+
+  .student-nav button,
+  .student-account-button,
+  .student-logout-button{
+    width:100%;
+    min-height:48px;
+  }
+
+  .dashboard-welcome{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:14px;
+    padding:28px 0 20px;
+  }
+
+  .dashboard-welcome h1{
+    font-size:clamp(30px,9vw,42px);
+    line-height:1.05;
+    letter-spacing:-1px;
+  }
+
+  .dashboard-welcome p{
+    font-size:13px;
+    line-height:1.65;
+  }
+
+  .dashboard-primary-action,
+  .hero-action{
+    width:100%;
+    min-height:50px;
+    justify-content:center;
+    box-sizing:border-box;
+    text-align:center;
+  }
+
+  .dashboard-kpis{
+    grid-template-columns:1fr;
+    gap:9px;
+  }
+
+  .dashboard-kpi{
+    padding:15px;
+    border-radius:14px;
+  }
+
+  .dashboard-kpi>strong{font-size:24px}
+
+  .dashboard-focus-grid,
+  .dashboard-grid{
+    grid-template-columns:1fr;
+    gap:10px;
+  }
+
+  .dashboard-focus-card,
+  .panel{
+    min-width:0;
+    padding:16px;
+    border-radius:16px;
+  }
+
+  .dashboard-card-head,
+  .panel-heading{
+    gap:10px;
+    flex-wrap:wrap;
+  }
+
+  .course-row,
+  .exam-row,
+  .topic-row{
+    align-items:flex-start;
+    flex-direction:column;
+    gap:9px;
+    padding:14px 0;
+  }
+
+  .course-row>div,
+  .exam-row>div,
+  .topic-row>div{
+    width:100%;
+  }
+
+  .exam-row-actions{
+    width:100%;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+
+  .exam-row-actions button{
+    min-height:42px;
+    width:100%;
+  }
+
+  .exam-form{
+    grid-template-columns:1fr;
+  }
+
+  .exam-form button,
+  .exam-form-actions{
+    grid-column:auto;
+  }
+
+  .exam-form-actions{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+
+  .day-pick{
+    grid-template-columns:repeat(2,1fr);
+    gap:7px;
+  }
+
+  .day{
+    width:100%;
+    min-height:48px;
+  }
+
+  .settings-hero{
+    margin:24px 0 14px;
+    padding:22px 17px;
+    border-radius:18px;
+  }
+
+  /* Prevent the hero title from disappearing into Havan blue. */
+  .settings-hero h1{
+    color:#fff !important;
+    font-size:clamp(29px,8.5vw,40px);
+    line-height:1.06;
+    letter-spacing:-.8px;
+  }
+
+  .settings-hero p{
+    font-size:12px;
+    line-height:1.6;
+  }
+
+  .settings-grid{
+    grid-template-columns:1fr;
+    gap:10px;
+  }
+
+  .settings-card{
+    gap:12px;
+    padding:16px;
+  }
+
+  .settings-card h2{font-size:20px}
+
+  .settings-id{
+    grid-template-columns:1fr 1fr;
+    gap:8px 10px;
+    padding:12px;
+  }
+
+  .settings-label{
+    font-size:12px;
+  }
+
+  .settings-input,
+  .settings-select .havan-select-trigger{
+    width:100%;
+    min-height:50px;
+    box-sizing:border-box;
+    font-size:14px;
+  }
+
+  .settings-save{
+    width:100%;
+    min-height:50px;
+    margin-top:4px;
+  }
+
+  .security-note,
+  .settings-danger{
+    padding:13px;
+  }
+
+  .settings-danger button{
+    min-height:44px;
+    padding:0 4px;
+  }
+
+  .havan-select-menu{
+    max-height:min(48vh,360px);
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .havan-select-option{
+    min-height:48px;
+    font-size:14px;
+  }
+}
+
+@media (max-width:480px){
+  .student-shell{padding-inline:10px}
+  .dashboard-shell{padding-inline:0}
+  .student-brand{gap:7px}
+  .student-brand>span:last-child{display:none}
+
+  .dashboard-kpi{
+    padding:14px;
+  }
+
+  .dashboard-kpi>strong{font-size:22px}
+
+  .panel,
+  .dashboard-focus-card,
+  .settings-card{
+    padding:14px;
+  }
+
+  .settings-id{
+    grid-template-columns:1fr;
+  }
+
+  .exam-row-actions{
+    grid-template-columns:1fr;
+  }
+
+  .settings-hero{
+    padding:20px 15px;
+  }
+}
