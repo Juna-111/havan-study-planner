@@ -156,3 +156,16 @@ button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
   .previewCard>footer{grid-template-columns:1fr}
   .structureBadge button{width:100%}
 }
+
+.mobileMenu,.mobileScrim{display:none}
+@media(max-width:760px){
+  .mobileMenu{display:grid;place-items:center;position:fixed;z-index:8;top:12px;right:12px;width:46px;height:46px;border:1px solid #dedee9;border-radius:13px;background:#fff;color:#01017e;font-size:22px;box-shadow:0 8px 20px #14143912}
+  .mobileScrim{display:block;position:fixed;z-index:5;inset:0;border:0;background:rgba(7,7,30,.34)}
+  .ad aside{transform:translateX(-105%);transition:transform .2s ease;box-shadow:14px 0 40px rgba(1,1,40,.18)}
+  .ad aside.mobileOpen{transform:translateX(0)}
+  .ad aside>button{min-height:48px;font-size:13px}
+  .ad aside label{margin-top:28px}
+  .ad aside footer{padding-bottom:max(14px,env(safe-area-inset-bottom))}
+  .ad main{padding-top:68px}
+}
+@media(prefers-reduced-motion:reduce){.ad aside{transition:none}}
