@@ -82,6 +82,8 @@ export default function AdminManagementWorkspace(){
   const endpoint='/'+(section==='universities'?'universities':section==='curricula'?'curriculums':section)
 
   async function save(){
+    const parentMissing=(section==='curricula'&&!universityId)||(section==='streams'&&!curriculumId)||(section==='courses'&&!streamId)||(section==='chapters'&&!courseId)||(section==='topics'&&!chapterId)
+    if(parentMissing){setError('Choose the parent record before creating this item.');return}
     setSaving(true);setError('');setMessage('')
     try{
       const result=await apiFetch<any>(editing?endpoint+'/'+editing:endpoint,{method:editing?'PATCH':'POST',body:JSON.stringify(payload())})
