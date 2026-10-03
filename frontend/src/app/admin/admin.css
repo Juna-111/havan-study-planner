@@ -749,3 +749,80 @@ button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
   .qualityStats article:first-child{grid-column:auto}
   .qualityFilters{grid-template-columns:1fr}
 }
+
+
+
+/* =========================================================
+   Havan Topic Relationship Intelligence
+   AI proposes; Havan resolves, validates, previews, persists.
+   ========================================================= */
+.relationshipAIPage{width:min(100%,1250px);margin:0 auto}
+.relationshipAIHeader{margin-bottom:16px}
+.relationshipAIHeader>span,.relationshipAICard>span,.relationshipAIPreview header span{display:block;color:#01017e;font-size:9px;font-weight:800;letter-spacing:1.3px}
+.relationshipAIHeader h1{margin:5px 0;color:#01017e;font:700 clamp(30px,4vw,43px) Fraunces,Georgia,serif;letter-spacing:-1.5px}
+.relationshipAIHeader p{max-width:850px;margin:8px 0;color:#77778a;font-size:12px;line-height:1.6}
+.relationshipNotice{max-width:none}
+.relationshipAIBanner{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:16px;padding:16px 18px;border:1px solid #dfe1f5;border-radius:15px;background:#f3f4ff;color:#01017e}
+.relationshipAIBanner div{display:grid;gap:4px}
+.relationshipAIBanner b{font-size:12px}
+.relationshipAIBanner span{color:#66667a;font-size:10px;line-height:1.5}
+.relationshipAIBanner strong{font-size:9px;letter-spacing:.7px;white-space:nowrap}
+.relationshipAIGrid{display:grid;grid-template-columns:1fr 1.25fr;gap:16px}
+.relationshipAICard,.relationshipAIPreview,.relationshipAIContract{padding:21px;border:1px solid #e7e7ef;border-radius:18px;background:#fff;box-shadow:0 10px 28px #14143909}
+.relationshipAICard h2,.relationshipAIPreview h2{margin:5px 0 7px;color:#151526;font:700 20px Fraunces,Georgia,serif}
+.relationshipAICard p{margin:0 0 13px;color:#77778a;font-size:11px;line-height:1.6}
+.relationshipAICard .workspacePrimary{width:100%;margin-top:12px}
+.relationshipCatalogStats{display:flex;align-items:center;gap:10px;margin-top:13px;padding:12px;border-radius:11px;background:#f3f4ff;color:#01017e}
+.relationshipCatalogStats b{font-size:22px}
+.relationshipCatalogStats span{color:#77778a;font-size:9px}
+.relationshipCandidateBox{width:100%;min-height:285px;box-sizing:border-box;padding:12px;border:1px solid #dfdfe8;border-radius:10px;outline:0;background:#10102c;color:#e8e8ff;font:11px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;resize:vertical}
+.relationshipCandidateBox:focus{border-color:#01017e;box-shadow:0 0 0 3px #01017e10}
+.relationshipAIPreview{margin-top:16px}
+.relationshipAIPreview>header{display:flex;justify-content:space-between;align-items:flex-start;gap:15px}
+.relationshipAIPreview header h2{font-size:24px}
+.relationshipAIPreview header>strong{color:#01017e;font-size:10px;text-align:right}
+.relationshipAIList{display:grid;gap:9px;margin-top:15px}
+.relationshipAIItem{padding:14px;border:1px solid #e5e5ed;border-radius:13px;background:#fafafd}
+.relationshipAIItem.ready{border-left:4px solid #27734f}
+.relationshipAIItem.existing{border-left:4px solid #8a5b00}
+.relationshipAIItem.error{border-left:4px solid #b62120;background:#fffafa}
+.relationshipAIItemTop{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.relationshipAIItemTop>b{color:#01017e;font-size:10px;text-transform:uppercase}
+.relationshipAIItemTop>span{color:#77778a;font-size:9px}
+.relationshipAIItemTop>strong{margin-left:auto;padding:4px 7px;border-radius:999px;background:#e9ebff;color:#01017e;font-size:8px}
+.relationshipAIItem.error .relationshipAIItemTop>strong{background:#fff0ef;color:#b62120}
+.relationshipAIItem.existing .relationshipAIItemTop>strong{background:#fff6df;color:#8a5b00}
+.relationshipResolved{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin-top:12px}
+.relationshipResolved>div{min-width:0;padding:11px;border-radius:10px;background:#fff;border:1px solid #ececf2}
+.relationshipResolved small,.relationshipResolved b,.relationshipResolved span{display:block}
+.relationshipResolved small{color:#9999a8;font-size:8px;font-weight:800;letter-spacing:.8px}
+.relationshipResolved b{margin-top:4px;color:#01017e;font-size:11px}
+.relationshipResolved span{margin-top:3px;color:#555568;font-size:10px;line-height:1.4;overflow-wrap:anywhere}
+.relationshipResolved em{color:#01017e;font-style:normal;font-weight:900}
+.relationshipAIItem p{margin:9px 0 0;color:#a62221;font-size:10px;line-height:1.5}
+.relationshipSaveButton{width:100%;margin-top:15px;min-height:48px}
+.relationshipAIContract{margin-top:16px;color:#77778a;font-size:10px;line-height:1.6}
+.relationshipAIContract b{color:#01017e}
+.relationshipAIContract p{margin:4px 0 0}
+.relationshipAIContract code,.relationshipAIBanner code{padding:2px 4px;border-radius:4px;background:#e9ebff;color:#01017e;font-family:ui-monospace,monospace}
+
+@media(max-width:760px){
+  .relationshipAIPage{width:100%}
+  .relationshipAIHeader h1{font-size:clamp(27px,8.5vw,38px);line-height:1.06}
+  .relationshipAIHeader p{font-size:12px}
+  .relationshipAIBanner{display:grid;gap:10px;padding:14px}
+  .relationshipAIBanner strong{white-space:normal}
+  .relationshipAIGrid{grid-template-columns:1fr;gap:10px}
+  .relationshipAICard,.relationshipAIPreview,.relationshipAIContract{padding:16px;border-radius:16px}
+  .relationshipAICard h2{font-size:19px}
+  .relationshipCandidateBox{min-height:260px;font-size:11px}
+  .relationshipAIPreview>header{display:grid;gap:6px}
+  .relationshipAIPreview header h2{font-size:21px}
+  .relationshipAIPreview header>strong{text-align:left}
+  .relationshipResolved{grid-template-columns:1fr;gap:7px}
+  .relationshipResolved>em{text-align:center}
+  .relationshipAIItemTop{display:grid;grid-template-columns:1fr auto}
+  .relationshipAIItemTop>span{grid-column:1/-1}
+  .relationshipAIItemTop>strong{margin-left:0}
+  .relationshipSaveButton{min-height:50px}
+}
