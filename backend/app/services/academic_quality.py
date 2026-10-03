@@ -147,6 +147,18 @@ def run_academic_quality_checks(db: Session) -> dict:
                 )
             )
 
+    for course in courses:
+        if course.status == "ACTIVE" and course.stream_id is not None and course.stream_id not in active_streams:
+            issues.append(
+                _issue(
+                    "error",
+                    "course",
+                    course.id,
+                    "Inactive or missing stream",
+                    f"{course.code} is active but its stream is not active.",
+                )
+            )
+
     for topic in topics:
         if topic.status == "ACTIVE" and topic.chapter_id not in active_chapters:
             issues.append(
