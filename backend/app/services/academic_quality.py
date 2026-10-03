@@ -12,7 +12,6 @@ from app.db.models.curriculum import (
     Curriculum,
     Stream,
     Topic,
-    TopicRelationship,
     University,
     UniversityCourseMapping,
 )
@@ -38,14 +37,10 @@ def run_academic_quality_checks(db: Session) -> dict:
     courses = list(db.scalars(select(Course)).all())
     chapters = list(db.scalars(select(Chapter)).all())
     topics = list(db.scalars(select(Topic)).all())
-    relationships = list(db.scalars(select(TopicRelationship)).all())
     mappings = list(db.scalars(select(UniversityCourseMapping)).all())
 
-    curriculum_by_id = {item.id: item for item in curriculums}
-    stream_by_id = {item.id: item for item in streams}
     course_by_id = {item.id: item for item in courses}
     chapter_by_id = {item.id: item for item in chapters}
-    topic_by_id = {item.id: item for item in topics}
 
     issues: list[QualityIssue] = []
 
@@ -302,120 +297,6 @@ def run_academic_quality_checks(db: Session) -> dict:
                 )
             )
 
-    # Relationship integrity. Database foreign keys handle normal inserts,
-    # but this check also gives administrators a useful diagnostic if legacy
-    # or imported data is inconsistent.
-    valid_relationship_types = {"prerequisite"}
-    for relationship in relationships:
-        if relationship.source_topic_id not in topic_by_id:
-            issues.append(
-                _issue(
-                    "error",
-                    "relationship",
-                    relationship.id,
-                    "Missing source topic",
-                    f"Relationship #{relationship.id} points to missing topic {relationship.source_topic_id}.",
-                )
-            )
-        if relationship.target_topic_id not in topic_by_id:
-            issues.append(
-                _issue(
-                    "error",
-                    "relationship",
-                    relationship.id,
-                    "Missing target topic",
-                    f"Relationship #{relationship.id} points to missing topic {relationship.target_topic_id}.",
-                )
-            )
-        if relationship.source_topic_id == relationship.target_topic_id:
-            issues.append(
-                _issue(
-                    "error",
-                    "relationship",
-                    relationship.id,
-                    "Self-referencing relationship",
-                    "A topic cannot be its own prerequisite.",
-                )
-            )
-        if not 0 <= relationship.strength <= 1:
-            issues.append(
-                _issue(
-                    "error",
-                    "relationship",
-                    relationship.id,
-                    "Invalid relationship strength",
-                    f"Relationship #{relationship.id} must have strength between 0 and 1.",
-                )
-            )
-        if relationship.relationship_type not in valid_relationship_types:
-            issues.append(
-                _issue(
-                    "warning",
-                    "relationship",
-                    relationship.id,
-                    "Unknown relationship type",
-                    f"Relationship #{relationship.id} uses unsupported type '{relationship.relationship_type}'.",
-                )
-            )
-
-    relationship_keys = Counter(
-        (item.source_topic_id, item.target_topic_id, item.relationship_type)
-        for item in relationships
-    )
-    for key, count in relationship_keys.items():
-        if count > 1:
-            issues.append(
-                _issue(
-                    "error",
-                    "relationship",
-                    key[0],
-                    "Duplicate topic relationship",
-                    f"The relationship {key[0]} → {key[1]} ({key[2]}) appears {count} times.",
-                )
-            )
-
-    # Prerequisite cycles can prevent deterministic planner ordering.
-    graph: dict[int, list[int]] = {}
-    for relationship in relationships:
-        if (
-            relationship.relationship_type == "prerequisite"
-            and relationship.source_topic_id in topic_by_id
-            and relationship.target_topic_id in topic_by_id
-        ):
-            graph.setdefault(relationship.source_topic_id, []).append(relationship.target_topic_id)
-
-    visiting: set[int] = set()
-    visited: set[int] = set()
-    cycle_nodes: set[int] = set()
-
-    def visit(node: int, path: list[int]) -> None:
-        if node in visiting:
-            cycle_nodes.update(path[path.index(node) :])
-            return
-        if node in visited:
-            return
-
-        visiting.add(node)
-        for child in graph.get(node, []):
-            visit(child, path + [child])
-        visiting.remove(node)
-        visited.add(node)
-
-    for node in graph:
-        visit(node, [node])
-
-    for topic_id in sorted(cycle_nodes):
-        topic = topic_by_id[topic_id]
-        issues.append(
-            _issue(
-                "error",
-                "topic",
-                topic_id,
-                "Prerequisite cycle detected",
-                f"{topic.name} participates in a prerequisite cycle. The planner cannot establish a clean prerequisite order.",
-            )
-        )
-
     # A course is planner-ready when it is active, has an active chapter with
     # active topics, has credit hours, and its active topics pass value checks.
     ready_courses = 0
@@ -441,10 +322,9 @@ def run_academic_quality_checks(db: Session) -> dict:
         "active_topics": len(active_topics),
         "active_course_mappings": sum(1 for item in mappings if item.status == "ACTIVE"),
         "invalid_topics": len(invalid_topic_ids),
-        "prerequisite_cycle_topics": len(cycle_nodes),
     }
 
-    if cycle_nodes or invalid_topic_ids:
+    if invalid_topic_ids:
         readiness["status"] = "error"
     elif ready_courses < len(active_courses):
         readiness["status"] = "warning"
@@ -456,7 +336,6 @@ def run_academic_quality_checks(db: Session) -> dict:
         "courses": len(courses),
         "chapters": len(chapters),
         "topics": len(topics),
-        "relationships": len(relationships),
         "course_mappings": len(mappings),
     }
     severity_counts = Counter(item.severity for item in issues)

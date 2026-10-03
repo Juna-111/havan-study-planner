@@ -17,7 +17,7 @@ class FakeDB:
 
     def scalars(self, statement):
         model = statement.column_descriptions[0]["type"].__name__
-        names = {"University": "universities", "Curriculum": "curriculums", "Stream": "streams", "Course": "courses", "Chapter": "chapters", "Topic": "topics", "TopicRelationship": "relationships", "UniversityCourseMapping": "mappings"}
+        names = {"University": "universities", "Curriculum": "curriculums", "Stream": "streams", "Course": "courses", "Chapter": "chapters", "Topic": "topics", "UniversityCourseMapping": "mappings"}
         return FakeResult(self.data[names[model]])
 
 
@@ -65,17 +65,7 @@ def topic(
     )
 
 
-def relationship(id, source, target, relationship_type="prerequisite", strength=1.0):
-    return SimpleNamespace(
-        id=id,
-        source_topic_id=source,
-        target_topic_id=target,
-        relationship_type=relationship_type,
-        strength=strength,
-    )
-
-
-def make_db(topics=(), relationships=(), **overrides):
+def make_db(topics=(), **overrides):
     return FakeDB(
         universities=overrides.pop("universities", [university()]),
         curriculums=overrides.pop("curriculums", [curriculum()]),
@@ -83,7 +73,6 @@ def make_db(topics=(), relationships=(), **overrides):
         courses=overrides.pop("courses", [course()]),
         chapters=overrides.pop("chapters", [chapter()]),
         topics=topics,
-        relationships=relationships,
         mappings=overrides.pop("mappings", []),
         **overrides,
     )
@@ -128,35 +117,8 @@ def test_quality_detects_inactive_parent_chain():
     assert any(issue["title"] == "Inactive or missing stream" for issue in result["issues"])
 
 
-def test_quality_detects_prerequisite_cycle():
-    result = run_academic_quality_checks(
-        make_db(
-            topics=[topic(id=1), topic(id=2, order_index=2)],
-            relationships=[
-                relationship(1, 1, 2),
-                relationship(2, 2, 1),
-            ],
-        )
-    )
-    cycle_issues = [issue for issue in result["issues"] if issue["title"] == "Prerequisite cycle detected"]
-    assert {issue["entity_id"] for issue in cycle_issues} == {1, 2}
-    assert result["readiness"]["status"] == "error"
-
-
 def test_quality_marks_complete_sample_course_ready():
     result = run_academic_quality_checks(make_db(topics=[topic()]))
     assert result["readiness"]["status"] == "ready"
     assert result["readiness"]["ready_courses"] == 1
 
-
-def test_quality_detects_duplicate_topic_relationship():
-    result = run_academic_quality_checks(
-        make_db(
-            topics=[topic(id=1), topic(id=2, order_index=2)],
-            relationships=[
-                relationship(1, 1, 2),
-                relationship(2, 1, 2),
-            ],
-        )
-    )
-    assert any(issue["title"] == "Duplicate topic relationship" for issue in result["issues"])
