@@ -69,3 +69,43 @@
   .managementItemActions{grid-template-columns:1fr}
   .managementActions{grid-template-columns:1fr}
 }
+
+.relationshipImportCard{margin-bottom:14px;padding:18px;border:1px solid #e4e4ee;border-radius:18px;background:#fff;box-shadow:0 8px 24px rgba(20,20,57,.05)}
+.relationshipImportHead{display:flex;justify-content:space-between;gap:14px;margin-bottom:14px}
+.relationshipImportHead span,.relationshipPreviewHead span{display:block;color:#01017e;font-size:9px;font-weight:800;letter-spacing:1.1px}
+.relationshipImportHead h2,.relationshipPreviewHead h3{margin:5px 0;color:#171726;font:700 20px Fraunces,Georgia,serif}
+.relationshipImportHead p{margin:6px 0 0;color:#77778a;font-size:11px;line-height:1.5}
+.relationshipImportHead>strong{align-self:flex-start;padding:7px 9px;border-radius:8px;background:#f3f4ff;color:#01017e;font-size:9px;white-space:nowrap}
+.relationshipImportGrid{display:grid;grid-template-columns:minmax(280px,.8fr) minmax(360px,1.2fr);gap:14px}
+.relationshipFileBox{display:grid;gap:7px;padding:15px;border:1px dashed #c9c9dd;border-radius:13px;background:#fafafe;cursor:pointer}
+.relationshipFileBox>span{color:#4c4c60;font-size:11px;font-weight:800}
+.relationshipFileBox input{width:100%;font-size:12px}
+.relationshipFileBox b{color:#01017e;font-size:12px;overflow-wrap:anywhere}
+.relationshipFileBox small{color:#77778a;font-size:10px}
+.relationshipFormat{margin:10px 0;padding:13px;overflow:auto;border-radius:12px;background:#171726;color:#f6f6fb;font:11px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap}
+.relationshipImportRules{display:grid;gap:4px;margin:10px 0;color:#66667a;font-size:10px;line-height:1.45}
+.relationshipImportRules b{color:#01017e}
+.relationshipImportButton{width:100%;min-height:48px;padding:0 15px;border:1px solid #01017e;border-radius:11px;font-weight:800}
+.relationshipPreview{min-width:0;padding:15px;border:1px solid #e5e5ef;border-radius:14px;background:#fafafe}
+.relationshipPreviewHead{display:flex;justify-content:space-between;gap:10px;margin-bottom:10px}
+.relationshipPreviewHead h3{font-size:18px}
+.relationshipPreviewHead>b{color:#77778a;font-size:10px}
+.relationshipPreviewList{display:grid;gap:7px;max-height:390px;overflow:auto}
+.relationshipPreviewList article{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px;border:1px solid #e4e4ee;border-radius:11px;background:#fff}
+.relationshipPreviewList article>div{display:grid;gap:3px;min-width:0}
+.relationshipPreviewList small{color:#77778a;font-size:9px}
+.relationshipPreviewList b{color:#222237;font-size:11px;overflow-wrap:anywhere}
+.relationshipPreviewList span{color:#01017e;font-size:12px;font-weight:900}
+.relationshipPreviewList article>strong{padding:5px 7px;border-radius:7px;font-size:9px;white-space:nowrap}
+.relationshipNew{color:#19723b;background:#eaf7ef}
+.relationshipExisting{color:#77778a;background:#eeeeF4}
+@media(max-width:900px){.relationshipImportGrid{grid-template-columns:1fr}}
+@media(max-width:760px){
+  .relationshipImportCard{padding:15px;border-radius:16px}
+  .relationshipImportHead{align-items:flex-start}
+  .relationshipImportHead h2{font-size:19px}
+  .relationshipImportGrid{grid-template-columns:1fr}
+  .relationshipPreviewList article{grid-template-columns:1fr}
+  .relationshipPreviewList article>strong{justify-self:start}
+  .relationshipImportButton{min-height:50px}
+}
