@@ -383,3 +383,435 @@
   .dashboard-details summary{padding:15px}
   .dashboard-details-body{padding-inline:15px}
 }
+
+
+/* =========================================================
+   Havan mobile correction pass
+   The student surface must remain readable on phones and on
+   Android browsers that expose a wider CSS viewport.
+   ========================================================= */
+
+.dashboard-shell{
+  width:min(1240px,100%);
+  box-sizing:border-box;
+}
+
+.dashboard-profile-button,
+.dashboard-profile-button .dashboard-avatar,
+.dashboard-primary-action,
+.dashboard-kpi,
+.dashboard-focus-card,
+.dashboard-course-card,
+.dashboard-details,
+.exam-form,
+.exam-form-actions{
+  box-sizing:border-box;
+}
+
+.dashboard-primary-action{
+  background:#fa0302;
+  color:#fff;
+  border:0;
+  box-shadow:0 8px 22px rgba(250,3,2,.14);
+  transition:transform .15s ease,background .15s ease,box-shadow .15s ease;
+}
+.dashboard-primary-action:hover{
+  background:#d90202;
+  transform:translateY(-1px);
+  box-shadow:0 10px 25px rgba(250,3,2,.20);
+}
+.dashboard-course-card{
+  min-width:0;
+}
+.dashboard-course-card h3,
+.dashboard-course-card p,
+.dashboard-course-top span{
+  overflow-wrap:anywhere;
+}
+.dashboard-details summary{
+  min-height:62px;
+}
+.dashboard-details summary i{
+  flex:0 0 auto;
+}
+
+/* Wider phone/tablet CSS viewports should still use a phone-friendly
+   composition rather than squeezing desktop content into two columns. */
+@media(max-width:900px){
+  .student-shell.dashboard-shell{
+    padding-left:clamp(14px,3vw,28px);
+    padding-right:clamp(14px,3vw,28px);
+  }
+
+  .student-dashboard-topbar{
+    margin-bottom:8px;
+  }
+
+  .dashboard-welcome{
+    display:grid;
+    grid-template-columns:1fr;
+    align-items:start;
+    gap:16px;
+    padding:24px 0 18px;
+  }
+
+  .dashboard-welcome h1{
+    max-width:720px;
+  }
+
+  .dashboard-primary-action{
+    width:100%;
+    min-height:52px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-top:0;
+  }
+
+  .dashboard-kpis{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .dashboard-kpi-primary{
+    grid-column:1/-1;
+  }
+
+  .dashboard-focus-grid,
+  .dashboard-manage-grid{
+    grid-template-columns:1fr;
+  }
+
+  .dashboard-course-grid{
+    grid-template-columns:1fr;
+  }
+
+  .dashboard-course-card{
+    min-height:0;
+  }
+
+  .dashboard-section-head{
+    align-items:flex-end;
+  }
+
+  .dashboard-section-head h2{
+    line-height:1.1;
+  }
+
+  .dashboard-details-body{
+    overflow:hidden;
+  }
+
+  .exam-form{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .exam-form-actions{
+    grid-column:1/-1;
+  }
+}
+
+/* Android-sized screens: larger touch targets, fewer cramped controls,
+   and no tiny two-column course cards. */
+@media(max-width:760px){
+  .student-shell.dashboard-shell{
+    padding-top:12px;
+    padding-bottom:max(42px,env(safe-area-inset-bottom));
+  }
+
+  .student-dashboard-topbar{
+    gap:12px;
+  }
+
+  .student-dashboard-topbar .student-brand{
+    padding:4px 0;
+  }
+
+  .dashboard-nav{
+    width:100%;
+    justify-content:space-between;
+    gap:10px;
+  }
+
+  .dashboard-nav .student-context{
+    font-size:11px;
+  }
+
+  .dashboard-profile-button{
+    min-height:44px;
+    padding:4px 10px 4px 5px;
+  }
+
+  .dashboard-profile-button .dashboard-avatar{
+    width:34px;
+    height:34px;
+  }
+
+  .dashboard-welcome{
+    gap:14px;
+    padding:22px 0 17px;
+  }
+
+  .dashboard-welcome h1{
+    margin:7px 0 9px;
+    font-size:clamp(31px,8.8vw,42px);
+    line-height:1.04;
+    letter-spacing:-1.2px;
+  }
+
+  .dashboard-welcome p{
+    max-width:620px;
+    font-size:13px;
+    line-height:1.6;
+  }
+
+  .dashboard-primary-action{
+    min-height:52px;
+    border-radius:12px;
+    font-size:12px;
+  }
+
+  .dashboard-kpis{
+    gap:8px;
+  }
+
+  .dashboard-kpi{
+    min-height:104px;
+    padding:14px;
+    border-radius:14px;
+  }
+
+  .dashboard-kpi>strong{
+    font-size:23px;
+  }
+
+  .dashboard-kpi small{
+    font-size:10px;
+    line-height:1.4;
+  }
+
+  .dashboard-focus-card,
+  .dashboard-courses-panel,
+  .dashboard-details{
+    border-radius:15px;
+  }
+
+  .dashboard-focus-card{
+    padding:17px;
+  }
+
+  .dashboard-card-head{
+    gap:10px;
+  }
+
+  .dashboard-card-head h2{
+    font-size:21px;
+    line-height:1.15;
+  }
+
+  .dashboard-exam-countdown strong{
+    font-size:34px;
+  }
+
+  .dashboard-course-grid{
+    gap:9px;
+  }
+
+  .dashboard-course-card{
+    padding:15px;
+  }
+
+  .dashboard-course-card h3{
+    font-size:14px;
+    line-height:1.35;
+  }
+
+  .dashboard-course-card p{
+    font-size:11px;
+    line-height:1.45;
+  }
+
+  .dashboard-section-head h2{
+    font-size:23px;
+  }
+
+  .dashboard-details summary{
+    min-height:64px;
+    padding:15px 16px;
+  }
+
+  .dashboard-details-body{
+    padding:0 16px 16px;
+  }
+
+  .exam-row-managed{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:9px;
+    align-items:start;
+  }
+
+  .exam-row-actions{
+    width:100%;
+    justify-content:flex-start;
+  }
+
+  .exam-row-actions strong{
+    margin-right:auto;
+  }
+
+  .exam-row-actions button,
+  .progress-button{
+    min-height:42px;
+    padding-inline:11px;
+  }
+
+  .exam-form{
+    grid-template-columns:1fr;
+    gap:9px;
+  }
+
+  .exam-form-actions{
+    display:grid;
+    grid-template-columns:1fr;
+    grid-column:auto;
+    gap:8px;
+  }
+
+  .exam-form-actions button{
+    width:100%;
+    min-height:48px;
+  }
+
+  .topic-row{
+    align-items:flex-start;
+    flex-direction:column;
+    gap:9px;
+  }
+
+  .topic-row .progress-button{
+    width:100%;
+  }
+
+  .topic-registration-warning{
+    overflow:hidden;
+  }
+
+  .topic-status-row{
+    align-items:flex-start;
+    flex-direction:column;
+    gap:7px;
+  }
+
+  .topic-status-row strong{
+    white-space:normal;
+    line-height:1.4;
+  }
+
+  /* Keep Havan controls white and high-contrast on mobile. */
+  .havan-select-trigger,
+  .havan-date-trigger,
+  .havan-stepper{
+    min-height:50px;
+    background:#fff !important;
+    color:#151526 !important;
+  }
+
+  .havan-select-trigger .has-value,
+  .havan-date-trigger .has-value{
+    color:#151526 !important;
+  }
+
+  .havan-select-trigger i,
+  .havan-date-icon{
+    color:#01017e;
+  }
+
+  .havan-select-menu{
+    max-height:52svh;
+  }
+
+  .havan-select-option{
+    min-height:46px;
+    font-size:13px;
+  }
+}
+
+@media(max-width:480px){
+  .student-shell.dashboard-shell{
+    padding-left:11px;
+    padding-right:11px;
+  }
+
+  .student-dashboard-topbar{
+    flex-direction:column;
+    align-items:stretch;
+  }
+
+  .dashboard-nav{
+    align-items:center;
+  }
+
+  .dashboard-profile-button{
+    width:auto;
+  }
+
+  .dashboard-welcome h1{
+    font-size:34px;
+  }
+
+  .dashboard-kpis{
+    grid-template-columns:1fr;
+  }
+
+  .dashboard-kpi-primary{
+    grid-column:auto;
+  }
+
+  .dashboard-kpi{
+    min-height:94px;
+  }
+
+  .dashboard-focus-card{
+    padding:15px;
+  }
+
+  .dashboard-section-head{
+    gap:8px;
+  }
+
+  .dashboard-section-head>span{
+    font-size:9px;
+  }
+
+  .dashboard-course-card{
+    padding:14px;
+  }
+
+  .dashboard-details summary{
+    padding:14px;
+  }
+
+  .dashboard-details-body{
+    padding-inline:14px;
+  }
+}
+
+@media(max-width:380px){
+  .student-shell.dashboard-shell{
+    padding-left:9px;
+    padding-right:9px;
+  }
+
+  .dashboard-welcome h1{
+    font-size:31px;
+  }
+
+  .dashboard-kpi{
+    padding:13px;
+  }
+
+  .dashboard-card-head h2,
+  .dashboard-section-head h2{
+    font-size:20px;
+  }
+}
