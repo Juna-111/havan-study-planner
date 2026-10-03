@@ -40,7 +40,6 @@ def run_academic_quality_checks(db: Session) -> dict:
     topics = list(db.scalars(select(Topic)).all())
     relationships = list(db.scalars(select(TopicRelationship)).all())
     mappings = list(db.scalars(select(UniversityCourseMapping)).all())
-    mappings = list(db.scalars(select(UniversityCourseMapping)).all())
 
     curriculum_by_id = {item.id: item for item in curriculums}
     stream_by_id = {item.id: item for item in streams}
