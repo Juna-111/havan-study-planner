@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 
 
 class TopicRelationshipImportItem(BaseModel):
+    line_number: int | None = Field(default=None, ge=1)
     source_ref: str = Field(min_length=3, max_length=100)
     target_ref: str = Field(min_length=3, max_length=100)
     relationship_type: str = Field(pattern=r"^(prerequisite|conceptual|cross_course|related|revision)$")
