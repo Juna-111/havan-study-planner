@@ -4,7 +4,6 @@ import {useEffect,useMemo,useState} from 'react'
 import {apiFetch} from '../../lib/api'
 import './management.css'
 import UniversityCourseMappingWorkspace from './UniversityCourseMappingWorkspace'
-import TopicRelationshipBulkImportWorkspace from './TopicRelationshipBulkImportWorkspace'
 
 type University={id:number;name:string;code:string;description:string|null;status:string}
 type Curriculum={id:number;university_id:number;name:string;version:string;academic_year:string|null;description:string|null;status:string}
@@ -12,18 +11,16 @@ type Stream={id:number;curriculum_id:number;name:string;code:string;description:
 type Course={id:number;stream_id:number|null;code:string;name:string;description:string|null;credit_hours:number|null;status:string}
 type Chapter={id:number;course_id:number;name:string;description:string|null;order_index:number;status:string}
 type Topic={id:number;chapter_id:number;name:string;description:string|null;difficulty:number;estimated_study_minutes:number;exam_importance:number;conceptual_importance:number;order_index:number;status:string}
-type Relationship={id:number;source_topic_id:number;target_topic_id:number;relationship_type:string;strength:number;notes:string|null}
-
-type Section='universities'|'curricula'|'streams'|'courses'|'chapters'|'topics'|'mappings'|'relationships'
+type Section='universities'|'curricula'|'streams'|'courses'|'chapters'|'topics'|'mappings'
 const labels:Record<Section,string>={
   universities:'Universities',curricula:'Curricula',streams:'Streams',courses:'Courses',
-  chapters:'Chapters',topics:'Topics',mappings:'Course mappings',relationships:'Topic relationships'
+  chapters:'Chapters',topics:'Topics',mappings:'Course mappings'
 }
 const masterSections:Section[]=['universities','curricula','streams','courses','chapters','topics']
 const statusOptions:Record<Section,string[]>={
   universities:['ACTIVE','INACTIVE'],curricula:['DRAFT','ACTIVE','ARCHIVED'],streams:['ACTIVE','INACTIVE'],
   courses:['ACTIVE','INACTIVE'],chapters:['ACTIVE','INACTIVE'],topics:['ACTIVE','INACTIVE'],
-  mappings:[],relationships:[]
+  mappings:[]
 }
 
 export default function AdminManagementWorkspace(){
@@ -34,7 +31,6 @@ export default function AdminManagementWorkspace(){
   const [courses,setCourses]=useState<Course[]>([])
   const [chapters,setChapters]=useState<Chapter[]>([])
   const [topics,setTopics]=useState<Topic[]>([])
-  const [relationships,setRelationships]=useState<Relationship[]>([])
   const [universityId,setUniversityId]=useState('')
   const [curriculumId,setCurriculumId]=useState('')
   const [streamId,setStreamId]=useState('')
@@ -69,11 +65,7 @@ export default function AdminManagementWorkspace(){
   async function loadSection(nextPage=page){
     setLoading(true);setError('')
     try{
-      if(section==='relationships'){
-        const result=await apiFetch<{items:Relationship[];page:number;pages:number;total:number}>('/topic-relationships?page='+nextPage+'&page_size=20')
-        setRelationships(result.items);setPage(result.page);setPages(result.pages);setTotal(result.total);return
-      }
-      const endpoint=section==='curricula'?'curriculums':section
+        const endpoint=section==='curricula'?'curriculums':section
       const params=new URLSearchParams({page:String(nextPage),page_size:'20'})
       if(section==='curricula'&&universityId)params.set('university_id',universityId)
       if(section==='streams'&&curriculumId)params.set('curriculum_id',curriculumId)
@@ -97,14 +89,13 @@ export default function AdminManagementWorkspace(){
   useEffect(()=>{setPage(1);setEditing(null);setForm({});setSearch('');loadSection(1)},[section,universityId,curriculumId,streamId,courseId,chapterId])
 
   const currentRows=useMemo<any[]>(()=>{
-    if(section==='relationships')return relationships
     if(section==='universities')return universities
     if(section==='curricula')return curricula
     if(section==='streams')return streams
     if(section==='courses')return courses
     if(section==='chapters')return chapters
     return topics
-  },[section,universities,curricula,streams,courses,chapters,topics,relationships])
+  },[section,universities,curricula,streams,courses,chapters,topics)
 
   const filtered=currentRows.filter(item=>{
     const term=search.trim().toLowerCase()
@@ -123,7 +114,6 @@ export default function AdminManagementWorkspace(){
     Object.entries(item).forEach(([key,value])=>{
       if(!['id','created_at','updated_at','registry_key','academic_scope','university_name','curriculum_name','curriculum_version','stream_name','stream_code','course_code','course_name','credit_hours'].includes(key)&&value!==null)next[key]=String(value)
     })
-    if(section==='relationships'){next.source_topic_id=String(item.source_topic_id);next.target_topic_id=String(item.target_topic_id)}
     setForm(next)
   }
 
@@ -139,31 +129,13 @@ export default function AdminManagementWorkspace(){
     if(section==='courses')return {stream_id:Number(streamId),code:form.code||'',name:form.name||'',description:form.description||'',credit_hours:form.credit_hours?Number(form.credit_hours):null,status:form.status||'ACTIVE'}
     if(section==='chapters')return {course_id:Number(courseId),name:form.name||'',description:form.description||'',order_index:Number(form.order_index||1),status:form.status||'ACTIVE'}
     if(section==='topics')return {chapter_id:Number(chapterId),name:form.name||'',description:form.description||'',difficulty:Number(form.difficulty||3),estimated_study_minutes:Number(form.estimated_study_minutes||60),exam_importance:Number(form.exam_importance||0.5),conceptual_importance:Number(form.conceptual_importance||0.5),order_index:Number(form.order_index||1),status:form.status||'ACTIVE'}
-    return {source_topic_id:Number(form.source_topic_id),target_topic_id:Number(form.target_topic_id),relationship_type:form.relationship_type||'prerequisite',strength:Number(form.strength||1),notes:form.notes||''}
+    return {}
   }
 
-  const endpoint=section==='curricula'?'curriculums':section==='relationships'?'topic-relationships':section
+  const endpoint=section==='curricula'?'curriculums':section
 
   async function save(){
     if(parentMissing()){setError('Choose the parent record before creating this item.');return}
-    if(section==='relationships'&&(!form.source_topic_id||!form.target_topic_id)){setError('Choose both source and target topics.');return}
-    if(section==='relationships'&&form.source_topic_id===form.target_topic_id){setError('A topic cannot relate to itself.');return}
-    setSaving(true);setError('');setMessage('')
-    try{
-      const result=await apiFetch<any>(editing?'/'+endpoint+'/'+editing:'/'+endpoint,{method:editing?'PATCH':'POST',body:JSON.stringify(payload())})
-      setMessage((editing?'Updated ':'Created ')+labels[section].slice(0,-1)+'.')
-      clearForm()
-      await loadReferenceData()
-      await loadSection(page)
-    }catch(e){setError(e instanceof Error?e.message:'Could not save this record.')}
-    finally{setSaving(false)}
-  }
-
-  async function archive(item:any){
-    const archiveStatus=section==='curricula'?'ARCHIVED':'INACTIVE'
-    const action=item.status==='ACTIVE'?'deactivate':'archive'
-    if(item.status!=='ACTIVE'&&item.status!=='DRAFT'&&item.status!=='ARCHIVED'){
-      setError('This record cannot be changed from its current state.');return
     }
     if(!window.confirm((action==='deactivate'?'Deactivate ':'Archive ')+displayName(item)+'? It will remain in the database and can be restored later.'))return
     setError('');setMessage('')
@@ -184,20 +156,10 @@ export default function AdminManagementWorkspace(){
     }catch(e){setError(e instanceof Error?e.message:'Could not restore this record.')}
   }
 
-  async function removeRelationship(item:Relationship){
-    if(!window.confirm('Remove this topic relationship? This changes planner knowledge, but does not delete either topic.'))return
-    try{
-      await apiFetch('/topic-relationships/'+item.id,{method:'DELETE'})
-      setMessage('Topic relationship removed.')
-      await loadSection(page)
-    }catch(e){setError(e instanceof Error?e.message:'Could not remove the relationship.')}
-  }
 
   function displayName(item:any){
-    if(section==='relationships')return topicName(item.source_topic_id)+' → '+topicName(item.target_topic_id)
     return item.name||item.code||('Record #'+item.id)
   }
-  function topicName(id:number){const t=topics.find(x=>x.id===id);return t?t.name:'Topic #'+id}
   function streamName(id:number){const s=streams.find(x=>x.id===id);return s?s.code+' · '+s.name:'Stream #'+id}
   function courseName(id:number){const c=courses.find(x=>x.id===id);return c?c.code+' · '+c.name:'Course #'+id}
   function chapterName(id:number){const c=chapters.find(x=>x.id===id);return c?c.order_index+'. '+c.name:'Chapter #'+id}
@@ -212,11 +174,10 @@ export default function AdminManagementWorkspace(){
     if(section==='courses')return <>{selectField('stream_id','Stream',streams.map(x=>({value:String(x.id),label:x.code+' · '+x.name})),undefined,setStreamId)}{field('code','Code','text','PHY101')}{field('name','Name','text','Physics')}{field('credit_hours','Credit hours','number','3')}{field('description','Description')}{selectField('status','Status',statusOptions.courses.map(x=>({value:x,label:x})))}</>
     if(section==='chapters')return <>{selectField('course_id','Course',courses.map(x=>({value:String(x.id),label:x.code+' · '+x.name})),undefined,setCourseId)}{field('name','Name','text','Measurement')}{field('order_index','Order','number','1')}{field('description','Description')}{selectField('status','Status',statusOptions.chapters.map(x=>({value:x,label:x})))}</>
     if(section==='topics')return <>{selectField('chapter_id','Chapter',chapters.map(x=>({value:String(x.id),label:chapterName(x.id)})),undefined,setChapterId)}{field('name','Name','text','Physical quantities')}{field('order_index','Order','number','1')}{field('difficulty','Difficulty 1–5','number','3')}{field('estimated_study_minutes','Study minutes','number','60')}{field('exam_importance','Exam importance 0–1','number','0.5')}{field('conceptual_importance','Conceptual importance 0–1','number','0.5')}{field('description','Description')}{selectField('status','Status',statusOptions.topics.map(x=>({value:x,label:x})))}</>
-    return <>{selectField('source_topic_id','Source topic',topics.map(x=>({value:String(x.id),label:topicName(x.id)})))}{selectField('target_topic_id','Target topic',topics.map(x=>({value:String(x.id),label:topicName(x.id)})))}{selectField('relationship_type','Relationship type',['prerequisite','conceptual','cross_course','related','revision'].map(x=>({value:x,label:x})))}{field('strength','Strength 0–1','number','1')}{field('notes','Notes') }</>
+    return null
   }
 
   function listItem(item:any){
-    if(section==='relationships')return <article className='managementItem' key={item.id}><div><b>{item.relationship_type}</b><h3>{topicName(item.source_topic_id)} → {topicName(item.target_topic_id)}</h3><small>Strength {item.strength} · {item.status||'ACTIVE'}</small></div><div className='managementItemActions'><button onClick={()=>beginEdit(item)}>Edit</button><button className='danger' onClick={()=>removeRelationship(item)}>Remove</button></div></article>
     const inactive=item.status!=='ACTIVE'
     return <article className='managementItem' key={item.id}><div><b>{item.code||('ID '+item.id)}</b><h3>{item.name}</h3><small>{section==='curricula'?'v'+item.version+' · ':''}{item.status}</small></div><div className='managementItemActions'><button onClick={()=>beginEdit(item)}>Edit</button>{inactive?<button onClick={()=>restore(item)}>Restore</button>:<button className='danger' onClick={()=>archive(item)}>Deactivate</button>}</div></article>
   }
@@ -231,7 +192,7 @@ export default function AdminManagementWorkspace(){
     <header className='workspaceHeader'>
       <span>HAVAN ADMIN MANAGEMENT</span>
       <h1>One control center for academic data</h1>
-      <p>Management is the source of truth for Havan’s academic hierarchy, course placement, and topic relationships. Imports remain for bulk loading only.</p>
+      <p>Management is the source of truth for Havan’s academic hierarchy and course placement. Imports remain for bulk loading only.</p>
     </header>
 
     {message&&<div className='notice workspaceNotice'>{message}</div>}
@@ -244,11 +205,11 @@ export default function AdminManagementWorkspace(){
     {section==='mappings'?<UniversityCourseMappingWorkspace/>:<>
     <div className='hierarchyBar'>
       <span>Current scope</span>
-      <b>{selectedParent?('› '+(selectedParent as any).name):section==='universities'?'All universities':section==='relationships'?'All topic relationships':'Choose a parent to narrow this level'}</b>
-      {section!=='universities'&&section!=='relationships'&&<button onClick={()=>{setUniversityId('');setCurriculumId('');setStreamId('');setCourseId('');setChapterId('')}}>Clear scope</button>}
+      <b>{selectedParent?('› '+(selectedParent as any).name):section==='universities'?'All universities':'Choose a parent to narrow this level'}</b>
+      {section!=='universities'&&<button onClick={()=>{setUniversityId('');setCurriculumId('');setStreamId('');setCourseId('');setChapterId('')}}>Clear scope</button>}
     </div>
 
-    {section==='relationships'&&<TopicRelationshipBulkImportWorkspace/>}
+    
 
     <section className='managementToolbar'>
       {section==='curricula'&&<select value={universityId} onChange={e=>setUniversityId(e.target.value)}><option value=''>All universities</option>{universities.map(x=><option key={x.id} value={x.id}>{x.code} · {x.name}</option>)}</select>}
@@ -256,7 +217,7 @@ export default function AdminManagementWorkspace(){
       {section==='courses'&&<select value={streamId} onChange={e=>setStreamId(e.target.value)}><option value=''>All streams</option>{streams.map(x=><option key={x.id} value={x.id}>{x.code} · {x.name}</option>)}</select>}
       {section==='chapters'&&<select value={courseId} onChange={e=>setCourseId(e.target.value)}><option value=''>All courses</option>{courses.map(x=><option key={x.id} value={x.id}>{x.code} · {x.name}</option>)}</select>}
       {section==='topics'&&<select value={chapterId} onChange={e=>setChapterId(e.target.value)}><option value=''>All chapters</option>{chapters.map(x=><option key={x.id} value={x.id}>{chapterName(x.id)}</option>)}</select>}
-      {(section==='universities'||section==='relationships')&&<div className='toolbarSpacer'/>}
+      {section==='universities'&&<div className='toolbarSpacer'/>
       <input value={search} onChange={e=>setSearch(e.target.value)} placeholder={'Search '+labels[section].toLowerCase()+' on this page…'}/>
       <button onClick={clearForm}>New</button>
     </section>
@@ -267,7 +228,7 @@ export default function AdminManagementWorkspace(){
         {formContent()}
         <div className='managementActions'><button onClick={clearForm}>Clear</button><button className='workspacePrimary' disabled={saving} onClick={save}>{saving?'Saving…':editing?'Save changes':'Create'}</button></div>
         {masterSections.includes(section)&&<small className='managementHint'>Parent selection is explicit. Deactivation is safe: records stay in the database and can be restored.</small>}
-        {section==='relationships'&&<small className='managementHint'>Relationships are planner knowledge. Removing one never deletes either topic.</small>}
+        
       </div>
 
       <div className='managementCard managementListCard'>
