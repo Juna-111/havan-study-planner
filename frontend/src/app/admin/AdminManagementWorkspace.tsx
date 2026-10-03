@@ -233,7 +233,7 @@ export default function AdminManagementWorkspace(){
       {section==='courses'&&<select value={streamId} onChange={e=>setStreamId(e.target.value)}><option value=''>All streams</option>{streams.map(x=><option key={x.id} value={x.id}>{x.code} · {x.name}</option>)}</select>}
       {section==='chapters'&&<select value={courseId} onChange={e=>setCourseId(e.target.value)}><option value=''>All courses</option>{courses.map(x=><option key={x.id} value={x.id}>{x.code} · {x.name}</option>)}</select>}
       {section==='topics'&&<select value={chapterId} onChange={e=>setChapterId(e.target.value)}><option value=''>All chapters</option>{chapters.map(x=><option key={x.id} value={x.id}>{chapterName(x.id)}</option>)}</select>}
-      {section==='universities'&&<div className='toolbarSpacer'/>
+      {section==='universities'&&<div className='toolbarSpacer'/>}
       <input value={search} onChange={e=>setSearch(e.target.value)} placeholder={'Search '+labels[section].toLowerCase()+' on this page…'}/>
       <button onClick={clearForm}>New</button>
     </section>
