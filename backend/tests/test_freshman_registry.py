@@ -85,3 +85,32 @@ def test_freshman_registry_import_parser_rejects_legacy_indented_format() -> Non
     except HTTPException:
         return
     raise AssertionError("Legacy indented curriculum format must not be accepted.")
+
+
+def test_university_course_mapping_schema_assigns_a_course_to_one_semester():
+    from app.schemas.curriculum import UniversityCourseMappingCreate
+
+    item = UniversityCourseMappingCreate(
+        stream_id=11,
+        course_id=42,
+        semester_number=1,
+        order_index=3,
+        status="ACTIVE",
+    )
+
+    assert item.stream_id == 11
+    assert item.course_id == 42
+    assert item.semester_number == 1
+
+
+def test_university_course_mapping_rejects_invalid_semester():
+    import pytest
+    from pydantic import ValidationError
+    from app.schemas.curriculum import UniversityCourseMappingCreate
+
+    with pytest.raises(ValidationError):
+        UniversityCourseMappingCreate(
+            stream_id=11,
+            course_id=42,
+            semester_number=3,
+        )
