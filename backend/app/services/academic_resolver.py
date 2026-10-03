@@ -52,6 +52,8 @@ def resolve_stream_courses(db: Session, stream_id: int) -> list[ResolvedCourse]:
         ).all()
     )
 
+    rows.sort(key=lambda pair: (pair[0].semester_number, pair[0].order_index, pair[1].code, pair[1].id))
+
     return [
         ResolvedCourse(
             course_id=course.id,
