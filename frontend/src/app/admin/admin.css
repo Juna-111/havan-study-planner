@@ -62,3 +62,97 @@
 .workspaceSemester .overrideList{margin-top:0}
 .workspaceSemester .overrideCard{background:#fff}
 @media(max-width:760px){.workspaceSemesterGrid{grid-template-columns:1fr}}
+
+/* Havan mobile-first accessibility layer */
+button,input,select,textarea{font:inherit}
+button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+@media(max-width:760px){
+  .ad{font-size:14px}
+  .ad main{padding:16px 12px max(30px,env(safe-area-inset-bottom))}
+  .ad main>header{margin-bottom:16px}
+  .ad h1{font-size:clamp(28px,9vw,38px);line-height:1.05}
+  .hero{padding:20px 17px;border-radius:16px}
+  .hero h2{font-size:22px}
+  .hero p,.workspaceHeader p{font-size:13px;line-height:1.55}
+  .primary,.workspacePrimary,.workspaceActions>button:first-child,.workspaceCard:nth-child(2) .overrideMeta button{min-height:46px}
+  .toolbar{display:grid;grid-template-columns:1fr;margin:14px auto 10px}
+  .toolbar input{height:48px;font-size:14px}
+  .table{border-radius:14px}
+  .table td>button{min-height:44px;padding:0 8px;font-size:11px}
+  .form input,.form select,.form textarea,.workspaceCard input,.workspaceCard select,.workspaceCard textarea{min-height:48px;font-size:14px}
+  .form label span,.workspaceCard label span{font-size:11px}
+  .modal{padding:20px 16px;border-radius:18px}
+  .modal footer{display:grid;grid-template-columns:1fr 1fr}
+  .modal footer button{min-height:46px}
+  .overrideCard{padding:13px;gap:10px}
+  .overrideBody h3{font-size:15px}
+  .overrideBody p{font-size:11px;line-height:1.4}
+  .overrideMeta{width:100%;justify-content:stretch;gap:7px}
+  .overrideMeta button{min-height:44px;padding:0 10px;font-size:10px}
+  .workspacePage{width:100%}
+  .workspaceGrid{gap:12px}
+  .workspaceCard,.workspacePanel{padding:17px;border-radius:16px}
+  .workspaceStep h3{font-size:17px}
+  .workspaceList{max-height:none}
+  .workspaceCard:nth-child(2) .overrideCard{grid-template-columns:1fr}
+  .workspaceCard:nth-child(2) .overrideMeta{grid-column:auto;display:grid;grid-template-columns:1fr 1fr}
+  .workspaceCard:nth-child(2) .overrideMeta button{width:100%}
+  .workspacePanel>header{display:grid;gap:6px}
+  .workspacePanel>header h2{font-size:21px}
+  .workspaceSemester{padding:13px}
+  .workspaceSemester .overrideCard{grid-template-columns:auto 1fr}
+  .workspaceSemester .overrideMeta{grid-column:2;display:grid;grid-template-columns:1fr 1fr}
+  .workspaceSemester .overrideMeta button{min-height:44px}
+  .havanMappingHero{padding:20px 17px;border-radius:18px}
+  .havanMappingHero h1{font-size:30px}
+  .havanMappingRule{min-width:0;width:100%}
+
+  /* Course Registry */
+  .importPage{width:min(100%,1250px);margin:0 auto}
+  .importHeader{margin-bottom:18px;padding:20px 17px;border:1px solid #e7e7ef;border-radius:18px;background:linear-gradient(135deg,#fff,#f5f5ff);box-shadow:0 10px 28px #14143909}
+  .importHeader span,.previewCard header span{display:block;color:#01017e;font-size:9px;font-weight:800;letter-spacing:1.2px}
+  .importHeader h1{margin:6px 0 8px;color:#01017e;font:700 clamp(29px,9vw,38px) Fraunces,Georgia,serif;line-height:1.05}
+  .importHeader p{font-size:13px;line-height:1.55}
+  .importGrid{display:grid;grid-template-columns:1fr;gap:12px}
+  .importCard,.previewCard{padding:17px;border:1px solid #e7e7ef;border-radius:16px;background:#fff;box-shadow:0 10px 28px #14143909}
+  .importCard{border-top:3px solid #01017e}
+  .importCard:nth-child(2){border-top-color:#fa0302}
+  .importCard h3,.previewCard h2{font-family:Fraunces,Georgia,serif;color:#151526}
+  .importCard h3{margin:0 0 10px;font-size:18px}
+  .importCard label{display:grid;gap:6px;margin-top:12px}
+  .importCard label span,.categoryPicker>span{font-size:11px;font-weight:800;color:#555568}
+  .importCard input:not([type=file]){width:100%;box-sizing:border-box;min-height:48px;padding:0 12px;border:1px solid #dfdfe8;border-radius:11px;font-size:14px}
+  .categoryPicker{margin-top:14px}
+  .structureBadge{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+  .structureBadge button{min-height:42px;padding:0 11px;border:1px solid #dedee9;border-radius:10px;background:#fff;color:#01017e;font-size:11px;font-weight:800}
+  .structureBadge .selCat{background:#01017e;color:#fff;border-color:#01017e}
+  .importButton{width:100%;margin-top:15px;min-height:48px}
+  .dropzone{display:grid;gap:7px;padding:18px;border:1px dashed #c9c9d9;border-radius:13px;background:#fafaff}
+  .dropzone input{width:100%;font-size:12px}
+  .dropzone strong{color:#01017e;font-size:13px;overflow-wrap:anywhere}
+  .dropzone small{color:#77778a;font-size:10px}
+  .importCard pre{overflow:auto;margin:12px 0 0;padding:13px;border-radius:11px;background:#10102c;color:#e8e8ff;font-size:10px;line-height:1.6}
+  .previewCard{margin-top:12px}
+  .previewCard>header{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+  .previewCard h2{margin:5px 0 0;font-size:22px}
+  .previewCard header>strong{color:#01017e;font-size:11px}
+  .tree{display:grid;gap:10px;margin-top:14px}
+  .treeCourse{padding:14px;border:1px solid #e7e7ef;border-radius:13px;background:#fafafd}
+  .treeCourse>b{display:block;color:#01017e;font-size:12px}
+  .treeCourse>small{display:block;margin-top:5px;color:#77778a;font-size:9px;overflow-wrap:anywhere}
+  .treeChapter{margin-top:10px;padding:10px 10px 0;border-top:1px solid #e8e8ef}
+  .treeChapter>b{color:#151526;font-size:11px}
+  .treeChapter>span{margin-left:7px;color:#8a8a98;font-size:9px}
+  .treeTopic{padding:7px 0 0 12px;color:#555568;font-size:10px;line-height:1.45}
+  .treeTopic small{color:#8a8a98}
+  .previewCard>footer{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:15px;padding-top:14px;border-top:1px solid #ededf2}
+  .previewCard>footer button{min-height:46px;border:1px solid #dddde6;border-radius:10px;background:#fff;color:#01017e;font-weight:800}
+  .previewCard>footer .primary{border:0;background:#fa0302;color:#fff}
+}
+@media(max-width:380px){
+  .ad main{padding-inline:10px}
+  .workspaceCard,.workspacePanel,.importCard,.previewCard{padding:14px}
+  .workspaceCard:nth-child(2) .overrideMeta,.workspaceSemester .overrideMeta{grid-template-columns:1fr}
+  .previewCard>footer{grid-template-columns:1fr}
+  .structureBadge button{width:100%}
+}
