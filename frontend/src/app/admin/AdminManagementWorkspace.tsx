@@ -259,11 +259,11 @@ export default function AdminManagementWorkspace(){
     </div>
 
     <section className='managementToolbar'>
-      {section==='curricula'&&selectField('toolbarUniversity','University',universities.map(x=>({value:String(x.id),label:x.code+' · '+x.name})),'All universities')}
-      {section==='streams'&&selectField('toolbarCurriculum','Curriculum',curricula.map(x=>({value:String(x.id),label:x.name+' · v'+x.version})),'All curricula')}
-      {section==='courses'&&selectField('toolbarStream','Stream',streams.map(x=>({value:String(x.id),label:x.code+' · '+x.name})),'All streams')}
-      {section==='chapters'&&selectField('toolbarCourse','Course',courses.map(x=>({value:String(x.id),label:x.code+' · '+x.name})),'All courses')}
-      {section==='topics'&&selectField('toolbarChapter','Chapter',chapters.map(x=>({value:String(x.id),label:chapterName(x.id)})),'All chapters')}
+      {section==='curricula'&&<select value={universityId} onChange={e=>setUniversityId(e.target.value)}><option value=''>All universities</option>{universities.map(x=><option key={x.id} value={x.id}>{x.code} · {x.name}</option>)}</select>}
+      {section==='streams'&&<select value={curriculumId} onChange={e=>setCurriculumId(e.target.value)}><option value=''>All curricula</option>{curricula.map(x=><option key={x.id} value={x.id}>{x.name} · v{x.version}</option>)}</select>}
+      {section==='courses'&&<select value={streamId} onChange={e=>setStreamId(e.target.value)}><option value=''>All streams</option>{streams.map(x=><option key={x.id} value={x.id}>{x.code} · {x.name}</option>)}</select>}
+      {section==='chapters'&&<select value={courseId} onChange={e=>setCourseId(e.target.value)}><option value=''>All courses</option>{courses.map(x=><option key={x.id} value={x.id}>{x.code} · {x.name}</option>)}</select>}
+      {section==='topics'&&<select value={chapterId} onChange={e=>setChapterId(e.target.value)}><option value=''>All chapters</option>{chapters.map(x=><option key={x.id} value={x.id}>{chapterName(x.id)}</option>)}</select>}
       {(section==='universities'||section==='mappings'||section==='relationships')&&<div className='toolbarSpacer'/>}
       <input value={search} onChange={e=>setSearch(e.target.value)} placeholder={'Search '+labels[section].toLowerCase()+' on this page…'}/>
       <button onClick={clearForm}>New</button>
