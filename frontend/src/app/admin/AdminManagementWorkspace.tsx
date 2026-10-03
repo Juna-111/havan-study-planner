@@ -4,6 +4,7 @@ import {useEffect,useMemo,useState} from 'react'
 import {apiFetch} from '../../lib/api'
 import './management.css'
 import UniversityCourseMappingWorkspace from './UniversityCourseMappingWorkspace'
+import TopicRelationshipBulkImportWorkspace from './TopicRelationshipBulkImportWorkspace'
 
 type University={id:number;name:string;code:string;description:string|null;status:string}
 type Curriculum={id:number;university_id:number;name:string;version:string;academic_year:string|null;description:string|null;status:string}
@@ -246,6 +247,8 @@ export default function AdminManagementWorkspace(){
       <b>{selectedParent?('› '+(selectedParent as any).name):section==='universities'?'All universities':section==='relationships'?'All topic relationships':'Choose a parent to narrow this level'}</b>
       {section!=='universities'&&section!=='relationships'&&<button onClick={()=>{setUniversityId('');setCurriculumId('');setStreamId('');setCourseId('');setChapterId('')}}>Clear scope</button>}
     </div>
+
+    {section==='relationships'&&<TopicRelationshipBulkImportWorkspace/>}
 
     <section className='managementToolbar'>
       {section==='curricula'&&<select value={universityId} onChange={e=>setUniversityId(e.target.value)}><option value=''>All universities</option>{universities.map(x=><option key={x.id} value={x.id}>{x.code} · {x.name}</option>)}</select>}
