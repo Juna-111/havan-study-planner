@@ -5,14 +5,16 @@ import './admin.css'
 import FreshmanRegistryWorkspace from './FreshmanRegistryWorkspace'
 import AcademicQuality from './AcademicQuality'
 import AdminManagementWorkspace from './AdminManagementWorkspace'
+import TopicRelationshipAIWorkspace from './TopicRelationshipAIWorkspace'
 
-type Mode='management'|'freshman'|'quality'
+type Mode='management'|'freshman'|'quality'|'relationships'
 
 const navigation:Array<{mode:Mode;label:string;icon:string}>=
   [
     {mode:'management',label:'Management',icon:'⚙'},
     {mode:'freshman',label:'Course registry',icon:'▣'},
-    {mode:'quality',label:'Academic quality',icon:'✓'}
+    {mode:'quality',label:'Academic quality',icon:'✓'},
+    {mode:'relationships',label:'Topic relationships',icon:'↔'}
   ]
 
 export default function Admin(){
@@ -32,7 +34,8 @@ export default function Admin(){
   const workspace={
     management:<AdminManagementWorkspace/>,
     freshman:<FreshmanRegistryWorkspace/>,
-    quality:<AcademicQuality/>
+    quality:<AcademicQuality/>,
+    relationships:<TopicRelationshipAIWorkspace/>
   }[mode]
 
   return(
