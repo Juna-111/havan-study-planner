@@ -52,3 +52,13 @@
 @media(max-width:760px){.workspaceGrid{grid-template-columns:1fr}.workspaceGrid>.workspaceCard:last-child,.workspacePanel{grid-column:auto}.workspacePanel>header{align-items:flex-start}.workspacePanel>header h2{font-size:20px}}
 
 .adminStudentLink{display:block;margin-bottom:9px;color:#fff;text-decoration:none;font-weight:800}.adminStudentLink:hover{text-decoration:underline}
+
+.workspaceSemesterGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:18px}
+.workspaceSemester{padding:16px;border:1px solid #ececf2;border-radius:14px;background:#fafafd}
+.workspaceSemester>header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.workspaceSemester>header small{color:#01017e;font-size:8px;font-weight:800;letter-spacing:.8px}
+.workspaceSemester>header h3{margin:4px 0 0;color:#151526;font:700 17px Fraunces,Georgia,serif}
+.workspaceSemester>header span{color:#77778a;font-size:9px}
+.workspaceSemester .overrideList{margin-top:0}
+.workspaceSemester .overrideCard{background:#fff}
+@media(max-width:760px){.workspaceSemesterGrid{grid-template-columns:1fr}}
