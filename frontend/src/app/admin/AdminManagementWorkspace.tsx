@@ -33,7 +33,6 @@ export default function AdminManagementWorkspace(){
   const [courses,setCourses]=useState<Course[]>([])
   const [chapters,setChapters]=useState<Chapter[]>([])
   const [topics,setTopics]=useState<Topic[]>([])
-  const [mappings,setMappings]=useState<Mapping[]>([])
   const [relationships,setRelationships]=useState<Relationship[]>([])
   const [universityId,setUniversityId]=useState('')
   const [curriculumId,setCurriculumId]=useState('')
