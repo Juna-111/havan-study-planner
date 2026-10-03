@@ -3,7 +3,6 @@ from datetime import date, timedelta
 from app.services.planner_engine import (
     PlannerExam,
     PlannerTopic,
-    eligible_topics,
     exam_urgency,
     schedule_tasks,
     score_topic,
@@ -13,29 +12,13 @@ TODAY = date(2026, 10, 1)
 
 
 def topic(topic_id: int, *, course_id=1, minutes=60, difficulty=3,
-          exam_importance=0.5, status="NOT_STARTED", confidence=3,
-          prerequisites=()):
+          exam_importance=0.5, status="NOT_STARTED", confidence=3):
     return PlannerTopic(
         topic_id=topic_id, course_id=course_id, name=f"Topic {topic_id}",
         difficulty=difficulty, estimated_minutes=minutes,
         exam_importance=exam_importance, conceptual_importance=0.5,
         progress_status=status, progress_confidence=confidence,
-        prerequisite_ids=prerequisites,
     )
-
-
-def test_prerequisite_blocks_dependent_topic():
-    eligible, blocked = eligible_topics([topic(1), topic(2, prerequisites=(1,))], set())
-    assert [item.topic_id for item in eligible] == [1]
-    assert [item.topic_id for item in blocked] == [2]
-
-
-def test_completed_prerequisite_unlocks_dependent_topic():
-    eligible, blocked = eligible_topics(
-        [topic(1, status="COMPLETED"), topic(2, prerequisites=(1,))], {1}
-    )
-    assert [item.topic_id for item in eligible] == [2]
-    assert blocked == []
 
 
 def test_exam_urgency_increases_as_exam_approaches():
@@ -66,14 +49,6 @@ def test_available_time_is_never_exceeded():
         sum(minutes for _, planned, minutes in scheduled if planned == day) <= 60
         for day in dates
     )
-
-
-def test_completed_topics_are_excluded():
-    eligible, blocked = eligible_topics(
-        [topic(1, status="COMPLETED"), topic(2)], {1}
-    )
-    assert [item.topic_id for item in eligible] == [2]
-    assert blocked == []
 
 
 def test_multiple_courses_are_supported():

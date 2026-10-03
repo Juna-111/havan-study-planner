@@ -22,14 +22,13 @@ TODAY = date(2026, 10, 5)  # a Monday
 
 
 def topic(topic_id, *, course_id=1, minutes=60, difficulty=3, exam_importance=0.5,
-          status="NOT_STARTED", confidence=3, prerequisites=(), soft=(),
+          status="NOT_STARTED", confidence=3,
           chapter=0, order=0, last_studied=None):
     return PlannerTopic(
         topic_id=topic_id, course_id=course_id, name=f"Topic {topic_id}",
         difficulty=difficulty, estimated_minutes=minutes,
         exam_importance=exam_importance, conceptual_importance=0.5,
         progress_status=status, progress_confidence=confidence,
-        prerequisite_ids=prerequisites, soft_prerequisite_ids=soft,
         chapter_order=chapter, topic_order=order, last_studied_on=last_studied,
     )
 
@@ -75,42 +74,6 @@ def test_minutes_already_studied_today_reduce_todays_capacity():
         done_minutes={TODAY: 90})
     result = plan([topic(i, minutes=120) for i in (1, 2)], calendar=calendar)
     assert result.minutes_by_date()[TODAY] <= 30
-
-
-def test_dependent_topic_is_scheduled_the_day_after_its_prerequisite():
-    result = plan([topic(1, minutes=40), topic(2, minutes=40, prerequisites=(1,))])
-    first = [s for s in result.sessions if s.topic_id == 1][0]
-    second = [s for s in result.sessions if s.topic_id == 2][0]
-    assert second.planned_date > first.planned_date
-
-
-def test_blocked_topic_is_reported_with_its_blocker():
-    result = plan([topic(1), topic(2, prerequisites=(1,))])
-    blocked = {b.topic_id: b for b in result.blocked}
-    assert blocked[2].waiting_on == (1,)
-    assert blocked[2].scheduled_in_plan is True
-
-
-def test_known_topic_unlocks_dependent_immediately():
-    topics = [topic(1), topic(2, prerequisites=(1,))]
-    assert 2 not in ids_on(plan(topics, minutes=120), TODAY)
-    result = plan(topics, known_topic_ids=frozenset({1}), minutes=120)
-    assert 2 in ids_on(result, TODAY)
-
-
-def test_close_exam_turns_prerequisite_into_advice():
-    result = plan(
-        [topic(1, minutes=60), topic(2, minutes=60, prerequisites=(1,))],
-        exams=[exam(days=2)], minutes=120)
-    session = [s for s in result.sessions if s.topic_id == 2][0]
-    assert session.planned_date == TODAY
-    assert "prerequisite is unfinished" in session.reason
-
-
-def test_prerequisite_cycle_is_reported_not_scheduled():
-    result = plan([topic(1, prerequisites=(2,)), topic(2, prerequisites=(1,)), topic(3)])
-    assert {s.topic_id for s in result.sessions} == {3}
-    assert any(w.code == "PREREQUISITE_CYCLE" for w in result.warnings)
 
 
 def test_earlier_chapters_come_first_when_everything_else_is_equal():

@@ -6,14 +6,13 @@ from datetime import date, timedelta
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.db.models.curriculum import Chapter, Topic, TopicRelationship
+from app.db.models.curriculum import Chapter, Topic
 from app.db.models.planner import StudyPlan, StudyTask
 from app.db.models.student import StudentCourse, StudentExam, StudentProfile, StudentTopicProgress
 from app.services.academic_resolver import resolved_course_ids
 from app.services.planner_engine import (
     PlannerExam,
     PlannerTopic,
-    eligible_topics,
     schedule_tasks,
     score_topic,
 )
@@ -121,18 +120,6 @@ def generate_plan(
         if exam.exam_date >= today:
             exam_by_course[exam.course_id].append(exam)
 
-    topic_ids = {topic.id for topic in topics}
-    relationships = list(db.scalars(
-        select(TopicRelationship).where(
-            func.lower(TopicRelationship.relationship_type) == "prerequisite",
-            TopicRelationship.target_topic_id.in_(topic_ids),
-        )
-    ).all()) if topic_ids else []
-
-    prerequisite_map: dict[int, list[int]] = defaultdict(list)
-    for relationship in relationships:
-        prerequisite_map[relationship.target_topic_id].append(relationship.source_topic_id)
-
     planner_topics: list[PlannerTopic] = []
     for topic in topics:
         course_id = chapter_to_course[topic.chapter_id]
@@ -148,21 +135,14 @@ def generate_plan(
                 conceptual_importance=float(topic.conceptual_importance),
                 progress_status=row.status if row else "NOT_STARTED",
                 progress_confidence=row.confidence if row else course_confidence.get(course_id, 3),
-                prerequisite_ids=tuple(
-                    prerequisite_id
-                    for prerequisite_id in prerequisite_map.get(topic.id, [])
-                    if prerequisite_id in topic_ids
-                ),
             )
         )
 
-    eligible, blocked = eligible_topics(planner_topics, completed_ids)
+    eligible = [
+        topic for topic in planner_topics
+        if topic.topic_id not in completed_ids and topic.progress_status != "COMPLETED"
+    ]
     if not eligible:
-        if blocked:
-            raise ValueError(
-                "Your remaining topics are waiting on unfinished prerequisites. "
-                "Complete the prerequisite topics first."
-            )
         raise ValueError("There are no unfinished active topics in your selected courses.")
 
     scored = []
@@ -179,13 +159,6 @@ def generate_plan(
             if nearest_exam else None
         )
         item = score_topic(topic, exam, today)
-        if topic.prerequisite_ids:
-            item = type(item)(
-                topic=item.topic,
-                score=item.score,
-                reason=item.reason + "; prerequisites are completed",
-                exam_days=item.exam_days,
-            )
         scored.append(item)
 
     study_dates = _study_dates(student, horizon_days, today)

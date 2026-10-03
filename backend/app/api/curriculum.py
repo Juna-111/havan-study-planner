@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func, select
 from app.db.session import get_db
-from app.db.models.curriculum import Chapter, Course, Curriculum, Stream, Topic, TopicRelationship, University, UniversityCourseMapping
+from app.db.models.curriculum import Chapter, Course, Curriculum, Stream, Topic, University, UniversityCourseMapping
 from app.schemas.curriculum import *
 from app.services.academic_resolver import resolve_stream_courses
 from app.services.curriculum import create_item, delete_item, get_or_404, list_items, update_item
@@ -125,15 +125,3 @@ def get_topic(item_id:int,db:DB): return get_or_404(db,Topic,item_id)
 def update_topic(item_id:int,payload:TopicUpdate,db:DB): return update_item(db,get_or_404(db,Topic,item_id),payload.model_dump(exclude_unset=True))
 @router.delete("/topics/{item_id}",status_code=204)
 def delete_topic(item_id:int,db:DB): delete_item(db,get_or_404(db,Topic,item_id))
-
-@router.get("/topic-relationships")
-def relationships(db:DB,source_topic_id:int|None=None,target_topic_id:int|None=None,page:int=Query(1,ge=1),page_size:int=Query(20,ge=1,le=100)):
-    return collection(db,TopicRelationship,TopicRelationshipRead,page,page_size,{"source_topic_id":source_topic_id,"target_topic_id":target_topic_id})
-@router.post("/topic-relationships",response_model=TopicRelationshipRead,status_code=201)
-def create_relationship(payload:TopicRelationshipCreate,db:DB): return create_item(db,TopicRelationship,payload.model_dump())
-@router.get("/topic-relationships/{item_id}",response_model=TopicRelationshipRead)
-def get_relationship(item_id:int,db:DB): return get_or_404(db,TopicRelationship,item_id)
-@router.patch("/topic-relationships/{item_id}",response_model=TopicRelationshipRead)
-def update_relationship(item_id:int,payload:TopicRelationshipUpdate,db:DB): return update_item(db,get_or_404(db,TopicRelationship,item_id),payload.model_dump(exclude_unset=True))
-@router.delete("/topic-relationships/{item_id}",status_code=204)
-def delete_relationship(item_id:int,db:DB): delete_item(db,get_or_404(db,TopicRelationship,item_id))
