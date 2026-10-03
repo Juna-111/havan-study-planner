@@ -95,7 +95,7 @@ export default function AdminManagementWorkspace(){
     if(section==='courses')return courses
     if(section==='chapters')return chapters
     return topics
-  },[section,universities,curricula,streams,courses,chapters,topics)
+  },[section,universities,curricula,streams,courses,chapters,topics])
 
   const filtered=currentRows.filter(item=>{
     const term=search.trim().toLowerCase()
@@ -136,6 +136,22 @@ export default function AdminManagementWorkspace(){
 
   async function save(){
     if(parentMissing()){setError('Choose the parent record before creating this item.');return}
+    setSaving(true);setError('');setMessage('')
+    try{
+      await apiFetch(editing?'/'+endpoint+'/'+editing:'/'+endpoint,{method:editing?'PATCH':'POST',body:JSON.stringify(payload())})
+      setMessage((editing?'Updated ':'Created ')+labels[section].slice(0,-1)+'.')
+      clearForm()
+      await loadReferenceData()
+      await loadSection(page)
+    }catch(e){setError(e instanceof Error?e.message:'Could not save this record.')}
+    finally{setSaving(false)}
+  }
+
+  async function archive(item:any){
+    const archiveStatus=section==='curricula'?'ARCHIVED':'INACTIVE'
+    const action=item.status==='ACTIVE'?'deactivate':'archive'
+    if(item.status!=='ACTIVE'&&item.status!=='DRAFT'&&item.status!=='ARCHIVED'){
+      setError('This record cannot be changed from its current state.');return
     }
     if(!window.confirm((action==='deactivate'?'Deactivate ':'Archive ')+displayName(item)+'? It will remain in the database and can be restored later.'))return
     setError('');setMessage('')
