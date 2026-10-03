@@ -22,7 +22,7 @@ const masterSections:Section[]=['universities','curricula','streams','courses','
 const statusOptions:Record<Section,string[]>={
   universities:['ACTIVE','INACTIVE'],curricula:['DRAFT','ACTIVE','ARCHIVED'],streams:['ACTIVE','INACTIVE'],
   courses:['ACTIVE','INACTIVE'],chapters:['ACTIVE','INACTIVE'],topics:['ACTIVE','INACTIVE'],
-relationships:[]
+  mappings:[],relationships:[]
 }
 
 export default function AdminManagementWorkspace(){
@@ -244,7 +244,7 @@ export default function AdminManagementWorkspace(){
     {section==='mappings'?<UniversityCourseMappingWorkspace/>:<>
     <div className='hierarchyBar'>
       <span>Current scope</span>
-      <b>{selectedParent?('› '+(selectedParent as any).name):section==='universities'?'All universities':section==='mappings'?'All course mappings':section==='relationships'?'All topic relationships':'Choose a parent to narrow this level'}</b>
+      <b>{selectedParent?('› '+(selectedParent as any).name):section==='universities'?'All universities':section==='relationships'?'All topic relationships':'Choose a parent to narrow this level'}</b>
       {section!=='universities'&&section!=='relationships'&&<button onClick={()=>{setUniversityId('');setCurriculumId('');setStreamId('');setCourseId('');setChapterId('')}}>Clear scope</button>}
     </div>
 
