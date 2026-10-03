@@ -3,6 +3,7 @@
 import {useEffect,useMemo,useState} from 'react'
 import {apiFetch} from '../../lib/api'
 import './management.css'
+import UniversityCourseMappingWorkspace from './UniversityCourseMappingWorkspace'
 
 type University={id:number;name:string;code:string;description:string|null;status:string}
 type Curriculum={id:number;university_id:number;name:string;version:string;academic_year:string|null;description:string|null;status:string}
@@ -252,6 +253,7 @@ export default function AdminManagementWorkspace(){
       {(Object.keys(labels) as Section[]).map(key=><button key={key} className={section===key?'active':''} onClick={()=>setSection(key)}>{labels[key]}</button>)}
     </nav>
 
+    {section==='mappings'?<UniversityCourseMappingWorkspace/>:<>
     <div className='hierarchyBar'>
       <span>Current scope</span>
       <b>{selectedParent?('› '+(selectedParent as any).name):section==='universities'?'All universities':section==='mappings'?'All course mappings':section==='relationships'?'All topic relationships':'Choose a parent to narrow this level'}</b>
@@ -275,7 +277,6 @@ export default function AdminManagementWorkspace(){
         {formContent()}
         <div className='managementActions'><button onClick={clearForm}>Clear</button><button className='workspacePrimary' disabled={saving} onClick={save}>{saving?'Saving…':editing?'Save changes':'Create'}</button></div>
         {masterSections.includes(section)&&<small className='managementHint'>Parent selection is explicit. Deactivation is safe: records stay in the database and can be restored.</small>}
-        {section==='mappings'&&<small className='managementHint'>Mapping changes where an existing course is taught. It never deletes the course or its content.</small>}
         {section==='relationships'&&<small className='managementHint'>Relationships are planner knowledge. Removing one never deletes either topic.</small>}
       </div>
 
@@ -285,5 +286,6 @@ export default function AdminManagementWorkspace(){
         {pages>1&&<div className='pagination'><button disabled={page<=1||loading} onClick={()=>loadSection(page-1)}>Previous</button><span>Page {page} / {pages}</span><button disabled={page>=pages||loading} onClick={()=>loadSection(page+1)}>Next</button></div>}
       </div>
     </section>
+    </>}
   </div>
 }
