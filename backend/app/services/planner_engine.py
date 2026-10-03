@@ -10,13 +10,13 @@ Principle: the system recommends, the student decides.
 Pipeline
 --------
 1. Normalise      completed / "already known" topics, pace factor, study days.
-2. Gate           hard prerequisites (with cycle detection) and soft prerequisites.
-3. Assess         exam workload against available time (earliest-deadline-first).
-4. Score          transparent 0..1 priority from named components.
+2. Assess         exam workload against available time (earliest-deadline-first).
+3. Score          transparent 0..1 priority from named components.
+4. Schedule       day by day: exam-aware, interleaved, capacity-safe, honouring the student's skips and pins.
 5. Schedule       day by day: dependency-aware, exam-aware, interleaved,
                   capacity-safe, honouring the student's skips and pins.
-6. Review         short spaced-revision sessions for completed topics.
-7. Report         sessions, blocked topics, exam readiness and warnings.
+5. Review         short spaced-revision sessions for completed topics.
+6. Report         sessions, exam readiness and warnings.
 
 Backward compatibility
 ----------------------
