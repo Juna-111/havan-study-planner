@@ -11,7 +11,6 @@ type Stream={id:number;curriculum_id:number;name:string;code:string;description:
 type Course={id:number;stream_id:number|null;code:string;name:string;description:string|null;credit_hours:number|null;status:string}
 type Chapter={id:number;course_id:number;name:string;description:string|null;order_index:number;status:string}
 type Topic={id:number;chapter_id:number;name:string;description:string|null;difficulty:number;estimated_study_minutes:number;exam_importance:number;conceptual_importance:number;order_index:number;status:string}
-type Mapping={id:number;curriculum_id:number;curriculum_name:string;curriculum_version:string;university_id:number;university_name:string;stream_id:number;stream_name:string;stream_code:string;course_id:number;course_code:string;course_name:string;credit_hours:number|null;semester_number:number;order_index:number;status:string}
 type Relationship={id:number;source_topic_id:number;target_topic_id:number;relationship_type:string;strength:number;notes:string|null}
 
 type Section='universities'|'curricula'|'streams'|'courses'|'chapters'|'topics'|'mappings'|'relationships'
@@ -23,7 +22,7 @@ const masterSections:Section[]=['universities','curricula','streams','courses','
 const statusOptions:Record<Section,string[]>={
   universities:['ACTIVE','INACTIVE'],curricula:['DRAFT','ACTIVE','ARCHIVED'],streams:['ACTIVE','INACTIVE'],
   courses:['ACTIVE','INACTIVE'],chapters:['ACTIVE','INACTIVE'],topics:['ACTIVE','INACTIVE'],
-  mappings:['DRAFT','ACTIVE','ARCHIVED'],relationships:[]
+relationships:[]
 }
 
 export default function AdminManagementWorkspace(){
@@ -70,10 +69,6 @@ export default function AdminManagementWorkspace(){
   async function loadSection(nextPage=page){
     setLoading(true);setError('')
     try{
-      if(section==='mappings'){
-        const rows=await apiFetch<Mapping[]>('/university-course-mappings')
-        setMappings(rows);setTotal(rows.length);setPages(1);return
-      }
       if(section==='relationships'){
         const result=await apiFetch<{items:Relationship[];page:number;pages:number;total:number}>('/topic-relationships?page='+nextPage+'&page_size=20')
         setRelationships(result.items);setPage(result.page);setPages(result.pages);setTotal(result.total);return
@@ -102,7 +97,6 @@ export default function AdminManagementWorkspace(){
   useEffect(()=>{setPage(1);setEditing(null);setForm({});setSearch('');loadSection(1)},[section,universityId,curriculumId,streamId,courseId,chapterId])
 
   const currentRows=useMemo<any[]>(()=>{
-    if(section==='mappings')return mappings
     if(section==='relationships')return relationships
     if(section==='universities')return universities
     if(section==='curricula')return curricula
@@ -110,7 +104,7 @@ export default function AdminManagementWorkspace(){
     if(section==='courses')return courses
     if(section==='chapters')return chapters
     return topics
-  },[section,universities,curricula,streams,courses,chapters,topics,mappings,relationships])
+  },[section,universities,curricula,streams,courses,chapters,topics,relationships])
 
   const filtered=currentRows.filter(item=>{
     const term=search.trim().toLowerCase()
@@ -146,16 +140,14 @@ export default function AdminManagementWorkspace(){
     if(section==='courses')return {stream_id:Number(streamId),code:form.code||'',name:form.name||'',description:form.description||'',credit_hours:form.credit_hours?Number(form.credit_hours):null,status:form.status||'ACTIVE'}
     if(section==='chapters')return {course_id:Number(courseId),name:form.name||'',description:form.description||'',order_index:Number(form.order_index||1),status:form.status||'ACTIVE'}
     if(section==='topics')return {chapter_id:Number(chapterId),name:form.name||'',description:form.description||'',difficulty:Number(form.difficulty||3),estimated_study_minutes:Number(form.estimated_study_minutes||60),exam_importance:Number(form.exam_importance||0.5),conceptual_importance:Number(form.conceptual_importance||0.5),order_index:Number(form.order_index||1),status:form.status||'ACTIVE'}
-    if(section==='mappings')return {stream_id:Number(form.stream_id||streamId),course_id:Number(form.course_id),semester_number:Number(form.semester_number||1),order_index:Number(form.order_index||1),status:form.status||'DRAFT'}
     return {source_topic_id:Number(form.source_topic_id),target_topic_id:Number(form.target_topic_id),relationship_type:form.relationship_type||'prerequisite',strength:Number(form.strength||1),notes:form.notes||''}
   }
 
-  const endpoint=section==='curricula'?'curriculums':section==='mappings'?'university-course-mappings':section==='relationships'?'topic-relationships':section
+  const endpoint=section==='curricula'?'curriculums':section==='relationships'?'topic-relationships':section
 
   async function save(){
     if(parentMissing()){setError('Choose the parent record before creating this item.');return}
     if(section==='relationships'&&(!form.source_topic_id||!form.target_topic_id)){setError('Choose both source and target topics.');return}
-    if(section==='mappings'&&(!form.stream_id||!form.course_id)){setError('Choose a stream and course.');return}
     if(section==='relationships'&&form.source_topic_id===form.target_topic_id){setError('A topic cannot relate to itself.');return}
     setSaving(true);setError('');setMessage('')
     try{
@@ -169,7 +161,7 @@ export default function AdminManagementWorkspace(){
   }
 
   async function archive(item:any){
-    const archiveStatus=section==='curricula'||section==='mappings'?'ARCHIVED':'INACTIVE'
+    const archiveStatus=section==='curricula'?'ARCHIVED':'INACTIVE'
     const action=item.status==='ACTIVE'?'deactivate':'archive'
     if(item.status!=='ACTIVE'&&item.status!=='DRAFT'&&item.status!=='ARCHIVED'){
       setError('This record cannot be changed from its current state.');return
@@ -185,7 +177,7 @@ export default function AdminManagementWorkspace(){
   }
 
   async function restore(item:any){
-    const restoreStatus=section==='curricula'||section==='mappings'?'ACTIVE':'ACTIVE'
+    const restoreStatus='ACTIVE'
     try{
       await apiFetch('/'+endpoint+'/'+item.id,{method:'PATCH',body:JSON.stringify({status:restoreStatus})})
       setMessage(displayName(item)+' restored to ACTIVE.')
@@ -203,7 +195,6 @@ export default function AdminManagementWorkspace(){
   }
 
   function displayName(item:any){
-    if(section==='mappings')return item.course_code+' → '+item.stream_code
     if(section==='relationships')return topicName(item.source_topic_id)+' → '+topicName(item.target_topic_id)
     return item.name||item.code||('Record #'+item.id)
   }
@@ -227,7 +218,6 @@ export default function AdminManagementWorkspace(){
   }
 
   function listItem(item:any){
-    if(section==='mappings')return <article className='managementItem' key={item.id}><div><b>{item.course_code}</b><h3>{item.course_name}</h3><small>{item.university_name} · {item.stream_code} · Semester {item.semester_number} · {item.status}</small></div><div className='managementItemActions'><button onClick={()=>beginEdit(item)}>Edit</button>{item.status==='ACTIVE'?<button className='danger' onClick={()=>archive(item)}>Archive</button>:<button onClick={()=>restore(item)}>Restore</button>}</div></article>
     if(section==='relationships')return <article className='managementItem' key={item.id}><div><b>{item.relationship_type}</b><h3>{topicName(item.source_topic_id)} → {topicName(item.target_topic_id)}</h3><small>Strength {item.strength} · {item.status||'ACTIVE'}</small></div><div className='managementItemActions'><button onClick={()=>beginEdit(item)}>Edit</button><button className='danger' onClick={()=>removeRelationship(item)}>Remove</button></div></article>
     const inactive=item.status!=='ACTIVE'
     return <article className='managementItem' key={item.id}><div><b>{item.code||('ID '+item.id)}</b><h3>{item.name}</h3><small>{section==='curricula'?'v'+item.version+' · ':''}{item.status}</small></div><div className='managementItemActions'><button onClick={()=>beginEdit(item)}>Edit</button>{inactive?<button onClick={()=>restore(item)}>Restore</button>:<button className='danger' onClick={()=>archive(item)}>Deactivate</button>}</div></article>
@@ -257,7 +247,7 @@ export default function AdminManagementWorkspace(){
     <div className='hierarchyBar'>
       <span>Current scope</span>
       <b>{selectedParent?('› '+(selectedParent as any).name):section==='universities'?'All universities':section==='mappings'?'All course mappings':section==='relationships'?'All topic relationships':'Choose a parent to narrow this level'}</b>
-      {section!=='universities'&&section!=='mappings'&&section!=='relationships'&&<button onClick={()=>{setUniversityId('');setCurriculumId('');setStreamId('');setCourseId('');setChapterId('')}}>Clear scope</button>}
+      {section!=='universities'&&section!=='relationships'&&<button onClick={()=>{setUniversityId('');setCurriculumId('');setStreamId('');setCourseId('');setChapterId('')}}>Clear scope</button>}
     </div>
 
     <section className='managementToolbar'>
@@ -266,7 +256,7 @@ export default function AdminManagementWorkspace(){
       {section==='courses'&&<select value={streamId} onChange={e=>setStreamId(e.target.value)}><option value=''>All streams</option>{streams.map(x=><option key={x.id} value={x.id}>{x.code} · {x.name}</option>)}</select>}
       {section==='chapters'&&<select value={courseId} onChange={e=>setCourseId(e.target.value)}><option value=''>All courses</option>{courses.map(x=><option key={x.id} value={x.id}>{x.code} · {x.name}</option>)}</select>}
       {section==='topics'&&<select value={chapterId} onChange={e=>setChapterId(e.target.value)}><option value=''>All chapters</option>{chapters.map(x=><option key={x.id} value={x.id}>{chapterName(x.id)}</option>)}</select>}
-      {(section==='universities'||section==='mappings'||section==='relationships')&&<div className='toolbarSpacer'/>}
+      {(section==='universities'||section==='relationships')&&<div className='toolbarSpacer'/>}
       <input value={search} onChange={e=>setSearch(e.target.value)} placeholder={'Search '+labels[section].toLowerCase()+' on this page…'}/>
       <button onClick={clearForm}>New</button>
     </section>
