@@ -3185,3 +3185,513 @@
     width:calc(100vw - 14px);
   }
 }
+
+
+/* =========================================================
+   HAVAN MOBILE-FIRST PLANNER FINAL PASS
+   Designed for Android phones: readable, calm and touch-safe.
+   ========================================================= */
+.planner-shell{
+  width:100%;
+  max-width:1180px;
+  min-width:0;
+  overflow-x:clip;
+}
+
+.planner-detail,
+.planner-focus-mode,
+.planner-focus-mini{
+  box-sizing:border-box;
+}
+
+.planner-detail *{
+  max-width:100%;
+}
+
+@media(max-width:760px){
+  .planner-shell{
+    padding-inline:0;
+  }
+
+  .planner-topbar{
+    padding-inline:12px;
+  }
+
+  .planner-nav{
+    width:100%;
+    justify-content:space-between;
+  }
+
+  .planner-user{
+    min-height:44px;
+  }
+
+  .planner-hero{
+    margin:18px 12px 12px;
+    padding:19px 16px;
+    border-radius:18px;
+  }
+
+  .planner-hero h1{
+    font-size:clamp(29px,8.5vw,41px);
+    line-height:1.05;
+    letter-spacing:-.9px;
+  }
+
+  .planner-hero p{
+    font-size:12px;
+    line-height:1.65;
+  }
+
+  .planner-hero-actions{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+
+  .planner-hero-buttons{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+
+  .planner-hero-buttons button,
+  .planner-regenerate{
+    width:100%;
+    min-height:50px;
+    font-size:12px;
+  }
+
+  .planner-overview{
+    grid-template-columns:1fr;
+    gap:8px;
+    padding-inline:12px;
+  }
+
+  .planner-stat{
+    min-height:86px;
+    padding:14px;
+  }
+
+  .planner-workspace{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:10px;
+    padding-inline:12px;
+  }
+
+  .planner-main-column,
+  .planner-side-column{
+    width:100%;
+    min-width:0;
+  }
+
+  .planner-side-column{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+
+  .planner-calendar,
+  .planner-today,
+  .planner-agenda,
+  .planner-side-card{
+    border-radius:16px;
+  }
+
+  .planner-calendar{
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+
+  .planner-calendar::-webkit-scrollbar{display:none}
+
+  .planner-week-strip{
+    width:max-content;
+    min-width:620px;
+    margin-right:0;
+    padding-right:0;
+  }
+
+  .planner-week-day{
+    min-width:76px;
+    min-height:88px;
+    padding:10px 8px;
+  }
+
+  .planner-week-day span{font-size:9px}
+  .planner-week-day strong{font-size:13px}
+  .planner-week-day small{font-size:8px}
+
+  .planner-today,
+  .planner-agenda,
+  .planner-side-card{
+    padding:15px;
+  }
+
+  .planner-section-heading,
+  .planner-today-heading{
+    align-items:flex-start;
+    flex-wrap:wrap;
+    gap:9px;
+  }
+
+  .planner-section-heading h2,
+  .planner-today-heading h2{
+    font-size:19px;
+    line-height:1.2;
+  }
+
+  .planner-focus-task{
+    grid-template-columns:36px minmax(0,1fr);
+    gap:10px;
+    min-height:78px;
+    padding:13px;
+  }
+
+  .focus-number{
+    width:36px;
+    height:36px;
+  }
+
+  .focus-content strong{
+    font-size:13px;
+    line-height:1.35;
+    overflow-wrap:anywhere;
+    white-space:normal;
+  }
+
+  .focus-content small{
+    font-size:10px;
+    white-space:normal;
+    line-height:1.45;
+  }
+
+  .focus-time{
+    grid-column:2;
+    justify-items:start;
+    display:flex;
+    align-items:center;
+    gap:7px;
+    padding-top:1px;
+    font-size:11px;
+  }
+
+  .planner-agenda-item{
+    grid-template-columns:58px minmax(0,1fr);
+    min-height:70px;
+    gap:8px;
+  }
+
+  .agenda-copy strong,
+  .agenda-copy small{
+    white-space:normal;
+    overflow-wrap:anywhere;
+  }
+
+  .planner-action-grid{
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+
+  .planner-action{
+    min-height:70px;
+    padding:14px;
+    border-radius:13px;
+  }
+
+  .planner-action strong{
+    font-size:12px;
+  }
+
+  .planner-action span{
+    font-size:10px;
+    line-height:1.5;
+  }
+
+  /* Recommendation drawer: one clear vertical reading path. */
+  .planner-detail-backdrop{
+    align-items:flex-end;
+    padding:0;
+  }
+
+  .planner-detail{
+    width:100%;
+    max-width:none;
+    max-height:min(94svh,900px);
+    padding:9px 15px max(24px,env(safe-area-inset-bottom));
+    border-radius:22px 22px 0 0;
+  }
+
+  .planner-detail-header{
+    gap:10px;
+    padding-top:4px;
+  }
+
+  .planner-detail-header h2{
+    font-size:23px;
+    line-height:1.15;
+    overflow-wrap:anywhere;
+  }
+
+  .planner-detail-close{
+    width:42px;
+    height:42px;
+    flex:0 0 42px;
+  }
+
+  .planner-detail-meta{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:6px;
+    margin-top:10px;
+  }
+
+  .planner-detail-meta span,
+  .planner-detail-meta strong{
+    min-width:0;
+    font-size:10px;
+    overflow-wrap:anywhere;
+  }
+
+  .planner-detail-reason{
+    margin-top:14px;
+    padding:14px;
+    border-radius:13px;
+  }
+
+  .planner-detail-reason p{
+    font-size:12px;
+    line-height:1.6;
+  }
+
+  .planner-reason-list{
+    gap:7px;
+    margin-top:10px;
+  }
+
+  .planner-reason-list li{
+    align-items:flex-start;
+    font-size:11px;
+    line-height:1.45;
+  }
+
+  .planner-progress-meter{
+    margin:14px 0;
+    padding:13px;
+  }
+
+  .planner-detail-grid{
+    grid-template-columns:1fr 1fr;
+    gap:7px;
+  }
+
+  .planner-detail-grid>div{
+    min-height:78px;
+    padding:11px;
+  }
+
+  .planner-detail-grid strong{
+    font-size:11px;
+    line-height:1.35;
+    overflow-wrap:anywhere;
+  }
+
+  .planner-action-preview{
+    padding:13px;
+    margin-top:12px;
+  }
+
+  .planner-action-preview p{
+    font-size:11px;
+    line-height:1.5;
+  }
+
+  .planner-action-stack{
+    gap:9px;
+  }
+
+  .planner-move-row{
+    display:grid;
+    gap:8px;
+    padding:13px 0;
+  }
+
+  .planner-move-row>div:first-child p{
+    font-size:10px;
+    line-height:1.5;
+  }
+
+  .planner-move-controls{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:7px;
+  }
+
+  .planner-move-controls input,
+  .planner-move-controls button{
+    width:100%;
+    min-height:50px;
+    font-size:13px;
+  }
+
+  .planner-add-panel{
+    padding:13px;
+  }
+
+  .planner-add-controls{
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+
+  .planner-add-controls select,
+  .planner-add-controls input,
+  .planner-add-controls button{
+    width:100%;
+    min-height:50px;
+    font-size:13px;
+  }
+
+  /* Focus mode gets explicit colors so inherited global heading rules
+     cannot turn the title dark on Havan's dark focus surface. */
+  .planner-focus-backdrop{
+    align-items:center;
+    padding:0;
+    background:rgba(7,7,30,.86);
+  }
+
+  .planner-focus-mode{
+    width:100%;
+    max-width:none;
+    height:100svh;
+    max-height:none;
+    min-height:100svh;
+    border:0;
+    border-radius:0;
+    display:flex;
+    flex-direction:column;
+    color:#fff !important;
+    background:#11112d;
+    overflow:hidden;
+  }
+
+  .planner-focus-mode *{
+    color:inherit;
+  }
+
+  .planner-focus-mode .student-eyebrow{
+    color:#bfc2ff !important;
+  }
+
+  .planner-focus-mode .planner-focus-course{
+    color:#9ea1c8 !important;
+  }
+
+  .planner-focus-mode h2{
+    color:#fff !important;
+    font-size:clamp(25px,7vw,34px);
+    line-height:1.18;
+    overflow-wrap:anywhere;
+  }
+
+  .planner-focus-mode p{
+    color:#c9c9d8 !important;
+    font-size:12px;
+    line-height:1.6;
+  }
+
+  .planner-focus-window-bar{
+    flex:0 0 auto;
+    min-height:58px;
+    padding:9px 10px 9px 13px;
+  }
+
+  .planner-focus-window-controls{
+    gap:4px;
+  }
+
+  .planner-focus-window-button{
+    width:38px;
+    height:38px;
+  }
+
+  .planner-focus-body{
+    width:100%;
+    max-width:620px;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    margin:0 auto;
+    padding:24px 18px max(28px,env(safe-area-inset-bottom));
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .planner-focus-timer{
+    margin:30px 0 18px;
+    font-size:clamp(56px,17vw,84px);
+    letter-spacing:-3px;
+  }
+
+  .planner-focus-progress{
+    height:6px;
+  }
+
+  .planner-focus-actions{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:9px;
+    width:100%;
+    margin-top:24px;
+  }
+
+  .planner-focus-actions button{
+    width:100%;
+    min-height:52px;
+    font-size:13px;
+  }
+
+  .planner-focus-mode>small{
+    color:#9a9ab1 !important;
+    font-size:9px;
+    line-height:1.45;
+  }
+
+  .planner-focus-mini{
+    width:calc(100vw - 20px);
+    max-width:430px;
+  }
+}
+
+@media(max-width:480px){
+  .planner-overview,
+  .planner-workspace{
+    padding-inline:10px;
+  }
+
+  .planner-hero{
+    margin-inline:10px;
+    padding:18px 14px;
+  }
+
+  .planner-hero-buttons{
+    grid-template-columns:1fr;
+  }
+
+  .planner-week-strip{
+    min-width:590px;
+  }
+
+  .planner-detail-grid{
+    grid-template-columns:1fr;
+  }
+
+  .planner-detail{
+    padding-inline:13px;
+  }
+
+  .planner-detail-header h2{
+    font-size:21px;
+  }
+}
