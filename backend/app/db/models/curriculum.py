@@ -283,25 +283,3 @@ class TopicRelationship(Base):
     target_topic: Mapped[Topic] = relationship(foreign_keys=[target_topic_id], back_populates="incoming_relationships")
 
 
-class FreshmanCurriculumMapping(Base):
-    __tablename__ = "freshman_curriculum_mappings"
-    __table_args__ = (
-        UniqueConstraint("curriculum_id", name="uq_freshman_mapping_curriculum"),
-        Index("ix_freshman_mapping_template", "template_id"),
-        CheckConstraint("status IN ('DRAFT', 'ACTIVE', 'ARCHIVED')", name="ck_freshman_mapping_status"),
-    )
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    curriculum_id: Mapped[int] = mapped_column(
-        ForeignKey("curriculums.id", ondelete="CASCADE"), nullable=False
-    )
-    template_id: Mapped[int] = mapped_column(
-        ForeignKey("freshman_curriculum_templates.id", ondelete="RESTRICT"), nullable=False
-    )
-    status: Mapped[str] = mapped_column(String(20), nullable=False, default="DRAFT", server_default="DRAFT")
-    notes: Mapped[Optional[str]] = mapped_column(Text)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-
-    curriculum: Mapped[Curriculum] = relationship(back_populates="freshman_mapping")
-    template: Mapped[FreshmanCurriculumTemplate] = relationship()
