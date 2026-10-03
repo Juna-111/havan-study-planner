@@ -3,30 +3,21 @@
 import {useEffect,useState} from 'react'
 import './admin.css'
 import FreshmanRegistryWorkspace from './FreshmanRegistryWorkspace'
-import FreshmanTemplateWorkspace from './FreshmanTemplateWorkspace'
-import FreshmanMappingWorkspace from './FreshmanMappingWorkspace'
-import FreshmanStreamAssignmentWorkspace from './FreshmanStreamAssignmentWorkspace'
-import UniversityOverrideWorkspace from './UniversityOverrideWorkspace'
 import UniversitySetupWorkspace from './UniversitySetupWorkspace'
+import UniversityCourseMappingWorkspace from './UniversityCourseMappingWorkspace'
 import AcademicQuality from './AcademicQuality'
 
 type Mode =
   | 'setup'
   | 'quality'
   | 'freshman'
-  | 'templates'
-  | 'mapping'
-  | 'streamAssignments'
-  | 'universityOverrides'
+  | 'courseMapping'
 
 const navigation: Array<{mode: Mode; label: string; icon: string}> = [
   {mode: 'setup', label: 'University setup', icon: '⌂'},
+  {mode: 'courseMapping', label: 'Course mapping', icon: '↔'},
+  {mode: 'freshman', label: 'Course registry', icon: '▣'},
   {mode: 'quality', label: 'Academic quality', icon: '✓'},
-  {mode: 'freshman', label: 'Freshman registry', icon: '▣'},
-  {mode: 'templates', label: 'Freshman templates', icon: '▤'},
-  {mode: 'mapping', label: 'Freshman mapping', icon: '↔'},
-  {mode: 'streamAssignments', label: 'Stream courses', icon: '⊞'},
-  {mode: 'universityOverrides', label: 'University overrides', icon: '⚙'},
 ]
 
 export default function Admin() {
@@ -45,12 +36,9 @@ export default function Admin() {
 
   const workspace = {
     setup: <UniversitySetupWorkspace />,
-    quality: <AcademicQuality />,
+    courseMapping: <UniversityCourseMappingWorkspace />,
     freshman: <FreshmanRegistryWorkspace />,
-    templates: <FreshmanTemplateWorkspace />,
-    mapping: <FreshmanMappingWorkspace />,
-    streamAssignments: <FreshmanStreamAssignmentWorkspace />,
-    universityOverrides: <UniversityOverrideWorkspace />,
+    quality: <AcademicQuality />,
   }[mode]
 
   return (
@@ -94,7 +82,7 @@ export default function Admin() {
           <a href="/student" className="adminStudentLink">Open student surface ↗</a>
           Havan academic workspace
           <br />
-          <small>Registry → template → mapping → stream → override → student</small>
+          <small>Course registry → university mapping → student planner</small>
         </footer>
       </aside>
 
