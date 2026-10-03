@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.db.models.curriculum import Chapter, Course, Topic, TopicRelationship
@@ -115,16 +116,21 @@ def commit_topic_relationship_import(payload: TopicRelationshipImportCommit, db:
                 skipped += 1
                 continue
 
-            db.add(
-                TopicRelationship(
-                    source_topic_id=preview.source_topic_id,
-                    target_topic_id=preview.target_topic_id,
-                    relationship_type=item.relationship_type,
-                    strength=item.strength,
-                    notes=item.notes,
-                )
-            )
-            created += 1
+            try:
+                with db.begin_nested():
+                    db.add(
+                        TopicRelationship(
+                            source_topic_id=preview.source_topic_id,
+                            target_topic_id=preview.target_topic_id,
+                            relationship_type=item.relationship_type,
+                            strength=item.strength,
+                            notes=item.notes,
+                        )
+                    )
+                    db.flush()
+                created += 1
+            except IntegrityError:
+                skipped += 1
 
         db.commit()
     except Exception as exc:
