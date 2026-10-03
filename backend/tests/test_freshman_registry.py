@@ -8,6 +8,10 @@ def test_freshman_registry_routes_are_registered() -> None:
     assert "/api/v1/freshman-registry/courses" in paths
     assert "/api/v1/university-course-mappings" in paths
     assert "/api/v1/university-course-mappings/courses" in paths
+    assert "/api/v1/freshman-mappings" not in paths
+    assert "/api/v1/freshman-stream-assignments" not in paths
+    assert "/api/v1/university-course-overrides" not in paths
+    assert "/api/v1/freshman-templates" not in paths
     assert "/api/v1/freshman-registry/categories" in paths
     assert "/api/v1/freshman-registry-import/preview" in paths
     assert "/api/v1/freshman-registry-import/commit" in paths
