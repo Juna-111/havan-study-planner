@@ -8,6 +8,7 @@ from app.api.health import router as health_router
 from app.api.freshman_registry import router as freshman_registry_router
 from app.api.freshman_registry_import import router as freshman_registry_import_router
 from app.api.topic_relationship_import import router as topic_relationship_import_router
+from app.api.topic_relationship_candidates import router as topic_relationship_candidates_router
 from app.api.university_course_mappings import router as university_course_mappings_router
 from app.api.student import router as student_router
 from app.api.planner import router as planner_router
@@ -37,6 +38,7 @@ app.include_router(curriculum_router)
 app.include_router(freshman_registry_router)
 app.include_router(freshman_registry_import_router)
 app.include_router(topic_relationship_import_router)
+app.include_router(topic_relationship_candidates_router)
 app.include_router(university_course_mappings_router)
 app.include_router(student_router)
 app.include_router(planner_router)
