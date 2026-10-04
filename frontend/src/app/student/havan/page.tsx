@@ -47,11 +47,41 @@ function topicWeight(item: SelectedTopic) {
 }
 
 function allocate(topics: SelectedTopic[], totalMinutes: number) {
-  const safeTotal = Math.max(30, Math.round(totalMinutes))
+  if (!topics.length) return []
+
+  const safeTotal = Math.max(5, Math.round(totalMinutes / 5) * 5)
   const totalWeight = topics.reduce((sum, item) => sum + topicWeight(item), 0)
-  return topics.map((item) => ({
+  const units = Math.floor(safeTotal / 5)
+  const minimumUnits = units >= topics.length * 2 ? 2 : units >= topics.length ? 1 : 0
+
+  const rawUnits = topics.map((item) => (topicWeight(item) / totalWeight) * units)
+  const baseUnits = rawUnits.map((value) => Math.max(minimumUnits, Math.floor(value)))
+  let remainingUnits = units - baseUnits.reduce((sum, value) => sum + value, 0)
+
+  const order = rawUnits
+    .map((value, index) => ({ index, fraction: value - Math.floor(value) }))
+    .sort((a, b) => b.fraction - a.fraction)
+
+  let cursor = 0
+  while (remainingUnits > 0 && order.length) {
+    baseUnits[order[cursor % order.length].index] += 1
+    remainingUnits -= 1
+    cursor += 1
+  }
+
+  while (remainingUnits < 0) {
+    const removable = baseUnits
+      .map((value, index) => ({ index, value }))
+      .filter((item) => item.value > minimumUnits)
+      .sort((a, b) => b.value - a.value)
+    if (!removable.length) break
+    baseUnits[removable[0].index] -= 1
+    remainingUnits += 1
+  }
+
+  return topics.map((item, index) => ({
     ...item,
-    minutes: Math.max(10, Math.round(((topicWeight(item) / totalWeight) * safeTotal) / 5) * 5),
+    minutes: baseUnits[index] * 5,
   }))
 }
 
@@ -62,7 +92,8 @@ function allocateToday(topics: SelectedTopic[], courseHours: Record<string, numb
     byCourse.set(key, [...(byCourse.get(key) ?? []), item])
   })
   return [...byCourse.entries()].flatMap(([courseId, items]) => {
-    const courseMinutes = Math.max(30, Math.round(Number(courseHours[courseId] ?? 1) * 60))
+    const hours = Number(courseHours[courseId] ?? 1)
+    const courseMinutes = Math.max(5, Math.round((Number.isFinite(hours) ? hours : 1) * 60 / 5) * 5)
     return allocate(items, courseMinutes)
   })
 }
