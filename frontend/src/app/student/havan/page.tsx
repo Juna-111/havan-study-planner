@@ -382,7 +382,7 @@ export default function HavanPlannerPage() {
           <span className="selection-count">{selectedCourseIds.length} courses</span>
         </div>
         <div className="course-picker">
-          {courses.map((course) => (
+          {courses.length === 0 ? <p className="empty-note">Your courses are not available yet. Havan needs at least one course before it can organize a plan.</p> : courses.map((course) => (
             <button key={course.id} className={'course-chip ' + (selectedCourseIds.includes(String(course.id)) ? 'selected' : '')} onClick={() => toggleCourse(String(course.id))}>
               <b>{course.code ?? 'COURSE'}</b><span>{course.name}</span>
             </button>
@@ -413,7 +413,7 @@ export default function HavanPlannerPage() {
                 <button key={topic.id} className={'topic-choice ' + (activeContent.topicIds.includes(String(topic.id)) ? 'selected' : '')} onClick={() => toggleTopic(String(topic.id))}>
                   <span>{activeContent.topicIds.includes(String(topic.id)) ? '✓' : '+'}</span>
                   <strong>{topic.name}</strong>
-                  <small>Havan estimate: {minutesText(Number(topic.estimated_study_minutes || 60))}</small>
+                  <small>Typical study time: {minutesText(Number(topic.estimated_study_minutes || 60))}</small>
                 </button>
               ))}
             </div>
@@ -447,6 +447,11 @@ export default function HavanPlannerPage() {
           </>
         )}
       </section>
+
+      <div className="plan-summary-note pre-build-summary">
+        <b>{selectedTopics.length} topic{selectedTopics.length === 1 ? '' : 's'} selected</b>
+        <span>{mode === 'today' ? minutesText(totalTodayMinutes) + ' today' : minutesText(weeklyMinutes) + ' per week'}</span>
+      </div>
 
       <button className="build-button" disabled={saving || !selectedTopics.length} onClick={buildPlan}>{saving ? 'Organizing…' : 'Build my Havan ' + (mode === 'today' ? 'Today' : mode === 'week' ? 'Week' : 'Month')}</button>
 
