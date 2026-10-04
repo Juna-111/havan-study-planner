@@ -111,3 +111,40 @@
 }
 
 .managementCard textarea{width:100%;min-height:120px;resize:vertical;padding:12px;border:1px solid #dfe0e9;border-radius:12px;background:#fff;color:#151526;font:inherit;line-height:1.5}.managementCard textarea:focus{outline:2px solid rgba(1,1,126,.12);border-color:#01017e}
+\n
+/* Havan admin customer-first mobile pass */
+.managementPage{padding-inline:8px}
+.workspaceHeader{padding-inline:4px}
+.managementTabs{position:sticky;top:8px;z-index:8;box-shadow:0 5px 16px rgba(20,20,57,.05)}
+.managementTabs button{cursor:pointer;min-height:46px}
+.hierarchyBar{box-shadow:0 4px 14px rgba(20,20,57,.035)}
+.managementToolbar input,.managementToolbar select,.managementToolbar>button{font-size:13px}
+.managementToolbar>button{cursor:pointer}
+.managementCard{box-shadow:0 7px 22px rgba(20,20,57,.045)}
+.managementCardHead h2{font-weight:800}
+.managementCard label{gap:8px}
+.managementCard input,.managementCard select,.managementCard textarea{font-size:14px}
+.managementCard textarea{min-height:132px}
+.managementActions button,.managementItemActions button,.pagination button{cursor:pointer}
+.managementActions .workspacePrimary{box-shadow:0 6px 14px rgba(1,1,126,.15)}
+.managementItem{transition:border-color .15s ease,box-shadow .15s ease}
+.managementItem:hover{border-color:#cfcfe1;box-shadow:0 4px 12px rgba(20,20,57,.04)}
+@media(max-width:760px){
+  .managementPage{padding-inline:5px}
+  .managementTabs{top:4px;margin-inline:-1px;padding:5px}
+  .hierarchyBar{font-size:12px;padding:10px 12px}
+  .managementToolbar{margin-bottom:10px}
+  .managementGrid{gap:10px}
+  .managementCard{padding:14px;border-radius:15px}
+  .managementCardHead{margin-bottom:12px}
+  .managementCardHead h2{font-size:20px}
+  .managementCard label{margin-top:10px}
+  .managementCard label span{font-size:12px}
+  .managementCard input,.managementCard select,.managementCard textarea{min-height:52px;font-size:16px}
+  .managementCard textarea{min-height:140px}
+  .managementActions{position:sticky;bottom:8px;z-index:6;padding:7px;border:1px solid #e5e5ee;border-radius:13px;background:rgba(255,255,255,.96);backdrop-filter:blur(8px)}
+  .managementActions button{min-height:50px;font-size:13px}
+  .managementItem{padding:14px}
+  .managementItem h3{font-size:16px}
+  .managementItemActions button{min-height:48px;font-size:12px}
+}
