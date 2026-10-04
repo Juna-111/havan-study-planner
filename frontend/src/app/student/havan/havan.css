@@ -19,3 +19,77 @@
 .plan-summary-note{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:12px 0;padding:11px 13px;border:1px solid #e2e3f0;border-radius:12px;background:#f7f7ff;color:#44445a;font-size:10px}
 .plan-summary-note b{color:#01017e;font-size:11px}.plan-summary-note span{font-weight:700;color:#77778a}
 @media(max-width:520px){.plan-summary-note{align-items:flex-start;flex-direction:column;gap:4px}}
+\n
+/* Havan customer-first UI pass */
+.new-planner-shell{background:linear-gradient(180deg,#f7f8fc 0%,#f3f4f9 100%)}
+.new-planner-header{padding-top:16px}
+.havan-brand{cursor:pointer}
+.havan-brand span{box-shadow:0 5px 14px rgba(1,1,126,.16)}
+.new-planner-nav{border:1px solid #dedfec;background:#e9eaf3;box-shadow:0 5px 18px rgba(20,20,57,.05)}
+.new-planner-nav button{cursor:pointer;transition:transform .15s ease,background .15s ease,box-shadow .15s ease}
+.new-planner-nav button:active{transform:scale(.98)}
+.new-planner-nav button.active{box-shadow:0 5px 16px rgba(1,1,126,.12)}
+.new-planner-hero{margin-bottom:18px}
+.new-planner-hero h1{font-size:clamp(34px,6.5vw,58px)}
+.planner-card,.result-section{box-shadow:0 8px 26px rgba(20,20,57,.045)}
+.card-heading h2,.result-header h2{font-weight:800}
+.course-picker{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.course-chip{cursor:pointer;transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease}
+.course-chip:hover,.topic-choice:hover{border-color:#a9a9c9}
+.course-chip:active,.topic-choice:active{transform:scale(.99)}
+.course-chip.selected{box-shadow:0 5px 14px rgba(1,1,126,.10)}
+.active-course-tabs button,.topic-choice,.day-button{cursor:pointer}
+.active-course-tabs button{min-height:42px}
+.planner-card select{font-size:14px;cursor:pointer}
+.topic-grid{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.topic-choice{min-height:108px;cursor:pointer;transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease}
+.topic-choice>span{width:28px;height:28px;font-size:15px}
+.topic-choice strong{font-size:14px;padding-top:9px}
+.topic-choice small{font-size:10px}
+.course-hour-row{background:#fbfbfe}
+.hour-input input,.daily-hours input{font-size:16px;font-weight:800;color:#151526}
+.day-button{cursor:pointer;transition:transform .15s ease,border-color .15s ease}
+.day-button:active{transform:scale(.98)}
+.build-button{position:sticky;bottom:max(12px,env(safe-area-inset-bottom));z-index:6;cursor:pointer;min-height:58px;box-shadow:0 10px 24px rgba(250,3,2,.22),0 3px 12px rgba(20,20,57,.12)}
+.result-section{scroll-margin-top:90px}
+.result-header{padding-bottom:4px}
+.topic-plan-card{box-shadow:0 7px 20px rgba(20,20,57,.045)}
+.topic-plan-top>strong{font-size:13px}
+.topic-plan-focus{background:#f5f5fb}
+.topic-plan-academy{background:linear-gradient(135deg,#01017e,#17179c)}
+.plan-summary-note{background:#f1f2ff;border-color:#dfe1f4}
+@media(max-width:520px){
+  .new-planner-shell{padding-inline:10px}
+  .new-planner-header{padding-top:12px}
+  .header-user{font-size:12px}
+  .new-planner-nav{margin-inline:2px}
+  .new-planner-nav button{min-height:56px}
+  .new-planner-hero{margin:26px 2px 16px}
+  .new-planner-hero h1{font-size:36px;letter-spacing:-1.4px}
+  .new-planner-hero p{font-size:14px}
+  .planner-card,.result-section{padding:14px;margin-top:12px}
+  .card-heading{gap:8px;margin-bottom:14px}
+  .card-heading h2,.result-header h2{font-size:19px}
+  .selection-count{white-space:nowrap}
+  .course-picker{grid-template-columns:1fr}
+  .course-chip{min-height:68px}
+  .active-course-tabs{margin-inline:-2px;padding-inline:2px}
+  .active-course-tabs button{min-height:44px;font-size:11px}
+  .topic-grid{grid-template-columns:1fr}
+  .topic-choice{min-height:96px}
+  .topic-choice strong{font-size:14px}
+  .course-hour-row{padding:13px}
+  .day-grid{grid-template-columns:repeat(4,1fr)}
+  .day-button{min-height:64px}
+  .daily-hours{grid-template-columns:1fr 1fr}
+  .capacity-line{align-items:flex-start;flex-direction:column;gap:2px}
+  .build-button{width:calc(100% - 4px);margin:14px auto;min-height:56px}
+  .topic-plan-card{padding:14px}
+  .topic-plan-top h3{font-size:17px}
+}
+@media(max-width:360px){
+  .new-planner-nav b{font-size:13px}
+  .new-planner-nav span{font-size:9px}
+  .day-grid{grid-template-columns:repeat(2,1fr)}
+  .daily-hours{grid-template-columns:1fr}
+}
