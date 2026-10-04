@@ -93,3 +93,6 @@
   .day-grid{grid-template-columns:repeat(2,1fr)}
   .daily-hours{grid-template-columns:1fr}
 }
+
+
+.planner-next-note{width:min(100%,1100px);margin:8px auto 0;padding:12px 14px;border:1px dashed #d8d9e6;border-radius:12px;background:#fbfbfe;color:#77778a;font-size:10px}.planner-next-note strong{display:block;color:#01017e;font-size:11px;margin-bottom:3px}@media(max-width:520px){.planner-next-note{margin-inline:2px}}

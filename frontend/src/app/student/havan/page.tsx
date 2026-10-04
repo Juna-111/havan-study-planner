@@ -119,7 +119,6 @@ export default function HavanPlannerPage() {
   const [courseHours, setCourseHours] = useState<Record<string, number>>({})
   const [studyDays, setStudyDays] = useState<number[]>([1, 2, 3, 4, 5])
   const [hoursPerDay, setHoursPerDay] = useState<Record<number, number>>({ 0: 2, 1: 2, 2: 2, 3: 2, 4: 2, 5: 2, 6: 3 })
-  const [plan, setPlan] = useState<any[]>([])
   const [notice, setNotice] = useState('')
 
   async function loadCourseContent(id: string) {
@@ -313,7 +312,7 @@ export default function HavanPlannerPage() {
       }
     }
 
-    setPlan(nextPlan)
+    window.sessionStorage.setItem('havan_built_plan', JSON.stringify({ mode, plan: nextPlan }))
     saveDraft()
     try {
       if (account?.student_profile_id) {
@@ -341,13 +340,8 @@ export default function HavanPlannerPage() {
     } finally {
       setSaving(false)
     }
+    router.push('/student/havan/plan')
   }
-
-  const grouped = useMemo(() => {
-    const map = new Map<string, any[]>()
-    plan.forEach((item) => map.set(item.date, [...(map.get(item.date) ?? []), item]))
-    return [...map.entries()]
-  }, [plan])
 
   if (loading) return <main className="new-planner-shell"><div className="new-planner-loading">Preparing your Havan planner…</div></main>
 
@@ -455,44 +449,7 @@ export default function HavanPlannerPage() {
 
       <button className="build-button" disabled={saving || !selectedTopics.length} onClick={buildPlan}>{saving ? 'Organizing…' : 'Build my Havan ' + (mode === 'today' ? 'Today' : mode === 'week' ? 'Week' : 'Month')}</button>
 
-      {plan.length > 0 && (
-        <section className="result-section">
-          <div className="result-header">
-            <div><span className="section-kicker">04</span><h2>Your Havan {mode === 'today' ? 'Today' : mode === 'week' ? 'Week' : 'Month'}</h2><p>Every time block below belongs to a specific topic you selected.</p></div>
-            <strong>{minutesText(plan.reduce((s, x) => s + x.minutes, 0))}</strong>
-          </div>
-          <div className="plan-summary-note"><b>Your time is divided by topic.</b><span>Course → Chapter → Topic → study time</span></div>
-          {grouped.map(([date, items]) => (
-            <div className="plan-day" key={date}>
-              <div className="plan-day-title"><strong>{items[0].day}</strong><span>{date}</span></div>
-              {items.map((item) => (
-                <article className="topic-plan-card" key={item.id}>
-                  <div className="topic-plan-top">
-                    <div>
-                      <span className="topic-plan-label">TOPIC</span>
-                      <h3>{item.topic}</h3>
-                      <p>{item.course} · Chapter {item.chapter}</p>
-                    </div>
-                    <strong>{minutesText(item.minutes)}</strong>
-                  </div>
-                  <div className="topic-plan-focus">
-                    <span>WHAT TO FOCUS ON</span>
-                    {item.importantPoints?.length ? (
-                      <ul>{item.importantPoints.map((point: string, index: number) => <li key={index}>{point}</li>)}</ul>
-                    ) : (
-                      <p>No specific Havan recommendation has been added for this topic yet.</p>
-                    )}
-                  </div>
-                  <div className="topic-plan-academy">
-                    <div><b>Havan Academy</b><span>Use Havan Academy lecture, notes and practice questions for this topic.</span></div>
-                    <span className="academy-badge">STUDY SUPPORT</span>
-                  </div>
-                </article>
-              ))}
-            </div>
-          ))}
-        </section>
-      )}
+      <div className="planner-next-note"><strong>Ready to build?</strong><span>Your organized plan will open on its own screen.</span></div>
 
       <footer className="new-planner-footer"><span>Havan Academy</span><span>Student-controlled planning</span><span>Mobile first</span></footer>
     </main>
