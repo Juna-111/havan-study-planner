@@ -339,7 +339,7 @@ export default function HavanPlannerPage() {
       <section className="new-planner-hero">
         <span className="hero-kicker">NEW HAVAN PLANNER</span>
         <h1>Plan what <em>you</em> want to study.</h1>
-        <p>Choose your courses, chapters, topics and available time. Havan organizes the workload for you.</p>
+        <p>Choose exactly what you want to study. Havan then divides your available time across the selected topics.</p>
       </section>
 
       {error && <div className="planner-alert error">{error}</div>}
@@ -362,7 +362,7 @@ export default function HavanPlannerPage() {
       <section className="planner-card">
         <div className="card-heading">
           <div><span className="section-kicker">02</span><h2>Choose chapters and topics</h2></div>
-          <span className="selection-count">{selectedTopics.length} topics</span>
+          <span className="selection-count">{selectedTopics.length} selected</span>
         </div>
         <div className="active-course-tabs">
           {selectedCourseIds.map((id) => {
@@ -382,7 +382,7 @@ export default function HavanPlannerPage() {
                 <button key={topic.id} className={'topic-choice ' + (activeContent.topicIds.includes(String(topic.id)) ? 'selected' : '')} onClick={() => toggleTopic(String(topic.id))}>
                   <span>{activeContent.topicIds.includes(String(topic.id)) ? '✓' : '+'}</span>
                   <strong>{topic.name}</strong>
-                  <small>{minutesText(Number(topic.estimated_study_minutes || 60))} estimated</small>
+                  <small>Havan estimate: {minutesText(Number(topic.estimated_study_minutes || 60))}</small>
                 </button>
               ))}
             </div>
@@ -392,7 +392,7 @@ export default function HavanPlannerPage() {
       </section>
 
       <section className="planner-card">
-        <div className="card-heading"><div><span className="section-kicker">03</span><h2>{mode === 'today' ? 'Set course hours' : 'Set your study days'}</h2></div></div>
+        <div className="card-heading"><div><span className="section-kicker">03</span><h2>{mode === 'today' ? 'Set course hours' : 'Set your study days'}</h2><p className="card-help">{mode === 'today' ? 'Choose how much time each selected course gets. Havan will divide that time across its selected topics.' : 'Choose the days you study and your available hours. Havan will divide that time across your selected topics.'}</p></div></div>
         {mode === 'today' ? (
           <div className="course-hours-list">
             {selectedCourseIds.map((id) => {
@@ -422,9 +422,10 @@ export default function HavanPlannerPage() {
       {plan.length > 0 && (
         <section className="result-section">
           <div className="result-header">
-            <div><span className="section-kicker">04</span><h2>Your Havan {mode === 'today' ? 'Today' : mode === 'week' ? 'Week' : 'Month'}</h2><p>Organized from your selected content and available time.</p></div>
+            <div><span className="section-kicker">04</span><h2>Your Havan {mode === 'today' ? 'Today' : mode === 'week' ? 'Week' : 'Month'}</h2><p>Every time block below belongs to a specific topic you selected.</p></div>
             <strong>{minutesText(plan.reduce((s, x) => s + x.minutes, 0))}</strong>
           </div>
+          <div className="plan-summary-note"><b>Your time is divided by topic.</b><span>Course → Chapter → Topic → study time</span></div>
           {grouped.map(([date, items]) => (
             <div className="plan-day" key={date}>
               <div className="plan-day-title"><strong>{items[0].day}</strong><span>{date}</span></div>

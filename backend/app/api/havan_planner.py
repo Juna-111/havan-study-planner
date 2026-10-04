@@ -31,9 +31,24 @@ def _validate_tasks(db: Session, student_id: int, payload: HavanPlanCreate) -> N
     if db.get(StudentProfile, student_id) is None:
         raise HTTPException(status_code=404, detail="Student profile not found")
 
+    expected_horizon = {"today": 1, "week": 7, "month": 28}[payload.mode]
+    if payload.horizon_days != expected_horizon:
+        raise HTTPException(status_code=400, detail="The selected plan mode and horizon do not match")
+
+    if any(day < 0 or day > 6 for day in payload.study_days):
+        raise HTTPException(status_code=400, detail="Study days must use weekday values from 0 to 6")
+
+    if any(float(hours) <= 0 or float(hours) > 24 for hours in payload.hours_per_day.values()):
+        raise HTTPException(status_code=400, detail="Daily study hours must be greater than 0 and no more than 24")
+
+    if sum(int(item.minutes) for item in payload.tasks) != payload.total_minutes:
+        raise HTTPException(status_code=400, detail="Plan total_minutes must equal the sum of all topic task minutes")
+
     today = date.today()
     horizon_end = today + timedelta(days=payload.horizon_days - 1)
     for item in payload.tasks:
+        if payload.mode == "today" and item.planned_date != today:
+            raise HTTPException(status_code=400, detail="Today plans must contain only today's date")
         if item.planned_date < today or item.planned_date > horizon_end:
             raise HTTPException(status_code=400, detail="Every planned task must stay inside the selected plan horizon")
         topic = db.get(Topic, item.topic_id)
