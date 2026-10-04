@@ -192,7 +192,7 @@ export default function HavanPlannerPage() {
     window.localStorage.setItem('havan_new_planner_draft', JSON.stringify({ mode: nextMode, studyDays, hoursPerDay, courseHours }))
   }
 
-  function buildPlan() {
+  async function buildPlan() {
     setSaving(true)
     setError('')
     setNotice('')
@@ -212,6 +212,8 @@ export default function HavanPlannerPage() {
         id: 'today-' + item.topic.id,
         date: dateKey(now),
         day: 'Today',
+        courseId: item.course.id,
+        topicId: item.topic.id,
         course: item.course.name,
         chapter: item.chapter.name,
         topic: item.topic.name,
@@ -237,6 +239,8 @@ export default function HavanPlannerPage() {
               id: mode + '-' + item.topic.id + '-' + cursor,
               date: dateKey(day),
               day: day.toLocaleDateString(undefined, { weekday: 'long' }),
+              courseId: item.course.id,
+              topicId: item.topic.id,
               course: item.course.name,
               chapter: item.chapter.name,
               topic: item.topic.name,
@@ -253,8 +257,32 @@ export default function HavanPlannerPage() {
 
     setPlan(nextPlan)
     saveDraft()
-    setNotice('Your Havan plan is organized from your selected courses, topics and available time.')
-    setSaving(false)
+    try {
+      if (account?.student_profile_id) {
+        await apiFetch('/havan-planner/students/' + account.student_profile_id + '/plans', {
+          method: 'POST',
+          body: JSON.stringify({
+            mode,
+            horizon_days: mode === 'today' ? 1 : mode === 'week' ? 7 : 28,
+            study_days: studyDays,
+            hours_per_day: hoursPerDay,
+            total_minutes: nextPlan.reduce((sum, item) => sum + item.minutes, 0),
+            tasks: nextPlan.map((item) => ({
+              course_id: Number(item.courseId),
+              topic_id: Number(item.topicId),
+              planned_date: item.date,
+              minutes: item.minutes,
+            })),
+          }),
+        })
+      }
+      setNotice('Your Havan plan is organized and saved.')
+    } catch (err) {
+      setNotice('Your plan is ready on this device, but could not be saved to your account.')
+      setError(err instanceof Error ? err.message : 'Could not save the Havan plan.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const grouped = useMemo(() => {
