@@ -38,27 +38,18 @@ def _validate_tasks(db: Session, student_id: int, payload: HavanPlanCreate) -> N
     if any(day < 0 or day > 6 for day in payload.study_days):
         raise HTTPException(status_code=400, detail="Study days must use weekday values from 0 to 6")
 
-    if any(float(hours) <= 0 or float(hours) > 24 for hours in payload.hours_per_day.values()):
+    if payload.mode in {"week", "month"} and not payload.study_days:\n        raise HTTPException(status_code=400, detail="Week and month plans need at least one study day")\n\n    if any(float(hours) <= 0 or float(hours) > 24 for hours in payload.hours_per_day.values()):
         raise HTTPException(status_code=400, detail="Daily study hours must be greater than 0 and no more than 24")
 
     if sum(int(item.minutes) for item in payload.tasks) != payload.total_minutes:
         raise HTTPException(status_code=400, detail="Plan total_minutes must equal the sum of all topic task minutes")
 
-    today = date.today()
-    horizon_end = today + timedelta(days=payload.horizon_days - 1)
-    for item in payload.tasks:
-        if payload.mode == "today" and item.planned_date != today:
+    today = date.today()\n    horizon_end = today + timedelta(days=payload.horizon_days - 1)\n    daily_totals: dict[date, int] = {}\n    for item in payload.tasks:\n        if payload.mode == "today" and item.planned_date != today:
             raise HTTPException(status_code=400, detail="Today plans must contain only today's date")
-        if item.planned_date < today or item.planned_date > horizon_end:
-            raise HTTPException(status_code=400, detail="Every planned task must stay inside the selected plan horizon")
-        topic = db.get(Topic, item.topic_id)
-        if topic is None or str(topic.status).upper() != "ACTIVE":
+        if item.planned_date < today or item.planned_date > horizon_end:\n            raise HTTPException(status_code=400, detail="Every planned task must stay inside the selected plan horizon")\n        if payload.mode in {"week", "month"} and item.planned_date.weekday() not in payload.study_days:\n            raise HTTPException(status_code=400, detail="A week or month task must be placed on a selected study day")\n        daily_totals[item.planned_date] = daily_totals.get(item.planned_date, 0) + item.minutes\n        topic = db.get(Topic, item.topic_id)\n        if topic is None or str(topic.status).upper() != "ACTIVE":
             raise HTTPException(status_code=400, detail=f"Topic {item.topic_id} is not active")
         chapter = db.get(Chapter, topic.chapter_id)
-        if chapter is None or chapter.course_id != item.course_id:
-            raise HTTPException(status_code=400, detail=f"Topic {item.topic_id} does not belong to course {item.course_id}")
-
-
+        if chapter is None or chapter.course_id != item.course_id:\n            raise HTTPException(status_code=400, detail=f"Topic {item.topic_id} does not belong to course {item.course_id}")\n\n    if payload.mode in {"week", "month"}:\n        for planned_date, minutes in daily_totals.items():\n            allowed = float(payload.hours_per_day.get(planned_date.weekday(), 0)) * 60\n            if minutes > allowed:\n                raise HTTPException(status_code=400, detail=f"Tasks on {planned_date.isoformat()} exceed the available study time")\n\n
 @router.post("/students/{student_id}/plans", response_model=HavanPlanRead)
 def create_plan(student_id: int, payload: HavanPlanCreate, db: Session = Depends(get_db)):
     _validate_tasks(db, student_id, payload)
