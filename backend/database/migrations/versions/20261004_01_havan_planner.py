@@ -1,7 +1,7 @@
 """add student-controlled Havan Today/Week/Month planner
 
 Revision ID: 20261004_01
-Revises: 20261003_02_remove_topic_relationships
+Revises: 20261003_02
 Create Date: 2026-10-04
 """
 
@@ -9,7 +9,7 @@ from alembic import op
 import sqlalchemy as sa
 
 revision = "20261004_01"
-down_revision = "20261003_02_remove_topic_relationships"
+down_revision = "20261003_02"
 branch_labels = None
 depends_on = None
 
