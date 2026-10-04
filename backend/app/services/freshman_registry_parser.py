@@ -83,7 +83,7 @@ def parse_bullet_curriculum(content: str) -> list[ParsedCourse]:
 def _course_identity(text: str, line_number: int) -> tuple[str, str]:
     match = COURSE_ID_RE.match(text.strip())
     if not match:
-        raise HTTPException(status_code=422, detail=f"Line {line_number}: course must use 'Course: [CODE] Name'.")
+        raise HTTPException(status_code=422, detail=f"Line {line_number}: course must use the canonical format 'Course: [CODE] Name'.")
     code, name = match.group(1).strip(), match.group(2).strip()
     if not code:
         raise HTTPException(status_code=422, detail=f"Line {line_number}: course code is empty.")
