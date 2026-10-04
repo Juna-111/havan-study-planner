@@ -135,22 +135,25 @@ class ChapterBase(BaseModel):
     course_id: int = Field(gt=0)
     name: str = Field(min_length=2, max_length=200)
     description: Optional[str] = None
+    important_points: Optional[str] = Field(default=None, max_length=10000)
     order_index: int = Field(ge=1)
     status: str = Field(default="ACTIVE", pattern=r"^(ACTIVE|INACTIVE)$")
 class ChapterCreate(ChapterBase): pass
 class ChapterUpdate(BaseModel):
     name: Optional[str] = Field(default=None, min_length=2, max_length=200)
     description: Optional[str] = None
+    important_points: Optional[str] = Field(default=None, max_length=10000)
     order_index: Optional[int] = Field(default=None, ge=1)
     status: Optional[str] = Field(default=None, pattern=r"^(ACTIVE|INACTIVE)$")
 class ChapterRead(ORMModel):
-    id: int; course_id: int; name: str; description: Optional[str]; order_index: int; status: str
+    id: int; course_id: int; name: str; description: Optional[str]; important_points: Optional[str]; order_index: int; status: str
 
 
 class TopicBase(BaseModel):
     chapter_id: int = Field(gt=0)
     name: str = Field(min_length=2, max_length=250)
     description: Optional[str] = None
+    important_points: Optional[str] = Field(default=None, max_length=10000)
     difficulty: int = Field(default=3, ge=1, le=5)
     estimated_study_minutes: int = Field(default=60, gt=0, le=1440)
     exam_importance: float = Field(default=0.5, ge=0, le=1)
@@ -161,6 +164,7 @@ class TopicCreate(TopicBase): pass
 class TopicUpdate(BaseModel):
     name: Optional[str] = Field(default=None, min_length=2, max_length=250)
     description: Optional[str] = None
+    important_points: Optional[str] = Field(default=None, max_length=10000)
     difficulty: Optional[int] = Field(default=None, ge=1, le=5)
     estimated_study_minutes: Optional[int] = Field(default=None, gt=0, le=1440)
     exam_importance: Optional[float] = Field(default=None, ge=0, le=1)
@@ -168,7 +172,7 @@ class TopicUpdate(BaseModel):
     order_index: Optional[int] = Field(default=None, ge=1)
     status: Optional[str] = Field(default=None, pattern=r"^(ACTIVE|INACTIVE)$")
 class TopicRead(ORMModel):
-    id: int; chapter_id: int; name: str; description: Optional[str]; difficulty: int; estimated_study_minutes: int; exam_importance: float; conceptual_importance: float; order_index: int; status: str
+    id: int; chapter_id: int; name: str; description: Optional[str]; important_points: Optional[str]; difficulty: int; estimated_study_minutes: int; exam_importance: float; conceptual_importance: float; order_index: int; status: str
 
 
 class PageMeta(BaseModel):

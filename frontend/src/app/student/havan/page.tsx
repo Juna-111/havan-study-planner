@@ -42,13 +42,34 @@ const addDays = (date: Date, amount: number) => {
   return next
 }
 
+function topicWeight(item: SelectedTopic) {
+  return Math.max(1, Number(item.topic.estimated_study_minutes || 60))
+}
+
 function allocate(topics: SelectedTopic[], totalMinutes: number) {
   const safeTotal = Math.max(30, Math.round(totalMinutes))
-  const totalWeight = topics.reduce((sum, item) => sum + Math.max(1, Number(item.topic.estimated_study_minutes || 60)), 0)
+  const totalWeight = topics.reduce((sum, item) => sum + topicWeight(item), 0)
   return topics.map((item) => ({
     ...item,
-    minutes: Math.max(10, Math.round(((Math.max(1, Number(item.topic.estimated_study_minutes || 60)) / totalWeight) * safeTotal) / 5) * 5),
+    minutes: Math.max(10, Math.round(((topicWeight(item) / totalWeight) * safeTotal) / 5) * 5),
   }))
+}
+
+function allocateToday(topics: SelectedTopic[], courseHours: Record<string, number>) {
+  const byCourse = new Map<string, SelectedTopic[]>()
+  topics.forEach((item) => {
+    const key = String(item.course.id)
+    byCourse.set(key, [...(byCourse.get(key) ?? []), item])
+  })
+  return [...byCourse.entries()].flatMap(([courseId, items]) => {
+    const courseMinutes = Math.max(30, Math.round(Number(courseHours[courseId] ?? 1) * 60))
+    return allocate(items, courseMinutes)
+  })
+}
+
+function recommendationPoints(topic: Item, chapter: Item) {
+  const raw = String(topic.important_points || chapter.important_points || '').trim()
+  return raw.split(/\r?\n/).map((line) => line.replace(/^\s*[-•*]\s*/, '').trim()).filter(Boolean)
 }
 
 export default function HavanPlannerPage() {
@@ -144,7 +165,9 @@ export default function HavanPlannerPage() {
     [selectedCourseIds, courses, courseContent],
   )
 
-  const totalTodayMinutes = selectedCourseIds.reduce((sum, id) => sum + Number(courseHours[id] ?? 1) * 60, 0)
+  const totalTodayMinutes = selectedCourseIds
+    .filter((id) => selectedTopics.some((item) => String(item.course.id) === id))
+    .reduce((sum, id) => sum + Number(courseHours[id] ?? 1) * 60, 0)
   const weeklyMinutes = studyDays.reduce((sum, day) => sum + Number(hoursPerDay[day] || 0) * 60, 0)
 
   async function toggleCourse(id: string) {
@@ -204,7 +227,9 @@ export default function HavanPlannerPage() {
 
     const now = new Date()
     const totalMinutes = mode === 'today' ? totalTodayMinutes : mode === 'week' ? weeklyMinutes : weeklyMinutes * 4
-    const allocated = allocate(selectedTopics, totalMinutes || 60)
+    const allocated = mode === 'today'
+      ? allocateToday(selectedTopics, courseHours)
+      : allocate(selectedTopics, totalMinutes || 60)
     const nextPlan: any[] = []
 
     if (mode === 'today') {
@@ -219,6 +244,7 @@ export default function HavanPlannerPage() {
         topic: item.topic.name,
         minutes: item.minutes,
         questions: null,
+        importantPoints: recommendationPoints(item.topic, item.chapter),
         order: index,
       }))
     } else {
@@ -246,6 +272,7 @@ export default function HavanPlannerPage() {
               topic: item.topic.name,
               minutes: slot,
               questions: null,
+              importantPoints: recommendationPoints(item.topic, item.chapter),
               order: nextPlan.length,
             })
             remaining -= slot
@@ -402,18 +429,26 @@ export default function HavanPlannerPage() {
             <div className="plan-day" key={date}>
               <div className="plan-day-title"><strong>{items[0].day}</strong><span>{date}</span></div>
               {items.map((item) => (
-                <article className="new-task" key={item.id}>
-                  <div className="task-time">{minutesText(item.minutes)}</div>
-                  <div className="task-main">
-                    <small>{item.course} · {item.chapter}</small>
-                    <h3>{item.topic}</h3>
-                    <div className="resource-row">
-                      <span className="resource academy">Havan Academy</span>
-                      <button onClick={() => setNotice('Lecture mapping is ready for this topic; the real Academy link will appear when content is connected.')}>Video</button>
-                      <button onClick={() => setNotice('Notes mapping is ready for this topic; the real Academy note will appear when content is connected.')}>Notes</button>
-                      <button onClick={() => setNotice('Practice mapping is ready for this topic; the real Academy questions will appear when content is connected.')}>Questions</button>
+                <article className="topic-plan-card" key={item.id}>
+                  <div className="topic-plan-top">
+                    <div>
+                      <span className="topic-plan-label">TOPIC</span>
+                      <h3>{item.topic}</h3>
+                      <p>{item.course} · Chapter {item.chapter}</p>
                     </div>
-                    <div className="freshman-box"><div><b>Freshman Questions</b><span>Practice after this topic</span></div><strong>Question count pending</strong></div>
+                    <strong>{minutesText(item.minutes)}</strong>
+                  </div>
+                  <div className="topic-plan-focus">
+                    <span>WHAT TO FOCUS ON</span>
+                    {item.importantPoints?.length ? (
+                      <ul>{item.importantPoints.map((point: string, index: number) => <li key={index}>{point}</li>)}</ul>
+                    ) : (
+                      <p>No specific Havan recommendation has been added for this topic yet.</p>
+                    )}
+                  </div>
+                  <div className="topic-plan-academy">
+                    <div><b>Havan Academy</b><span>Use Havan Academy lecture, notes and practice questions for this topic.</span></div>
+                    <span className="academy-badge">STUDY SUPPORT</span>
                   </div>
                 </article>
               ))}
