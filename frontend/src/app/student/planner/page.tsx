@@ -140,11 +140,11 @@ export default function PlannerPage() {
     try {
       const next = await apiFetch<Item>('/planner/students/' + id + '/replan', {
         method: 'POST',
-        body: JSON.stringify({ horizon_days: 7 }),
+        body: JSON.stringify({ horizon_days: plannerView === 'today' ? 1 : plannerView === 'month' ? 28 : 7 }),
       })
       setPlan(next)
       setSelectedDate(next.days?.[0]?.date ?? dateKey(today()))
-      setToast('Your week was rebalanced using your current progress, decisions, and study capacity.')
+      setToast(plannerView === 'today' ? 'Today was rebalanced around your current progress and capacity.' : plannerView === 'month' ? 'Your month was rebalanced around your current progress and capacity.' : 'Your week was rebalanced using your current progress, decisions, and study capacity.')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not rebalance your study plan.')
     } finally {
