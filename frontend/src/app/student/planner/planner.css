@@ -3695,3 +3695,6 @@
     font-size:21px;
   }
 }
+
+/* Havan Today / Week / Month navigation views */
+.planner-month-weeks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}.planner-month-week{display:grid;gap:5px;min-height:92px;padding:12px;border:1px solid var(--line,#e3e3ec);border-radius:13px;background:#fff;text-align:left;cursor:pointer}.planner-month-week:hover{border-color:#bfc0dc;background:#fcfcff}.planner-month-week span{color:var(--blue,#01017e);font-size:8px;font-weight:900;letter-spacing:1px}.planner-month-week strong{color:var(--ink,#151526);font-size:14px}.planner-month-week small{color:var(--muted,#77778a);font-size:9px;line-height:1.4}@media(max-width:760px){.planner-month-weeks{grid-template-columns:repeat(2,minmax(0,1fr))}.planner-month-week{min-height:84px}}@media(max-width:380px){.planner-month-weeks{grid-template-columns:1fr 1fr}.planner-month-week{padding:10px}}
