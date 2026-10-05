@@ -623,6 +623,27 @@ export default function PlannerPage() {
                     })}
                   </div>
                 )}
+
+                {plannerView === 'month' && (
+                  <div className="planner-month-weeks" aria-label="Monthly study milestones">
+                    {monthWeeks.map((week) => (
+                      <button
+                        type="button"
+                        className="planner-month-week"
+                        key={week.index}
+                        onClick={() => {
+                          const first = week.dates[0]
+                          if (first) setSelectedDate(dateKey(first))
+                          setSelectedTaskId(null)
+                        }}
+                      >
+                        <span>WEEK {week.index + 1}</span>
+                        <strong>{week.tasks.length ? minutesLabel(week.minutes) : 'No sessions'}</strong>
+                        <small>{week.tasks.length} scheduled session{week.tasks.length === 1 ? '' : 's'}</small>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </section>
 
               <section className="planner-today panel">
