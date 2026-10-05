@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { apiFetch } from '../../../lib/api'
-import { getAuthToken } from '../../../lib/auth'
+import { apiFetch } from '../../../../lib/api'
+import { getAuthToken } from '../../../../lib/auth'
 import '../havan.css'
 
 type Item = Record<string, any>
