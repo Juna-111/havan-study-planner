@@ -17,6 +17,13 @@ interface TopicProgress {
 }
 
 const KEY = 'havan_student_key'
+type PlannerView = 'today' | 'week' | 'month'
+
+function requestedPlannerView(): PlannerView {
+  if (typeof window === 'undefined') return 'week'
+  const value = new URLSearchParams(window.location.search).get('view')
+  return value === 'today' || value === 'month' ? value : 'week'
+}
 
 function getClientKey() {
   if (typeof window === 'undefined') return ''
@@ -94,6 +101,7 @@ export default function PlannerPage() {
   const [focusTaskId, setFocusTaskId] = useState<number | null>(null)
   const [focusSeconds, setFocusSeconds] = useState(25 * 60)
   const [focusMode, setFocusMode] = useState<'compact' | 'normal' | 'fullscreen' | 'minimized'>('normal')
+  const [plannerView, setPlannerView] = useState<PlannerView>('week')
 
   const courseMap = useMemo(
     () => new Map(courses.map((course) => [course.id, course])),
@@ -109,13 +117,13 @@ export default function PlannerPage() {
     return result.items ?? result
   }
 
-  async function generatePlan(id: number) {
+  async function generatePlan(id: number, requestedView: PlannerView = plannerView) {
     setGenerating(true)
     setError('')
     try {
       const next = await apiFetch<Item>('/planner/students/' + id + '/generate', {
         method: 'POST',
-        body: JSON.stringify({ horizon_days: 7 }),
+        body: JSON.stringify({ horizon_days: requestedView === 'today' ? 1 : requestedView === 'month' ? 28 : 7 }),
       })
       setPlan(next)
       setSelectedDate(next.days?.[0]?.date ?? dateKey(today()))
@@ -173,7 +181,9 @@ export default function PlannerPage() {
     setContext(data)
     setCourses(selected)
     setTopics(topicItems.filter((topic: Item) => String(topic.status).toUpperCase() === 'ACTIVE'))
-    await generatePlan(id)
+    const view = requestedPlannerView()
+    setPlannerView(view)
+    await generatePlan(id, view)
   }
 
   useEffect(() => {
@@ -326,10 +336,22 @@ export default function PlannerPage() {
 
   const planDates = useMemo(() => {
     const first = plan?.days?.[0]?.date ? toDate(plan.days[0].date) : today()
-    return Array.from({ length: plan?.horizon_days ?? 7 }, (_, index) => addDays(first, index))
-  }, [plan])
+    return Array.from({ length: plan?.horizon_days ?? (plannerView === 'month' ? 28 : plannerView === 'today' ? 1 : 7) }, (_, index) => addDays(first, index))
+  }, [plan, plannerView])
+
+  const monthWeeks = useMemo(() => {
+    if (plannerView !== 'month') return []
+    return Array.from({ length: 4 }, (_, index) => {
+      const dates = planDates.slice(index * 7, index * 7 + 7)
+      const tasks = dates.flatMap((date) => grouped[dateKey(date)] ?? [])
+      return { index, dates, tasks, minutes: tasks.reduce((sum, task) => sum + task.estimated_minutes, 0) }
+    }).filter((week) => week.dates.length)
+  }, [plannerView, planDates, grouped])
 
   const selectedDay = toDate(selectedDate)
+  const viewTitle = plannerView === 'today' ? 'Havan Today' : plannerView === 'month' ? 'Havan Month' : 'Havan Week'
+  const viewQuestion = plannerView === 'today' ? 'What should I do now?' : plannerView === 'month' ? 'Where am I heading?' : 'How should I organize this week?'
+  const viewKicker = plannerView === 'today' ? 'TODAY' : plannerView === 'month' ? 'MONTH ROADMAP' : 'YOUR ACADEMIC WEEK'
   const selectedTasks = grouped[selectedDate] ?? []
   const totalMinutes = visibleTasks.reduce((sum, task) => sum + task.estimated_minutes, 0)
   const selectedMinutes = selectedTasks.reduce((sum, task) => sum + task.estimated_minutes, 0)
@@ -499,11 +521,10 @@ export default function PlannerPage() {
 
       <section className="planner-hero">
         <div>
-          <span className="student-eyebrow planner-eyebrow">YOUR ACADEMIC WEEK</span>
-          <h1>{profile?.name ? profile.name + "'s plan" : 'Your study plan'}</h1>
+          <span className="student-eyebrow planner-eyebrow">{viewKicker}</span>
+          <h1>{viewTitle}</h1>
           <p>
-            Havan turns your curriculum, progress, confidence, exam pressure, and available
-            capacity into a focused sequence of recommendations.
+            {viewQuestion} Havan uses your curriculum, progress, confidence, exam pressure, and available capacity to organize the next useful work.
           </p>
         </div>
         <div className="planner-hero-actions">
@@ -518,7 +539,7 @@ export default function PlannerPage() {
               disabled={generating || !studentId}
               onClick={() => studentId && rebalancePlan(studentId)}
             >
-              {generating ? 'Rebalancing…' : 'Rebalance week'}
+              {generating ? 'Rebalancing…' : plannerView === 'today' ? 'Rebalance today' : plannerView === 'month' ? 'Rebalance month' : 'Rebalance week'}
             </button>
             <button
               className="student-primary planner-regenerate"
@@ -526,7 +547,7 @@ export default function PlannerPage() {
               disabled={generating || !studentId}
               onClick={() => studentId && generatePlan(studentId)}
             >
-              {generating ? 'Rebuilding…' : 'Refresh plan'}
+              {generating ? 'Rebuilding…' : plannerView === 'today' ? 'Refresh today' : plannerView === 'month' ? 'Refresh month' : 'Refresh week'}
             </button>
           </div>
         </div>
@@ -536,7 +557,7 @@ export default function PlannerPage() {
         <>
           <section className="planner-overview" aria-label="Plan overview">
             <article className="planner-stat planner-stat-primary">
-              <span>THIS WEEK</span>
+              <span>{plannerView === 'today' ? 'TODAY' : plannerView === 'month' ? 'THIS MONTH' : 'THIS WEEK'}</span>
               <strong>{minutesLabel(totalMinutes)}</strong>
               <small>{visibleTasks.length} scheduled sessions</small>
             </article>
@@ -571,45 +592,43 @@ export default function PlannerPage() {
               <section className="planner-calendar panel">
                 <div className="planner-section-heading">
                   <div>
-                    <span className="student-eyebrow">WEEK VIEW</span>
-                    <h2>Choose a study day</h2>
+                    <span className="student-eyebrow">{plannerView === 'today' ? 'TODAY VIEW' : plannerView === 'month' ? 'MONTH VIEW' : 'WEEK VIEW'}</span>
+                    <h2>{plannerView === 'today' ? 'Today at a glance' : plannerView === 'month' ? 'Choose a day in your roadmap' : 'Choose a study day'}</h2>
                   </div>
                   <span className="planner-section-note">{plan.horizon_days} day recommendation</span>
                 </div>
 
-                <div className="planner-week-strip" role="tablist" aria-label="Study plan days">
-                  {planDates.map((date) => {
-                    const key = dateKey(date)
-                    const dayTasks = grouped[key] ?? []
-                    const minutes = dayTasks.reduce((sum, task) => sum + task.estimated_minutes, 0)
-                    const active = key === selectedDate
-
-                    return (
-                      <button
-                        type="button"
-                        role="tab"
-                        aria-selected={active}
-                        className={'planner-week-day ' + (active ? 'is-active' : '')}
-                        key={key}
-                        onClick={() => {
-                          setSelectedDate(key)
-                          setSelectedTaskId(null)
-                        }}
-                      >
-                        <span>{formatDate(date, { weekday: 'short' })}</span>
-                        <strong>{date.getDate()}</strong>
-                        <small>{dayTasks.length ? minutesLabel(minutes) : 'No study'}</small>
-                        {dayTasks.length > 0 && <i aria-hidden="true" />}
-                      </button>
-                    )
-                  })}
-                </div>
+                {plannerView !== 'today' && (
+                  <div className="planner-week-strip" role="tablist" aria-label={plannerView === 'month' ? 'Monthly study plan days' : 'Weekly study plan days'}>
+                    {planDates.map((date) => {
+                      const key = dateKey(date)
+                      const dayTasks = grouped[key] ?? []
+                      const minutes = dayTasks.reduce((sum, task) => sum + task.estimated_minutes, 0)
+                      const active = key === selectedDate
+                      return (
+                        <button
+                          type="button"
+                          role="tab"
+                          aria-selected={active}
+                          className={'planner-week-day ' + (active ? 'is-active' : '')}
+                          key={key}
+                          onClick={() => { setSelectedDate(key); setSelectedTaskId(null) }}
+                        >
+                          <span>{formatDate(date, { weekday: 'short' })}</span>
+                          <strong>{date.getDate()}</strong>
+                          <small>{dayTasks.length ? minutesLabel(minutes) : 'No study'}</small>
+                          {dayTasks.length > 0 && <i aria-hidden="true" />}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
               </section>
 
               <section className="planner-today panel">
                 <div className="planner-today-heading">
                   <div>
-                    <span className="student-eyebrow">FOCUS</span>
+                    <span className="student-eyebrow">{plannerView === 'today' ? 'WHAT TO DO NOW' : plannerView === 'month' ? 'CURRENT FOCUS' : 'FOCUS'}</span>
                     <h2>{formatDate(selectedDay, { weekday: 'long', month: 'long', day: 'numeric' })}</h2>
                     <p>
                       {selectedTasks.length
@@ -666,8 +685,8 @@ export default function PlannerPage() {
               <section className="planner-agenda panel">
                 <div className="planner-section-heading planner-agenda-heading">
                   <div>
-                    <span className="student-eyebrow">DAILY AGENDA</span>
-                    <h2>Recommendation details</h2>
+                    <span className="student-eyebrow">{plannerView === 'month' ? 'MONTHLY AGENDA' : 'DAILY AGENDA'}</span>
+                    <h2>{plannerView === 'month' ? 'What is planned next' : 'Recommendation details'}</h2>
                   </div>
                   <select
                     aria-label="Filter recommendations by course"
