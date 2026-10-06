@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { apiFetch } from '@/lib/api'
 import styles from './admin.module.css'
 
-type Props = { onMode: (mode: 'academic' | 'curriculum' | 'streams' | 'mapping' | 'content' | 'import' | 'quality') => void }
+type Props = { onMode: (mode: 'academic' | 'curriculum' | 'streams' | 'mapping' | 'content' | 'import' | 'quality' | 'requests' | 'registry') => void }
 type Page<T> = { items: T[] }
 type Item = { id: number; status: string }
 
