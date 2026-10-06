@@ -45,3 +45,35 @@ button { cursor:pointer } :focus-visible { outline:3px solid rgba(1,1,126,.35); 
 .day-toggle-group { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)) } .day-toggle { width:100% } }
 
 .academic-request{display:grid;gap:12px;padding:14px;border:1px dashed #cfd2e5;border-radius:14px;background:#fafaff}.academic-request-toggle{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;border:0;background:transparent;padding:0;text-align:left;font:inherit;cursor:pointer}.academic-request-toggle span{display:grid;gap:4px}.academic-request-toggle small{color:#5d5d73}.academic-request-toggle b{white-space:nowrap;color:#01017e}.academic-request-body{display:grid;gap:12px;padding-top:4px}.academic-request p{margin:4px 0;color:#5d5d73}.academic-request-tabs{display:flex;gap:8px}.academic-request-tabs button{min-height:40px;border:1px solid #d8d8e4;border-radius:9px;background:#fff;padding:8px 12px;font:inherit;cursor:pointer}.academic-request-tabs .active{background:#01017e;color:#fff;border-color:#01017e}.academic-request-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.academic-request-submit{min-height:44px;border:0;border-radius:9px;background:#01017e;color:#fff;padding:8px 14px;font:inherit;font-weight:700;cursor:pointer}.academic-request-submit:disabled{opacity:.55;cursor:not-allowed}@media(max-width:600px){.academic-request-grid{grid-template-columns:1fr}}
+
+/* Havan student home */
+.havan-home { display:grid; gap:24px; padding:8px 0 40px; }
+.havan-home-hero { display:grid; gap:10px; padding:28px 0 8px; }
+.havan-home-hero h1 { max-width:760px; color:#01017e; font-size:clamp(2.15rem,7vw,3.7rem); line-height:1.02; letter-spacing:-.03em; }
+.havan-home-hero p { max-width:650px; color:#5d5d73; font-size:1rem; line-height:1.65; }
+.havan-home-intro { display:flex; align-items:end; justify-content:space-between; gap:20px; }
+.havan-home-intro > div { display:grid; gap:5px; }
+.havan-home-intro h2 { color:#151526; font-size:1.45rem; }
+.havan-home-intro > p { max-width:380px; color:#5d5d73; }
+.havan-destination-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+.havan-destination { display:block; color:inherit; text-decoration:none; }
+.havan-destination-card { min-height:245px; display:grid; align-content:space-between; gap:20px; border:1px solid #e3e3ec; transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease; }
+.havan-destination:hover .havan-destination-card,.havan-destination:focus-visible .havan-destination-card { transform:translateY(-2px); border-color:#01017e; box-shadow:0 12px 30px rgba(1,1,126,.08); }
+.havan-destination:focus-visible { outline:3px solid rgba(1,1,126,.25); outline-offset:4px; border-radius:14px; }
+.havan-destination-top { display:flex; justify-content:space-between; align-items:center; }
+.havan-destination-label { color:#01017e; font-size:.75rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+.havan-destination-arrow { display:grid; place-items:center; width:40px; height:40px; border-radius:12px; background:#eef0ff; color:#01017e; font-size:1.2rem; font-weight:800; }
+.havan-destination-card h2 { color:#151526; font-size:1.55rem; }
+.havan-destination-card p { color:#5d5d73; line-height:1.6; }
+.havan-destination-action { color:#01017e; font-size:.9rem; font-weight:800; }
+.havan-home-note { display:grid; gap:5px; padding:18px 20px; border:1px solid #e0e2f1; border-radius:16px; background:#f7f8ff; }
+.havan-home-note strong { color:#01017e; }
+.havan-home-note p { color:#5d5d73; line-height:1.6; }
+@media(max-width:760px) {
+  .havan-home { gap:20px; padding-bottom:32px; }
+  .havan-home-hero { padding-top:20px; }
+  .havan-home-hero p { font-size:.95rem; }
+  .havan-home-intro { display:grid; align-items:start; gap:4px; }
+  .havan-destination-grid { grid-template-columns:1fr; gap:12px; }
+  .havan-destination-card { min-height:0; gap:18px; }
+}
