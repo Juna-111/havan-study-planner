@@ -76,7 +76,7 @@ function View() {
           ))}
 
           {p.tasks.map((t) => (
-            <Card key={t.id} as="article">
+            <Card key={t.id} as="article" padding="lg" className="plan-task">
               <div className="row">
                 <Chip tone={t.status === 'DONE' ? 'success' : 'info'}>
                   {t.status}
@@ -84,13 +84,13 @@ function View() {
                 <strong>{t.planned_date}</strong>
               </div>
 
-              <h2 style={{ margin: '10px 0 4px' }}>{t.topic_name}</h2>
+              <h2 className="plan-task-title">{t.topic_name}</h2>
               <p>{t.reason}</p>
               <small>
                 {t.minutes} min · {t.course_name}
               </small>
 
-              <div className="row" style={{ marginTop: 12 }}>
+              <div className="plan-task-actions">
                 {t.status !== 'DONE' && (
                   <Button
                     onClick={() =>
