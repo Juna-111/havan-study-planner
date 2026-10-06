@@ -6,6 +6,7 @@ import AdminOverview from '@/features/admin/AdminOverview'
 import AdminShell, { type AdminMode } from '@/features/admin/AdminShell'
 import AcademicSetupScreen from '@/features/admin/AcademicSetupScreen'
 import CurriculumManagementScreen from '@/features/admin/CurriculumManagementScreen'
+import StreamManagementScreen from '@/features/admin/StreamManagementScreen'
 import MappingScreen from '@/features/admin/MappingScreen'
 import ContentScreen from '@/features/admin/ContentScreen'
 import ImportScreen from '@/features/admin/ImportScreen'
@@ -18,6 +19,7 @@ export default function AdminScreen() {
     overview: <AdminOverview onMode={setMode} />,
     academic: <AcademicSetupScreen />,
     curriculum: <CurriculumManagementScreen />,
+    streams: <StreamManagementScreen />,
     mapping: <MappingScreen />,
     content: <ContentScreen />,
     import: <ImportScreen />,
