@@ -39,6 +39,7 @@ export default function StepHabits({ days, hours, onDays, onHours }: StepHabitsP
       <div className="onboarding-days">
         {DAYS.map(([key, label]) => (
           <button
+            className="onboarding-day"
             key={key}
             type="button"
             aria-pressed={days.includes(key)}
