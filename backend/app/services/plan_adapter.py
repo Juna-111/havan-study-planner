@@ -142,6 +142,10 @@ def build_request(
     }
     default_minutes = max(5, round(plan_input.hours_per_day * 60 / 5) * 5)
     pin_dates = pinned_topic_dates or plan_input.pinned_topic_dates
+    horizon_end = today + __import__("datetime").timedelta(days=plan_input.horizon_days - 1)
+    for pinned_date in pin_dates.values():
+        if pinned_date < today or pinned_date > horizon_end:
+            raise ValueError("Pinned dates must stay inside the selected planning window.")
     pin_topic_ids = set(pin_dates)
     for pinned_date in pin_dates.values():
         weekdays = frozenset(set(weekdays) | {pinned_date.weekday()})
