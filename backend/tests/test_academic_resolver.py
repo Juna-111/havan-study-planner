@@ -14,12 +14,15 @@ class FakeResult:
 class FakeDB:
     def __init__(self, stream, rows):
         self.stream = stream
+        self.curriculum = SimpleNamespace(id=stream.curriculum_id, status="ACTIVE")
         self.rows = rows
 
     def get(self, model, item_id):
-        from app.db.models.curriculum import Stream
+        from app.db.models.curriculum import Curriculum, Stream
         if model is Stream and item_id == self.stream.id:
             return self.stream
+        if model is Curriculum and item_id == self.curriculum.id:
+            return self.curriculum
         return None
 
     def execute(self, query):
