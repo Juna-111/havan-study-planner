@@ -108,6 +108,8 @@ button { cursor:pointer } :focus-visible { outline:3px solid rgba(1,1,126,.35); 
  .plan-task { display:grid; gap:8px }
  .plan-task-title { margin:2px 0; color:#151526; font-size:1.3rem }
  .plan-task-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap }
+.plan-task-date { display:grid; gap:3px; color:#5d5d73; font-size:.75rem; font-weight:600 }
+ .plan-task-date input { min-height:40px; border:1px solid #d9d9e6; border-radius:8px; padding:6px 8px; background:#fff; color:#151526 }
 
 .plan-capacity { display:grid; gap:10px; border-color:#dfe2f4; background:#f7f8ff }
  .plan-capacity > div { display:grid; gap:2px }
