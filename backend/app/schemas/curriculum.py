@@ -12,7 +12,7 @@ class ORMModel(BaseModel):
 
 class UniversityBase(BaseModel):
     name: str = Field(min_length=2, max_length=150)
-    code: str = Field(min_length=2, max_length=30, pattern=r"^[A-Za-z0-9_-]+$")
+    code: Optional[str] = Field(default=None, min_length=2, max_length=30, pattern=r"^[A-Za-z0-9_-]+$")
     description: Optional[str] = None
     status: str = Field(default="ACTIVE", pattern=r"^(ACTIVE|INACTIVE)$")
 class UniversityCreate(UniversityBase): pass
