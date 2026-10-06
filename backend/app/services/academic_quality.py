@@ -101,6 +101,31 @@ def run_academic_quality_checks(db: Session) -> dict:
         if chapter.status == "ACTIVE" and active_topics_by_chapter[chapter.id] == 0:
             add_parent_child_issue("chapter", chapter.id, "topic", chapter.name)
 
+    # Content completeness checks for the planner-facing academic content.
+    for chapter in chapters:
+        if chapter.status == "ACTIVE" and not (chapter.important_points or "").strip():
+            issues.append(
+                _issue(
+                    "warning",
+                    "chapter",
+                    chapter.id,
+                    "Missing critical points",
+                    f"{chapter.name} has no admin-entered critical points.",
+                )
+            )
+
+    for topic in topics:
+        if topic.status == "ACTIVE" and not (topic.important_points or "").strip():
+            issues.append(
+                _issue(
+                    "warning",
+                    "topic",
+                    topic.id,
+                    "Missing critical points",
+                    f"{topic.name} has no admin-entered critical points.",
+                )
+            )
+
     # Active records whose parent is inactive. These records exist, but cannot
     # safely participate in the active planner dataset.
     for curriculum in curriculums:
