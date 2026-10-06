@@ -1,5 +1,4 @@
-from app.core.config import get_settings
-API_PREFIX = get_settings().api_prefix
+from app.core.config import API_PREFIX
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
