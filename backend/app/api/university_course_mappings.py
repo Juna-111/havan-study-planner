@@ -1,5 +1,5 @@
-from app.core.config import get_settings
-API_PREFIX = get_settings().api_prefix
+from app.core.config import API_PREFIX
+from app.core.deps import require_admin
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
@@ -12,10 +12,7 @@ from app.schemas.curriculum import (
     UniversityCourseMappingUpdate,
 )
 
-router = APIRouter(
-    prefix=f"{API_PREFIX}/university-course-mappings",
-    tags=["university-course-mappings"],
-)
+router = APIRouter(prefix=f"{API_PREFIX}/university-course-mappings", tags=["university-course-mappings"], dependencies=[Depends(require_admin)])
 DB = Depends(get_db)
 
 
