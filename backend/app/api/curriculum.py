@@ -36,7 +36,12 @@ def get_university(item_id:int,db:DB): return get_or_404(db,University,item_id)
 @router.patch("/universities/{item_id}", dependencies=[Depends(require_admin)], response_model=UniversityRead)
 def update_university(item_id:int,payload:UniversityUpdate,db:DB): return update_item(db,get_or_404(db,University,item_id),payload.model_dump(exclude_unset=True))
 @router.delete("/universities/{item_id}", dependencies=[Depends(require_admin)],status_code=204)
-def delete_university(item_id:int,db:DB): delete_item(db,get_or_404(db,University,item_id))
+def delete_university(item_id:int,db:DB):
+    item = get_or_404(db, University, item_id)
+    child_count = db.scalar(select(func.count()).select_from(Curriculum).where(Curriculum.university_id == item_id)) or 0
+    if child_count:
+        raise HTTPException(status_code=409, detail="This university has curricula. Deactivate it instead of deleting it.")
+    delete_item(db, item)
 
 @router.get("/curriculums")
 def curriculums(db:DB, university_id:int|None=None,page:int=Query(1,ge=1),page_size:int=Query(20,ge=1,le=100)):
@@ -48,7 +53,13 @@ def get_curriculum(item_id:int,db:DB): return get_or_404(db,Curriculum,item_id)
 @router.patch("/curriculums/{item_id}", dependencies=[Depends(require_admin)],response_model=CurriculumRead)
 def update_curriculum(item_id:int,payload:CurriculumUpdate,db:DB): return update_item(db,get_or_404(db,Curriculum,item_id),payload.model_dump(exclude_unset=True))
 @router.delete("/curriculums/{item_id}", dependencies=[Depends(require_admin)],status_code=204)
-def delete_curriculum(item_id:int,db:DB): delete_item(db,get_or_404(db,Curriculum,item_id))
+def delete_curriculum(item_id:int,db:DB):
+    item = get_or_404(db, Curriculum, item_id)
+    stream_count = db.scalar(select(func.count()).select_from(Stream).where(Stream.curriculum_id == item_id)) or 0
+    mapping_count = db.scalar(select(func.count()).select_from(UniversityCourseMapping).where(UniversityCourseMapping.curriculum_id == item_id)) or 0
+    if stream_count or mapping_count:
+        raise HTTPException(status_code=409, detail="This curriculum has dependent streams or course mappings. Archive it instead of deleting it.")
+    delete_item(db, item)
 
 @router.get("/streams")
 def streams(db:DB,curriculum_id:int|None=None,page:int=Query(1,ge=1),page_size:int=Query(20,ge=1,le=100)):
@@ -60,7 +71,13 @@ def get_stream(item_id:int,db:DB): return get_or_404(db,Stream,item_id)
 @router.patch("/streams/{item_id}", dependencies=[Depends(require_admin)],response_model=StreamRead)
 def update_stream(item_id:int,payload:StreamUpdate,db:DB): return update_item(db,get_or_404(db,Stream,item_id),payload.model_dump(exclude_unset=True))
 @router.delete("/streams/{item_id}", dependencies=[Depends(require_admin)],status_code=204)
-def delete_stream(item_id:int,db:DB): delete_item(db,get_or_404(db,Stream,item_id))
+def delete_stream(item_id:int,db:DB):
+    item = get_or_404(db, Stream, item_id)
+    course_count = db.scalar(select(func.count()).select_from(Course).where(Course.stream_id == item_id)) or 0
+    mapping_count = db.scalar(select(func.count()).select_from(UniversityCourseMapping).where(UniversityCourseMapping.stream_id == item_id)) or 0
+    if course_count or mapping_count:
+        raise HTTPException(status_code=409, detail="This stream has courses or mappings. Deactivate it instead of deleting it.")
+    delete_item(db, item)
 
 @router.get("/courses")
 def courses(
