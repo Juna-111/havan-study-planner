@@ -93,10 +93,54 @@ function View() {
         {profile && (
           <Card padding="lg" className="settings-card">
             <h2>Profile</h2>
-            <label className="app-field">University<select value={universityId} onChange={(event) => { setUniversityId(event.target.value); setCurriculumId(''); setStreamId('') }}><option value="">Choose university</option>{universities.map((item) => <option key={item.id} value={item.id}>{item.code ? item.code + ' · ' : ''}{item.name}</option>)}</select></label>
-            <label className="app-field">Curriculum<select value={curriculumId} onChange={(event) => { setCurriculumId(event.target.value); setStreamId('') }}><option value="">Choose curriculum</option>{curriculums.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+            <label className="app-field">
+              University
+              <select
+                value={universityId}
+                onChange={(event) => {
+                  setUniversityId(event.target.value)
+                  setCurriculumId('')
+                  setStreamId('')
+                }}
+              >
+                <option value="">Choose university</option>
+                {universities.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.code ? item.code + ' · ' : ''}{item.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="app-field">
+              Curriculum
+              <select
+                value={curriculumId}
+                onChange={(event) => {
+                  setCurriculumId(event.target.value)
+                  setStreamId('')
+                }}
+              >
+                <option value="">Choose curriculum</option>
+                {curriculums.map((item) => (
+                  <option key={item.id} value={item.id}>{item.name}</option>
+                ))}
+              </select>
+            </label>
             <AcademicCatalogRequest universityId={universityId} />
-            <label className="app-field">Stream<select value={streamId} onChange={(event) => setStreamId(event.target.value)}><option value="">Choose stream</option>{streams.map((item) => <option key={item.id} value={item.id}>{item.code ? item.code + ' · ' : ''}{item.name}</option>)}</select></label>
+            <label className="app-field">
+              Stream
+              <select
+                value={streamId}
+                onChange={(event) => setStreamId(event.target.value)}
+              >
+                <option value="">Choose stream</option>
+                {streams.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.code ? item.code + ' · ' : ''}{item.name}
+                  </option>
+                ))}
+              </select>
+            </label>
             <label className="app-field">
               Name
               <input value={name} onChange={(event) => setName(event.target.value)} />
