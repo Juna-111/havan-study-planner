@@ -97,8 +97,8 @@ export default function AcademicSetupScreen() {
     <section>
       <header className={styles.header}>
         <span>SETUP · ACADEMIC CATALOG</span>
-        <h1>Add universities and curricula faster</h1>
-        <p>Create academic options once, then students can select them during setup. Student requests for missing options appear here for approval.</p>
+        <h1>Build the academic catalog faster</h1>
+        <p>Add universities, curricula, and streams once, then students can select the correct academic path during setup. Student requests for missing options appear here for approval.</p>
       </header>
       {(message || error) && <div className={error ? styles.alert : styles.notice}>{error || message}</div>}
       <div className={styles.quickGrid}>
