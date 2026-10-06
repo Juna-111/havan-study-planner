@@ -1,4 +1,4 @@
-import { clearAuth, getAuthToken } from '@/lib/auth'
+import { clearAuth, getAuthToken } from '@/lib/auth'\n\nexport type ApiValidationError = {\n  field: string\n  message: string\n  type: string\n}\n\ntype ApiErrorDetail = string | ApiValidationError[]\n
 
 const rawApiBaseUrl = process.env.NEXT_PUBLIC_API_URL?.trim()
 const API_BASE_URL = rawApiBaseUrl
