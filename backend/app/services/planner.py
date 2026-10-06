@@ -12,7 +12,7 @@ from app.db.models.curriculum import Chapter, Topic
 from app.db.models.planner import StudyPlan, StudyTask
 from app.db.models.student import StudentCourse, StudentExam, StudentProfile, StudentTopicProgress
 from app.services.academic_resolver import resolved_course_ids
-from app.services.planner_engine import (
+from app.services.plan.engine import (
     PlannerExam,
     PlannerTopic,
     schedule_tasks,
