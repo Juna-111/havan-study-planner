@@ -1,18 +1,32 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AppShell, PageHeader } from '@/components/layout'
 import { Button, Card, Chip, EmptyState, ErrorState } from '@/components/ui'
 import { getCurrentPlan, planAction, type Plan } from '@/lib/plan'
+import { apiFetch } from '@/lib/api'
 export default function PlanView() {
   const [p, setP] = useState<Plan | null>(null)
   const [e, setE] = useState('')
   const [targetDates, setTargetDates] = useState<Record<number, string>>({})
   const [pendingTask, setPendingTask] = useState<number | null>(null)
+  const [catalog, setCatalog] = useState<{ id: number; code: string; name: string; chapters: { id: number; name: string; topics: { id: number; name: string }[] }[] }[]>([])
+  const [addTopicId, setAddTopicId] = useState('')
+  const [addError, setAddError] = useState('')
   useEffect(() => {
     getCurrentPlan()
       .then(setP)
       .catch((x) => setE(x instanceof Error ? x.message : ''))
   }, [])
+  useEffect(() => {
+    apiFetch<typeof catalog>('/students/me/catalog').then(setCatalog).catch(() => setCatalog([]))
+  }, [])
+  const addOptions = useMemo(
+    () => catalog.flatMap((course) => course.chapters.flatMap((chapter) => chapter.topics.map((topic) => ({
+      id: topic.id,
+      label: course.code + ' · ' + chapter.name + ' · ' + topic.name,
+    })))),
+    [catalog],
+  )
   const modeLabel = p?.mode === 'today' ? 'Today' : p?.mode === 'month' ? 'Month' : 'Week'
   const completedCount = p?.tasks.filter((task) => task.status === 'DONE').length ?? 0
   const plannedMinutes = p?.tasks.filter((task) => task.status !== 'SKIPPED').reduce((total, task) => total + task.minutes, 0) ?? 0
@@ -74,6 +88,36 @@ export default function PlanView() {
               <span>planned study time</span>
             </div>
           </Card>
+          <Card padding="lg" className="plan-add-topic">
+            <span className="app-eyebrow">ADD TO YOUR PLAN</span>
+            <h2>Add a topic</h2>
+            <p className="app-meta">Choose another topic yourself. Havan will place it as a manual addition, not as a recommendation.</p>
+            <div className="row">
+              <select value={addTopicId} onChange={(event) => { setAddTopicId(event.target.value); setAddError('') }}>
+                <option value="">Choose a topic</option>
+                {addOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+              </select>
+              <Button
+                variant="accent"
+                disabled={!addTopicId || pendingTask !== null}
+                onClick={async () => {
+                  try {
+                    setAddError('')
+                    setPendingTask(0)
+                    setP(await planAction(0, { action: 'ADD', target_topic_id: Number(addTopicId) }))
+                    setAddTopicId('')
+                  } catch (x) {
+                    setAddError(x instanceof Error ? x.message : 'Could not add that topic.')
+                  } finally {
+                    setPendingTask(null)
+                  }
+                }}
+              >
+                Add topic
+              </Button>
+            </div>
+            {addError && <p className="app-meta">{addError}</p>}
+          </Card>
           {p.warnings.map((w) => (
             <Chip
               key={w.code}
@@ -121,6 +165,11 @@ export default function PlanView() {
                     {t.status !== 'DONE' && (
                       <Button disabled={pendingTask === t.id} variant="ghost" onClick={() => act(t.id, 'SKIP')}>
                         Skip
+                      </Button>
+                    )}
+                    {t.status !== 'DONE' && (
+                      <Button disabled={pendingTask === t.id} variant="ghost" onClick={() => act(t.id, 'REMOVE')}>
+                        Remove
                       </Button>
                     )}
                     <label className="plan-task-date">
