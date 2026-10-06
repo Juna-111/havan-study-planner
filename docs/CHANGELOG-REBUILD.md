@@ -48,6 +48,9 @@ Status: IMPLEMENTED / LOCAL VERIFICATION PENDING
 - Updated student weekday schema/model types to canonical strings.
 - Updated touched student frontend code to use the canonical weekday definition.
 
+### Static audit
+- Selected Phase 3 backend/frontend files pass repository text scans for malformed duplicate function declarations, legacy `date.today()` in touched planner paths, `havan_student_key`, and `Record<string, any>` in the new lib files.
+
 ### Verification
 Not run in the GitHub workspace. Required local checks before Phase 3 is green:
 - backend: `pytest -q backend/tests/test_time.py backend/tests/security/test_auth_guards.py`
