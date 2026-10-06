@@ -33,9 +33,11 @@ export default function QualityScreen() {
   const [data, setData] = useState<Quality | null>(null)
   const [filter, setFilter] = useState('all')
   const [error, setError] = useState('')
+  const [checking, setChecking] = useState(false)
 
   const load = () => {
     setError('')
+    setChecking(true)
     apiFetch<Quality>('/academic-quality')
       .then(setData)
       .catch((value) =>
@@ -45,6 +47,7 @@ export default function QualityScreen() {
             : 'Could not load quality checks.',
         ),
       )
+      .finally(() => setChecking(false))
   }
 
   useEffect(load, [])
@@ -60,6 +63,9 @@ export default function QualityScreen() {
         <span>QUALITY</span>
         <h1>Academic quality</h1>
         <p>Check the data that feeds the Havan planner before it reaches students.</p>
+        <button className={styles.primary} disabled={checking} onClick={load}>
+          {checking ? 'Checking…' : 'Recheck data'}
+        </button>
       </header>
 
       {error && <div className={styles.alert}>{error}</div>}
