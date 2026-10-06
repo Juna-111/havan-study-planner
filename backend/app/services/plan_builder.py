@@ -16,12 +16,12 @@ from app.services.plan.engine import PlanResult, build_plan
 
 def _add_pin_warnings(result: PlanResult, plan_input: PlanInput) -> PlanResult:
     default_minutes = max(5, round(plan_input.hours_per_day * 60 / 5) * 5)
-    selected_days = set(plan_input.study_days)
+    selected_days = {to_index(day) for day in plan_input.study_days}
     extra = list(result.warnings)
     pinned_per_date: dict[date, int] = {}
     for topic_id, pinned_date in plan_input.pinned_topic_dates.items():
         pinned_per_date[pinned_date] = pinned_per_date.get(pinned_date, 0) + 1
-        if pinned_date.strftime("%a").lower()[:3] not in selected_days:
+        if pinned_date.weekday() not in selected_days:
             extra.append(__import__("app.services.planner_engine", fromlist=["PlanWarning"]).PlanWarning(
                 "PIN_NON_STUDY_DAY", f"{pinned_date.isoformat()} is not one of your study days. We kept the topic there."
             ))
