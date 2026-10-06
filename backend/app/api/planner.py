@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models.planner import StudyPlan, StudyTask
 from app.db.models.curriculum import Chapter, Topic
-from app.db.models.student import StudentProfile, StudentTopicProgress
+from app.db.models.student import StudentAccount, StudentProfile, StudentTopicProgress
 from app.services.academic_resolver import resolved_course_ids
 from app.db.session import get_db
 from app.schemas.planner import PlanGenerateRequest, StudyPlanDay, StudyPlanRead, StudyTaskAction
@@ -95,9 +95,13 @@ def _generate(db: Session, student_id: int, horizon_days: int) -> StudyPlanRead:
 def generate_from_request(
     payload: PlanGenerateRequest,
     db: Session = Depends(get_db),
+    account: StudentAccount = Depends(current_account),
 ):
-    account = current_account_from_request\n    if payload.student_id is None:
+    if payload.student_id is None:
         raise HTTPException(status_code=422, detail="student_id is required")
+    profile = db.get(StudentProfile, payload.student_id)
+    if profile is None or profile.account_id != account.id:
+        raise HTTPException(status_code=403, detail="You cannot access another student's data.")
     return _generate(db, payload.student_id, payload.horizon_days)
 
 
