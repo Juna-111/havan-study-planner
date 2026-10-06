@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppShell, PageHeader, StickyActionBar } from '@/components/layout'
-import { Button, Card, Checkbox, EmptyState, ErrorState, NumberStepper, Segmented } from '@/components/ui'
+import { Button, Card, EmptyState, ErrorState, NumberStepper, Segmented, TreeSelect } from '@/components/ui'
 import { apiFetch } from '@/lib/api'
 import { previewPlan, savePlan, type Plan, type PlanMode } from '@/lib/plan'
 
@@ -101,47 +101,58 @@ export function PlanBuilder() {
         <EmptyState title="No topics available" hint="Your selected courses do not have active topic data yet." />
       ) : (
         <div className="app-section">
-          {courses.map((course) => (
-            <Card key={course.id} padding="lg" className="plan-course">
-              <div>
-                <h2>{course.code} · {course.name}</h2>
-                <p className="app-meta">Select the topics you want Havan to schedule.</p>
-              </div>
-
-              {course.chapters.map((chapter) => (
-                <section key={chapter.id} className="plan-chapter">
-                  <h3>{chapter.name}</h3>
-                  <div className="topic-list">
-                    {chapter.topics.map((topic) => (
-                      <div key={topic.id} className="plan-topic-row">
-                        <Checkbox
-                          label={topic.name}
-                          checked={selected.has(topic.id)}
-                          onChange={(checked) => setSelected((old) => {
+          <Card padding="lg" className="plan-course">
+            <div>
+              <h2>Choose your topics</h2>
+              <p className="app-meta">
+                Open a chapter, then select the specific topics you want Havan to schedule.
+              </p>
+            </div>
+            <TreeSelect
+              courses={courses.map((course) => ({
+                id: String(course.id),
+                name: `${course.code} · ${course.name}`,
+                chapters: course.chapters.map((chapter) => ({
+                  id: String(chapter.id),
+                  name: chapter.name,
+                  topics: chapter.topics.map((topic) => ({
+                    id: String(topic.id),
+                    name: topic.name,
+                    minutes: topic.estimated_study_minutes,
+                  })),
+                })),
+              }))}
+              selected={new Set([...selected].map(String))}
+              onChange={(next) => setSelected(new Set([...next].map(Number)))}
+            />
+            {selected.size > 0 && (
+              <div className="app-section">
+                <p className="app-meta">Already know a selected topic? Mark it known so Havan can account for it.</p>
+                <div className="topic-list">
+                  {[...selected].map((topicId) => {
+                    const topic = courses.flatMap((course) => course.chapters.flatMap((chapter) => chapter.topics))
+                      .find((item) => item.id === topicId)
+                    if (!topic) return null
+                    return (
+                      <label className="plan-topic-row" key={topic.id}>
+                        <span>{topic.name}</span>
+                        <input
+                          type="checkbox"
+                          checked={known.has(topic.id)}
+                          onChange={(event) => setKnown((old) => {
                             const next = new Set(old)
-                            checked ? next.add(topic.id) : next.delete(topic.id)
+                            event.target.checked ? next.add(topic.id) : next.delete(topic.id)
                             return next
                           })}
                         />
-                        <div className="topic-actions">
-                          <span>{topic.estimated_study_minutes} min</span>
-                          <Checkbox
-                            label="Known"
-                            checked={known.has(topic.id)}
-                            onChange={(checked) => setKnown((old) => {
-                              const next = new Set(old)
-                              checked ? next.add(topic.id) : next.delete(topic.id)
-                              return next
-                            })}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              ))}
-            </Card>
-          ))}
+                        <span className="app-meta">Known</span>
+                      </label>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+          </Card>
 
           {preview && (
             <Card padding="lg" className="plan-review">
