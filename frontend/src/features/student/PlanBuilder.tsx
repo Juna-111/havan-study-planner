@@ -73,17 +73,23 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
     }
   }, [initialMode])
 
+  async function loadStudyData() {
+    try {
+      setError('')
+      const [catalog, student] = await Promise.all([
+        apiFetch<Course[]>('/students/me/catalog'),
+        apiFetch<Profile>('/students/me/profile'),
+      ])
+      setCourses(catalog)
+      setProfile(student)
+      setHours(student.study_hours_per_day)
+    } catch (value) {
+      setError(value instanceof Error ? value.message : 'Could not load your study data.')
+    }
+  }
+
   useEffect(() => {
-    Promise.all([
-      apiFetch<Course[]>('/students/me/catalog'),
-      apiFetch<Profile>('/students/me/profile'),
-    ])
-      .then(([catalog, student]) => {
-        setCourses(catalog)
-        setProfile(student)
-        setHours(student.study_hours_per_day)
-      })
-      .catch((value) => setError(value instanceof Error ? value.message : 'Could not load your study data.'))
+    void loadStudyData()
   }, [])
 
   const horizon = mode === 'today' ? 1 : mode === 'week' ? 7 : 28
@@ -158,8 +164,24 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
           </div>
           <span className="havan-plan-control-note">Your selections stay under your control.</span>
         </div>
-        <Segmented options={['today', 'week', 'month'] as const} value={mode} onChange={setMode} />
-        <NumberStepper label="Hours per study day" value={hours} min={1} max={12} onChange={setHours} />
+        <Segmented
+          options={['today', 'week', 'month'] as const}
+          value={mode}
+          onChange={(next) => {
+            setMode(next)
+            setPreview(null)
+          }}
+        />
+        <NumberStepper
+          label="Hours per study day"
+          value={hours}
+          min={1}
+          max={12}
+          onChange={(next) => {
+            setHours(next)
+            setPreview(null)
+          }}
+        />
       </Card>
 
       {selected.size > 0 && (
@@ -176,7 +198,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
         </Card>
       )}
 
-      {error && <ErrorState message={error} onRetry={() => setError('')} />}
+      {error && <ErrorState message={error} onRetry={() => void loadStudyData()} />}
 
       {!courses.length && !error ? (
         <EmptyState title="No topics available" hint="Your selected courses do not have active topic data yet." />
