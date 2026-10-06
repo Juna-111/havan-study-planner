@@ -37,6 +37,13 @@ function Builder() {
   const [preview, setPreview] = useState<Plan | null>(null)
 
   useEffect(() => {
+    const requestedMode = new URLSearchParams(window.location.search).get('mode')
+    if (requestedMode === 'today' || requestedMode === 'week' || requestedMode === 'month') {
+      setMode(requestedMode)
+    }
+  }, [])
+
+  useEffect(() => {
     Promise.all([
       apiFetch<Course[]>('/students/me/catalog'),
       apiFetch<Profile>('/students/me/profile'),
