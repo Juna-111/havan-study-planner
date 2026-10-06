@@ -8,7 +8,15 @@ import { StudentGate } from '@/features/student/StudentGate'
 import { apiFetch } from '@/lib/api'
 import { previewPlan, savePlan, type Plan, type PlanMode } from '@/lib/plan'
 
-type Topic = { id: number; name: string; difficulty: number; estimated_study_minutes: number; important_points?: string | null; status: string }
+type Topic = {
+  id: number
+  name: string
+  difficulty: number
+  estimated_study_minutes: number
+  important_points?: string | null
+  status: string
+}
+
 type Chapter = { id: number; name: string; topics: Topic[] }
 type Course = { id: number; code: string; name: string; chapters: Chapter[] }
 type Profile = { study_hours_per_day: number; study_days: string[] }
@@ -32,11 +40,13 @@ function Builder() {
     Promise.all([
       apiFetch<Course[]>('/students/me/catalog'),
       apiFetch<Profile>('/students/me/profile'),
-    ]).then(([catalog, student]) => {
-      setCourses(catalog)
-      setProfile(student)
-      setHours(student.study_hours_per_day)
-    }).catch((value) => setError(value instanceof Error ? value.message : 'Could not load your study data.'))
+    ])
+      .then(([catalog, student]) => {
+        setCourses(catalog)
+        setProfile(student)
+        setHours(student.study_hours_per_day)
+      })
+      .catch((value) => setError(value instanceof Error ? value.message : 'Could not load your study data.'))
   }, [])
 
   const horizon = mode === 'today' ? 1 : mode === 'week' ? 7 : 28
@@ -44,6 +54,7 @@ function Builder() {
     () => Object.fromEntries((profile?.study_days ?? []).map((day) => [day, hours * 60])),
     [profile?.study_days, hours],
   )
+
   const input = useMemo(() => ({
     mode,
     horizon_days: horizon,
@@ -73,17 +84,81 @@ function Builder() {
     }
   }
 
-  return <AppShell>
-    <PageHeader title="Build your plan" backHref="/plan" description="Choose the topics. Havan organizes the time." />
-    <Card>
-      <Segmented options={['today', 'week', 'month'] as const} value={mode} onChange={setMode} />
-      <NumberStepper label="Hours per study day" value={hours} min={1} max={12} onChange={setHours} />
-    </Card>
-    {error && <ErrorState message={error} onRetry={() => setError('')} />}
-    {!courses.length && !error ? <EmptyState title="No topics available" hint="Your selected courses do not have active topic data yet." /> : <div className="stack">
-      {courses.map((course) => <Card key={course.id}><h2>{course.code} · {course.name}</h2>{course.chapters.map((chapter) => <section key={chapter.id}><h3>{chapter.name}</h3>{chapter.topics.map((topic) => <div key={topic.id} className="row"><Checkbox label={topic.name} checked={selected.has(topic.id)} onChange={(checked) => setSelected((old) => { const next = new Set(old); checked ? next.add(topic.id) : next.delete(topic.id); return next })} /><Checkbox label="Known" checked={known.has(topic.id)} onChange={(checked) => setKnown((old) => { const next = new Set(old); checked ? next.add(topic.id) : next.delete(topic.id); return next })} /></div>)}</section>)}</Card>)}
-      {preview && <Card><h2>Review</h2><p>{preview.total_minutes} minutes placed. {preview.unplaced.length} topics could not fit.</p>{preview.warnings.slice(0, 3).map((warning) => <p key={warning.code}>{warning.message}</p>)}</Card>}
-    </div>}
-    <StickyActionBar><Button disabled={!selected.size} variant="secondary" onClick={previewIt}>Preview</Button><Button disabled={!selected.size} onClick={saveIt}>Create plan</Button></StickyActionBar>
-  </AppShell>
+  return (
+    <AppShell>
+      <PageHeader title="Build your plan" backHref="/plan" description="Choose the topics. Havan organizes the time." />
+
+      <Card padding="lg" className="app-section">
+        <Segmented options={['today', 'week', 'month'] as const} value={mode} onChange={setMode} />
+        <NumberStepper label="Hours per study day" value={hours} min={1} max={12} onChange={setHours} />
+      </Card>
+
+      {error && <ErrorState message={error} onRetry={() => setError('')} />}
+
+      {!courses.length && !error ? (
+        <EmptyState title="No topics available" hint="Your selected courses do not have active topic data yet." />
+      ) : (
+        <div className="app-section">
+          {courses.map((course) => (
+            <Card key={course.id} padding="lg" className="plan-course">
+              <div>
+                <h2>{course.code} · {course.name}</h2>
+                <p className="app-meta">Select the topics you want Havan to schedule.</p>
+              </div>
+
+              {course.chapters.map((chapter) => (
+                <section key={chapter.id} className="plan-chapter">
+                  <h3>{chapter.name}</h3>
+                  <div className="topic-list">
+                    {chapter.topics.map((topic) => (
+                      <div key={topic.id} className="plan-topic-row">
+                        <Checkbox
+                          label={topic.name}
+                          checked={selected.has(topic.id)}
+                          onChange={(checked) => setSelected((old) => {
+                            const next = new Set(old)
+                            checked ? next.add(topic.id) : next.delete(topic.id)
+                            return next
+                          })}
+                        />
+                        <div className="topic-actions">
+                          <span>{topic.estimated_study_minutes} min</span>
+                          <Checkbox
+                            label="Known"
+                            checked={known.has(topic.id)}
+                            onChange={(checked) => setKnown((old) => {
+                              const next = new Set(old)
+                              checked ? next.add(topic.id) : next.delete(topic.id)
+                              return next
+                            })}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </Card>
+          ))}
+
+          {preview && (
+            <Card padding="lg" className="plan-review">
+              <h2>Review</h2>
+              <p className="app-copy">
+                {preview.total_minutes} minutes placed. {preview.unplaced.length} topics could not fit.
+              </p>
+              {preview.warnings.slice(0, 3).map((warning) => (
+                <p className="app-meta" key={warning.code}>{warning.message}</p>
+              ))}
+            </Card>
+          )}
+        </div>
+      )}
+
+      <StickyActionBar>
+        <Button disabled={!selected.size} variant="secondary" onClick={previewIt}>Preview</Button>
+        <Button disabled={!selected.size} onClick={saveIt}>Create plan</Button>
+      </StickyActionBar>
+    </AppShell>
+  )
 }
