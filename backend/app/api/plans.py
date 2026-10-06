@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import API_PREFIX
 from app.core.deps import current_student
-from app.db.models.plan import Plan, PlanTask
+from app.db.models.plan import Plan
 from app.db.models.student import StudentProfile
 from app.db.session import get_db
 from app.schemas.plan import PlanAction, PlanInput, PlanOut
