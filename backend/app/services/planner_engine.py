@@ -771,7 +771,7 @@ def schedule_tasks(
             remaining -= duration
             if remaining <= 0:
                 break
-    return outpudef parse_weekdays(values: Iterable[object] | None, default: frozenset[int] = frozenset({0, 1, 2, 3, 4})) -> frozenset[int]:
+    return output\n\ndef parse_weekdays(values: Iterable[object] | None, default: frozenset[int] = frozenset({0, 1, 2, 3, 4})) -> frozenset[int]:
     from app.core.time import parse_weekdays as canonical_parse_weekdays
     return canonical_parse_weekdays(values, tuple(default))
 t
