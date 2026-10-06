@@ -8,6 +8,7 @@ import { StudentGate } from '@/features/student/StudentGate'
 import { apiFetch } from '@/lib/api'
 import { clearAuth, getSavedAccount } from '@/lib/auth'
 import { getMyStudentProfile } from '@/lib/session'
+import AcademicCatalogRequest from '@/features/onboarding/AcademicCatalogRequest'
 
 const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const
 type Profile = { id: number; name: string; university_id: number; curriculum_id: number; stream_id: number; study_hours_per_day: number; study_days: string[] }
@@ -93,6 +94,7 @@ function View() {
             <h2>Profile</h2>
             <label className="app-field">University<select value={universityId} onChange={(event) => { setUniversityId(event.target.value); setCurriculumId(''); setStreamId('') }}><option value="">Choose university</option>{universities.map((item) => <option key={item.id} value={item.id}>{item.code ? item.code + ' · ' : ''}{item.name}</option>)}</select></label>
             <label className="app-field">Curriculum<select value={curriculumId} onChange={(event) => { setCurriculumId(event.target.value); setStreamId('') }}><option value="">Choose curriculum</option>{curriculums.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+            <AcademicCatalogRequest universityId={universityId} />
             <label className="app-field">Stream<select value={streamId} onChange={(event) => setStreamId(event.target.value)}><option value="">Choose stream</option>{streams.map((item) => <option key={item.id} value={item.id}>{item.code ? item.code + ' · ' : ''}{item.name}</option>)}</select></label>
             <label className="app-field">
               Name
