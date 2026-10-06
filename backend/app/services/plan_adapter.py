@@ -13,7 +13,7 @@ from app.db.models.plan import Plan, PlanTask
 from app.db.models.student import StudentExam, StudentProfile, StudentTopicProgress
 from app.schemas.plan import PlanInput
 from app.services.academic_resolver import resolved_course_ids
-from app.services.planner_engine import (
+from app.services.plan.engine import (
     PlanRequest,
     PlannerExam,
     PlannerTopic,
