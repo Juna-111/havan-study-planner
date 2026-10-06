@@ -12,6 +12,7 @@ import ContentScreen from '@/features/admin/ContentScreen'
 import CourseRegistryScreen from '@/features/admin/CourseRegistryScreen'
 import ImportScreen from '@/features/admin/ImportScreen'
 import QualityScreen from '@/features/admin/QualityScreen'
+import RequestManagementScreen from '@/features/admin/RequestManagementScreen'
 
 export default function AdminScreen() {
   const [mode, setMode] = useState<AdminMode>('overview')
@@ -26,6 +27,7 @@ export default function AdminScreen() {
     content: <ContentScreen />,
     import: <ImportScreen />,
     quality: <QualityScreen onMode={setMode} />,
+    requests: <RequestManagementScreen />,
   }[mode]
 
   return (
