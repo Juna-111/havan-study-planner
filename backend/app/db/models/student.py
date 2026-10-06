@@ -13,7 +13,8 @@ class StudentAccount(Base):
     __tablename__ = "student_accounts"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
-    password_hash: Mapped[str] = mapped_column(String(512), nullable=False)\n    role: Mapped[str] = mapped_column(String(10), nullable=False, default="STUDENT", server_default="STUDENT")
+    password_hash: Mapped[str] = mapped_column(String(512), nullable=False)
+    role: Mapped[str] = mapped_column(String(10), nullable=False, default="STUDENT", server_default="STUDENT")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
