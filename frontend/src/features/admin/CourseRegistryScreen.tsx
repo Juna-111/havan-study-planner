@@ -28,6 +28,8 @@ export default function CourseRegistryScreen() {
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('ALL')
   const [selected, setSelected] = useState<Course | null>(null)
+  const [editing, setEditing] = useState<number | null>(null)
+  const [form, setForm] = useState({ stream_id: '', code: '', name: '', description: '', credit_hours: '' })
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
 
@@ -80,6 +82,50 @@ export default function CourseRegistryScreen() {
   function selectCurriculum(value: string) {
     setCurriculumId(value)
     setStreamId('')
+  }
+
+  function beginEdit(course: Course) {
+    setEditing(course.id)
+    setForm({
+      stream_id: course.stream_id ? String(course.stream_id) : streamId,
+      code: course.code,
+      name: course.name,
+      description: course.description || '',
+      credit_hours: course.credit_hours == null ? '' : String(course.credit_hours),
+    })
+    setSelected(null)
+    setError('')
+  }
+
+  function resetForm() {
+    setEditing(null)
+    setForm({ stream_id: streamId, code: '', name: '', description: '', credit_hours: '' })
+  }
+
+  async function saveCourse() {
+    if (!form.stream_id || !form.code.trim() || !form.name.trim()) return
+    setBusy(editing ? 'edit-' + editing : 'add')
+    setError('')
+    try {
+      const body = {
+        stream_id: Number(form.stream_id),
+        code: form.code.trim().toUpperCase(),
+        name: form.name.trim(),
+        description: form.description.trim() || null,
+        credit_hours: form.credit_hours ? Number(form.credit_hours) : null,
+        ...(editing ? {} : { status: 'ACTIVE' }),
+      }
+      await apiFetch(editing ? '/courses/' + editing : '/courses', {
+        method: editing ? 'PATCH' : 'POST',
+        body: JSON.stringify(editing ? { ...body, stream_id: undefined } : body),
+      })
+      resetForm()
+      await load()
+    } catch (value) {
+      setError(value instanceof Error ? value.message : 'Could not save course.')
+    } finally {
+      setBusy('')
+    }
   }
 
   async function toggleStatus(course: Course) {
@@ -171,6 +217,7 @@ export default function CourseRegistryScreen() {
             </div>
             <div className={styles.actions}>
               <button onClick={() => setSelected(course)}>Inspect</button>
+              <button onClick={() => beginEdit(course)}>Edit</button>
               <button
                 className={course.status === 'ACTIVE' ? styles.danger : styles.primary}
                 disabled={busy === String(course.id)}
@@ -181,6 +228,27 @@ export default function CourseRegistryScreen() {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className={styles.editor}>
+        <div className={styles.crudHead}>
+          <div><span>{editing ? 'REGISTRY EDIT' : 'REGISTRY CREATE'}</span><h2>{editing ? 'Edit course' : 'Add canonical course'}</h2></div>
+          {editing && <button onClick={resetForm}>Cancel</button>}
+        </div>
+        <p>Every course must belong to a real stream record. Mapping determines academic use; this screen owns the course record.</p>
+        <label>Stream
+          <select value={form.stream_id || streamId} onChange={(event) => setForm((old) => ({ ...old, stream_id: event.target.value }))}>
+            <option value="">Choose stream</option>
+            {streams.map((item) => <option key={item.id} value={item.id}>{item.code} · {item.name}</option>)}
+          </select>
+        </label>
+        <label>Course code<input value={form.code} onChange={(event) => setForm((old) => ({ ...old, code: event.target.value }))} placeholder="PHY101" /></label>
+        <label>Course name<input value={form.name} onChange={(event) => setForm((old) => ({ ...old, name: event.target.value }))} placeholder="Physics" /></label>
+        <label>Credit hours<input type="number" min="0" max="30" value={form.credit_hours} onChange={(event) => setForm((old) => ({ ...old, credit_hours: event.target.value }))} /></label>
+        <label>Description<textarea value={form.description} onChange={(event) => setForm((old) => ({ ...old, description: event.target.value }))} rows={3} /></label>
+        <button className={styles.primary} disabled={busy === 'add' || (editing !== null && busy === 'edit-' + editing) || !form.stream_id || !form.code.trim() || !form.name.trim()} onClick={saveCourse}>
+          {busy ? 'Saving…' : editing ? 'Save course' : 'Add course'}
+        </button>
       </div>
 
       {selected && (
