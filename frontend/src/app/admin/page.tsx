@@ -1,12 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import AdminGuard from './AdminGuard'
-import AdminShell, { type AdminMode } from './AdminShell'
-import MappingScreen from './MappingScreen'
-import ContentScreen from './ContentScreen'
-import ImportScreen from './ImportScreen'
-import QualityScreen from './QualityScreen'
+import AdminGuard from '@/features/admin/AdminGuard'
+import AdminShell, { type AdminMode } from '@/features/admin/AdminShell'
+import MappingScreen from '@/features/admin/MappingScreen'
+import ContentScreen from '@/features/admin/ContentScreen'
+import ImportScreen from '@/features/admin/ImportScreen'
+import QualityScreen from '@/features/admin/QualityScreen'
 
 export default function AdminScreen() {
   const [mode, setMode] = useState<AdminMode>('mapping')
