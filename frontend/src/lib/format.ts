@@ -12,3 +12,5 @@ export function formatDate(value: string | Date, options: Intl.DateTimeFormatOpt
     ...options,
   }).format(typeof value === 'string' ? new Date(value) : value)
 }
+
+export const formatMinutes = minutesLabel
