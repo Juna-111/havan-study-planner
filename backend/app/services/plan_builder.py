@@ -11,7 +11,7 @@ from app.db.models.plan import Plan, PlanTask
 from app.db.models.student import StudentProfile
 from app.schemas.plan import PlanInput, PlanOut
 from app.services.plan_adapter import build_request
-from app.services.plan.engine import PlanResult, PlanWarning, PlannedSession, UnplacedTopic
+from app.services.plan.engine import PlanResult, PlanWarning, allocate_selected_topics
 
 
 
@@ -202,7 +202,7 @@ def build_student_choice_result(
     deferred_topic_ids: set[int] | None = None,
     pinned_topic_dates: dict[int, date] | None = None,
 ) -> PlanResult:
-    """Phase F allocator: only selected topics receive study time."""
+    """Build a smart plan without changing the student's topic choices."""
     request = build_request(
         db,
         student,
@@ -210,93 +210,7 @@ def build_student_choice_result(
         deferred_topic_ids=deferred_topic_ids or set(),
         pinned_topic_dates=pinned_topic_dates,
     )
-    topics = [
-        topic for topic in request.topics
-        if topic.topic_id not in request.known_topic_ids
-        and topic.progress_status != "COMPLETED"
-    ]
-    if not topics:
-        raise ValueError("Select at least one unfinished topic.")
-
-    study_days = [
-        request.today + timedelta(days=offset)
-        for offset in range(max(1, request.horizon_days))
-        if request.calendar.capacity(request.today + timedelta(days=offset)) > 0
-    ]
-    if not study_days:
-        return PlanResult(
-            engine_version="3.0.0-choice",
-            today=request.today,
-            sessions=(),
-            readiness=(),
-            warnings=(PlanWarning("NO_STUDY_TIME", "There is no free study time inside the planning window."),),
-            unplaced=tuple(
-                UnplacedTopic(topic.topic_id, topic.name, topic.course_id, max(5, topic.estimated_minutes), "no_capacity")
-                for topic in topics
-            ),
-        )
-
-    capacities = {day: request.calendar.capacity(day) for day in study_days}
-    remaining = {topic.topic_id: max(5, topic.estimated_minutes) for topic in topics}
-    sessions: list[dict] = []
-    pinned = dict(request.pinned_topic_dates)
-
-    def place(topic, day):
-        available = capacities.get(day, 0)
-        chunk = (min(remaining[topic.topic_id], available, 60) // 5) * 5
-        if chunk < 5:
-            return False
-        parts = (("student_selected", {}), ("allocated", {}))
-        if topic.topic_id in pinned:
-            parts = parts + (("pinned", {}),)
-        sessions.append({"topic": topic, "day": day, "minutes": chunk, "parts": parts})
-        remaining[topic.topic_id] -= chunk
-        capacities[day] -= chunk
-        return True
-
-    for topic in topics:
-        target = pinned.get(topic.topic_id)
-        if target is not None and target not in capacities:
-            capacities[target] = request.calendar.capacity(target)
-        if target is not None and remaining[topic.topic_id] > 0:
-            place(topic, target)
-
-    deferred = deferred_topic_ids or set()
-    for topic in topics:
-        if remaining[topic.topic_id] <= 0:
-            continue
-        days = study_days[1:] if topic.topic_id in deferred and len(study_days) > 1 else study_days
-        for day in days:
-            while remaining[topic.topic_id] > 0 and capacities.get(day, 0) > 0:
-                if not place(topic, day):
-                    break
-            if remaining[topic.topic_id] <= 0:
-                break
-
-    built = tuple(
-        PlannedSession(
-            topic_id=item["topic"].topic_id,
-            course_id=item["topic"].course_id,
-            planned_date=item["day"],
-            minutes=item["minutes"],
-            priority=float(index + 1),
-            reason="You selected this topic; Havan allocated your available study time.",
-            kind="STUDY",
-            components={"selection_order": float(index + 1)},
-            reason_parts=item["parts"],
-        )
-        for index, item in enumerate(sessions)
-    )
-    unplaced = tuple(
-        UnplacedTopic(topic.topic_id, topic.name, topic.course_id, remaining[topic.topic_id], "no_capacity")
-        for topic in topics
-        if remaining[topic.topic_id] > 0
-    )
-    warnings = (
-        (PlanWarning("DOES_NOT_FIT", "Some selected topics need more time than the available study capacity."),)
-        if unplaced else ()
-    )
-    return PlanResult("3.0.0-choice", request.today, built, (), warnings, unplaced)
+    return allocate_selected_topics(request)
 
 def preview_plan(
     db: Session,
@@ -318,11 +232,11 @@ def save_plan(
     deferred_topic_ids: set[int] | None = None,
     pinned_topic_dates: dict[int, date] | None = None,
 ) -> PlanOut:
-    request = build_request(
-        db, student, plan_input, deferred_topic_ids=deferred_topic_ids or set(),
+    result = build_student_choice_result(
+        db, student, plan_input,
+        deferred_topic_ids=deferred_topic_ids,
         pinned_topic_dates=pinned_topic_dates,
     )
-    result = build_student_choice_result(db, student, plan_input, deferred_topic_ids=deferred_topic_ids, pinned_topic_dates=pinned_topic_dates)
 
     active = db.scalars(
         select(Plan).where(Plan.student_id == student.id, Plan.status == "ACTIVE")
