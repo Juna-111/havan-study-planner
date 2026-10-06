@@ -65,11 +65,22 @@ def delete_curriculum(item_id:int,db:DB):
 def streams(db:DB,curriculum_id:int|None=None,page:int=Query(1,ge=1),page_size:int=Query(20,ge=1,le=100)):
     return collection(db,Stream,StreamRead,page,page_size,{"curriculum_id":curriculum_id})
 @router.post("/streams", dependencies=[Depends(require_admin)],response_model=StreamRead,status_code=201)
-def create_stream(payload:StreamCreate,db:DB): return create_item(db,Stream,payload.model_dump())
+def create_stream(payload:StreamCreate,db:DB):
+    curriculum = get_or_404(db, Curriculum, payload.curriculum_id)
+    if str(curriculum.status).upper() != "ACTIVE" and payload.status == "ACTIVE":
+        raise HTTPException(status_code=409, detail="An active stream requires an active curriculum.")
+    return create_item(db,Stream,payload.model_dump())
 @router.get("/streams/{item_id}",response_model=StreamRead)
 def get_stream(item_id:int,db:DB): return get_or_404(db,Stream,item_id)
 @router.patch("/streams/{item_id}", dependencies=[Depends(require_admin)],response_model=StreamRead)
-def update_stream(item_id:int,payload:StreamUpdate,db:DB): return update_item(db,get_or_404(db,Stream,item_id),payload.model_dump(exclude_unset=True))
+def update_stream(item_id:int,payload:StreamUpdate,db:DB):
+    item = get_or_404(db, Stream, item_id)
+    changes = payload.model_dump(exclude_unset=True)
+    if changes.get("status") == "ACTIVE":
+        curriculum = get_or_404(db, Curriculum, item.curriculum_id)
+        if str(curriculum.status).upper() != "ACTIVE":
+            raise HTTPException(status_code=409, detail="An active stream requires an active curriculum.")
+    return update_item(db,item,changes)
 @router.delete("/streams/{item_id}", dependencies=[Depends(require_admin)],status_code=204)
 def delete_stream(item_id:int,db:DB):
     item = get_or_404(db, Stream, item_id)
