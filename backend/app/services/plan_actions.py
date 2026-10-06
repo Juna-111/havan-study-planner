@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -73,7 +73,7 @@ def apply_action(
             db.flush()
         progress.completed_minutes += actual
         progress.study_sessions += 1
-        progress.last_studied_at = __import__("datetime").datetime.now(__import__("datetime").timezone.utc)
+        progress.last_studied_at = datetime.now(timezone.utc)
         if payload.confidence is not None:
             progress.confidence = blend_confidence(progress.confidence, payload.confidence)
         progress.status = "COMPLETED" if progress.completed_minutes >= topic.estimated_study_minutes else "IN_PROGRESS"
