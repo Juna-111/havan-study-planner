@@ -31,7 +31,8 @@ const [editing, setEditing] = useState<{ type: 'university' | 'curriculum' | 'st
 const [editName, setEditName] = useState('')
 const [editCode, setEditCode] = useState('')
 const [editVersion, setEditVersion] = useState('')
-const [editYear, setEditYear] = useState('') async function load() { try {
+const [editYear, setEditYear] = useState('')
+async function load() { try {
 const [u, c, s, requestsResult] = await Promise.all([ apiFetch<{ items: University[] }>('/universities?page=1&page_size=100'),
 apiFetch<{ items: Curriculum[] }>('/curriculums?page=1&page_size=100'), apiFetch<{ items: Stream[] }>('/streams?page=1&page_size=100'), apiFetch<Request[]>('/academic-catalog-requests'), ])
 setUniversities(u.items); setCurriculums(c.items); setStreams(s.items); setRequests(requestsResult) if (!universityId && u.items[0]) setUniversityId(String(u.items[0].id))
