@@ -156,3 +156,32 @@ Not run in the GitHub workspace. Required before Phase 6 is GREEN:
 - manual student journey review at 320, 360, 390, 768, 1024, and 1280 px
 - verify no horizontal scroll and no browser-side allocation/scheduling implementation
 - verify student isolation by attempting plan access/actions with a different authenticated student
+
+
+## Phase 7 — Admin Simplification
+
+Status: IMPLEMENTED / LOCAL VERIFICATION PENDING
+
+### Branch
+- `rebuild/phase-7-admin-simplification`
+- Base: Phase 6 Student API
+
+### Implemented
+- Replaced the legacy multi-workspace admin page with a guarded Havan admin feature area.
+- Added an `/auth/me` role guard with a friendly Not allowed screen for non-admins.
+- Added responsive Setup, Content, Import, and Quality navigation.
+- Rebuilt University → Curriculum → Stream mapping with searchable Semester 1/2 placement, move, and confirmed remove.
+- Replaced the growing management workspace with a config-driven CrudList for Courses, Chapters, and Topics.
+- Added inline editing for catalog fields required by the specification.
+- Kept .txt/.md course import preview-first and confirmation-based.
+- Rebuilt Academic Quality as a compact filterable review surface.
+- Deleted AdminManagementWorkspace.tsx and the old admin CSS/workspace files.
+- Kept backend `require_admin` protection authoritative; no migration was needed.
+
+### Verification
+Not run in the GitHub workspace. Required before Phase 7 is GREEN:
+- frontend `npm test`, `npx tsc --noEmit`, `npm run lint`, `npm run build`
+- backend security/admin tests and full `pytest -q`
+- manual review at 360, 768, 1024, and 1280 px
+- verify mapping add/move/remove and non-admin 403 behavior
+- grep for references to deleted admin workspaces and old admin CSS
