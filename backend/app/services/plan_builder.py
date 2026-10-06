@@ -306,10 +306,6 @@ def preview_plan(
     deferred_topic_ids: set[int] | None = None,
     pinned_topic_dates: dict[int, date] | None = None,
 ) -> PlanOut:
-    request = build_request(
-        db, student, plan_input, deferred_topic_ids=deferred_topic_ids or set(),
-        pinned_topic_dates=pinned_topic_dates,
-    )
     result = build_student_choice_result(db, student, plan_input, deferred_topic_ids=deferred_topic_ids, pinned_topic_dates=pinned_topic_dates)
     return _result_to_out(db, student, plan_input, result)
 
