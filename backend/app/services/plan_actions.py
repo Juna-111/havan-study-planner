@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, timedelta, datetime, timezone
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -10,7 +10,7 @@ from app.db.models.curriculum import Topic
 from app.db.models.plan import Plan, PlanTask
 from app.db.models.student import StudentProfile, StudentTopicProgress
 from app.schemas.plan import PlanAction, PlanInput
-from app.services.plan_builder import preview_plan, save_plan
+from app.services.plan_builder import save_plan
 from app.services.plan.engine import blend_confidence
 
 
