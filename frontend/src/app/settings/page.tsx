@@ -114,7 +114,8 @@ function View() {
             {message && <p className="app-meta">{message}</p>}
           </Card>
         )}
-        {profile && <ExamManager />}\n        <Button variant="danger" onClick={() => { clearAuth(); router.replace('/auth') }}>Sign out</Button>
+        {profile && <ExamManager />}
+        <Button variant="danger" onClick={() => { clearAuth(); router.replace('/auth') }}>Sign out</Button>
       </div>
     </AppShell>
   )
