@@ -20,24 +20,58 @@ type Chapter = { id: number; name: string; topics: Topic[] }
 type Course = { id: number; code: string; name: string; chapters: Chapter[] }
 type Profile = { study_hours_per_day: number; study_days: string[] }
 
-export function PlanBuilder() {
+type PlanBuilderProps = {
+  initialMode?: PlanMode
+}
+
+const modeCopy: Record<PlanMode, { title: string; description: string; horizon: string }> = {
+  today: {
+    title: 'Havan Today',
+    description: 'Choose exactly what you want to study today. Havan allocates your available time across those topics.',
+    horizon: '1 day',
+  },
+  week: {
+    title: 'Havan Week',
+    description: 'Choose the courses, chapters, and topics for your week. Havan spreads them across your available study days.',
+    horizon: '7 days',
+  },
+  month: {
+    title: 'Havan Month',
+    description: 'Choose what you want to cover this month. Havan organizes your selected topics across the available study days.',
+    horizon: '28 days',
+  },
+}
+
+function criticalPoints(value?: string | null) {
+  if (!value?.trim()) return []
+  return value
+    .split(/\\r?\\n|•/)
+    .map((item) => item.replace(/^[-*]\\s*/, '').trim())
+    .filter(Boolean)
+}
+
+export function PlanBuilder({ initialMode }: PlanBuilderProps) {
   const router = useRouter()
   const [courses, setCourses] = useState<Course[]>([])
   const [profile, setProfile] = useState<Profile | null>(null)
   const [selected, setSelected] = useState<Set<number>>(new Set())
-  const [known, setKnown] = useState<Set<number>>(new Set())
-  const [mode, setMode] = useState<PlanMode>('week')
+  const [mode, setMode] = useState<PlanMode>(initialMode ?? 'week')
   const [hours, setHours] = useState(2)
   const [error, setError] = useState('')
   const [preview, setPreview] = useState<Plan | null>(null)
   const [busy, setBusy] = useState<'preview' | 'save' | null>(null)
 
   useEffect(() => {
+    if (initialMode) {
+      setMode(initialMode)
+      return
+    }
+
     const requestedMode = new URLSearchParams(window.location.search).get('mode')
     if (requestedMode === 'today' || requestedMode === 'week' || requestedMode === 'month') {
       setMode(requestedMode)
     }
-  }, [])
+  }, [initialMode])
 
   useEffect(() => {
     Promise.all([
@@ -58,30 +92,32 @@ export function PlanBuilder() {
     [profile?.study_days, hours],
   )
 
-  const selectedMinutes = useMemo(
+  const selectedTopics = useMemo(
     () => courses
       .flatMap((course) => course.chapters.flatMap((chapter) => chapter.topics))
-      .filter((topic) => selected.has(topic.id))
-      .reduce((total, topic) => total + topic.estimated_study_minutes, 0),
+      .filter((topic) => selected.has(topic.id)),
     [courses, selected],
+  )
+
+  const selectedMinutes = useMemo(
+    () => selectedTopics.reduce((total, topic) => total + topic.estimated_study_minutes, 0),
+    [selectedTopics],
   )
 
   const studyDayCount = profile?.study_days?.length ?? 0
   const dailyMinutes = hours * 60
 
-
   const input = useMemo(() => ({
     mode,
     horizon_days: horizon,
     topic_ids: [...selected],
-    known_topic_ids: [...known],
     study_days: profile?.study_days ?? [],
     minutes_by_weekday: minutesByDay,
     hours_per_day: hours,
-  }), [mode, horizon, selected, known, profile?.study_days, minutesByDay, hours])
+  }), [mode, horizon, selected, profile?.study_days, minutesByDay, hours])
 
   async function previewIt() {
-    if (busy) return
+    if (busy || !selected.size) return
     try {
       setError('')
       setBusy('preview')
@@ -94,7 +130,7 @@ export function PlanBuilder() {
   }
 
   async function saveIt() {
-    if (busy) return
+    if (busy || !selected.size) return
     try {
       setError('')
       setBusy('save')
@@ -107,11 +143,20 @@ export function PlanBuilder() {
     }
   }
 
+  const copy = modeCopy[mode]
+
   return (
     <AppShell>
-      <PageHeader title="Build your plan" backHref="/plan" description="Choose the topics. Havan organizes the time." />
+      <PageHeader title={copy.title} backHref="/student/havan" description={copy.description} />
 
-      <Card padding="lg" className="app-section">
+      <Card padding="lg" className="app-section havan-plan-controls">
+        <div className="havan-plan-mode">
+          <div>
+            <span className="app-eyebrow">PLAN HORIZON</span>
+            <strong>{copy.horizon}</strong>
+          </div>
+          <span className="havan-plan-control-note">Your selections stay under your control.</span>
+        </div>
         <Segmented options={['today', 'week', 'month'] as const} value={mode} onChange={setMode} />
         <NumberStepper label="Hours per study day" value={hours} min={1} max={12} onChange={setHours} />
       </Card>
@@ -126,7 +171,7 @@ export function PlanBuilder() {
             <strong>{dailyMinutes} min on each study day</strong>
             <span>{studyDayCount} {studyDayCount === 1 ? 'study day' : 'study days'} per week</span>
           </div>
-          <p>Havan will spread the selected topics across your available study days. Preview shows exactly what fits.</p>
+          <p>Havan will allocate the selected topics across your available study days. Preview shows exactly what fits.</p>
         </Card>
       )}
 
@@ -138,10 +183,9 @@ export function PlanBuilder() {
         <div className="app-section">
           <Card padding="lg" className="plan-course">
             <div>
+              <span className="app-eyebrow">STEP 1</span>
               <h2>Choose your topics</h2>
-              <p className="app-meta">
-                Open a chapter, then select the specific topics you want Havan to schedule.
-              </p>
+              <p className="app-meta">Open a course, then a chapter, and select only the specific topics you want Havan to schedule.</p>
             </div>
             <TreeSelect
               courses={courses.map((course) => ({
@@ -158,70 +202,83 @@ export function PlanBuilder() {
                 })),
               }))}
               selected={new Set([...selected].map(String))}
-              onChange={(next) => setSelected(new Set([...next].map(Number)))}
+              onChange={(next) => {
+                setSelected(new Set([...next].map(Number)))
+                setPreview(null)
+              }}
             />
-            {selected.size > 0 && (
-              <div className="app-section">
-                <p className="app-meta">Already know a selected topic? Mark it known so Havan can account for it.</p>
-                <div className="topic-list">
-                  {[...selected].map((topicId) => {
-                    const topic = courses.flatMap((course) => course.chapters.flatMap((chapter) => chapter.topics))
-                      .find((item) => item.id === topicId)
-                    if (!topic) return null
-                    return (
-                      <label className="plan-topic-row" key={topic.id}>
-                        <span>{topic.name}</span>
-                        <input
-                          type="checkbox"
-                          checked={known.has(topic.id)}
-                          onChange={(event) => setKnown((old) => {
-                            const next = new Set(old)
-                            event.target.checked ? next.add(topic.id) : next.delete(topic.id)
-                            return next
-                          })}
-                        />
-                        <span className="app-meta">Known</span>
-                      </label>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
           </Card>
 
-          {preview && (
+          {selectedTopics.length > 0 && (
+            <Card padding="lg" className="havan-critical-points">
+              <div>
+                <span className="app-eyebrow">STEP 2 · HAVAN ACADEMY</span>
+                <h2>Important points for your selected topics</h2>
+                <p className="app-meta">These are the critical points entered by the Havan Academy admin for the selected topics.</p>
+              </div>
+              <div className="havan-topic-insights">
+                {selectedTopics.map((topic) => {
+                  const points = criticalPoints(topic.important_points)
+                  return (
+                    <article className="havan-topic-insight" key={topic.id}>
+                      <div className="havan-topic-insight-heading">
+                        <strong>{topic.name}</strong>
+                        <span>{topic.estimated_study_minutes} min</span>
+                      </div>
+                      {points.length > 0 ? (
+                        <ul>
+                          {points.map((point, index) => <li key={`${topic.id}-${index}`}>{point}</li>)}
+                        </ul>
+                      ) : (
+                        <p className="app-meta">No critical points have been added for this topic yet.</p>
+                      )}
+                    </article>
+                  )
+                })}
+              </div>
+            </Card>
+          )}
+
+          {selectedTopics.length > 0 && (
             <Card padding="lg" className="plan-review">
+              <span className="app-eyebrow">STEP 3</span>
               <h2>Review your allocation</h2>
-              <p className="app-copy">
-                {preview.total_minutes} minutes placed. {preview.unplaced.length} topics could not fit.
-              </p>
-              {preview.tasks.length > 0 && (
-                <div className="plan-review-list">
-                  {preview.tasks.map((task) => (
-                    <div className="plan-review-row" key={task.id}>
-                      <div>
-                        <strong>{task.topic_name}</strong>
-                        <span>{task.course_code} · {task.course_name}</span>
-                      </div>
-                      <div>
-                        <strong>{task.minutes} min</strong>
-                        <span>{task.planned_date}</span>
-                      </div>
+              {!preview ? (
+                <p className="app-copy">Preview the plan to see how your selected topics fit into {copy.horizon}.</p>
+              ) : (
+                <>
+                  <p className="app-copy">
+                    {preview.total_minutes} minutes placed. {preview.unplaced.length} topics could not fit.
+                  </p>
+                  {preview.tasks.length > 0 && (
+                    <div className="plan-review-list">
+                      {preview.tasks.map((task) => (
+                        <div className="plan-review-row" key={task.id}>
+                          <div>
+                            <strong>{task.topic_name}</strong>
+                            <span>{task.course_code} · {task.course_name}</span>
+                          </div>
+                          <div>
+                            <strong>{task.minutes} min</strong>
+                            <span>{task.planned_date}</span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
+                  )}
+                  {preview.unplaced.length > 0 && (
+                    <div className="plan-review-unplaced">
+                      <strong>Could not fit</strong>
+                      {preview.unplaced.map((item) => (
+                        <p key={item.topic_id}>{item.topic_name} · {item.minutes} min</p>
+                      ))}
+                    </div>
+                  )}
+                  {preview.warnings.slice(0, 3).map((warning) => (
+                    <p className="app-meta" key={warning.code}>{warning.message}</p>
                   ))}
-                </div>
+                </>
               )}
-              {preview.unplaced.length > 0 && (
-                <div className="plan-review-unplaced">
-                  <strong>Could not fit</strong>
-                  {preview.unplaced.map((item) => (
-                    <p key={item.topic_id}>{item.topic_name} · {item.minutes} min</p>
-                  ))}
-                </div>
-              )}
-              {preview.warnings.slice(0, 3).map((warning) => (
-                <p className="app-meta" key={warning.code}>{warning.message}</p>
-              ))}
             </Card>
           )}
         </div>
