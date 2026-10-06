@@ -137,7 +137,12 @@ export default function AcademicSetupScreen() {
       <div className={styles.preview}>
         <h2>Student requests</h2><p>Students can request missing options without creating unsafe catalog records themselves.</p>
         {!requests.length && <p className={styles.empty}>No requests waiting.</p>}
-        {requests.map((item) => <div className={styles.requestRow} key={item.id}><div><b>{item.request_type === 'UNIVERSITY' ? 'University' : 'Curriculum'} · {item.name}</b><span>{item.code || item.version || 'Details not supplied'}</span><small>{item.status}{item.academic_year ? ' · ' + item.academic_year : ''}</small></div>{item.status === 'PENDING' && <div className={styles.actions}><button className={styles.primary} disabled={busy === 'request-' + item.id} onClick={() => review(item.id, 'APPROVED')}>Approve</button><button className={styles.danger} disabled={busy === 'request-' + item.id} onClick={() => review(item.id, 'REJECTED')}>Reject</button></div>}</div>)}
+       
+        {requests.map((item) => <div className={styles.requestRow} key={item.id}><div>
+            <b>{item.request_type === 'UNIVERSITY' ? 'University' : 'Curriculum'} · {item.name}</b>
+            <span>{item.code || item.version || 'Details not supplied'}</span>
+            <small>{item.status}{item.academic_year ? ' · ' + item.academic_year : ''}</small>
+          </div>{item.status === 'PENDING' && <div className={styles.actions}><button className={styles.primary} disabled={busy === 'request-' + item.id} onClick={() => review(item.id, 'APPROVED')}>Approve</button><button className={styles.danger} disabled={busy === 'request-' + item.id} onClick={() => review(item.id, 'REJECTED')}>Reject</button></div>}</div>)}
       </div>
     </section>
   )
