@@ -3,12 +3,12 @@
 import { useState } from 'react'
 import styles from './admin.module.css'
 
-export type AdminMode = 'mapping' | 'content' | 'import' | 'quality'
+export type AdminMode = 'academic' | 'mapping' | 'content' | 'import' | 'quality'
 
 const groups = [
   {
     label: 'SETUP',
-    items: [['mapping', 'Universities & mapping']],
+    items: [['academic', 'Academic catalog'], ['mapping', 'Course mapping']],
   },
   {
     label: 'CONTENT',
