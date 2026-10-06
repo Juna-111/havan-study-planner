@@ -18,6 +18,7 @@ function View() {
   const [p, setP] = useState<Plan | null>(null)
   const [e, setE] = useState('')
   const [targetDates, setTargetDates] = useState<Record<number, string>>({})
+  const [pendingTask, setPendingTask] = useState<number | null>(null)
 
   useEffect(() => {
     getCurrentPlan()
@@ -38,6 +39,8 @@ function View() {
     if (!p) return
 
     try {
+      setE('')
+      setPendingTask(id)
       const target_date = targetDates[id] || undefined
       if ((action === 'MOVE' || action === 'REPEAT') && !target_date) {
         setE('Choose a date before moving or repeating a task.')
@@ -46,6 +49,8 @@ function View() {
       setP(await planAction(id, { action, target_date }))
     } catch (x) {
       setE(x instanceof Error ? x.message : 'Action failed.')
+    } finally {
+      setPendingTask(null)
     }
   }
 
@@ -126,15 +131,16 @@ function View() {
                   <div className="plan-task-actions">
                     {t.status !== 'DONE' && (
                       <Button
+                        disabled={pendingTask === t.id}
                         onClick={() =>
                           act(t.id, t.status === 'PLANNED' ? 'START' : 'COMPLETE')
                         }
                       >
-                        {t.status === 'PLANNED' ? 'Start' : 'Complete'}
+                        {pendingTask === t.id ? 'Saving...' : t.status === 'PLANNED' ? 'Start' : 'Complete'}
                       </Button>
                     )}
                     {t.status !== 'DONE' && (
-                      <Button variant="ghost" onClick={() => act(t.id, 'SKIP')}>
+                      <Button disabled={pendingTask === t.id} variant="ghost" onClick={() => act(t.id, 'SKIP')}>
                         Skip
                       </Button>
                     )}
@@ -147,6 +153,7 @@ function View() {
                       />
                     </label>
                     <Button
+                      disabled={pendingTask === t.id}
                       variant={t.status === 'DONE' ? 'ghost' : 'secondary'}
                       onClick={() => act(t.id, t.status === 'DONE' ? 'REPEAT' : 'MOVE')}
                     >
