@@ -1,4 +1,5 @@
 from app.core.config import API_PREFIX
+from app.core.deps import current_account, require_student_owner
 from datetime import datetime, timezone
 from typing import Annotated
 
@@ -15,7 +16,7 @@ from app.schemas.student import (
     StudentCourseAdd, StudentCourseRead, StudentCreate, StudentRead, StudentUpdate,
 )
 
-router = APIRouter(prefix="/api/v1/students", tags=["students"])
+router = APIRouter(prefix=f"{API_PREFIX}/students", tags=["students"])
 DB = Annotated[Session, Depends(get_db)]
 
 
@@ -77,7 +78,7 @@ def validate_curriculum_context(db: Session, university_id: int, curriculum_id: 
         raise HTTPException(status_code=400, detail="Stream does not belong to the selected curriculum")
 
 
-@router.post("/profiles", response_model=StudentRead, status_code=status.HTTP_201_CREATED)
+@router.post("/profiles", response_model=StudentRead, status_code=status.HTTP_201_CREATED)\ndef
 def create_profile(payload: StudentCreate, db: DB):
     validate_curriculum_context(db, payload.university_id, payload.curriculum_id, payload.stream_id)
     existing = db.scalar(select(StudentProfile).where(StudentProfile.client_key == payload.client_key))
