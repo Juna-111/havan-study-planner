@@ -8,12 +8,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select, delete
 from sqlalchemy.orm import Session
-from app.core.config import get_settings
+from app.core.config import API_PREFIX, get_settings
 from app.db.models.student import PasswordResetToken, StudentAccount, StudentProfile
 from app.db.session import get_db
 from app.schemas.student import AuthAccountRead, AuthLogin, AuthResponse, AuthSignup, ForgotPasswordRequest, PasswordChange, ResetPasswordRequest, VerifyResetCodeRequest
 
-router = APIRouter(prefix="/api/v1/auth", tags=["authentication"])
+router = APIRouter(prefix=f"{API_PREFIX}/auth", tags=["authentication"])
 DB = Annotated[Session, Depends(get_db)]
 bearer = HTTPBearer(auto_error=False)
 

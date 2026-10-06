@@ -1,3 +1,4 @@
+from app.core.config import API_PREFIX
 from datetime import datetime, timezone
 from typing import Annotated
 

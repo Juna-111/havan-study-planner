@@ -1,3 +1,4 @@
+from app.core.config import API_PREFIX
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError

@@ -18,3 +18,4 @@ logs/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+\n# Rebuild workspace metadata\n.freebuff/\n.qoderignore\n

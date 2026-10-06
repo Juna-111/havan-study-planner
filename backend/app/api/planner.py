@@ -1,3 +1,4 @@
+from app.core.config import API_PREFIX
 from collections import defaultdict
 from datetime import date, datetime, timedelta, timezone
 

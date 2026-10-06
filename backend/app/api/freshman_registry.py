@@ -1,3 +1,4 @@
+from app.core.config import API_PREFIX
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -21,7 +22,7 @@ from app.services.freshman_registry import (
     set_categories,
 )
 
-router = APIRouter(prefix="/api/v1/freshman-registry", tags=["freshman-registry"])
+router = APIRouter(prefix=f"{API_PREFIX}/freshman-registry", tags=["freshman-registry"])
 DB = Annotated[Session, Depends(get_db)]
 
 

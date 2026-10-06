@@ -1,3 +1,4 @@
+from app.core.config import API_PREFIX
 from typing import Annotated, Any
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
@@ -8,7 +9,7 @@ from app.schemas.curriculum import *
 from app.services.academic_resolver import resolve_stream_courses
 from app.services.curriculum import create_item, delete_item, get_or_404, list_items, update_item
 
-router = APIRouter(prefix="/api/v1", tags=["curriculum"])
+router = APIRouter(prefix=API_PREFIX, tags=["curriculum"])
 DB = Annotated[Session, Depends(get_db)]
 
 
