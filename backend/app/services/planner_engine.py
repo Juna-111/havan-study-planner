@@ -277,7 +277,11 @@ _DEFAULT_IMPORTANCE = (("FINAL", 5), ("MID", 4), ("TEST", 3), ("QUIZ", 2), ("ASS
 def default_exam_importance(exam_type: str) -> int:
     """Suggested 1..5 importance when the student did not choose one."""
     label = exam_type.strip().upper()
-    for prefix, value in _DEFAULT_IMPORTANCE:
+    for prefix, value indef parse_weekdays(values: Iterable[object] | None, default: frozenset[int] = frozenset({0, 1, 2, 3, 4})) -> frozenset[int]:
+    from app.core.time import parse_weekdays as canonical_parse_weekdays
+    return canonical_parse_weekdays(values, tuple(default))
+
+ _DEFAULT_IMPORTANCE:
         if label.startswith(prefix):
             return value
     return 3
