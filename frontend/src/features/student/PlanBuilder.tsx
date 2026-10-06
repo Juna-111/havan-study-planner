@@ -245,6 +245,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
           )}
 
           {selectedTopics.length > 0 && (
+            <Card padding="lg" className="havan-critical-points">
               <div>
                 <span className="app-eyebrow">STEP 2 · HAVAN ACADEMY</span>
                 <h2>Important points for your selected topics</h2>
@@ -271,7 +272,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
                 })}
               </div>
             </Card>
-          )}
+          )
 
           {selectedTopics.length > 0 && (
             <Card padding="lg" className="plan-review">
