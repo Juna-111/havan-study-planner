@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Button, Card, DateField, Select } from '@/components/ui'
 import { apiFetch, ApiError } from '@/lib/api'
 
@@ -26,7 +26,7 @@ export default function ExamManager() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true)
     setError('')
     try {
@@ -44,9 +44,9 @@ export default function ExamManager() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  useEffect(() => { void load() }, [])
+  useEffect(() => { void load() }, [load])
 
   async function addExam() {
     if (!courseId || !examDate || saving) return
