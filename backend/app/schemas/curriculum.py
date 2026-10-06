@@ -31,7 +31,7 @@ class CurriculumBase(BaseModel):
     version: str = Field(min_length=1, max_length=50)
     academic_year: Optional[str] = Field(default=None, max_length=30)
     description: Optional[str] = None
-    status: str = Field(default="DRAFT", pattern=r"^(DRAFT|ACTIVE|ARCHIVED)$")
+    status: str = Field(default="ACTIVE", pattern=r"^(DRAFT|ACTIVE|ARCHIVED)$")
 class CurriculumCreate(CurriculumBase): pass
 class CurriculumUpdate(BaseModel):
     name: Optional[str] = Field(default=None, min_length=2, max_length=150)
@@ -187,7 +187,7 @@ class UniversityCourseMappingCreate(BaseModel):
     course_id: int = Field(gt=0)
     semester_number: int = Field(ge=1, le=2)
     order_index: int = Field(default=1, ge=1)
-    status: str = Field(default="DRAFT", pattern=r"^(DRAFT|ACTIVE|ARCHIVED)$")
+    status: str = Field(default="ACTIVE", pattern=r"^(DRAFT|ACTIVE|ARCHIVED)$")
 
 
 class UniversityCourseMappingUpdate(BaseModel):
