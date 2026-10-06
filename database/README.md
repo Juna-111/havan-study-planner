@@ -1,25 +1,31 @@
 # Database
 
-Havan uses PostgreSQL as the production relational database.
-
-Alembic configuration lives under `backend/database/migrations/`.
+Havan uses PostgreSQL in production and Alembic for schema migrations.
 
 ## Migration policy
 
-The migration history is part of the database upgrade path. Historical migrations are retained even when an older phase introduced sample or temporary data.
+Migration history is immutable. Never rewrite or delete an existing migration. New schema changes are added as new migrations.
 
-New schema changes must be added as new migrations rather than rewriting or deleting already-applied migrations.
+## Active academic model
 
-## Current academic model
+The active catalog model is:
 
-The current MVP separates:
+Course → Chapter → Topic
 
-1. National Freshman course content
-2. National Freshman curriculum templates
-3. University curriculum mappings
-4. Stream course assignments
-5. University overrides and exceptions
-6. Student course resolution
-7. Planner and progress data
+University → Curriculum → Stream → University Course Mapping determines which courses a student receives and their Semester 1 or Semester 2 placement.
 
-Current academic records are sample/development data and are not treated as authoritative institutional data.
+The old national template, stream-assignment, and university-override workflow is not part of the active MVP.
+
+## Active plan model
+
+The current planner persists data in the unified Plan domain used by `/api/v1/plans`.
+
+## Legacy tables
+
+`study_plans` and `study_tasks` are legacy tables retained for upgrade/data-preservation safety. Their migration history is untouched and the active planner does not write new data to them.
+
+The earlier `havan_plans`, `havan_plan_selections`, and `havan_plan_tasks` tables are also historical planner schema. Their migrations remain intact because migration history is never rewritten.
+
+## Data policy
+
+Current academic records are sample/development data. Real institutional records can be introduced later without redesigning the planner.
