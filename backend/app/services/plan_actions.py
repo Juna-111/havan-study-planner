@@ -159,7 +159,27 @@ def apply_action(
             raise ValueError("That topic is already part of this plan.")
         target = payload.target_date or today_local()
         _validate_target_date(plan, target)
-        minutes = min(20, max(5, topic.estimated_study_minutes))
+        weekday_names = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+        weekday = weekday_names[target.weekday()]
+        if weekday not in snapshot.study_days:
+            raise ValueError("Choose one of your study days.")
+        daily_limit = int(snapshot.minutes_by_weekday.get(weekday, snapshot.hours_per_day * 60))
+        used_minutes = sum(
+            row.minutes
+            for row in db.scalars(
+                select(PlanTask).where(
+                    PlanTask.plan_id == plan.id,
+                    PlanTask.planned_date == target,
+                    PlanTask.status != "SKIPPED",
+                )
+            ).all()
+        )
+        available = max(0, daily_limit - used_minutes)
+        if available < 5:
+            raise ValueError("There is no available study time on that date.")
+        minutes = min(20, max(5, topic.estimated_study_minutes), available)
+        if minutes < 5:
+            raise ValueError("There is no available study time on that date.")
         db.add(PlanTask(
             plan_id=plan.id,
             student_id=student.id,
