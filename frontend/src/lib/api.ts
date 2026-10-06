@@ -36,7 +36,7 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   if (token && !headers.has('Authorization')) headers.set('Authorization', `Bearer ${token}`)
 
   const controller = new AbortController()
-  const timeout = window.setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS)
+  const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS)
   try {
     const response = await fetch(url, { ...init, headers, signal: init.signal ?? controller.signal })
     if (response.status === 401) {
@@ -60,7 +60,7 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
     }
     throw new ApiError(0, 'Cannot reach the Havan backend. Check your connection and try again.')
   } finally {
-    window.clearTimeout(timeout)
+    clearTimeout(timeout)
   }
 }
 
