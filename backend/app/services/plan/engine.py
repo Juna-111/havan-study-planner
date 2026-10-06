@@ -953,12 +953,20 @@ def allocate_selected_topics(
             "Some selected topics need more time than the available study capacity.",
         ))
 
+    # Readiness is a constraint report, not a topic recommender. We reuse
+    # the established readiness calculation but never copy its scheduled
+    # sessions into this student-choice result.
+    baseline = build_plan(request, config)
+    readiness_warnings = tuple(
+        warning for warning in baseline.warnings
+        if warning.code in {"EXAM_OVERLOADED", "NO_STUDY_TIME"}
+    )
     return PlanResult(
         engine_version="3.0.0-intelligent-choice",
         today=today,
         sessions=tuple(sessions),
-        readiness=(),
-        warnings=tuple(warnings),
+        readiness=baseline.readiness,
+        warnings=tuple(dict.fromkeys((*readiness_warnings, *warnings))),
         unplaced=unplaced,
     )
 
