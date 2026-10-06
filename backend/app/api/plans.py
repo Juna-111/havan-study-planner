@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import API_PREFIX
 from app.core.deps import current_student
-from app.db.models.plan import Plan
+from app.db.models.plan import Plan, PlanTask
 from app.db.models.student import StudentProfile
 from app.db.session import get_db
 from app.schemas.plan import PlanAction, PlanInput, PlanOut
@@ -90,7 +90,7 @@ def save_snapshot_response(
 
     deferred = {
         task.topic_id for task in db.scalars(
-            select(__import__("app.db.models.plan", fromlist=["PlanTask"]).PlanTask).where(
+            select(PlanTask).where(
                 __import__("app.db.models.plan", fromlist=["PlanTask"]).PlanTask.plan_id == plan.id,
                 __import__("app.db.models.plan", fromlist=["PlanTask"]).PlanTask.status == "SKIPPED",
             )
