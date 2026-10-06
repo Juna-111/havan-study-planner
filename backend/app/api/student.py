@@ -301,7 +301,29 @@ def remove_course(student_id: int, course_id: int, db: DB):
 @router.get("/profiles/{student_id}/progress", response_model=list[ProgressRead], dependencies=[Depends(require_student_owner)])
 def list_progress(student_id: int, db: DB):
     profile_or_404(db, student_id)
-    return list(db.scalars(select(StudentTopicProgress).where(StudentTopicProgress.student_id == student_id)).all())
+    rows = db.execute(
+        select(StudentTopicProgress, Topic.name, Course.name)
+        .join(Topic, Topic.id == StudentTopicProgress.topic_id)
+        .join(Chapter, Chapter.id == Topic.chapter_id)
+        .join(Course, Course.id == Chapter.course_id)
+        .where(StudentTopicProgress.student_id == student_id)
+    ).all()
+    return [
+        {
+            "id": progress.id,
+            "student_id": progress.student_id,
+            "topic_id": progress.topic_id,
+            "status": progress.status,
+            "confidence": progress.confidence,
+            "notes": progress.notes,
+            "last_studied_at": progress.last_studied_at,
+            "completed_minutes": progress.completed_minutes,
+            "study_sessions": progress.study_sessions,
+            "topic_name": topic_name,
+            "course_name": course_name,
+        }
+        for progress, topic_name, course_name in rows
+    ]
 
 
 @router.put("/profiles/{student_id}/progress/{topic_id}", response_model=ProgressRead, dependencies=[Depends(require_student_owner)])
