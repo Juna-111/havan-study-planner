@@ -16,7 +16,6 @@ depends_on = None
 
 def upgrade() -> None:
     op.add_column("student_accounts", sa.Column("role", sa.String(length=10), nullable=False, server_default="STUDENT"))
-    op.alter_column("student_accounts", "role", server_default=None)
 
 
 def downgrade() -> None:

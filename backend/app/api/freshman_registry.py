@@ -1,5 +1,5 @@
 from app.core.config import API_PREFIX
-from app.core.deps import current_account, require_admin
+from app.core.deps import require_admin
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -23,7 +23,7 @@ from app.services.freshman_registry import (
     set_categories,
 )
 
-router = APIRouter(prefix=f"{API_PREFIX}/freshman-registry", tags=["freshman-registry"], dependencies=[Depends(current_account)])
+router = APIRouter(prefix=f"{API_PREFIX}/freshman-registry", tags=["freshman-registry"], dependencies=[Depends(require_admin)])
 DB = Annotated[Session, Depends(get_db)]
 
 

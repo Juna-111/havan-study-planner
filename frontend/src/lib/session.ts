@@ -1,4 +1,4 @@
-import { apiFetch } from '@/lib/api'
+import { apiFetch, ApiError } from '@/lib/api'
 import { clearAuth, getSavedAccount, getAuthToken, type AuthAccount } from '@/lib/auth'
 
 export async function getSessionAccount(): Promise<AuthAccount | null> {
@@ -6,7 +6,7 @@ export async function getSessionAccount(): Promise<AuthAccount | null> {
   try {
     return await apiFetch<AuthAccount>('/auth/me')
   } catch (error) {
-    if (error instanceof Error && error.message.includes('401')) {
+    if (error instanceof ApiError && error.status === 401) {
       clearAuth()
       return null
     }

@@ -94,6 +94,51 @@ def get_my_courses(student: Annotated[StudentProfile, Depends(current_student)],
     return list_courses(student.id, db)
 
 
+@router.get("/me/catalog")
+def get_my_catalog(student: Annotated[StudentProfile, Depends(current_student)], db: DB):
+    courses = resolved_student_courses(db, student.id)
+    metadata = resolved_course_metadata(db, student.id)
+    result = []
+    for selected in courses:
+        course = db.get(Course, selected.course_id)
+        if course is None:
+            continue
+        chapters = list(db.scalars(
+            select(Chapter)
+            .where(Chapter.course_id == course.id, func.upper(Chapter.status) == "ACTIVE")
+            .order_by(Chapter.order_index, Chapter.id)
+        ).all())
+        result.append({
+            "id": course.id,
+            "code": metadata[course.id].display_code,
+            "name": metadata[course.id].display_name,
+            "chapters": [
+                {
+                    "id": chapter.id,
+                    "name": chapter.name,
+                    "order_index": chapter.order_index,
+                    "topics": [
+                        {
+                            "id": topic.id,
+                            "name": topic.name,
+                            "difficulty": topic.difficulty,
+                            "estimated_study_minutes": topic.estimated_study_minutes,
+                            "important_points": topic.important_points,
+                            "status": topic.status,
+                        }
+                        for topic in db.scalars(
+                            select(Topic)
+                            .where(Topic.chapter_id == chapter.id, func.upper(Topic.status) == "ACTIVE")
+                            .order_by(Topic.order_index, Topic.id)
+                        ).all()
+                    ],
+                }
+                for chapter in chapters
+            ],
+        })
+    return result
+
+
 @router.get("/me/progress", response_model=list[ProgressRead])
 def get_my_progress(student: Annotated[StudentProfile, Depends(current_student)], db: DB):
     return list_progress(student.id, db)
@@ -301,7 +346,29 @@ def remove_course(student_id: int, course_id: int, db: DB):
 @router.get("/profiles/{student_id}/progress", response_model=list[ProgressRead], dependencies=[Depends(require_student_owner)])
 def list_progress(student_id: int, db: DB):
     profile_or_404(db, student_id)
-    return list(db.scalars(select(StudentTopicProgress).where(StudentTopicProgress.student_id == student_id)).all())
+    rows = db.execute(
+        select(StudentTopicProgress, Topic.name, Course.name)
+        .join(Topic, Topic.id == StudentTopicProgress.topic_id)
+        .join(Chapter, Chapter.id == Topic.chapter_id)
+        .join(Course, Course.id == Chapter.course_id)
+        .where(StudentTopicProgress.student_id == student_id)
+    ).all()
+    return [
+        {
+            "id": progress.id,
+            "student_id": progress.student_id,
+            "topic_id": progress.topic_id,
+            "status": progress.status,
+            "confidence": progress.confidence,
+            "notes": progress.notes,
+            "last_studied_at": progress.last_studied_at,
+            "completed_minutes": progress.completed_minutes,
+            "study_sessions": progress.study_sessions,
+            "topic_name": topic_name,
+            "course_name": course_name,
+        }
+        for progress, topic_name, course_name in rows
+    ]
 
 
 @router.put("/profiles/{student_id}/progress/{topic_id}", response_model=ProgressRead, dependencies=[Depends(require_student_owner)])

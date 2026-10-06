@@ -1,4 +1,10 @@
-"""Legacy persistence model for study_plans/study_tasks.\n\nKept unchanged as a database compatibility record. The active planner uses\nthe unified Plan model instead.\n"""\n\nfrom __future__ import annotations
+"""Legacy persistence model for study_plans/study_tasks.
+
+Kept unchanged as a database compatibility record. The active planner uses
+the unified Plan model instead.
+"""
+
+from __future__ import annotations
 
 from datetime import date, datetime
 

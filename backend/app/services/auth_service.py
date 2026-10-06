@@ -9,7 +9,8 @@ from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.core.security import hash_password, make_access_token, reset_code_hash, verify_password
+from app.core.errors import DomainError
+from app.core.security import hash_password, login_throttle, make_access_token, reset_code_hash, verify_password
 from app.db.models.student import PasswordResetToken, StudentAccount, StudentProfile
 from app.schemas.student import AuthAccountRead
 
@@ -35,9 +36,14 @@ def signup(db: Session, email: str, password: str) -> tuple[StudentAccount, str]
 
 
 def login(db: Session, email: str, password: str) -> tuple[StudentAccount, str]:
-    account = db.scalar(select(StudentAccount).where(StudentAccount.email == email.strip().lower()))
+    normalized = email.strip().lower()
+    if not login_throttle.allowed(normalized):
+        raise DomainError("TOO_MANY_ATTEMPTS", "Too many failed sign-in attempts. Please try again later.", 429)
+    account = db.scalar(select(StudentAccount).where(StudentAccount.email == normalized))
     if account is None or not verify_password(password, account.password_hash):
-        raise HTTPException(status_code=401, detail="Email or password is incorrect.")
+        login_throttle.record_failure(normalized)
+        raise DomainError("UNAUTHORIZED", "Email or password is incorrect.", 401)
+    login_throttle.clear(normalized)
     desired_role = "ADMIN" if is_admin_email(account.email) else "STUDENT"
     if account.role != desired_role:
         account.role = desired_role

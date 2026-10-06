@@ -12,7 +12,6 @@ from app.services.plan.engine import (
     blend_confidence,
     build_plan,
     default_exam_importance,
-    local_today,
     parse_weekdays,
     render_reason,
     update_pace_factor,
@@ -253,9 +252,10 @@ def test_every_session_explains_itself_with_components():
     assert "MIDTERM is in" in session.reason
 
 
-def test_local_today_uses_ethiopian_time():
-    late_utc = datetime(2026, 10, 2, 22, 30, tzinfo=timezone.utc)   # 01:30 next day in Addis
-    assert local_today(now=late_utc) == date(2026, 10, 3)
+def test_today_local_uses_ethiopian_time():
+    from app.core.time import today_local
+    late_utc = datetime(2026, 10, 2, 22, 30, tzinfo=timezone.utc)
+    assert today_local(now=late_utc) == date(2026, 10, 3)
 
 
 def test_parse_weekdays_accepts_names_and_stored_numbers():

@@ -54,3 +54,30 @@ def decode_access_token(token: str) -> tuple[int, int]:
 
 def reset_code_hash(code: str) -> str:
     return hmac.new(get_settings().auth_secret.encode(), code.encode(), hashlib.sha256).hexdigest()
+
+
+class LoginThrottle:
+    def __init__(self, limit: int = 5, window_seconds: int = 15 * 60) -> None:
+        self.limit = limit
+        self.window_seconds = window_seconds
+        self._failures: dict[str, list[float]] = {}
+
+    def allowed(self, email: str, now: float | None = None) -> bool:
+        import time
+        current = time.time() if now is None else now
+        values = [stamp for stamp in self._failures.get(email, []) if current - stamp < self.window_seconds]
+        self._failures[email] = values
+        return len(values) < self.limit
+
+    def record_failure(self, email: str, now: float | None = None) -> None:
+        import time
+        current = time.time() if now is None else now
+        values = [stamp for stamp in self._failures.get(email, []) if current - stamp < self.window_seconds]
+        values.append(current)
+        self._failures[email] = values
+
+    def clear(self, email: str) -> None:
+        self._failures.pop(email, None)
+
+
+login_throttle = LoginThrottle()

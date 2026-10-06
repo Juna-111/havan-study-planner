@@ -11,7 +11,7 @@ class AuthSignup(BaseModel):
 
 class AuthLogin(BaseModel):
     email: str = Field(min_length=5, max_length=255)
-    password: str = Field(min_length=8, max_length=128)
+    password: str = Field(min_length=1, max_length=128)
 
 
 class AuthAccountRead(BaseModel):
@@ -40,11 +40,11 @@ class StudentBase(BaseModel):
     curriculum_id: int = Field(gt=0)
     stream_id: int = Field(gt=0)
     study_hours_per_day: float = Field(default=2.0, ge=0.5, le=12)
-    study_days: list[Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]] = Field(default_factory=list, min_length=1, max_length=7)
+    study_days: list[Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]] = Field(default_factory=list, max_length=7)
 
 
 class StudentCreate(StudentBase):
-    pass
+    study_days: list[Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]] = Field(min_length=1, max_length=7)
 
 
 class StudentUpdate(BaseModel):
@@ -96,6 +96,8 @@ class ProgressRead(ProgressUpsert):
     last_studied_at: Optional[datetime]
     completed_minutes: int
     study_sessions: int
+    topic_name: Optional[str] = None
+    course_name: Optional[str] = None
 
 
 class ExamCreate(BaseModel):
