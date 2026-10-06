@@ -187,6 +187,7 @@ def replan_remaining(
     horizon_days: int = 7,
     deferred_topic_ids: set[int] | None = None,
     pinned_topic_dates: dict[int, date] | None = None,
+    today: date | None = None,
 ) -> StudyPlan:
     """Create a fresh plan from the student's current state.
 
@@ -223,6 +224,7 @@ def replan_remaining(
             horizon_days,
             deferred_topic_ids=deferred_topic_ids,
             pinned_topic_dates=pinned_topic_dates,
+            today=today,
         )
     except ValueError as exc:
         if str(exc) != "There are no unfinished active topics in your selected courses.":
