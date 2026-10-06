@@ -25,10 +25,16 @@ def _add_pin_warnings(result: PlanResult, plan_input: PlanInput) -> PlanResult:
             extra.append(__import__("app.services.planner_engine", fromlist=["PlanWarning"]).PlanWarning(
                 "PIN_NON_STUDY_DAY", f"{pinned_date.isoformat()} is not one of your study days. We kept the topic there."
             ))
-    if any(count > 0 and default_minutes < 15 for count in pinned_per_date.values()):
-        extra.append(__import__("app.services.planner_engine", fromlist=["PlanWarning"]).PlanWarning(
-            "PIN_OVER_CAPACITY", "A pinned date is full. We kept the topic there as you chose."
-        ))
+    for pinned_date in pinned_per_date:
+        pinned_minutes = sum(
+            session.minutes for session in result.sessions
+            if session.planned_date == pinned_date and session.topic_id in plan_input.pinned_topic_dates
+        )
+        if pinned_minutes > default_minutes:
+            extra.append(__import__("app.services.planner_engine", fromlist=["PlanWarning"]).PlanWarning(
+                "PIN_OVER_CAPACITY", f"{pinned_date.isoformat()} is full. We kept the pinned topic there as you chose."
+            ))
+
     return replace(result, warnings=tuple(extra))
 
 def _warning_severity(code: str) -> str:
