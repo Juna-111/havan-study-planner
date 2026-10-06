@@ -1,7 +1,7 @@
 from app.core.config import API_PREFIX
 from app.core.deps import current_account, require_admin
 from typing import Annotated, Any
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func, select
 from app.db.session import get_db
