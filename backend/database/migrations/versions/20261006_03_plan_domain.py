@@ -17,7 +17,7 @@ def upgrade():
     op.create_table(
         "plans",
         sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column("student_id", sa.Integer(), sa.ForeignKey("student_profiles.id", ondelete="CASCADE"), nullable=False, index=True),
+        sa.Column("student_id", sa.Integer(), sa.ForeignKey("student_profiles.id", ondelete="CASCADE"), nullable=False),
         sa.Column("mode", sa.String(length=10), nullable=False),
         sa.Column("horizon_days", sa.Integer(), nullable=False),
         sa.Column("start_date", sa.Date(), nullable=False),
@@ -36,11 +36,11 @@ def upgrade():
     op.create_table(
         "plan_tasks",
         sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column("plan_id", sa.Integer(), sa.ForeignKey("plans.id", ondelete="CASCADE"), nullable=False, index=True),
+        sa.Column("plan_id", sa.Integer(), sa.ForeignKey("plans.id", ondelete="CASCADE"), nullable=False),
         sa.Column("student_id", sa.Integer(), sa.ForeignKey("student_profiles.id", ondelete="CASCADE"), nullable=False, index=True),
         sa.Column("course_id", sa.Integer(), sa.ForeignKey("courses.id", ondelete="CASCADE"), nullable=False),
         sa.Column("topic_id", sa.Integer(), sa.ForeignKey("topics.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("planned_date", sa.Date(), nullable=False, index=True),
+        sa.Column("planned_date", sa.Date(), nullable=False),
         sa.Column("minutes", sa.Integer(), nullable=False),
         sa.Column("priority", sa.Float(), nullable=False, server_default="0"),
         sa.Column("reason", sa.Text(), nullable=False),
