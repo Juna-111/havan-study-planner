@@ -335,8 +335,14 @@ def run_academic_quality_checks(db: Session) -> dict:
             for topic in topics
             if topic.status == "ACTIVE" and topic.chapter_id == chapter.id
         ]
-        if course.credit_hours is not None and course_topics and not any(
-            topic.id in invalid_topic_ids for topic in course_topics
+        complete_content = bool(course_topics) and all(
+            (getattr(topic, "important_points", None) or "").strip()
+            for topic in course_topics
+        )
+        if (
+            course.credit_hours is not None
+            and complete_content
+            and not any(topic.id in invalid_topic_ids for topic in course_topics)
         ):
             ready_courses += 1
 
