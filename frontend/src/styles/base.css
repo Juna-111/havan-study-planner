@@ -106,6 +106,16 @@ button { cursor:pointer } :focus-visible { outline:3px solid rgba(1,1,126,.35); 
 .settings-card h3 { font-size:1rem; margin-top:4px }
  .settings-account { display:grid; gap:4px }
  .plan-task { display:grid; gap:8px }
+.plan-overview { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:16px; align-items:center; border-color:#dfe2f4; background:#f7f8ff }
+.plan-overview h2 { margin-top:4px; color:#151526; font-size:1.4rem }
+.plan-overview p { margin-top:4px; color:#5d5d73 }
+.plan-overview-stats { display:grid; gap:2px; min-width:120px; text-align:right }
+.plan-overview-stats strong { color:#01017e; font-size:1.2rem }
+.plan-overview-stats span { color:#5d5d73; font-size:.78rem }
+.plan-day { display:grid; gap:10px }
+.plan-day-heading { display:flex; justify-content:space-between; align-items:center; gap:12px; padding-top:8px }
+.plan-day-heading h2 { color:#151526; font-size:1.15rem }
+.plan-day-heading span { color:#01017e; font-size:.8rem; font-weight:800 }
  .plan-task-title { margin:2px 0; color:#151526; font-size:1.3rem }
  .plan-task-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap }
 .plan-task-date { display:grid; gap:3px; color:#5d5d73; font-size:.75rem; font-weight:600 }
