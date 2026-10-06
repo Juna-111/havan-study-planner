@@ -9,6 +9,7 @@ export function getAuthToken(): string | null {
 }
 
 export function saveAuth(response: AuthResponse) {
+  if (typeof window === 'undefined') return
   localStorage.setItem(TOKEN_KEY, response.access_token)
   localStorage.setItem('havan_auth_account', JSON.stringify(response.account))
 }
@@ -16,7 +17,7 @@ export function saveAuth(response: AuthResponse) {
 export function clearAuth() {
   localStorage.removeItem(TOKEN_KEY)
   localStorage.removeItem('havan_auth_account')
-  localStorage.removeItem('havan_student_id')
+  if (typeof window === 'undefined') return
 }
 
 export function getSavedAccount(): AuthAccount | null {
