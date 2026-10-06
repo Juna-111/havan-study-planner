@@ -1,3 +1,4 @@
+from app.core.config import API_PREFIX
 import json
 from datetime import date, timedelta
 
