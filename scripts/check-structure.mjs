@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import zlib from 'node:zlib'
 
 const root = process.cwd()
 const src = path.join(root, 'frontend', 'src')
@@ -41,3 +42,21 @@ if (failures.length) {
 }
 
 console.log('Havan structure check passed.')
+
+
+const buildManifest = path.join(root, 'frontend', '.next', 'app-build-manifest.json')
+if (fs.existsSync(buildManifest)) {
+  const manifest = JSON.parse(fs.readFileSync(buildManifest, 'utf8'))
+  const pages = manifest.pages ?? {}
+  const limit = 150 * 1024
+  for (const [route, files] of Object.entries(pages)) {
+    const jsFiles = Array.isArray(files) ? files.filter(file => String(file).endsWith('.js')) : []
+    const bytes = jsFiles.reduce((total, file) => {
+      const full = path.join(root, 'frontend', '.next', String(file))
+      return total + (fs.existsSync(full) ? zlib.gzipSync(fs.readFileSync(full)).length : 0)
+    }, 0)
+    if (bytes > limit) failures.push(`${route}: first-load JS exceeds 150 KB gzipped (${Math.round(bytes / 1024)} KB)`)
+  }
+} else {
+  console.log('Bundle budget check skipped: frontend/.next/app-build-manifest.json is not present.')
+}
