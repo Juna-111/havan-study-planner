@@ -1,6 +1,6 @@
 'use client'
 import {useState} from 'react'
-import {apiFetch} from '../../lib/api'
+import {apiFetch} from '@/lib/api'
 import styles from './admin.module.css'
 type Preview={code:string;name:string;content_version:string;category_codes:string[];chapters:{name:string;topics:{name:string;difficulty:number}[]}[]}
 export default function ImportScreen(){const [file,setFile]=useState<File|null>(null),[version,setVersion]=useState('1.0'),[preview,setPreview]=useState<Preview[]>([]),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[error,setError]=useState('')

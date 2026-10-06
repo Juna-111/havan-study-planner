@@ -1,4 +1,4 @@
-# Phase 6.2 — Execution Workspace
+> Historical; not current.\n\n# Phase 6.2 — Execution Workspace
 
 Phase 6.2 turns the recommendation page into an execution product.
 

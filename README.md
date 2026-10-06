@@ -1,82 +1,55 @@
 # Havan Study Planner
 
-Production-oriented academic planning platform for Ethiopian university Freshman students.
+Havan is a Havan-branded study planning platform for Ethiopian university Freshman students.
 
 **The system recommends. The student decides.**
 
-## Current MVP architecture
+## Active flow
 
-Course Catalog
-        ↓
-University
-        ↓
-Curriculum
-        ↓
-Stream
-        ↓
-University Course Mapping
-        ↓
-Student Course Resolution
-        ↓
-Editable Study Planner
+`/auth → /onboarding → /home → /plan → /plan/new → /progress → /settings`
 
-The course catalog contains all available courses. A university does not need to recreate a course just because it teaches that course in a particular semester.
+Students choose the courses/topics and available time. The deterministic Plan engine organizes the selected work around study days, progress, and exams.
 
-The administrator's academic setup is intentionally simple:
+Admins use `/admin` to manage university course mapping, canonical course/chapter/topic content, imports, and academic quality.
 
-1. Select the university.
-2. Select the curriculum.
-3. Select the stream.
-4. Choose courses from the full catalog.
-5. Place each course in Semester 1 or Semester 2.
+## Data
 
-Moving a course changes only its university semester mapping. Removing a mapping does not delete the course or its Course → Chapter → Topic content.
+Academic course, chapter, topic, curriculum, and mapping records are sample/development data for now. Real institutional data can be loaded later through the same catalog architecture.
 
-## MVP focus
-
-- Student registration and academic onboarding.
-- University, curriculum, and stream resolution.
-- Direct university course-to-semester mapping.
-- Canonical Freshman Course → Chapter → Topic content.
-- Current chapter/topic position.
-- Study availability and examination dates.
-- Dynamic study-plan generation.
-- Editable planner actions such as move, skip, add, reschedule, complete, and repeat.
-- Havan-branded student and admin experiences.
-- Reliable academic data import and validation.
-
-## Data strategy
-
-Current chapter, topic, curriculum, and course content is development/sample data.
-
-The architecture is designed so real institutional course mappings and real academic content can be introduced later without redesigning the planner.
-
-## Engineering commands
+## Run
 
 Frontend:
 
+```bash
 npm install
 npm run dev
-npm run build
-npm test
-npm run lint
+```
 
 Backend:
 
+```bash
 cd backend
-
-Create/activate a Python 3.12 virtual environment, install requirements.txt, copy .env.example to .env, then run:
-
+pip install -r requirements.txt
+cp .env.example .env
+alembic upgrade head
 uvicorn app.main:app --reload
+```
 
-Health endpoint:
+## Verify
 
-GET /health
+```bash
+# backend
+cd backend
+pytest -q
 
-Never commit secrets. Use the frontend and backend environment example files for local configuration.
+# frontend
+cd ..
+npm run lint
+npm test
+npm run build
+npm run check:structure
+```
 
-## MVP principle
+Read [docs/README.md](docs/README.md) for the current architecture and development guide.
 
-Keep the academic engine powerful internally, but keep the administrator experience simple.
-
-The administrator should manage **which courses a university teaches in Semester 1 and Semester 2**, not internal resolver mechanics.
+Never commit secrets.

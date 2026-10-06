@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 
-from app.services.planner_engine import (
+from app.services.plan.engine import (
     PlannerExam,
     PlannerTopic,
     exam_urgency,

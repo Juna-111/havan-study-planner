@@ -1,4 +1,4 @@
-# Phase 6.7 — Student Dashboard
+> Historical; not current.\n\n# Phase 6.7 — Student Dashboard
 
 ## Goal
 

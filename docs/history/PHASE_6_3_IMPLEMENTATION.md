@@ -1,4 +1,4 @@
-# Phase 6.3: Dynamic Replanning
+> Historical; not current.\n\n# Phase 6.3: Dynamic Replanning
 
 ## Goal
 

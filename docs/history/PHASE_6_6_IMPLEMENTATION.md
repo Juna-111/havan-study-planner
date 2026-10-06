@@ -1,4 +1,4 @@
-# Phase 6.6: Recommendation Explanations
+> Historical; not current.\n\n# Phase 6.6: Recommendation Explanations
 
 ## Goal
 

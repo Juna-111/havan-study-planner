@@ -1,4 +1,4 @@
-# Phases 6.84–6.86: Academic Mapping, Overrides, and Planner Integration
+> Historical; not current.\n\n# Phases 6.84–6.86: Academic Mapping, Overrides, and Planner Integration
 
 ## 6.84 — Semester/Stream Course Mapping
 

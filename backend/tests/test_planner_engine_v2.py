@@ -1,7 +1,7 @@
 from dataclasses import replace
 from datetime import date, datetime, timedelta, timezone
 
-from app.services.planner_engine import (
+from app.services.plan.engine import (
     DEFAULT_CONFIG,
     ENGINE_VERSION,
     PlanRequest,

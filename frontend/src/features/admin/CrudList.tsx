@@ -1,6 +1,6 @@
 'use client'
 import {useEffect,useState} from 'react'
-import {apiFetch} from '../../lib/api'
+import {apiFetch} from '@/lib/api'
 import styles from './admin.module.css'
 export type EntityKey='courses'|'chapters'|'topics'
 type Field={key:string;label:string;type?:'text'|'number'|'textarea'}

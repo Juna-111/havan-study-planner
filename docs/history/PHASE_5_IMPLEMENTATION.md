@@ -1,4 +1,4 @@
-# Phase 5: Deterministic Planning Engine
+> Historical; not current.\n\n# Phase 5: Deterministic Planning Engine
 
 ## Purpose
 

@@ -1,14 +1,19 @@
 {
-  "name":"havan-study-planner",
-  "private":true,
-  "version":"1.0.0",
-  "workspaces":["frontend"],
-  "scripts":{
-    "dev":"npm --workspace @havan/study-planner-frontend run dev",
-    "build":"npm --workspace @havan/study-planner-frontend run build",
-    "start":"npm --workspace @havan/study-planner-frontend run start",
-    "test":"npm --workspace @havan/study-planner-frontend run test",
-    "lint":"npm --workspace @havan/study-planner-frontend run lint"
+  "name": "havan-study-planner",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "npm --workspace @havan/study-planner-frontend run dev",
+    "build": "npm --workspace @havan/study-planner-frontend run build",
+    "start": "npm --workspace @havan/study-planner-frontend run start",
+    "test": "npm --workspace @havan/study-planner-frontend run test",
+    "lint": "npm --workspace @havan/study-planner-frontend run lint",
+    "check:structure": "node scripts/check-structure.mjs"
   },
-  "engines":{"node":">=20.9.0"}
+  "engines": {
+    "node": ">=20.9.0"
+  }
 }
