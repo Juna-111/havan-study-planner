@@ -20,6 +20,8 @@ type Chapter = { id: number; name: string; topics: Topic[] }
 type Course = { id: number; code: string; name: string; chapters: Chapter[] }
 type Profile = { study_hours_per_day: number; study_days: string[] }
 
+const weekdayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
+
 export function PlanBuilder() {
   const router = useRouter()
   const [courses, setCourses] = useState<Course[]>([])
@@ -56,6 +58,29 @@ export function PlanBuilder() {
     () => Object.fromEntries((profile?.study_days ?? []).map((day) => [day, hours * 60])),
     [profile?.study_days, hours],
   )
+
+  const selectedMinutes = useMemo(
+    () => courses
+      .flatMap((course) => course.chapters.flatMap((chapter) => chapter.topics))
+      .filter((topic) => selected.has(topic.id))
+      .reduce((total, topic) => total + topic.estimated_study_minutes, 0),
+    [courses, selected],
+  )
+
+  const availableDays = useMemo(() => {
+    if (!profile?.study_days?.length) return 0
+    const studyDays = new Set(profile.study_days)
+    const start = new Date()
+    let count = 0
+    for (let offset = 0; offset < horizon; offset += 1) {
+      const date = new Date(start)
+      date.setDate(start.getDate() + offset)
+      if (studyDays.has(weekdayKeys[date.getDay()])) count += 1
+    }
+    return count
+  }, [horizon, profile?.study_days])
+
+  const availableMinutes = availableDays * hours * 60
 
   const input = useMemo(() => ({
     mode,
@@ -94,6 +119,24 @@ export function PlanBuilder() {
         <Segmented options={['today', 'week', 'month'] as const} value={mode} onChange={setMode} />
         <NumberStepper label="Hours per study day" value={hours} min={1} max={12} onChange={setHours} />
       </Card>
+
+      {selected.size > 0 && (
+        <Card padding="md" className="plan-capacity">
+          <div>
+            <strong>{selected.size} {selected.size === 1 ? 'topic' : 'topics'} selected</strong>
+            <span>{selectedMinutes} min of study content</span>
+          </div>
+          <div>
+            <strong>{availableMinutes} min available</strong>
+            <span>{availableDays} {availableDays === 1 ? 'study day' : 'study days'} in this plan</span>
+          </div>
+          <p>
+            {selectedMinutes <= availableMinutes
+              ? 'Your selected topics fit within your available study time.'
+              : 'These topics need more time than this plan currently provides. Preview will show what can fit.'}
+          </p>
+        </Card>
+      )}
 
       {error && <ErrorState message={error} onRetry={() => setError('')} />}
 
@@ -175,4 +218,3 @@ export function PlanBuilder() {
     </AppShell>
   )
 }
-
