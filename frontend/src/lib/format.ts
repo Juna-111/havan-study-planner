@@ -3,7 +3,7 @@ export function minutesLabel(minutes: number): string {
   if (safe < 60) return `${safe} min`
   const hours = Math.floor(safe / 60)
   const remainder = safe % 60
-  return remainder ? `${hours} h ${remainder} min` : `${hours} h`
+  return remainder ? `${hours}h ${remainder}m` : `${hours}h`
 }
 
 export function formatDate(value: string | Date, options: Intl.DateTimeFormatOptions = {}): string {
