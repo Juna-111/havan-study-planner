@@ -124,9 +124,22 @@ export default function AcademicSetupScreen() {
         </div>
         <div className={styles.quickCard}>
           <h2>Add curriculum</h2><p>Pick the university first. Version keeps identities separate.</p>
-          <label>University<select value={universityId} onChange={(e) => setUniversityId(e.target.value)}><option value=''>Choose university</option>{universities.map((item) => <option key={item.id} value={item.id}>{item.code} · {item.name}</option>)}</select></label>
+          <label>
+University<select value={universityId} onChange={(e) => setUniversityId(e.target.value)}>
+<option value=''>
+Choose university</option>
+{universities.map((item) => <option key={item.id} value={item.id}>
+{item.code} · {item.name}</option>)}</select>
+</label>
           <label>Curriculum name<input value={curriculumName} onChange={(e) => setCurriculumName(e.target.value)} placeholder='2025 Freshman Curriculum' /></label>
-          <div className={styles.twoFields}><label>Version<input value={curriculumVersion} onChange={(e) => setCurriculumVersion(e.target.value)} /></label><label>Academic year<input value={curriculumYear} onChange={(e) => setCurriculumYear(e.target.value)} placeholder='2025/26' /></label></div>
+          <div className={styles.twoFields}>
+<label>
+Version<input value={curriculumVersion} onChange={(e) => setCurriculumVersion(e.target.value)} />
+</label>
+<label>
+Academic year<input value={curriculumYear} onChange={(e) => setCurriculumYear(e.target.value)} placeholder='2025/26' />
+</label>
+</div>
           <button className={styles.primary} disabled={busy === 'curriculum' || !universityId || !curriculumName.trim()} onClick={addCurriculum}>{busy === 'curriculum' ? 'Adding…' : 'Add curriculum'}</button>
         </div>
       </div>
@@ -142,7 +155,13 @@ export default function AcademicSetupScreen() {
             <b>{item.request_type === 'UNIVERSITY' ? 'University' : 'Curriculum'} · {item.name}</b>
             <span>{item.code || item.version || 'Details not supplied'}</span>
             <small>{item.status}{item.academic_year ? ' · ' + item.academic_year : ''}</small>
-          </div>{item.status === 'PENDING' && <div className={styles.actions}><button className={styles.primary} disabled={busy === 'request-' + item.id} onClick={() => review(item.id, 'APPROVED')}>Approve</button><button className={styles.danger} disabled={busy === 'request-' + item.id} onClick={() => review(item.id, 'REJECTED')}>Reject</button></div>}</div>)}
+          </div>
+{item.status === 'PENDING' && <div className={styles.actions}>
+<button className={styles.primary} disabled={busy === 'request-' + item.id} onClick={() => review(item.id, 'APPROVED')}>
+Approve</button>
+<button className={styles.danger} disabled={busy === 'request-' + item.id} onClick={() => review(item.id, 'REJECTED')}>
+Reject</button>
+</div>}</div>)}
       </div>
     </section>
   )
