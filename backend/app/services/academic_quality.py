@@ -103,7 +103,7 @@ def run_academic_quality_checks(db: Session) -> dict:
 
     # Content completeness checks for the planner-facing academic content.
     for chapter in chapters:
-        if chapter.status == "ACTIVE" and not (chapter.important_points or "").strip():
+        if chapter.status == "ACTIVE" and not (getattr(chapter, "important_points", None) or "").strip():
             issues.append(
                 _issue(
                     "warning",
@@ -115,7 +115,7 @@ def run_academic_quality_checks(db: Session) -> dict:
             )
 
     for topic in topics:
-        if topic.status == "ACTIVE" and not (topic.important_points or "").strip():
+        if topic.status == "ACTIVE" and not (getattr(topic, "important_points", None) or "").strip():
             issues.append(
                 _issue(
                     "warning",
