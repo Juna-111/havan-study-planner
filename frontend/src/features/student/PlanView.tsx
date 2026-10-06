@@ -54,9 +54,9 @@ export default function PlanView() {
       ) : !p ? (
         <EmptyState
           title="No plan yet"
-          hint="Choose study topics from topics you choose."
+          hint="Choose the course, chapter, and topics you want Havan to organize."
           action={
-            <Button onClick={() => (location.href = '/plan/new')}>
+            <Button variant="accent" onClick={() => (location.href = '/student/havan')}>
               Build a plan
             </Button>
           }
