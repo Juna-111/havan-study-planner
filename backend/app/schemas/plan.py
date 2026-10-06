@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 Weekday = Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 PlanMode = Literal["today", "week", "month"]
-PlanAction = Literal["START", "COMPLETE", "SKIP", "MOVE", "REPEAT", "REMOVE", "ADD"]
+PlanActionType = Literal["START", "COMPLETE", "SKIP", "MOVE", "REPEAT", "REMOVE", "ADD"]
 
 
 class TopicSelection(BaseModel):
@@ -88,7 +88,7 @@ class PlanOut(BaseModel):
 
 
 class PlanAction(BaseModel):
-    action: PlanAction
+    action: PlanActionType
     target_date: date | None = None
     target_topic_id: int | None = Field(default=None, gt=0)
     actual_minutes: int | None = Field(default=None, gt=0)
