@@ -56,7 +56,7 @@ export default function RequestManagementScreen() {
   return (
     <section>
       <header className={styles.header}>
-        <span>QUALITY · D11</span>
+        <span>CONTROL · STUDENT REQUESTS</span>
         <h1>Student requests</h1>
         <p>Review missing university and curriculum requests before they become shared academic catalog records.</p>
       </header>
