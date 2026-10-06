@@ -185,3 +185,32 @@ Not run in the GitHub workspace. Required before Phase 7 is GREEN:
 - manual review at 360, 768, 1024, and 1280 px
 - verify mapping add/move/remove and non-admin 403 behavior
 - grep for references to deleted admin workspaces and old admin CSS
+
+
+## Phase 8 — Clean-up, Hardening, Documentation
+
+Status: IMPLEMENTED / VERIFICATION PENDING
+
+### Implemented
+- Removed deprecated `/planner` and `/havan-planner` API routers, schemas, and services.
+- Removed the deprecated `/student/*` frontend route tree after the migration period.
+- Made `services/plan/engine.py` the canonical engine implementation and removed the duplicate `planner_engine.py` module.
+- Updated engine tests to use the canonical Plan engine path and removed tests tied only to deleted planner APIs.
+- Added `scripts/check-structure.mjs` and a root `npm run check:structure` command.
+- Removed frontend `--passWithNoTests` so empty test suites can no longer pass silently.
+- Hardened CI with PostgreSQL migration validation, backend tests, frontend lint/type/test/build, and the structure gate.
+- Added current documentation: `docs/README.md`, `MAP.md`, `PRODUCT.md`, `ARCHITECTURE.md`, `DEVELOPMENT.md`, and `STUDENT-QUICK-GUIDE.md`.
+- Rewrote the root README and database documentation to describe the active catalog and unified Plan model.
+- Removed superseded root phase documents and marked historical documents as historical.
+- Marked legacy planner persistence models explicitly; existing migrations were not rewritten or deleted.
+- Standardized new admin imports on the `@/` alias.
+
+### Verification status
+GitHub workflow execution is still required before calling Phase 8 GREEN. The final gate is:
+- backend `alembic upgrade head` on scratch PostgreSQL
+- backend `pytest -q`
+- frontend lint, `tsc --noEmit`, `npm test`, build
+- `npm run check:structure`
+- manual review at 320/360/390/768/1024/1280 px
+- confirm first-load route JS remains under the 150 KB gzipped target from the rebuild specification
+- confirm no deprecated planner route/import remains
