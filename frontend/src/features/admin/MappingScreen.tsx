@@ -168,8 +168,8 @@ export default function MappingScreen() {
   return (
     <section>
       <header className={styles.header}>
-        <span>SETUP</span>
-        <h1>Universities & mapping</h1>
+        <span>ACADEMIC SETUP · COURSE MAPPING</span>
+        <h1>Course mapping</h1>
         <p>Choose the academic path, then place Course Registry courses into Semester 1 or 2. Mapping changes usage only, never the canonical course.</p>
       </header>
       {error && <div className={styles.alert}>{error}</div>}
