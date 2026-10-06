@@ -9,6 +9,7 @@ import { apiFetch } from '@/lib/api'
 import { clearAuth, getSavedAccount } from '@/lib/auth'
 import { getMyStudentProfile } from '@/lib/session'
 import AcademicCatalogRequest from '@/features/onboarding/AcademicCatalogRequest'
+import ExamManager from '@/features/student/ExamManager'
 
 const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const
 type Profile = { id: number; name: string; university_id: number; curriculum_id: number; stream_id: number; study_hours_per_day: number; study_days: string[] }
@@ -113,7 +114,7 @@ function View() {
             {message && <p className="app-meta">{message}</p>}
           </Card>
         )}
-        <Button variant="danger" onClick={() => { clearAuth(); router.replace('/auth') }}>Sign out</Button>
+        {profile && <ExamManager />}\n        <Button variant="danger" onClick={() => { clearAuth(); router.replace('/auth') }}>Sign out</Button>
       </div>
     </AppShell>
   )
