@@ -1,4 +1,5 @@
 from app.core.config import API_PREFIX
+from app.core.deps import current_account, current_student, require_student_owner
 from datetime import datetime, timezone
 from typing import Annotated
 
@@ -7,7 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db.models.curriculum import Chapter, Course, Curriculum, Stream, Topic, University, UniversityCourseMapping
-from app.db.models.student import StudentCourse, StudentExam, StudentProfile, StudentTopicProgress
+from app.db.models.student import StudentAccount, StudentCourse, StudentExam, StudentProfile, StudentTopicProgress
 from app.db.session import get_db
 from app.services.academic_resolver import resolve_stream_courses, resolve_student_courses, resolved_course_ids
 from app.schemas.student import (
@@ -15,7 +16,7 @@ from app.schemas.student import (
     StudentCourseAdd, StudentCourseRead, StudentCreate, StudentRead, StudentUpdate,
 )
 
-router = APIRouter(prefix="/api/v1/students", tags=["students"])
+router = APIRouter(prefix=f"{API_PREFIX}/students", tags=["students"], dependencies=[Depends(current_account)])
 DB = Annotated[Session, Depends(get_db)]
 
 
@@ -77,13 +78,40 @@ def validate_curriculum_context(db: Session, university_id: int, curriculum_id: 
         raise HTTPException(status_code=400, detail="Stream does not belong to the selected curriculum")
 
 
-@router.post("/profiles", response_model=StudentRead, status_code=status.HTTP_201_CREATED)
-def create_profile(payload: StudentCreate, db: DB):
+@router.get("/me/profile", response_model=StudentRead)
+def get_my_profile(student: Annotated[StudentProfile, Depends(current_student)]):
+    return student
+
+
+@router.get("/me/context", response_model=StudentContext)
+def get_my_context(student: Annotated[StudentProfile, Depends(current_student)], db: DB):
+    return get_context(student.id, db)
+
+
+@router.get("/me/courses", response_model=list[StudentCourseRead])
+def get_my_courses(student: Annotated[StudentProfile, Depends(current_student)], db: DB):
+    return list_courses(student.id, db)
+
+
+@router.get("/me/progress", response_model=list[ProgressRead])
+def get_my_progress(student: Annotated[StudentProfile, Depends(current_student)], db: DB):
+    return list_progress(student.id, db)
+
+
+@router.get("/me/exams", response_model=list[ExamRead])
+def get_my_exams(student: Annotated[StudentProfile, Depends(current_student)], db: DB):
+    return list_exams(student.id, db)
+
+
+@router.post("/profiles", response_model=StudentRead, status_code=status.HTTP_201_CREATED)\ndef
+def create_profile(payload: StudentCreate, db: DB, account: Annotated[StudentAccount, Depends(current_account)]):
     validate_curriculum_context(db, payload.university_id, payload.curriculum_id, payload.stream_id)
     existing = db.scalar(select(StudentProfile).where(StudentProfile.client_key == payload.client_key))
     if existing:
         return existing
-    profile = StudentProfile(**payload.model_dump())
+    data = payload.model_dump(exclude={"account_id"})
+    data["account_id"] = account.id
+    profile = StudentProfile(**data)
     db.add(profile)
     db.commit()
     db.refresh(profile)
@@ -91,19 +119,19 @@ def create_profile(payload: StudentCreate, db: DB):
 
 
 @router.get("/profiles/by-client/{client_key}", response_model=StudentRead)
-def get_profile_by_client(client_key: str, db: DB):
+def get_profile_by_client(client_key: str, db: DB, account: Annotated[StudentAccount, Depends(current_account)]):
     profile = db.scalar(select(StudentProfile).where(StudentProfile.client_key == client_key))
     if not profile:
         raise HTTPException(status_code=404, detail="Student profile not found")
     return profile
 
 
-@router.get("/profiles/{student_id}", response_model=StudentRead)
+@router.get("/profiles/{student_id}", response_model=StudentRead, dependencies=[Depends(require_student_owner)])
 def get_profile(student_id: int, db: DB):
     return profile_or_404(db, student_id)
 
 
-@router.patch("/profiles/{student_id}", response_model=StudentRead)
+@router.patch("/profiles/{student_id}", response_model=StudentRead, dependencies=[Depends(require_student_owner)])
 def update_profile(student_id: int, payload: StudentUpdate, db: DB):
     profile = profile_or_404(db, student_id)
     data = payload.model_dump(exclude_unset=True)
@@ -119,7 +147,7 @@ def update_profile(student_id: int, payload: StudentUpdate, db: DB):
     return profile
 
 
-@router.get("/profiles/{student_id}/context", response_model=StudentContext)
+@router.get("/profiles/{student_id}/context", response_model=StudentContext, dependencies=[Depends(require_student_owner)])
 def get_context(student_id: int, db: DB):
     profile = profile_or_404(db, student_id)
     student_courses = resolved_student_courses(db, student_id)
@@ -163,14 +191,14 @@ def get_context(student_id: int, db: DB):
     )
 
 
-@router.get("/profiles/{student_id}/courses", response_model=list[StudentCourseRead])
+@router.get("/profiles/{student_id}/courses", response_model=list[StudentCourseRead], dependencies=[Depends(require_student_owner)])
 def list_courses(student_id: int, db: DB):
     profile_or_404(db, student_id)
     metadata = resolved_course_metadata(db, student_id)
     return [student_course_read_data(db, item, metadata) for item in resolved_student_courses(db, student_id)]
 
 
-@router.post("/profiles/{student_id}/courses", response_model=StudentCourseRead, status_code=201)
+@router.post("/profiles/{student_id}/courses", response_model=StudentCourseRead, status_code=201, dependencies=[Depends(require_student_owner)])
 def add_course(student_id: int, payload: StudentCourseAdd, db: DB):
     profile = profile_or_404(db, student_id)
     course = db.get(Course, payload.course_id)
@@ -259,7 +287,7 @@ def add_course(student_id: int, payload: StudentCourseAdd, db: DB):
     return student_course_read_data(db, item)
 
 
-@router.delete("/profiles/{student_id}/courses/{course_id}", status_code=204)
+@router.delete("/profiles/{student_id}/courses/{course_id}", status_code=204, dependencies=[Depends(require_student_owner)])
 def remove_course(student_id: int, course_id: int, db: DB):
     item = db.scalar(select(StudentCourse).where(StudentCourse.student_id == student_id, StudentCourse.course_id == course_id))
     if not item:
@@ -268,13 +296,13 @@ def remove_course(student_id: int, course_id: int, db: DB):
     db.commit()
 
 
-@router.get("/profiles/{student_id}/progress", response_model=list[ProgressRead])
+@router.get("/profiles/{student_id}/progress", response_model=list[ProgressRead], dependencies=[Depends(require_student_owner)])
 def list_progress(student_id: int, db: DB):
     profile_or_404(db, student_id)
     return list(db.scalars(select(StudentTopicProgress).where(StudentTopicProgress.student_id == student_id)).all())
 
 
-@router.put("/profiles/{student_id}/progress/{topic_id}", response_model=ProgressRead)
+@router.put("/profiles/{student_id}/progress/{topic_id}", response_model=ProgressRead, dependencies=[Depends(require_student_owner)])
 def upsert_progress(student_id: int, topic_id: int, payload: ProgressUpsert, db: DB):
     profile_or_404(db, student_id)
     if not db.get(Topic, topic_id):
@@ -303,7 +331,7 @@ def upsert_progress(student_id: int, topic_id: int, payload: ProgressUpsert, db:
     return item
 
 
-@router.delete("/profiles/{student_id}/progress/{topic_id}", status_code=204)
+@router.delete("/profiles/{student_id}/progress/{topic_id}", status_code=204, dependencies=[Depends(require_student_owner)])
 def reset_progress(student_id: int, topic_id: int, db: DB):
     item = db.scalar(select(StudentTopicProgress).where(StudentTopicProgress.student_id == student_id, StudentTopicProgress.topic_id == topic_id))
     if item:
@@ -311,13 +339,13 @@ def reset_progress(student_id: int, topic_id: int, db: DB):
         db.commit()
 
 
-@router.get("/profiles/{student_id}/exams", response_model=list[ExamRead])
+@router.get("/profiles/{student_id}/exams", response_model=list[ExamRead], dependencies=[Depends(require_student_owner)])
 def list_exams(student_id: int, db: DB):
     profile_or_404(db, student_id)
     return list(db.scalars(select(StudentExam).where(StudentExam.student_id == student_id).order_by(StudentExam.exam_date)).all())
 
 
-@router.post("/profiles/{student_id}/exams", response_model=ExamRead, status_code=201)
+@router.post("/profiles/{student_id}/exams", response_model=ExamRead, status_code=201, dependencies=[Depends(require_student_owner)])
 def add_exam(student_id: int, payload: ExamCreate, db: DB):
     profile = profile_or_404(db, student_id)
     course = db.get(Course, payload.course_id)
@@ -332,7 +360,7 @@ def add_exam(student_id: int, payload: ExamCreate, db: DB):
     return item
 
 
-@router.patch("/profiles/{student_id}/exams/{exam_id}", response_model=ExamRead)
+@router.patch("/profiles/{student_id}/exams/{exam_id}", response_model=ExamRead, dependencies=[Depends(require_student_owner)])
 def update_exam(student_id: int, exam_id: int, payload: ExamUpdate, db: DB):
     profile = profile_or_404(db, student_id)
     item = db.scalar(
@@ -360,7 +388,7 @@ def update_exam(student_id: int, exam_id: int, payload: ExamUpdate, db: DB):
     return item
 
 
-@router.delete("/profiles/{student_id}/exams/{exam_id}", status_code=204)
+@router.delete("/profiles/{student_id}/exams/{exam_id}", status_code=204, dependencies=[Depends(require_student_owner)])
 def remove_exam(student_id: int, exam_id: int, db: DB):
     item = db.scalar(select(StudentExam).where(StudentExam.student_id == student_id, StudentExam.id == exam_id))
     if not item:

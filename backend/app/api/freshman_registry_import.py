@@ -1,4 +1,5 @@
 from app.core.config import API_PREFIX
+from app.core.deps import require_admin
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -10,7 +11,7 @@ from app.schemas.freshman_registry_import import FreshmanRegistryPreview, Freshm
 from app.services.freshman_registry import create_freshman_course, freshman_registry_key
 from app.services.freshman_registry_parser import parse_bullet_curriculum
 
-router = APIRouter(prefix="/api/v1/freshman-registry-import", tags=["freshman-registry-import"])
+router = APIRouter(prefix=f"{API_PREFIX}/freshman-registry-import", tags=["freshman-registry-import"], dependencies=[Depends(require_admin)])
 DB = Depends(get_db)
 MAX_FILE_SIZE = 5 * 1024 * 1024
 

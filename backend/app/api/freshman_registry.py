@@ -1,4 +1,5 @@
 from app.core.config import API_PREFIX
+from app.core.deps import current_account, require_admin
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -22,7 +23,7 @@ from app.services.freshman_registry import (
     set_categories,
 )
 
-router = APIRouter(prefix=f"{API_PREFIX}/freshman-registry", tags=["freshman-registry"])
+router = APIRouter(prefix=f"{API_PREFIX}/freshman-registry", tags=["freshman-registry"], dependencies=[Depends(current_account)])
 DB = Annotated[Session, Depends(get_db)]
 
 
@@ -48,7 +49,7 @@ def list_categories(db: DB):
     ).all()
 
 
-@router.post("/categories", response_model=FreshmanCourseCategoryRead, status_code=status.HTTP_201_CREATED)
+@router.post("/categories", dependencies=[Depends(require_admin)], response_model=FreshmanCourseCategoryRead, status_code=status.HTTP_201_CREATED)
 def create_category(payload: FreshmanCourseCategoryCreate, db: DB):
     category = FreshmanCourseCategory(**payload.model_dump())
     db.add(category)
@@ -61,7 +62,7 @@ def create_category(payload: FreshmanCourseCategoryCreate, db: DB):
     return category
 
 
-@router.patch("/categories/{category_id}", response_model=FreshmanCourseCategoryRead)
+@router.patch("/categories/{category_id}", dependencies=[Depends(require_admin)], response_model=FreshmanCourseCategoryRead)
 def update_category(category_id: int, payload: FreshmanCourseCategoryUpdate, db: DB):
     category = db.get(FreshmanCourseCategory, category_id)
     if category is None:
@@ -98,7 +99,7 @@ def list_freshman_courses(
     return [_course_read(course) for course in db.scalars(query).unique().all()]
 
 
-@router.post("/courses", response_model=FreshmanCourseRead, status_code=status.HTTP_201_CREATED)
+@router.post("/courses", dependencies=[Depends(require_admin)], response_model=FreshmanCourseRead, status_code=status.HTTP_201_CREATED)
 def create_course(payload: FreshmanCourseCreate, db: DB):
     existing = db.scalar(
         select(Course).where(
@@ -137,7 +138,7 @@ def get_course(course_id: int, db: DB):
     return _course_read(course)
 
 
-@router.patch("/courses/{course_id}", response_model=FreshmanCourseRead)
+@router.patch("/courses/{course_id}", dependencies=[Depends(require_admin)], response_model=FreshmanCourseRead)
 def update_course(course_id: int, payload: FreshmanCourseUpdate, db: DB):
     course = db.scalar(
         select(Course)

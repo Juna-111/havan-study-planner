@@ -1,4 +1,4 @@
-export type AuthAccount = { id: number; email: string; student_profile_id: number | null }
+export type AuthAccount = { id: number; email: string; role: 'STUDENT' | 'ADMIN'; student_profile_id: number | null }
 export type AuthResponse = { access_token: string; token_type: string; account: AuthAccount }
 
 const TOKEN_KEY = 'havan_auth_token'
