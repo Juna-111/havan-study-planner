@@ -11,6 +11,7 @@ from app.services.plan.engine import (
     StudyCalendar,
     blend_confidence,
     build_plan,
+    allocate_selected_topics,
     default_exam_importance,
     parse_weekdays,
     render_reason,
@@ -47,6 +48,74 @@ def plan(topics, exams=(), minutes=120, horizon=7, **kwargs):
 
 def ids_on(result, day):
     return [s.topic_id for s in result.sessions if s.planned_date == day]
+
+
+
+def choice_plan(topics, *, exams=(), minutes=60, horizon=3, pace_factor=1.0,
+                study_weekdays=frozenset(range(7)), pinned_topic_dates=None,
+                deferred_topic_ids=frozenset(), known_topic_ids=frozenset()):
+    request = PlanRequest(
+        today=TODAY,
+        topics=topics,
+        exams=exams,
+        calendar=StudyCalendar(study_weekdays=study_weekdays, daily_minutes=minutes),
+        horizon_days=horizon,
+        pace_factor=pace_factor,
+        pinned_topic_dates=pinned_topic_dates or {},
+        deferred_topic_ids=deferred_topic_ids,
+        known_topic_ids=known_topic_ids,
+    )
+    return allocate_selected_topics(request)
+
+
+def test_choice_allocator_never_invents_topics():
+    result = choice_plan([topic(1), topic(2)], minutes=60, horizon=2)
+    assert {session.topic_id for session in result.sessions} <= {1, 2}
+    assert {item.topic_id for item in result.unplaced} <= {1, 2}
+
+
+def test_choice_allocator_uses_observed_pace():
+    result = choice_plan([topic(1, minutes=60)], minutes=180, pace_factor=1.5)
+    assert sum(session.minutes for session in result.sessions) == 90
+
+
+def test_choice_allocator_interleaves_selected_courses():
+    result = choice_plan([
+        topic(1, course_id=1, minutes=120),
+        topic(2, course_id=2, minutes=120),
+    ], minutes=120, horizon=1)
+    assert {session.course_id for session in result.sessions} == {1, 2}
+
+
+def test_choice_allocator_uses_exam_as_constraint_not_topic_source():
+    result = choice_plan(
+        [topic(1, course_id=1, minutes=60), topic(2, course_id=2, minutes=60)],
+        exams=[exam(course_id=1, days=1)],
+        minutes=60,
+        horizon=1,
+    )
+    assert {session.topic_id for session in result.sessions} <= {1, 2}
+    assert result.readiness[0].course_id == 1
+    assert result.readiness[0].required_minutes == 60
+
+
+def test_choice_allocator_preserves_pinned_date():
+    target = TODAY + timedelta(days=1)
+    result = choice_plan(
+        [topic(1, minutes=60), topic(2, minutes=60)],
+        minutes=60,
+        horizon=2,
+        pinned_topic_dates={1: target},
+    )
+    pinned = [session for session in result.sessions if session.topic_id == 1]
+    assert pinned and pinned[0].planned_date == target
+    assert "you chose this date" in pinned[0].reason
+
+
+def test_choice_allocator_reports_unplaced_work_without_overbooking():
+    result = choice_plan([topic(1, minutes=180)], minutes=60, horizon=1)
+    assert result.minutes_by_date()[TODAY] == 60
+    assert result.unplaced[0].remaining_minutes == 120
 
 
 def test_config_weights_must_sum_to_one():
