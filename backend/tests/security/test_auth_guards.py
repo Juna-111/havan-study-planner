@@ -59,7 +59,7 @@ def test_production_rejects_placeholder_secret():
 
 
 def test_cors_has_no_wildcard_host_regex():
-    source = Path(__file__).resolve().parents[1] / "app" / "main.py"
+    source = Path(__file__).resolve().parents[2] / "app" / "main.py"
     assert "allow_origin_regex" not in source.read_text(encoding="utf-8")
 
 
