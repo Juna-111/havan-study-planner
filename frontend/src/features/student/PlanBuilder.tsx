@@ -294,7 +294,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
                 })}
               </div>
             </Card>
-          )
+          )}
 
           {selectedTopics.length > 0 && (
             <Card padding="lg" className="plan-review">
