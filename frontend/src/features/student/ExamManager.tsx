@@ -15,6 +15,7 @@ const TYPES = [
 ]
 
 export default function ExamManager() {
+  const [profileId, setProfileId] = useState<number | null>(null)
   const [courses, setCourses] = useState<Course[]>([])
   const [exams, setExams] = useState<Exam[]>([])
   const [courseId, setCourseId] = useState('')
@@ -29,10 +30,12 @@ export default function ExamManager() {
     setLoading(true)
     setError('')
     try {
-      const [courseRows, examRows] = await Promise.all([
+      const [profile, courseRows, examRows] = await Promise.all([
+        apiFetch<{ id: number }>('/students/me/profile'),
         apiFetch<Course[]>('/students/me/courses'),
         apiFetch<Exam[]>('/students/me/exams'),
       ])
+      setProfileId(profile.id)
       setCourses(courseRows)
       setExams(examRows)
       setCourseId((current) => current || String(courseRows[0]?.id ?? ''))
@@ -70,7 +73,8 @@ export default function ExamManager() {
 
   async function removeExam(id: number) {
     try {
-      await apiFetch<void>(`/students/profiles/current/exams/${id}`, { method: 'DELETE' })
+      if (!profileId) return
+      await apiFetch<void>(`/students/profiles/${profileId}/exams/${id}`, { method: 'DELETE' })
       setExams((current) => current.filter((exam) => exam.id !== id))
     } catch {
       setError('Could not remove that exam.')
