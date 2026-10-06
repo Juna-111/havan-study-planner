@@ -196,3 +196,24 @@ button { cursor:pointer } :focus-visible { outline:3px solid rgba(1,1,126,.35); 
 .plan-review-unplaced{margin-top:14px;padding:12px;border-radius:10px;background:#fff4f3}
 .plan-review-unplaced p{margin:6px 0 0;color:#5d5d73;font-size:.875rem}
 @media(max-width:480px){.plan-review-row{grid-template-columns:1fr}.plan-review-row div:last-child{padding-top:2px}}
+
+
+/* Havan planning experience */
+.havan-plan-controls { gap:18px; }
+.havan-plan-mode { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.havan-plan-mode > div { display:grid; gap:3px; }
+.havan-plan-mode strong { color:#151526; font-size:1.15rem; }
+.havan-plan-control-note { color:#5d5d73; font-size:.82rem; text-align:right; }
+.havan-critical-points { display:grid; gap:18px; border-color:#dfe2f4; background:#fff; }
+.havan-critical-points > div:first-child { display:grid; gap:5px; }
+.havan-topic-insights { display:grid; gap:12px; }
+.havan-topic-insight { display:grid; gap:8px; padding:14px; border:1px solid #e7e7ef; border-radius:14px; background:#fafaff; }
+.havan-topic-insight-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.havan-topic-insight-heading strong { color:#151526; }
+.havan-topic-insight-heading span { color:#01017e; font-size:.8rem; font-weight:800; white-space:nowrap; }
+.havan-topic-insight ul { display:grid; gap:5px; margin:0; padding-left:20px; color:#5d5d73; line-height:1.55; }
+@media(max-width:600px) {
+  .havan-plan-mode { align-items:flex-start; flex-direction:column; }
+  .havan-plan-control-note { text-align:left; }
+  .havan-topic-insight-heading { align-items:flex-start; }
+}
