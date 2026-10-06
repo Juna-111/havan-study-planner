@@ -3,6 +3,8 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import date, timedelta
 
+from app.core.time import parse_weekdays, today_local
+
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -19,28 +21,7 @@ from app.services.planner_engine import (
 
 
 def _study_dates(student: StudentProfile, horizon_days: int, today: date) -> list[date]:
-    raw_days = student.study_days or []
-    weekdays: set[int] = set()
-    names = {
-        "sun": 6, "sunday": 6, "mon": 0, "monday": 0,
-        "tue": 1, "tuesday": 1, "wed": 2, "wednesday": 2,
-        "thu": 3, "thursday": 3, "fri": 4, "friday": 4,
-        "sat": 5, "saturday": 5,
-    }
-
-    for value in raw_days:
-        if isinstance(value, int) and 0 <= value <= 6:
-            weekdays.add((value - 1) % 7)
-        elif isinstance(value, str):
-            lowered = value.strip().lower()
-            if lowered.isdigit() and 0 <= int(lowered) <= 6:
-                weekdays.add((int(lowered) - 1) % 7)
-            elif lowered in names:
-                weekdays.add(names[lowered])
-
-    if not weekdays:
-        weekdays = {0, 1, 2, 3, 4}
-
+    weekdays = parse_weekdays(student.study_days)
     return [
         today + timedelta(days=offset)
         for offset in range(horizon_days)
@@ -54,6 +35,7 @@ def generate_plan(
     horizon_days: int = 7,
     deferred_topic_ids: set[int] | None = None,
     pinned_topic_dates: dict[int, date] | None = None,
+    today: date | None = None,
 ) -> StudyPlan:
     student = db.get(StudentProfile, student_id)
     if not student:
@@ -113,7 +95,7 @@ def generate_plan(
     progress = {row.topic_id: row for row in progress_rows}
     completed_ids = {row.topic_id for row in progress_rows if row.status == "COMPLETED"}
 
-    today = date.today()
+    today = today or today_local()
     exams = list(db.scalars(select(StudentExam).where(StudentExam.student_id == student_id)).all())
     exam_by_course: dict[int, list[StudentExam]] = defaultdict(list)
     for exam in exams:
