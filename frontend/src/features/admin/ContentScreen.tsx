@@ -1,6 +1,6 @@
 'use client'
 import {useEffect,useState} from 'react'
-import {apiFetch} from '../../lib/api'
+import {apiFetch} from '@/lib/api'
 import CrudList,{entityConfigs,EntityKey} from './CrudList'
 import styles from './admin.module.css'
 type Item={id:number;name:string;code?:string}
