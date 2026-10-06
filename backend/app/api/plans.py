@@ -51,27 +51,6 @@ def current(
     return read_plan(db, student, plan)
 
 
-@router.post("/{plan_id}/tasks/{task_id}/actions", response_model=PlanOut)
-def action(
-    plan_id: int,
-    task_id: int,
-    payload: PlanAction,
-    student: StudentProfile = Depends(current_student),
-    db: Session = Depends(get_db),
-):
-    plan = db.scalar(select(Plan).where(Plan.id == plan_id, Plan.student_id == student.id, Plan.status == "ACTIVE"))
-    if not plan:
-        raise DomainError("NO_ACTIVE_PLAN", "Study plan not found.", 404)
-    try:
-        result, warnings = apply_action(db, student, task_id, payload)
-        out = read_plan(db, student, result)
-        for code in warnings:
-            out.warnings.append({"code": code, "severity": "info", "message": code, "fix": {}})
-        return out
-    except ValueError as exc:
-        raise DomainError("INVALID_SELECTION", str(exc), 422)
-
-
 @router.post("/current/tasks/{task_id}/actions", response_model=PlanOut)
 def current_action(
     task_id: int,
@@ -96,3 +75,26 @@ def current_action(
         return out
     except ValueError as exc:
         raise DomainError("INVALID_SELECTION", str(exc), 422)
+
+
+@router.post("/{plan_id}/tasks/{task_id}/actions", response_model=PlanOut)
+def action(
+    plan_id: int,
+    task_id: int,
+    payload: PlanAction,
+    student: StudentProfile = Depends(current_student),
+    db: Session = Depends(get_db),
+):
+    plan = db.scalar(select(Plan).where(Plan.id == plan_id, Plan.student_id == student.id, Plan.status == "ACTIVE"))
+    if not plan:
+        raise DomainError("NO_ACTIVE_PLAN", "Study plan not found.", 404)
+    try:
+        result, warnings = apply_action(db, student, task_id, payload)
+        out = read_plan(db, student, result)
+        for code in warnings:
+            out.warnings.append({"code": code, "severity": "info", "message": code, "fix": {}})
+        return out
+    except ValueError as exc:
+        raise DomainError("INVALID_SELECTION", str(exc), 422)
+
+
