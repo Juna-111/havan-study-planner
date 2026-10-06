@@ -54,3 +54,22 @@ Never commit secrets. Use `backend/.env.example` and the frontend environment co
 5. Manual review at 320, 360, 390, 768, 1024, and 1280 px.
 
 The GitHub workflow performs the automated subset. A phase is not considered GREEN merely because code was committed.
+
+
+## Deployment environment
+
+Vercel builds the static export from the repository root:
+- `NEXT_PUBLIC_API_URL=https://<api-origin>`
+- Build output: `frontend/out`
+
+Backend production requires:
+- `ENVIRONMENT=production`
+- `DATABASE_URL`
+- `AUTH_SECRET` with at least 32 random characters
+- `CORS_ORIGINS=https://<vercel-origin>` with exact origins and no trailing slash
+- `ADMIN_EMAILS`
+- `AUTH_TOKEN_TTL_DAYS`
+- `DEFAULT_TIMEZONE=Africa/Addis_Ababa`
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` for password recovery
+
+The frontend build requires network access because `next/font/google` downloads fonts during build.
