@@ -73,3 +73,28 @@ def action(
     except ValueError as exc:
         raise DomainError("INVALID_SELECTION", str(exc), 422)
 
+
+@router.post("/current/tasks/{task_id}/actions", response_model=PlanOut)
+def current_action(
+    task_id: int,
+    payload: PlanAction,
+    student: StudentProfile = Depends(current_student),
+    db: Session = Depends(get_db),
+):
+    plan = db.scalar(select(Plan).where(
+        Plan.student_id == student.id,
+        Plan.status == "ACTIVE",
+    ).order_by(Plan.id.desc()))
+    if not plan:
+        raise DomainError("NO_ACTIVE_PLAN", "You do not have a plan yet.", 404)
+    try:
+        result, warnings = apply_action(db, student, task_id, payload)
+        out = read_plan(db, student, result)
+        if warnings:
+            out.warnings.extend([
+                {"code": code, "severity": "info", "message": code, "fix": {}}
+                for code in warnings
+            ])
+        return out
+    except ValueError as exc:
+        raise DomainError("INVALID_SELECTION", str(exc), 422)
