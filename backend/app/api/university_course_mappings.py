@@ -84,6 +84,9 @@ def _validate_stream_and_course(
     if str(course.status).upper() != "ACTIVE":
         raise HTTPException(status_code=422, detail="The selected course is not active.")
 
+    if stream.curriculum is None:
+        raise HTTPException(status_code=422, detail="The selected stream has no curriculum.")
+
     return stream, course
 
 
@@ -155,6 +158,9 @@ def create_mapping(payload: UniversityCourseMappingCreate, db: Session = DB):
             detail="This course is already mapped to the selected stream. Move it by changing its semester.",
         )
 
+    if payload.status == "ACTIVE" and str(stream.curriculum.status).upper() != "ACTIVE":
+        raise HTTPException(status_code=422, detail="Publish the selected curriculum before activating its course mappings.")
+
     item = UniversityCourseMapping(
         curriculum_id=stream.curriculum_id,
         stream_id=stream.id,
@@ -186,6 +192,14 @@ def update_mapping(
 ):
     item = _get(db, mapping_id)
     data = payload.model_dump(exclude_unset=True)
+
+    if data.get("status") == "ACTIVE":
+        if str(item.stream.status).upper() != "ACTIVE":
+            raise HTTPException(status_code=422, detail="The selected stream must be active before its mapping can be published.")
+        if str(item.curriculum.status).upper() != "ACTIVE":
+            raise HTTPException(status_code=422, detail="Publish the selected curriculum before activating its course mappings.")
+        if str(item.course.status).upper() != "ACTIVE":
+            raise HTTPException(status_code=422, detail="The selected course must be active before its mapping can be published.")
 
     for key, value in data.items():
         setattr(item, key, value)
