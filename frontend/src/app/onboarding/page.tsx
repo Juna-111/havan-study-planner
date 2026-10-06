@@ -1,1 +1,80 @@
-'use client';import{useEffect,useState}from'react';import{useRouter}from'next/navigation';import{apiFetch}from'@/lib/api';import{getAuthToken}from'@/lib/auth';import{Button,Card,Checkbox,ErrorState,NumberStepper,Select}from'@/components/ui';type Opt={id:number;name:string};type Course={id:number;course_name:string};const list=async<T>(p:string)=>{const x=await apiFetch<{items?:T[]}|T[]>(p);return Array.isArray(x)?x:(x.items??[])};export default function Onboarding(){const r=useRouter();const[name,setName]=useState('');const[uni,setUni]=useState('');const[cur,setCur]=useState('');const[stream,setStream]=useState('');const[unis,setUnis]=useState<Opt[]>([]);const[curs,setCurs]=useState<Opt[]>([]);const[streams,setStreams]=useState<Opt[]>([]);const[courses,setCourses]=useState<Course[]>([]);const[selected,setSelected]=useState<Set<number>>(new Set());const[hours,setHours]=useState(2);const[e,setE]=useState('');useEffect(()=>{if(!getAuthToken())r.replace('/auth');else list<Opt>('/universities?page=1&page_size=100').then(setUnis).catch(x=>setE(x instanceof Error?x.message:'Could not load universities.'))},[r]);useEffect(()=>{if(uni)list<Opt>('/curriculums?university_id='+uni+'&page=1&page_size=100').then(setCurs).catch(x=>setE(x instanceof Error?x.message:'Could not load curricula.'))},[uni]);useEffect(()=>{if(cur)list<Opt>('/streams?curriculum_id='+cur+'&page=1&page_size=100').then(setStreams).catch(x=>setE(x instanceof Error?x.message:'Could not load streams.'))},[cur]);useEffect(()=>{if(stream)list<Course>('/courses?stream_id='+stream+'&include_freshman=true&page=1&page_size=100').then(setCourses).catch(x=>setE(x instanceof Error?x.message:'Could not load courses.'))},[stream]);const submit=async()=>{setE('');try{const p=await apiFetch<{id:number}>('/students/profiles',{method:'POST',body:JSON.stringify({name,university_id:Number(uni),curriculum_id:Number(cur),stream_id:Number(stream),study_hours_per_day:hours,study_days:['mon','tue','wed','thu','fri']})});for(const id of selected)await apiFetch('/students/profiles/'+p.id+'/courses',{method:'POST',body:JSON.stringify({course_id:id,confidence:3})});r.replace('/home')}catch(x){setE(x instanceof Error?x.message:'Could not save your academic setup.')}};return <main style={{width:'min(calc(100% - 32px),720px)',margin:'auto',padding:'32px 0 96px'}}><span style={{color:'#01017e',fontWeight:800,letterSpacing:'.12em'}}>HAVAN</span><h1 style={{color:'#01017e',margin:'8px 0'}}>Set up your academic profile</h1><p style={{color:'#5d5d73',marginBottom:20}}>Tell Havan where you are. You can change these choices later.</p>{e&&<ErrorState onRetry={()=>location.reload()} message={e}/>}<div className="stack"><Card><div className="stack"><label className="field">Your name<input value={name} onChange={x=>setName(x.target.value)} placeholder="Your name"/></label><Select label="University" value={uni} onChange={setUni} options={unis.map(x=>({value:String(x.id),label:x.name}))}/><Select label="Curriculum" value={cur} onChange={setCur} options={curs.map(x=>({value:String(x.id),label:x.name}))}/><Select label="Stream" value={stream} onChange={setStream} options={streams.map(x=>({value:String(x.id),label:x.name}))}/><NumberStepper label="Hours per study day" value={hours} min={1} max={12} onChange={setHours}/></div></Card>{courses.length>0&&<Card><h2>Select your courses</h2><p style={{color:'var(--color-muted)',margin:'6px 0 12px'}}>Havan will plan only for courses you select.</p><div className="stack">{courses.map(c=><Checkbox key={c.id} label={c.course_name} checked={selected.has(c.id)} onChange={v=>setSelected(old=>{const n=new Set(old);v?n.add(c.id):n.delete(c.id);return n})}/>)}</div></Card>}<Button fullWidth disabled={!name.trim()||!uni||!cur||!stream||!selected.size} onClick={submit}>Save academic setup</Button></div></main>}
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { Button, ErrorState, Segmented } from '@/components/ui'
+import { StepAcademic } from '@/features/onboarding'
+import StepHabits from '@/features/onboarding/StepHabits'
+import StepExams from '@/features/onboarding/StepExams'
+import { apiFetch } from '@/lib/api'
+import { getAuthToken, saveAuth } from '@/lib/auth'
+
+export default function Onboarding() {
+  const router = useRouter()
+  const [step, setStep] = useState(0)
+  const [name, setName] = useState('')
+  const [university, setUniversity] = useState('')
+  const [curriculum, setCurriculum] = useState('')
+  const [stream, setStream] = useState('')
+  const [selected, setSelected] = useState<Set<number>>(new Set())
+  const [starts, setStarts] = useState<Record<number, { chapter?: number; topic?: number }>>({})
+  const [days, setDays] = useState<string[]>(['mon', 'tue', 'wed', 'thu', 'fri'])
+  const [hours, setHours] = useState(2)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (!getAuthToken()) router.replace('/auth')
+  }, [router])
+
+  const validAcademic = Boolean(name.trim() && university && curriculum && stream && selected.size)
+  const canNext = step === 0 ? validAcademic : step === 1 ? days.length > 0 : true
+
+  async function finish() {
+    setError('')
+    try {
+      const profile = await apiFetch<{ id: number }>('/students/profiles', {
+        method: 'POST',
+        body: JSON.stringify({
+          name,
+          university_id: Number(university),
+          curriculum_id: Number(curriculum),
+          stream_id: Number(stream),
+          study_hours_per_day: hours,
+          study_days: days,
+        }),
+      })
+      for (const courseId of selected) {
+        const start = starts[courseId]
+        await apiFetch(`/students/profiles/${profile.id}/courses`, {
+          method: 'POST',
+          body: JSON.stringify({
+            course_id: courseId,
+            confidence: 3,
+            starting_chapter_id: start?.chapter,
+            starting_topic_id: start?.topic,
+          }),
+        })
+      }
+      const account = await apiFetch<{ id: number; email: string; role: 'STUDENT' | 'ADMIN'; student_profile_id: number | null }>('/auth/me')
+      const token = getAuthToken()
+      if (token) saveAuth({ access_token: token, token_type: 'bearer', account })
+      router.replace('/home')
+    } catch (value) {
+      setError(value instanceof Error ? value.message : 'Could not save your academic setup.')
+    }
+  }
+
+  return <main className="content" style={{ maxWidth: 760, margin: '0 auto', paddingTop: 32 }}>
+    <span style={{ color: '#01017e', fontWeight: 800, letterSpacing: '.12em' }}>HAVAN</span>
+    <h1>Set up your academic profile</h1>
+    <p>Tell Havan where you are and when you study. You can change these choices later.</p>
+    <Segmented options={['Academic', 'Habits', 'Exams'] as const} value={['Academic', 'Habits', 'Exams'][step] as 'Academic' | 'Habits' | 'Exams'} onChange={(value) => setStep(['Academic', 'Habits', 'Exams'].indexOf(value))} />
+    {error && <ErrorState message={error} onRetry={() => setError('')} />}
+    {step === 0 && <StepAcademic name={name} university={university} curriculum={curriculum} stream={stream} selected={selected} starts={starts} onName={setName} onUniversity={setUniversity} onCurriculum={setCurriculum} onStream={setStream} onToggleCourse={(id, checked) => setSelected((old) => { const next = new Set(old); checked ? next.add(id) : next.delete(id); return next })} onStart={(courseId, value) => setStarts((old) => ({ ...old, [courseId]: value }))} />}
+    {step === 1 && <StepHabits days={days} hours={hours} onDays={setDays} onHours={setHours} />}
+    {step === 2 && <StepExams />}
+    <div className="row" style={{ marginTop: 20 }}>
+      {step > 0 && <Button variant="secondary" onClick={() => setStep(step - 1)}>Back</Button>}
+      {step < 2 ? <Button disabled={!canNext} onClick={() => setStep(step + 1)}>Continue</Button> : <Button disabled={!canNext} onClick={finish}>Finish setup</Button>}
+    </div>
+  </main>
