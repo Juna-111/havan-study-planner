@@ -271,51 +271,6 @@ class PlanResult:
 # --------------------------------------------------------------------------
 # Small helpers (time, calendar, personalisation)
 # --------------------------------------------------------------------------
-def local_today(tz_name: str = ADDIS_ABABA_TZ, now: datetime | None = None) -> date:
-    """Today's date for the student, not for the server (servers usually run in
-    UTC, three hours behind Ethiopia)."""
-    moment = now or datetime.now(timezone.utc)
-    if moment.tzinfo is None:
-        moment = moment.replace(tzinfo=timezone.utc)
-    try:
-        from zoneinfo import ZoneInfo
-
-        tz = ZoneInfo(tz_name)
-    except Exception:
-        if tz_name != ADDIS_ABABA_TZ:
-            raise
-        tz = timezone(timedelta(hours=3))  # East Africa Time, no daylight saving
-    return moment.astimezone(tz).date()
-
-
-_WEEKDAY_NAMES = {
-    "mon": 0, "monday": 0, "tue": 1, "tuesday": 1, "wed": 2, "wednesday": 2,
-    "thu": 3, "thursday": 3, "fri": 4, "friday": 4, "sat": 5, "saturday": 5,
-    "sun": 6, "sunday": 6,
-}
-
-
-def parse_weekdays(
-    values: Iterable[object] | None,
-    default: frozenset[int] = frozenset({0, 1, 2, 3, 4}),
-) -> frozenset[int]:
-    """Names, or numbers where 0 = Sunday and 1 = Monday (the stored
-    convention), to Python weekday numbers."""
-    found: set[int] = set()
-    for value in values or ():
-        if isinstance(value, bool):
-            continue
-        if isinstance(value, int) and 0 <= value <= 6:
-            found.add((value - 1) % 7)
-        elif isinstance(value, str):
-            text = value.strip().lower()
-            if text.isdigit() and 0 <= int(text) <= 6:
-                found.add((int(text) - 1) % 7)
-            elif text in _WEEKDAY_NAMES:
-                found.add(_WEEKDAY_NAMES[text])
-    return frozenset(found) or default
-
-
 _DEFAULT_IMPORTANCE = (("FINAL", 5), ("MID", 4), ("TEST", 3), ("QUIZ", 2), ("ASSIGN", 2))
 
 
@@ -816,4 +771,7 @@ def schedule_tasks(
             remaining -= duration
             if remaining <= 0:
                 break
-    return output
+    return outpudef parse_weekdays(values: Iterable[object] | None, default: frozenset[int] = frozenset({0, 1, 2, 3, 4})) -> frozenset[int]:
+    from app.core.time import parse_weekdays as canonical_parse_weekdays
+    return canonical_parse_weekdays(values, tuple(default))
+t
