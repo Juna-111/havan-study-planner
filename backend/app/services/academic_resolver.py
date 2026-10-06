@@ -39,7 +39,7 @@ def resolve_stream_courses(db: Session, stream_id: int) -> list[ResolvedCourse]:
             .join(Course, Course.id == UniversityCourseMapping.course_id)
             .where(
                 UniversityCourseMapping.stream_id == stream_id,
-                UniversityCourseMapping.curriculum_id == stream.curriculum_id,
+                UniversityCourseMapping.curriculum_id == curriculum.id,
                 UniversityCourseMapping.status == "ACTIVE",
                 Course.status == "ACTIVE",
             )
