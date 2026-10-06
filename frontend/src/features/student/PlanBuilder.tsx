@@ -289,7 +289,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
         <Button disabled={!selected.size || busy !== null} variant="secondary" onClick={previewIt}>
           {busy === 'preview' ? 'Previewing...' : 'Preview'}
         </Button>
-        <Button disabled={!selected.size || busy !== null} onClick={saveIt}>
+        <Button variant="accent" disabled={!selected.size || busy !== null} onClick={saveIt}>
           {busy === 'save' ? 'Creating...' : 'Create plan'}
         </Button>
       </StickyActionBar>
