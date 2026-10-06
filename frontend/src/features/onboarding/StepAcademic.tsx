@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Card, Checkbox, Select } from '@/components/ui'
 import { apiFetch } from '@/lib/api'
+import AcademicCatalogRequest from './AcademicCatalogRequest'
 
 type Opt = { id: number; name: string }
 type Course = { id: number; code: string; name: string }
@@ -67,6 +68,8 @@ export default function StepAcademic(props: Props) {
           <Select label="Stream" value={props.stream} onChange={props.onStream} options={streams.map((x) => ({ value: String(x.id), label: x.name }))} />
         </div>
       </Card>
+
+      <AcademicCatalogRequest universityId={props.university} />
 
       <Card>
         <h2>Choose your courses</h2>
