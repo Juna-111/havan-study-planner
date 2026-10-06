@@ -32,7 +32,7 @@ from dataclasses import dataclass, field, replace
 from datetime import date, datetime, timedelta, timezone
 from typing import Iterable, Mapping, Sequence
 
-ENGINE_VERSION = "2.0.0"
+ENGINE_VERSION = "2.1.0"
 
 DIFFICULTY_LABELS = {
     1: "Basic",
@@ -195,6 +195,7 @@ class StudyCalendar:
     study_weekdays: frozenset[int] = frozenset({0, 1, 2, 3, 4})
     daily_minutes: int = 120
     minutes_by_weekday: Mapping[int, int] = field(default_factory=dict)
+    capacity_overrides: Mapping[date, int] = field(default_factory=dict)
     blackout_dates: frozenset[date] = frozenset()
     # Minutes already studied (completed or in progress) on a given day.
     done_minutes: Mapping[date, int] = field(default_factory=dict)
@@ -202,7 +203,7 @@ class StudyCalendar:
     def capacity(self, day: date) -> int:
         if day in self.blackout_dates or day.weekday() not in self.study_weekdays:
             return 0
-        base = int(self.minutes_by_weekday.get(day.weekday(), self.daily_minutes))
+        base = int(self.capacity_overrides.get(day, self.minutes_by_weekday.get(day.weekday(), self.daily_minutes)))
         return max(0, base - int(self.done_minutes.get(day, 0)))
 
 
@@ -254,12 +255,22 @@ class PlanWarning:
 
 
 @dataclass(frozen=True)
+class UnplacedTopic:
+    topic_id: int
+    topic_name: str
+    course_id: int
+    remaining_minutes: int
+    reason_code: str
+
+
+@dataclass(frozen=True)
 class PlanResult:
     engine_version: str
     today: date
     sessions: tuple[PlannedSession, ...]
     readiness: tuple[ExamReadiness, ...]
     warnings: tuple[PlanWarning, ...]
+    unplaced: tuple["UnplacedTopic", ...] = ()
 
     def minutes_by_date(self) -> dict[date, int]:
         totals: dict[date, int] = defaultdict(int)
@@ -277,11 +288,7 @@ _DEFAULT_IMPORTANCE = (("FINAL", 5), ("MID", 4), ("TEST", 3), ("QUIZ", 2), ("ASS
 def default_exam_importance(exam_type: str) -> int:
     """Suggested 1..5 importance when the student did not choose one."""
     label = exam_type.strip().upper()
-    for prefix, value indef parse_weekdays(values: Iterable[object] | None, default: frozenset[int] = frozenset({0, 1, 2, 3, 4})) -> frozenset[int]:
-    from app.core.time import parse_weekdays as canonical_parse_weekdays
-    return canonical_parse_weekdays(values, tuple(default))
-
- _DEFAULT_IMPORTANCE:
+    for prefix, value in _DEFAULT_IMPORTANCE:
         if label.startswith(prefix):
             return value
     return 3
@@ -552,6 +559,8 @@ def build_plan(request: PlanRequest, config: PlannerConfig = DEFAULT_CONFIG) -> 
     # 5. Work items: study for unfinished topics, review for completed ----
     works: dict[int, _Work] = {}
     for topic in topics:
+        if topic.topic_id in satisfied:
+            continue
         if topic.topic_id in completed:
             if topic.last_studied_on is not None:
                 works[topic.topic_id] = _Work(topic, "REVIEW", cfg.review_minutes)
@@ -667,6 +676,7 @@ def build_plan(request: PlanRequest, config: PlannerConfig = DEFAULT_CONFIG) -> 
                 chunk = min(work.remaining, capacity, review_cap - review_used)
             else:
                 chunk = min(work.remaining, capacity, cfg.max_session_minutes)
+            chunk = (chunk // 5) * 5
             if chunk <= 0 or (chunk < work.remaining and chunk < cfg.min_session_minutes):
                 skip.add(tid)
                 continue
@@ -702,12 +712,48 @@ def build_plan(request: PlanRequest, config: PlannerConfig = DEFAULT_CONFIG) -> 
     )
 
     # 7. Report ------------------------------------------------------------
+    session_minutes = defaultdict(int)
+    for session in sessions:
+        session_minutes[session.topic_id] += session.minutes
+
+    unplaced: list[UnplacedTopic] = []
+    for topic in topics:
+        if topic.topic_id in satisfied:
+            continue
+        required = remaining_minutes.get(topic.topic_id, 0)
+        placed_minutes = session_minutes.get(topic.topic_id, 0)
+        remaining = max(0, required - placed_minutes)
+        if remaining <= 0:
+            continue
+        reason_code = "no_capacity"
+        if any(
+            exam.course_id == topic.course_id
+            and exam.exam_date < today
+            and exam.covers(topic.topic_id)
+            for exam in request.exams
+        ):
+            reason_code = "exam_passed"
+        unplaced.append(UnplacedTopic(
+            topic_id=topic.topic_id,
+            topic_name=topic.name,
+            course_id=topic.course_id,
+            remaining_minutes=remaining,
+            reason_code=reason_code,
+        ))
+
+    if unplaced:
+        warnings.append(PlanWarning(
+            "DOES_NOT_FIT",
+            "Some selected topics do not fit in the available study time.",
+        ))
+
     return PlanResult(
         engine_version=ENGINE_VERSION,
         today=today,
         sessions=sessions,
         readiness=tuple(readiness),
         warnings=tuple(warnings),
+        unplaced=tuple(sorted(unplaced, key=lambda item: item.topic_id)),
     )
 
 
@@ -779,3 +825,14 @@ def schedule_tasks(
     from app.core.time import parse_weekdays as canonical_parse_weekdays
     return canonical_parse_weekdays(values, tuple(default))
 t
+
+def suggest_extras(request: PlanRequest, extra_topics: Sequence[PlannerTopic], k: int = 5, config: PlannerConfig = DEFAULT_CONFIG) -> tuple[ScoredTopic, ...]:
+    """Score optional topics without ever adding them to the plan."""
+    selected = {topic.topic_id for topic in request.topics}
+    candidates = [topic for topic in extra_topics if topic.topic_id not in selected]
+    scored = []
+    for topic in candidates:
+        exam = next((item for item in sorted(request.exams, key=lambda value: value.exam_date)
+                     if item.course_id == topic.course_id and item.exam_date >= request.today and item.covers(topic.topic_id)), None)
+        scored.append(score_topic(topic, exam, request.today, config=config))
+    return tuple(sorted(scored, key=lambda item: (-item.score, item.topic.course_id, item.topic.topic_id))[:max(0, k)])

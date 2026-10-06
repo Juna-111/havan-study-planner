@@ -1,0 +1,73 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.core.config import API_PREFIX
+from app.core.deps import current_student
+from app.db.models.plan import Plan, PlanTask
+from app.db.models.student import StudentProfile
+from app.db.session import get_db
+from app.schemas.plan import PlanAction, PlanInput, PlanOut
+from app.services.plan_actions import apply_action
+from app.services.plan_builder import preview_plan, read_plan, save_plan
+
+router = APIRouter(prefix=f"{API_PREFIX}/plans", tags=["plans"])
+
+
+@router.post("/preview", response_model=PlanOut)
+def preview(
+    payload: PlanInput,
+    student: StudentProfile = Depends(current_student),
+    db: Session = Depends(get_db),
+):
+    try:
+        return preview_plan(db, student, payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@router.post("", response_model=PlanOut)
+def create(
+    payload: PlanInput,
+    student: StudentProfile = Depends(current_student),
+    db: Session = Depends(get_db),
+):
+    try:
+        return save_plan(db, student, payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@router.get("/current", response_model=PlanOut)
+def current(
+    student: StudentProfile = Depends(current_student),
+    db: Session = Depends(get_db),
+):
+    plan = db.scalar(select(Plan).where(Plan.student_id == student.id, Plan.status == "ACTIVE").order_by(Plan.id.desc()))
+    if not plan:
+        raise HTTPException(status_code=404, detail="You do not have a plan yet. Choose what to study and Havan will organize it.")
+    return read_plan(db, student, plan)
+
+
+@router.post("/{plan_id}/tasks/{task_id}/actions", response_model=PlanOut)
+def action(
+    plan_id: int,
+    task_id: int,
+    payload: PlanAction,
+    student: StudentProfile = Depends(current_student),
+    db: Session = Depends(get_db),
+):
+    plan = db.scalar(select(Plan).where(Plan.id == plan_id, Plan.student_id == student.id, Plan.status == "ACTIVE"))
+    if not plan:
+        raise HTTPException(status_code=404, detail="Study plan not found.")
+    try:
+        result, warning = apply_action(db, student, task_id, payload)
+        if isinstance(result, PlanOut):
+            return result
+        out = read_plan(db, student, result)
+        if warning:
+            out.warnings.append({"code": warning, "severity": "info", "message": "Skipped. Tap Rebuild the rest to place it later.", "fix": {"rebuild": "Rebuild the rest"}})
+        return out
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+

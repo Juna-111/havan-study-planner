@@ -58,3 +58,39 @@ Not run in the GitHub workspace. Required local checks before Phase 3 is green:
 - frontend: `npm test`, `npx tsc --noEmit`, `npm run lint`, `npm run build`
 - repository grep: confirm no duplicate weekday definitions in touched paths and zero `Record<string, any>` in `frontend/src/lib/`.
 
+
+
+## Phase 4 — The Plan Domain (Backend)
+
+Status: IMPLEMENTED / LOCAL VERIFICATION PENDING
+
+### Branch
+- `rebuild/phase-4-plan-domain`
+- Base: `rebuild/phase-3-foundations`
+
+### Implemented
+- Added canonical Plan persistence: `plans` and `plan_tasks`.
+- Added Alembic migration `20261006_03_plan_domain.py`; historical migrations remain untouched.
+- Added typed Plan schemas: `PlanInput`, `PlanOut`, readiness, warnings, unplaced topics, and task actions.
+- Added `services/plan_adapter.py` to convert student/catalog/progress/exam data into pure `PlanRequest` data.
+- Added `services/plan_builder.py` for deterministic preview/save.
+- Added `services/plan_actions.py` for START, COMPLETE, SKIP, MOVE, REPEAT, REMOVE, and ADD.
+- Added `services/plan/engine.py` as the canonical Plan engine boundary.
+- Upgraded the deterministic engine to 2.1.0 with explicit `unplaced` output, five-minute session rounding, known-topic exclusion, optional suggestions, and date-specific pinned capacity.
+- Added G1-G5 engine tests, readiness/overload, determinism, known-topic, and suggestion tests.
+- Added authenticated `/api/v1/plans/preview`, `POST /api/v1/plans`, `GET /api/v1/plans/current`, and task-action endpoints.
+- All Plan endpoints use `current_student`; there is no student-id selector in the canonical Plan API.
+- Legacy `study_plans` / `study_tasks` models remain untouched and are explicitly marked as legacy.
+
+### Static audit
+- New Plan-domain files contain no `Record[str, any]`, malformed duplicate `def` declarations, dynamic imports, or `date.today()`.
+- Canonical Plan code routes through `services/plan/engine.py`.
+- Migration 20261006_03 uses explicit indexes without duplicate index flags.
+
+### Verification
+Not run in the GitHub workspace. Required before Phase 4 is GREEN:
+- `pytest -q backend/tests/plan backend/tests/security`
+- `alembic upgrade head` against an empty scratch database
+- `alembic upgrade head` from the previous migration head
+- backend full `pytest -q`
+- frontend checks remain required by the phase gate.
