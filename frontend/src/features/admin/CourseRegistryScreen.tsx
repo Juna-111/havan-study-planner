@@ -1,9 +1,7 @@
 'use client'
-
 import { useEffect, useMemo, useState } from 'react'
 import { apiFetch } from '@/lib/api'
 import styles from './admin.module.css'
-
 type Course = {
   id: number
   stream_id?: number | null
@@ -16,7 +14,6 @@ type Course = {
 type Stream = { id: number; curriculum_id: number; name: string; code: string; status: string }
 type Curriculum = { id: number; university_id: number; name: string; version: string; status: string }
 type University = { id: number; name: string; code: string; status: string }
-
 export default function CourseRegistryScreen() {
   const [courses, setCourses] = useState<Course[]>([])
   const [universities, setUniversities] = useState<University[]>([])
@@ -32,7 +29,6 @@ export default function CourseRegistryScreen() {
   const [form, setForm] = useState({ stream_id: '', code: '', name: '', description: '', credit_hours: '' })
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
-
   async function load() {
     try {
       setError('')
@@ -50,19 +46,15 @@ export default function CourseRegistryScreen() {
       setError(value instanceof Error ? value.message : 'Could not load Course Registry.')
     }
   }
-
   useEffect(() => { void load() }, [])
-
   const visibleCurriculums = useMemo(
     () => curriculums.filter((item) => !universityId || String(item.university_id) === universityId),
     [curriculums, universityId],
   )
-
   const visibleStreams = useMemo(
     () => streams.filter((item) => !curriculumId || String(item.curriculum_id) === curriculumId),
     [streams, curriculumId],
   )
-
   const visibleCourses = useMemo(() => {
     const query = search.trim().toLowerCase()
     return courses.filter((course) => {
@@ -72,18 +64,15 @@ export default function CourseRegistryScreen() {
       return matchesStream && matchesStatus && matchesSearch
     })
   }, [courses, search, status, streamId])
-
   function selectUniversity(value: string) {
     setUniversityId(value)
     setCurriculumId('')
     setStreamId('')
   }
-
   function selectCurriculum(value: string) {
     setCurriculumId(value)
     setStreamId('')
   }
-
   function beginEdit(course: Course) {
     setEditing(course.id)
     setForm({
@@ -96,12 +85,10 @@ export default function CourseRegistryScreen() {
     setSelected(null)
     setError('')
   }
-
   function resetForm() {
     setEditing(null)
     setForm({ stream_id: streamId, code: '', name: '', description: '', credit_hours: '' })
   }
-
   async function saveCourse() {
     if (!form.stream_id || !form.code.trim() || !form.name.trim()) return
     setBusy(editing ? 'edit-' + editing : 'add')
@@ -127,7 +114,6 @@ export default function CourseRegistryScreen() {
       setBusy('')
     }
   }
-
   async function toggleStatus(course: Course) {
     const next = course.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'
     if (!window.confirm((next === 'ACTIVE' ? 'Activate ' : 'Deactivate ') + course.code + '? Course content remains attached to the same Course Registry record.')) return
@@ -146,10 +132,8 @@ export default function CourseRegistryScreen() {
       setBusy('')
     }
   }
-
   const activeCount = courses.filter((item) => item.status === 'ACTIVE').length
   const inactiveCount = courses.length - activeCount
-
   return (
     <section>
       <header className={styles.header}>
@@ -157,16 +141,13 @@ export default function CourseRegistryScreen() {
         <h1>One canonical home for courses</h1>
         <p>Course Registry owns the course record. University and stream mapping decides where a course is used; it does not create another copy.</p>
       </header>
-
       {error && <div className={styles.alert}>{error}</div>}
-
       <div className={styles.stats}>
         <div><span>Total registry courses</span><b>{courses.length}</b></div>
         <div><span>Active</span><b>{activeCount}</b></div>
         <div><span>Inactive</span><b>{inactiveCount}</b></div>
         <div><span>Filtered view</span><b>{visibleCourses.length}</b></div>
       </div>
-
       <div className={styles.selectors}>
         <label>University
           <select value={universityId} onChange={(event) => selectUniversity(event.target.value)}>
@@ -197,7 +178,6 @@ export default function CourseRegistryScreen() {
           <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="PHY101, Physics…" />
         </label>
       </div>
-
       <div className={styles.list}>
         <div className={styles.crudHead}>
           <div>
@@ -206,9 +186,7 @@ export default function CourseRegistryScreen() {
           </div>
           <b>{visibleCourses.length}</b>
         </div>
-
         {!visibleCourses.length && <div className={styles.empty}>No courses match the current filters.</div>}
-
         {visibleCourses.map((course) => (
           <div className={styles.row} key={course.id}>
             <div>
@@ -229,7 +207,6 @@ export default function CourseRegistryScreen() {
           </div>
         ))}
       </div>
-
       <div className={styles.editor}>
         <div className={styles.crudHead}>
           <div><span>{editing ? 'REGISTRY EDIT' : 'REGISTRY CREATE'}</span><h2>{editing ? 'Edit course' : 'Add canonical course'}</h2></div>
@@ -250,7 +227,6 @@ export default function CourseRegistryScreen() {
           {busy ? 'Saving…' : editing ? 'Save course' : 'Add course'}
         </button>
       </div>
-
       {selected && (
         <div className={styles.panel}>
           <div className={styles.crudHead}>
