@@ -182,10 +182,34 @@ export function PlanBuilder() {
 
           {preview && (
             <Card padding="lg" className="plan-review">
-              <h2>Review</h2>
+              <h2>Review your allocation</h2>
               <p className="app-copy">
                 {preview.total_minutes} minutes placed. {preview.unplaced.length} topics could not fit.
               </p>
+              {preview.tasks.length > 0 && (
+                <div className="plan-review-list">
+                  {preview.tasks.map((task) => (
+                    <div className="plan-review-row" key={task.id}>
+                      <div>
+                        <strong>{task.topic_name}</strong>
+                        <span>{task.course_code} · {task.course_name}</span>
+                      </div>
+                      <div>
+                        <strong>{task.minutes} min</strong>
+                        <span>{task.planned_date}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {preview.unplaced.length > 0 && (
+                <div className="plan-review-unplaced">
+                  <strong>Could not fit</strong>
+                  {preview.unplaced.map((item) => (
+                    <p key={item.topic_id}>{item.topic_name} · {item.minutes} min</p>
+                  ))}
+                </div>
+              )}
               {preview.warnings.slice(0, 3).map((warning) => (
                 <p className="app-meta" key={warning.code}>{warning.message}</p>
               ))}
