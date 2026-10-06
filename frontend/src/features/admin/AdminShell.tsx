@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import styles from './admin.module.css'
 
-export type AdminMode = 'overview' | 'academic' | 'curriculum' | 'streams' | 'mapping' | 'registry' | 'content' | 'import' | 'quality'
+export type AdminMode = 'overview' | 'academic' | 'curriculum' | 'streams' | 'mapping' | 'registry' | 'content' | 'import' | 'quality' | 'requests'
 
 const groups = [
   {
