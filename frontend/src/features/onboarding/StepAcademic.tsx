@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { Card, Checkbox, Select } from '@/components/ui'
+import { Card, Select } from '@/components/ui'
+import CourseChoice from './CourseChoice'
 import { apiFetch } from '@/lib/api'
 import AcademicCatalogRequest from './AcademicCatalogRequest'
 type Opt = { id: number; name: string; status?: string }
@@ -169,85 +170,5 @@ export default function StepAcademic(props: Props) {
         )}
       </Card>
     </div>
-  )
-}
-function CourseChoice({
-  course, checked, start, onToggle, onStart,
-}: {
-  course: Course
-  checked: boolean
-  start?: { chapter?: number; topic?: number }
-  onToggle: Props['onToggleCourse']
-  onStart: Props['onStart']
-}) {
-  const [chapters, setChapters] = useState<Opt[]>([])
-  const [topics, setTopics] = useState<Opt[]>([])
-  const [chapterLoading, setChapterLoading] = useState(false)
-  const [topicLoading, setTopicLoading] = useState(false)
-  const chapterRequest = useRef(0)
-  const topicRequest = useRef(0)
-  useEffect(() => {
-    setChapters([])
-    setTopics([])
-    if (!checked) return
-    const request = ++chapterRequest.current
-    let cancelled = false
-    setChapterLoading(true)
-    apiFetch<Page<Opt>>('/chapters?course_id=' + course.id + '&page=1&page_size=100')
-      .then((response) => {
-        if (!cancelled && request === chapterRequest.current) setChapters(response.items.filter((item) => item.status === 'ACTIVE'))
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (!cancelled && request === chapterRequest.current) setChapterLoading(false)
-      })
-    return () => { cancelled = true }
-  }, [checked, course.id])
-  useEffect(() => {
-    setTopics([])
-    if (!start?.chapter) return
-    const request = ++topicRequest.current
-    let cancelled = false
-    setTopicLoading(true)
-    apiFetch<Page<Opt>>('/topics?chapter_id=' + start.chapter + '&page=1&page_size=100')
-      .then((response) => {
-        if (!cancelled && request === topicRequest.current) setTopics(response.items.filter((item) => item.status === 'ACTIVE'))
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (!cancelled && request === topicRequest.current) setTopicLoading(false)
-      })
-    return () => { cancelled = true }
-  }, [start?.chapter])
-  function handleChapter(value: string) {
-    onStart(course.id, { chapter: value ? Number(value) : undefined })
-  }
-  function handleTopic(value: string) {
-    onStart(course.id, { chapter: start?.chapter, topic: value ? Number(value) : undefined })
-  }
-  return (
-    <Card>
-      <Checkbox label={course.code + ' · ' + course.name} checked={checked} onChange={(value) => onToggle(course.id, value)} />
-      {checked && (
-        <div className="stack">
-          <Select
-            label="Current chapter (optional)"
-            value={String(start?.chapter ?? '')}
-            disabled={chapterLoading}
-            onChange={handleChapter}
-            options={[{ value: '', label: chapterLoading ? 'Loading chapters…' : 'Start from beginning' }, ...chapters.map((x) => ({ value: String(x.id), label: x.name }))]}
-          />
-          {start?.chapter && (
-            <Select
-              label="Current topic (optional)"
-              value={String(start.topic ?? '')}
-              disabled={topicLoading}
-              onChange={handleTopic}
-              options={[{ value: '', label: topicLoading ? 'Loading topics…' : 'Start from this chapter' }, ...topics.map((x) => ({ value: String(x.id), label: x.name }))]}
-            />
-          )}
-        </div>
-      )}
-    </Card>
   )
 }
