@@ -15,9 +15,6 @@ class AcademicCatalogRequestCreate(BaseModel):
 
 class AcademicCatalogRequestRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    model_config = ConfigDict(from_attributes=True)
-
-    model_config = ConfigDict(from_attributes=True)
     id: int
     account_id: int
     request_type: str
