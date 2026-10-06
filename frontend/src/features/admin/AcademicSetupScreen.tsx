@@ -6,11 +6,13 @@ import styles from './admin.module.css'
 
 type University = { id: number; name: string; code: string; status: string }
 type Curriculum = { id: number; university_id: number; name: string; version: string; academic_year?: string | null; status: string }
+type Stream = { id: number; curriculum_id: number; name: string; code: string; status: string }
 type Request = { id: number; request_type: 'UNIVERSITY' | 'CURRICULUM'; university_id?: number | null; name: string; code?: string | null; version?: string | null; academic_year?: string | null; status: string }
 
 export default function AcademicSetupScreen() {
   const [universities, setUniversities] = useState<University[]>([])
   const [curriculums, setCurriculums] = useState<Curriculum[]>([])
+  const [streams, setStreams] = useState<Stream[]>([])
   const [requests, setRequests] = useState<Request[]>([])
   const [universityId, setUniversityId] = useState('')
   const [universityName, setUniversityName] = useState('')
@@ -18,22 +20,27 @@ export default function AcademicSetupScreen() {
   const [curriculumName, setCurriculumName] = useState('')
   const [curriculumVersion, setCurriculumVersion] = useState('1.0')
   const [curriculumYear, setCurriculumYear] = useState('')
+  const [streamName, setStreamName] = useState('')
+  const [streamCode, setStreamCode] = useState('')
+  const [curriculumIdForStream, setCurriculumIdForStream] = useState('')
   const [busy, setBusy] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
   async function load() {
     try {
-      const [u, c, r] = await Promise.all([
+      const [u, c, s, requestsResult] = await Promise.all([
         apiFetch<{ items: University[] }>('/universities?page=1&page_size=100'),
         apiFetch<{ items: Curriculum[] }>('/curriculums?page=1&page_size=100'),
+        apiFetch<{ items: Stream[] }>('/streams?page=1&page_size=100'),
         apiFetch<Request[]>('/academic-catalog-requests'),
       ])
-      setUniversities(u.items); setCurriculums(c.items); setRequests(r)
+      setUniversities(u.items); setCurriculums(c.items); setStreams(s.items); setRequests(requestsResult)
       if (!universityId && u.items[0]) setUniversityId(String(u.items[0].id))
     } catch (value) { setError(value instanceof Error ? value.message : 'Could not load academic catalog.') }
   }
   useEffect(() => { load() }, [])
+  useEffect(() => { if (!curriculumIdForStream && curriculums[0]) setCurriculumIdForStream(String(curriculums[0].id)) }, [curriculums, curriculumIdForStream])
 
   async function addUniversity() {
     if (!universityName.trim()) return
@@ -53,6 +60,31 @@ export default function AcademicSetupScreen() {
     } catch (value) { setError(value instanceof Error ? value.message : 'Could not add curriculum.') } finally { setBusy('') }
   }
 
+  async function addStream() {
+    if (!curriculumIdForStream || !streamName.trim() || !streamCode.trim()) return
+    setBusy('stream')
+    setError('')
+    try {
+      await apiFetch('/streams', {
+        method: 'POST',
+        body: JSON.stringify({
+          curriculum_id: Number(curriculumIdForStream),
+          name: streamName.trim(),
+          code: streamCode.trim().toUpperCase(),
+          status: 'ACTIVE',
+        }),
+      })
+      setStreamName('')
+      setStreamCode('')
+      setMessage('Stream added. Students can now select it for this curriculum.')
+      await load()
+    } catch (value) {
+      setError(value instanceof Error ? value.message : 'Could not add stream.')
+    } finally {
+      setBusy('')
+    }
+  }
+
   async function review(id: number, status: 'APPROVED' | 'REJECTED') {
     setBusy('request-' + id); setError('')
     try {
@@ -70,6 +102,20 @@ export default function AcademicSetupScreen() {
       </header>
       {(message || error) && <div className={error ? styles.alert : styles.notice}>{error || message}</div>}
       <div className={styles.quickGrid}>
+        <div className={styles.quickCard}>
+          <h2>Add stream</h2>
+          <p>Create the stream students must choose during registration.</p>
+          <label>Curriculum<select value={curriculumIdForStream} onChange={(e) => setCurriculumIdForStream(e.target.value)}>
+            <option value="">Choose curriculum</option>
+            {curriculums.map((item) => <option key={item.id} value={item.id}>{item.name} · v{item.version}</option>)}
+          </select></label>
+          <label>Stream name<input value={streamName} onChange={(e) => setStreamName(e.target.value)} placeholder="Natural Science" /></label>
+          <label>Stream code<input value={streamCode} onChange={(e) => setStreamCode(e.target.value)} placeholder="NAT" /></label>
+          <button className={styles.primary} disabled={busy === 'stream' || !curriculumIdForStream || !streamName.trim() || !streamCode.trim()} onClick={addStream}>
+            {busy === 'stream' ? 'Adding…' : 'Add stream'}
+          </button>
+        </div>
+
         <div className={styles.quickCard}>
           <h2>Add university</h2><p>Name is required. Code is optional and Havan can generate one.</p>
           <label>Name<input value={universityName} onChange={(e) => setUniversityName(e.target.value)} placeholder='Addis Ababa University' /></label>
