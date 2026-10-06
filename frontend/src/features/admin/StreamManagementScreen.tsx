@@ -1,4 +1,6 @@
-'use client' import { useEffect, useMemo, useState } from 'react' import { apiFetch } from '@/lib/api' import styles from './admin.module.css' type University = { id: number; name: string; code: string; status: string }
+'use client'
+
+import { useEffect, useMemo, useState } from 'react' import { apiFetch } from '@/lib/api' import styles from './admin.module.css' type University = { id: number; name: string; code: string; status: string }
 type Curriculum = { id: number; university_id: number; name: string; version: string; academic_year?: string | null; status: string } type Stream = { id: number; curriculum_id: number; name: string; code: string; status: string }
 type Course = { id: number; code: string; name: string; status: string } type Mapping = { id: number; course_id: number; semester_number: number; status: string } type Form = { name: string; code: string; curriculum_id: string }
 export default function StreamManagementScreen() { const [universities, setUniversities] = useState<University[]>([]) const [curriculums, setCurriculums] = useState<Curriculum[]>([]) const [streams, setStreams] = useState<Stream[]>([])
