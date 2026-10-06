@@ -17,6 +17,7 @@ export default function PlanPage() {
 function View() {
   const [p, setP] = useState<Plan | null>(null)
   const [e, setE] = useState('')
+  const [targetDates, setTargetDates] = useState<Record<number, string>>({})
 
   useEffect(() => {
     getCurrentPlan()
@@ -24,11 +25,16 @@ function View() {
       .catch((x) => setE(x instanceof Error ? x.message : ''))
   }, [])
 
-  const act = async (id: number, action: 'START' | 'COMPLETE' | 'SKIP') => {
+  const act = async (id: number, action: 'START' | 'COMPLETE' | 'SKIP' | 'MOVE' | 'REPEAT') => {
     if (!p) return
 
     try {
-      setP(await planAction(id, { action }))
+      const target_date = targetDates[id] || undefined
+      if ((action === 'MOVE' || action === 'REPEAT') && !target_date) {
+        setE('Choose a date before moving or repeating a task.')
+        return
+      }
+      setP(await planAction(id, { action, target_date }))
     } catch (x) {
       setE(x instanceof Error ? x.message : 'Action failed.')
     }
@@ -100,9 +106,31 @@ function View() {
                     {t.status === 'PLANNED' ? 'Start' : 'Complete'}
                   </Button>
                 )}
-                <Button variant="ghost" onClick={() => act(t.id, 'SKIP')}>
-                  Skip
-                </Button>
+                {t.status !== 'DONE' && (
+                  <Button variant="ghost" onClick={() => act(t.id, 'SKIP')}>
+                    Skip
+                  </Button>
+                )}
+                {t.status === 'DONE' && (
+                  <Button variant="ghost" onClick={() => act(t.id, 'REPEAT')}>
+                    Repeat
+                  </Button>
+                )}
+                {t.status !== 'DONE' && (
+                  <>
+                    <label className="plan-task-date">
+                      <span>Move to</span>
+                      <input
+                        type="date"
+                        value={targetDates[t.id] || ''}
+                        onChange={(event) => setTargetDates((old) => ({ ...old, [t.id]: event.target.value }))}
+                      />
+                    </label>
+                    <Button variant="secondary" onClick={() => act(t.id, 'MOVE')}>
+                      Reschedule
+                    </Button>
+                  </>
+                )}
               </div>
             </Card>
           ))}
