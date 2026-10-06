@@ -58,7 +58,7 @@ export default function StepAcademic(props: Props) {
     <div className="stack">
       <Card>
         <div className="stack">
-          <label className="field">
+          <label className="onboarding-field">
             Your name
             <input value={props.name} onChange={(e) => props.onName(e.target.value)} />
           </label>
