@@ -17,7 +17,8 @@ class Settings(BaseSettings):
     )
     cors_origins: list[str] = Field(default=["http://localhost:3000"], validation_alias="CORS_ORIGINS")
     log_level: str = "INFO"
-    auth_secret: str = Field("change-this-secret-in-production", validation_alias="AUTH_SECRET")
+    auth_secret: str = Field(validation_alias="AUTH_SECRET")
+    admin_emails: list[str] = Field(default_factory=list, validation_alias="ADMIN_EMAILS")
     auth_token_ttl_days: int = Field(30, validation_alias="AUTH_TOKEN_TTL_DAYS")
     smtp_host: str = Field("smtp.gmail.com", validation_alias="SMTP_HOST")
     smtp_port: int = Field(587, validation_alias="SMTP_PORT")
@@ -38,6 +39,13 @@ class Settings(BaseSettings):
                 return "postgresql+psycopg://" + value[len("postgresql://"):]
             if value.startswith("postgresql+psycopg2://"):
                 return "postgresql+psycopg://" + value[len("postgresql+psycopg2://"):]
+        return value
+
+    @field_validator("admin_emails", mode="before")
+    @classmethod
+    def parse_admin_emails(cls, value: object) -> object:
+        if isinstance(value, str):
+            return [x.strip().lower() for x in value.split(",") if x.strip()]
         return value
 
     @field_validator("cors_origins", mode="before")
