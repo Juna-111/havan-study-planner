@@ -1,1 +1,57 @@
-'use client';import{useEffect,useState}from'react';import{useRouter}from'next/navigation';import{AppShell}from'@/components/layout';import{Card}from'@/components/ui';import{Button,EmptyState,ErrorState,ProgressBar}from'@/components/ui';import{StudentGate}from'@/features/student/StudentGate';import{getCurrentPlan,type Plan}from'@/lib/plan';export default function Home(){return <StudentGate><HomeView/></StudentGate>}function HomeView(){const r=useRouter();const[p,setP]=useState<Plan|null>(null);const[e,setE]=useState('');useEffect(()=>{getCurrentPlan().then(setP).catch(x=>setE(x instanceof Error?x.message:'Could not load your plan.'))},[]);return <AppShell><header style={{padding:'32px 0 20px'}}><span style={{color:'#01017e',fontWeight:800,letterSpacing:'.12em'}}>HAVAN</span><h1 style={{color:'#01017e',fontSize:'clamp(2rem,7vw,3rem)',marginTop:8}}>What should I do now?</h1><p style={{color:'#5d5d73'}}>Havan recommends. You remain in control.</p></header>{e?<ErrorState onRetry={()=>location.reload()} message={e}/>:!p?<EmptyState title="No study plan yet" hint="Choose the topics you want to study. Havan will organize them around your available time." action={<Button onClick={()=>r.push('/plan/new')}>Build my plan</Button>}/>:<div className="stack"><Card as="section" padding="lg"><h2>{p.tasks.filter(t=>t.planned_date===p.start_date).length} tasks for your plan</h2><p style={{color:'#5d5d73',margin:'8px 0 16px'}}>Open the plan to start, complete, skip, or review tasks.</p><Button onClick={()=>r.push('/plan')}>Open my plan</Button></Card><Card as="section" padding="lg"><h2>{p.total_minutes} minutes planned</h2><ProgressBar value={p.total_minutes?100:0}/><p style={{marginTop:8}}>{p.unplaced.length} topics currently unplaced.</p></Card></div>}</AppShell>}
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { AppShell } from '@/components/layout'
+import { Button, Card, EmptyState, ErrorState, ProgressBar } from '@/components/ui'
+import { StudentGate } from '@/features/student/StudentGate'
+import { getCurrentPlan, type Plan } from '@/lib/plan'
+
+export default function Home() {
+  return <StudentGate><HomeView /></StudentGate>
+}
+
+function HomeView() {
+  const router = useRouter()
+  const [plan, setPlan] = useState<Plan | null>(null)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    getCurrentPlan()
+      .then(setPlan)
+      .catch((value) => setError(value instanceof Error ? value.message : 'Could not load your plan.'))
+  }, [])
+
+  return (
+    <AppShell>
+      <header className="home-hero">
+        <span className="app-eyebrow">HAVAN</span>
+        <h1>What should I do now?</h1>
+        <p>Havan recommends. You remain in control.</p>
+      </header>
+
+      {error ? (
+        <ErrorState onRetry={() => location.reload()} message={error} />
+      ) : !plan ? (
+        <EmptyState
+          title="No study plan yet"
+          hint="Choose the topics you want to study. Havan will organize them around your available time."
+          action={<Button onClick={() => router.push('/plan/new')}>Build my plan</Button>}
+        />
+      ) : (
+        <div className="app-grid">
+          <Card as="section" padding="lg" className="home-card">
+            <h2>{plan.tasks.filter((task) => task.planned_date === plan.start_date).length} tasks for your plan</h2>
+            <p className="app-copy">Open the plan to start, complete, skip, or review tasks.</p>
+            <Button onClick={() => router.push('/plan')}>Open my plan</Button>
+          </Card>
+          <Card as="section" padding="lg" className="home-card">
+            <h2>{plan.total_minutes} minutes planned</h2>
+            <ProgressBar value={plan.total_minutes ? 100 : 0} />
+            <p className="app-meta">{plan.unplaced.length} topics currently unplaced.</p>
+          </Card>
+        </div>
+      )}
+    </AppShell>
+  )
+}
