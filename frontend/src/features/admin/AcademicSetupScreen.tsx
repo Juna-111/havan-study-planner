@@ -1,4 +1,6 @@
-'use client' import { useEffect, useState } from 'react' import { apiFetch } from '@/lib/api' import styles from './admin.module.css' import quickStyles from './admin-quick.module.css' type University = { id: number; name: string; code: string; status: string }
+'use client'
+
+import { useEffect, useState } from 'react' import { apiFetch } from '@/lib/api' import styles from './admin.module.css' import quickStyles from './admin-quick.module.css' type University = { id: number; name: string; code: string; status: string }
 type Curriculum = { id: number; university_id: number; name: string; version: string; academic_year?: string | null; status: string } type Stream = { id: number; curriculum_id: number; name: string; code: string; status: string }
 type Request = { id: number; request_type: 'UNIVERSITY' | 'CURRICULUM'; university_id?: number | null; name: string; code?: string | null; version?: string | null; academic_year?: string | null; status: string } export default function AcademicSetupScreen() {
 const [universities, setUniversities] = useState<University[]>([]) const [curriculums, setCurriculums] = useState<Curriculum[]>([]) const [streams, setStreams] = useState<Stream[]>([]) const [requests, setRequests] = useState<Request[]>([])
