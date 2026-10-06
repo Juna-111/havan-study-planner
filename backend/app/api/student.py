@@ -94,6 +94,51 @@ def get_my_courses(student: Annotated[StudentProfile, Depends(current_student)],
     return list_courses(student.id, db)
 
 
+@router.get("/me/catalog")
+def get_my_catalog(student: Annotated[StudentProfile, Depends(current_student)], db: DB):
+    courses = resolved_student_courses(db, student.id)
+    metadata = resolved_course_metadata(db, student.id)
+    result = []
+    for selected in courses:
+        course = db.get(Course, selected.course_id)
+        if course is None:
+            continue
+        chapters = list(db.scalars(
+            select(Chapter)
+            .where(Chapter.course_id == course.id, func.upper(Chapter.status) == "ACTIVE")
+            .order_by(Chapter.order_index, Chapter.id)
+        ).all())
+        result.append({
+            "id": course.id,
+            "code": metadata[course.id].display_code,
+            "name": metadata[course.id].display_name,
+            "chapters": [
+                {
+                    "id": chapter.id,
+                    "name": chapter.name,
+                    "order_index": chapter.order_index,
+                    "topics": [
+                        {
+                            "id": topic.id,
+                            "name": topic.name,
+                            "difficulty": topic.difficulty,
+                            "estimated_study_minutes": topic.estimated_study_minutes,
+                            "important_points": topic.important_points,
+                            "status": topic.status,
+                        }
+                        for topic in db.scalars(
+                            select(Topic)
+                            .where(Topic.chapter_id == chapter.id, func.upper(Topic.status) == "ACTIVE")
+                            .order_by(Topic.order_index, Topic.id)
+                        ).all()
+                    ],
+                }
+                for chapter in chapters
+            ],
+        })
+    return result
+
+
 @router.get("/me/progress", response_model=list[ProgressRead])
 def get_my_progress(student: Annotated[StudentProfile, Depends(current_student)], db: DB):
     return list_progress(student.id, db)
