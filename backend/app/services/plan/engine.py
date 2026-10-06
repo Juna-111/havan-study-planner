@@ -12,8 +12,7 @@ Pipeline
 1. Normalise      completed / "already known" topics, pace factor, study days.
 2. Assess         exam workload against available time (earliest-deadline-first).
 3. Score          transparent 0..1 priority from named components.
-4. Schedule       day by day: exam-aware, interleaved, capacity-safe, honouring the student's skips and pins.
-5. Schedule       day by day: dependency-aware, exam-aware, interleaved,
+4. Schedule       day by day: dependency-aware, exam-aware, interleaved,
                   capacity-safe, honouring the student's skips and pins.
 5. Review         short spaced-revision sessions for completed topics.
 6. Report         sessions, exam readiness and warnings.
@@ -460,7 +459,7 @@ def build_plan(request: PlanRequest, config: PlannerConfig = DEFAULT_CONFIG) -> 
     remaining_minutes = {
         t.topic_id: max(1, math.ceil(t.estimated_minutes * pace))
         for t in topics
-        if t.topic_id not in completed
+        if t.topic_id not in satisfied
     }
 
     horizon = max(1, request.horizon_days)
@@ -559,13 +558,13 @@ def build_plan(request: PlanRequest, config: PlannerConfig = DEFAULT_CONFIG) -> 
     # 5. Work items: study for unfinished topics, review for completed ----
     works: dict[int, _Work] = {}
     for topic in topics:
-        if topic.topic_id in satisfied:
-            continue
         if topic.topic_id in completed:
             if topic.last_studied_on is not None:
                 works[topic.topic_id] = _Work(topic, "REVIEW", cfg.review_minutes)
-        else:
-            works[topic.topic_id] = _Work(topic, "STUDY", remaining_minutes[topic.topic_id])
+            continue
+        if topic.topic_id in request.known_topic_ids:
+            continue
+        works[topic.topic_id] = _Work(topic, "STUDY", remaining_minutes[topic.topic_id])
 
     pinned = dict(request.pinned_topic_dates)
     deferred = set(request.deferred_topic_ids)
