@@ -36,9 +36,9 @@ export default function AdminOverview({ onMode }: Props) {
     ['Active universities', stats.universities, 'academic'],
     ['Active curricula', stats.curricula, 'academic'],
     ['Active streams', stats.streams, 'streams'],
-    ['Course Registry', stats.courses, 'content'],
+    ['Course Registry', stats.courses, 'registry'],
     ['Active course mappings', stats.mappings, 'mapping'],
-    ['Pending requests', stats.requests, 'academic'],
+    ['Pending requests', stats.requests, 'requests'],
   ] as const
 
   return (
