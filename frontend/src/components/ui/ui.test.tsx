@@ -1,0 +1,1 @@
+import{describe,expect,it}from'vitest';import{Button,ProgressBar}from'./index';describe('Havan UI primitives',()=>{it('disables loading buttons',()=>{const n=Button({children:'Save',loading:true});expect(n.props.disabled).toBe(true);expect(n.props['aria-busy']).toBe(true)});it('clamps progress',()=>expect(ProgressBar({value:140}).props['aria-label']).toContain('100%'))})
