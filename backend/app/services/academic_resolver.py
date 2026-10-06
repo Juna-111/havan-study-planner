@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db.models.curriculum import Course, Stream, UniversityCourseMapping
+from app.db.models.curriculum import Course, Curriculum, Stream, UniversityCourseMapping
 from app.db.models.student import StudentProfile
 
 
@@ -31,6 +31,10 @@ def resolve_stream_courses(db: Session, stream_id: int) -> list[ResolvedCourse]:
 
     stream = db.get(Stream, stream_id)
     if stream is None or str(stream.status).upper() != "ACTIVE":
+        return []
+
+    curriculum = db.get(Curriculum, stream.curriculum_id)
+    if curriculum is None or str(curriculum.status).upper() != "ACTIVE":
         return []
 
     rows = list(
