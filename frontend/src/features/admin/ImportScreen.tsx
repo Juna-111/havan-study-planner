@@ -75,7 +75,7 @@ export default function ImportScreen() {
   return (
     <section>
       <header className={styles.header}>
-        <span>CONTENT · D9 IMPORT</span>
+        <span>ACADEMIC CONTENT · IMPORT</span>
         <h1>Import academic content safely</h1>
         <p>Preview the established Course → Chapter → Topic format before anything is written to the registry.</p>
       </header>
