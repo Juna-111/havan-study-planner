@@ -112,6 +112,25 @@ def test_choice_allocator_preserves_pinned_date():
     assert "you chose this date" in pinned[0].reason
 
 
+def test_choice_allocator_spreads_a_long_topic_across_days():
+    result = choice_plan([topic(1, minutes=180)], minutes=60, horizon=3)
+    assert [(s.planned_date, s.minutes) for s in result.sessions] == [
+        (TODAY, 60),
+        (TODAY + timedelta(days=1), 60),
+        (TODAY + timedelta(days=2), 60),
+    ]
+
+
+def test_choice_allocator_readiness_counts_only_selected_topics():
+    result = choice_plan(
+        [topic(1, course_id=1, minutes=60), topic(2, course_id=2, minutes=180)],
+        exams=[exam(course_id=1, days=3)],
+        minutes=60,
+        horizon=3,
+    )
+    assert result.readiness[0].required_minutes == 60
+
+
 def test_choice_allocator_reports_unplaced_work_without_overbooking():
     result = choice_plan([topic(1, minutes=180)], minutes=60, horizon=1)
     assert result.minutes_by_date()[TODAY] == 60
