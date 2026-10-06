@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { AppShell, PageHeader } from '@/components/layout'
 import { Button, Card, Chip, EmptyState, ErrorState } from '@/components/ui'
 import { getCurrentPlan, planAction, type Plan } from '@/lib/plan'
-function View() {
+export default function PlanView() {
   const [p, setP] = useState<Plan | null>(null)
   const [e, setE] = useState('')
   const [targetDates, setTargetDates] = useState<Record<number, string>>({})
