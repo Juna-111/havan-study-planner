@@ -344,35 +344,4 @@ def apply_action(
         db.commit()
         return plan, []
 
-    if payload.action == "ADD":
-        if payload.target_topic_id is None:
-            raise ValueError("Choose a topic to add.")
-        topic = db.get(Topic, payload.target_topic_id)
-        if not topic or topic.status != "ACTIVE":
-            raise ValueError("The selected topic is not active.")
-        snapshot = _input_from_snapshot(plan)
-        ids = list(dict.fromkeys(snapshot.topic_ids + [topic.id]))
-        target = payload.target_date or today_local()
-        snapshot = snapshot.model_copy(update={"topic_ids": ids})
-        chapter = db.get(Chapter, topic.chapter_id)
-        if chapter is None:
-            raise ValueError("Topic chapter not found.")
-        db.add(PlanTask(
-            plan_id=plan.id,
-            student_id=student.id,
-            course_id=chapter.course_id,
-            topic_id=topic.id,
-            planned_date=target,
-            minutes=min(20, topic.estimated_study_minutes),
-            priority=0,
-            reason="You added this topic to your plan.",
-            reason_parts=[["manual_add", {}]],
-            kind="STUDY",
-            status="PLANNED",
-            pinned=True,
-        ))
-        plan.input_snapshot = snapshot.model_dump(mode="json")
-        db.commit()
-        return plan, []
-
     raise ValueError("Unsupported plan action.")
