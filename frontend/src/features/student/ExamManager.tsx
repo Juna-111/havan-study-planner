@@ -53,7 +53,8 @@ export default function ExamManager() {
     setSaving(true)
     setError('')
     try {
-      const created = await apiFetch<Exam>('/students/me/exams', {
+      if (!profileId) throw new Error('Student profile is not ready.')
+      const created = await apiFetch<Exam>(`/students/profiles/${profileId}/exams`, {
         method: 'POST',
         body: JSON.stringify({
           course_id: Number(courseId),
