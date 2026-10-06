@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from types import SimpleNamespace
 
 from app.api.academic_catalog_requests import review_request
@@ -39,6 +40,7 @@ def request(
     university_id=None,
     version=None,
 ):
+    now = datetime.now(timezone.utc)
     return SimpleNamespace(
         id=1,
         account_id=7,
@@ -50,8 +52,8 @@ def request(
         academic_year="2026/27",
         status="PENDING",
         admin_note=None,
-        created_at=None,
-        updated_at=None,
+        created_at=now,
+        updated_at=now,
     )
 
 
