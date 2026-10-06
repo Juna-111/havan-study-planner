@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.time import today_local
+from app.core.time import today_local, to_index
 from app.db.models.curriculum import Chapter, Course, Topic
 from app.db.models.plan import Plan, PlanTask
 from app.db.models.student import StudentProfile, StudentTopicProgress
@@ -207,10 +207,7 @@ def apply_action(
         task.pinned = True
         task.status = "PLANNED"
         warnings: list[str] = []
-        if payload.target_date.weekday() not in set(
-            __import__("app.core.time", fromlist=["to_index"]).to_index(day)
-            for day in _input_from_snapshot(plan).study_days
-        ):
+        if payload.target_date.weekday() not in {to_index(day) for day in _input_from_snapshot(plan).study_days}:
             warnings.append("PIN_NON_STUDY_DAY")
         capacity = student.study_hours_per_day * 60
         used = sum(
@@ -275,10 +272,13 @@ def apply_action(
         ids = list(dict.fromkeys(snapshot.topic_ids + [topic.id]))
         target = payload.target_date or today_local()
         snapshot = snapshot.model_copy(update={"topic_ids": ids})
+        chapter = db.get(Chapter, topic.chapter_id)
+        if chapter is None:
+            raise ValueError("Topic chapter not found.")
         db.add(PlanTask(
             plan_id=plan.id,
             student_id=student.id,
-            course_id=db.scalar(select(Course.id).join(Chapter, Chapter.course_id == Course.id).where(Topic.id == topic.id)),
+            course_id=chapter.course_id,
             topic_id=topic.id,
             planned_date=target,
             minutes=min(20, topic.estimated_study_minutes),
