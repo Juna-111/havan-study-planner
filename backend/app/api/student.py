@@ -1,6 +1,7 @@
 from app.core.config import API_PREFIX
 from app.core.deps import current_account, current_student, require_student_owner
 from datetime import datetime, timezone
+from uuid import uuid4
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -106,11 +107,12 @@ def get_my_exams(student: Annotated[StudentProfile, Depends(current_student)], d
 @router.post("/profiles", response_model=StudentRead, status_code=status.HTTP_201_CREATED)\ndef
 def create_profile(payload: StudentCreate, db: DB, account: Annotated[StudentAccount, Depends(current_account)]):
     validate_curriculum_context(db, payload.university_id, payload.curriculum_id, payload.stream_id)
-    existing = db.scalar(select(StudentProfile).where(StudentProfile.client_key == payload.client_key))
+    existing = db.scalar(select(StudentProfile).where(StudentProfile.account_id == account.id))
     if existing:
         return existing
     data = payload.model_dump(exclude={"account_id"})
     data["account_id"] = account.id
+    data["client_key"] = payload.client_key or f"legacy-{uuid4().hex}"
     profile = StudentProfile(**data)
     db.add(profile)
     db.commit()
