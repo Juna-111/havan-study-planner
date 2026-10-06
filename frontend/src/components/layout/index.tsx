@@ -7,7 +7,7 @@ import styles from './layout.module.css'
 /** Responsive Havan app shell and navigation primitives. */
 
 const navigation = [
-  ['/home', 'Home'],
+  ['/student/havan', 'Havan'],
   ['/plan', 'Plan'],
   ['/progress', 'Progress'],
   ['/settings', 'Settings'],
