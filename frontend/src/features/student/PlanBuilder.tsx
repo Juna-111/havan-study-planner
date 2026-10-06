@@ -16,7 +16,7 @@ type Topic = {
   status: string
 }
 
-type Chapter = { id: number; name: string; topics: Topic[] }
+type Chapter = { id: number; name: string; important_points?: string | null; topics: Topic[] }
 type Course = { id: number; code: string; name: string; chapters: Chapter[] }
 type Profile = { study_hours_per_day: number; study_days: string[] }
 
@@ -212,6 +212,39 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
 
           {selectedTopics.length > 0 && (
             <Card padding="lg" className="havan-critical-points">
+              <div>
+                <span className="app-eyebrow">STEP 2 · HAVAN ACADEMY</span>
+                <h2>Chapter guidance</h2>
+                <p className="app-meta">Chapter-level critical points entered by the Havan Academy admin for the chapters containing your selected topics.</p>
+              </div>
+              <div className="havan-chapter-guidance">
+                {Array.from(new Map(
+                  selectedTopics.map((topic) => {
+                    const chapter = courses.flatMap((course) => course.chapters).find((item) => item.topics.some((entry) => entry.id === topic.id))
+                    return [chapter?.id ?? topic.id, chapter]
+                  }).filter((entry): entry is [number, Chapter] => Boolean(entry[1]))
+                ).values()).map((chapter) => {
+                  const points = criticalPoints(chapter.important_points)
+                  return (
+                    <article className="havan-chapter-guidance-item" key={chapter.id}>
+                      <strong>{chapter.name}</strong>
+                      {points.length > 0 ? (
+                        <ul>{points.map((point, index) => <li key={index}>{point}</li>)}</ul>
+                      ) : (
+                        <p className="app-meta">No chapter critical points have been added yet.</p>
+                      )}
+                    </article>
+                  )
+                })}
+              </div>
+              <div className="havan-resource-note">
+                <strong>Havan Academy resources</strong>
+                <p>Course videos, notes, and Freshman Exam Questions will appear here when those resources are published for the selected content.</p>
+              </div>
+            </Card>
+          )}
+
+          {selectedTopics.length > 0 && (
               <div>
                 <span className="app-eyebrow">STEP 2 · HAVAN ACADEMY</span>
                 <h2>Important points for your selected topics</h2>

@@ -123,6 +123,7 @@ def get_my_catalog(student: Annotated[StudentProfile, Depends(current_student)],
                     "id": chapter.id,
                     "name": chapter.name,
                     "order_index": chapter.order_index,
+                    "important_points": chapter.important_points,
                     "topics": [
                         {
                             "id": topic.id,
