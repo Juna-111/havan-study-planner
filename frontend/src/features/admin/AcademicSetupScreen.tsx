@@ -71,10 +71,10 @@ export default function AcademicSetupScreen() {
       {(message || error) && <div className={error ? styles.alert : styles.notice}>{error || message}</div>}
       <div className={styles.quickGrid}>
         <div className={styles.quickCard}>
-          <h2>Add university</h2><p>Only two required fields.</p>
+          <h2>Add university</h2><p>Name is required. Code is optional and Havan can generate one.</p>
           <label>Name<input value={universityName} onChange={(e) => setUniversityName(e.target.value)} placeholder='Addis Ababa University' /></label>
-          <label>Code<input value={universityCode} onChange={(e) => setUniversityCode(e.target.value)} placeholder='AAU' /></label>
-          <button className={styles.primary} disabled={busy === 'university' || !universityName.trim() || !universityCode.trim()} onClick={addUniversity}>{busy === 'university' ? 'Adding…' : 'Add university'}</button>
+          <label>Code (optional)<input value={universityCode} onChange={(e) => setUniversityCode(e.target.value)} placeholder='AAU' /></label>
+          <button className={styles.primary} disabled={busy === 'university' || !universityName.trim()} onClick={addUniversity}>{busy === 'university' ? 'Adding…' : 'Add university'}</button>
         </div>
         <div className={styles.quickCard}>
           <h2>Add curriculum</h2><p>Pick the university first. Version keeps identities separate.</p>
