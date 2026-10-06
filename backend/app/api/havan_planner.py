@@ -1,4 +1,5 @@
 from app.core.config import API_PREFIX
+from app.core.deps import require_student_owner
 import json
 from datetime import date, timedelta
 
@@ -12,7 +13,7 @@ from app.db.models.student import StudentProfile
 from app.db.session import get_db
 from app.schemas.havan_planner import HavanPlanCreate, HavanPlanRead, HavanPlanTaskRead
 
-router = APIRouter(prefix="/api/v1/havan-planner", tags=["havan-planner"])
+router = APIRouter(prefix=f"{API_PREFIX}/havan-planner", tags=["havan-planner"])
 
 
 def _read(plan: HavanPlan, tasks: list[HavanPlanTask]) -> HavanPlanRead:
@@ -73,7 +74,7 @@ def _validate_tasks(db: Session, student_id: int, payload: HavanPlanCreate) -> N
                 raise HTTPException(status_code=400, detail=f"Tasks on {planned_date.isoformat()} exceed the available study time")
 
 
-@router.post("/students/{student_id}/plans", response_model=HavanPlanRead)
+@router.post("/students/{student_id}/plans", dependencies=[Depends(require_student_owner)], response_model=HavanPlanRead)
 def create_plan(student_id: int, payload: HavanPlanCreate, db: Session = Depends(get_db)):
     _validate_tasks(db, student_id, payload)
 
@@ -104,7 +105,7 @@ def create_plan(student_id: int, payload: HavanPlanCreate, db: Session = Depends
     return _read(plan, tasks)
 
 
-@router.get("/students/{student_id}/latest", response_model=HavanPlanRead)
+@router.get("/students/{student_id}/latest", dependencies=[Depends(require_student_owner)], response_model=HavanPlanRead)
 def latest_plan(student_id: int, db: Session = Depends(get_db)):
     plan = db.scalar(select(HavanPlan).where(HavanPlan.student_id == student_id).order_by(HavanPlan.id.desc()))
     if plan is None:
