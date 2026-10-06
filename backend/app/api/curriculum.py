@@ -25,7 +25,12 @@ def collection(db, model, schema, page, page_size, filters=None):
 def universities(db: DB, page: int=Query(1,ge=1), page_size: int=Query(20,ge=1,le=100)):
     return collection(db,University,UniversityRead,page,page_size)
 @router.post("/universities", dependencies=[Depends(require_admin)], response_model=UniversityRead, status_code=status.HTTP_201_CREATED)
-def create_university(payload: UniversityCreate, db: DB): return create_item(db,University,payload.model_dump())
+def create_university(payload: UniversityCreate, db: DB):
+    data = payload.model_dump()
+    if not data.get("code"):
+        compact = "".join(char for char in data["name"].upper() if char.isalnum())
+        data["code"] = compact[:30] or "UNI"
+    return create_item(db, University, data)
 @router.get("/universities/{item_id}", response_model=UniversityRead)
 def get_university(item_id:int,db:DB): return get_or_404(db,University,item_id)
 @router.patch("/universities/{item_id}", dependencies=[Depends(require_admin)], response_model=UniversityRead)
