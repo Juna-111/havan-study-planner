@@ -1,4 +1,4 @@
-# Phase 6.1 — Planner UX
+> Historical; not current.\n\n# Phase 6.1 — Planner UX
 
 ## Goal
 
