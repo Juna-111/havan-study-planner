@@ -94,3 +94,32 @@ Not run in the GitHub workspace. Required before Phase 4 is GREEN:
 - `alembic upgrade head` from the previous migration head
 - backend full `pytest -q`
 - frontend checks remain required by the phase gate.
+
+
+## Phase 5 — Design System and App Shell
+
+Status: IMPLEMENTED / LOCAL VERIFICATION PENDING
+
+### Branch
+- `rebuild/phase-5-design-system`
+- Base: Phase 4 Plan Domain
+
+### Implemented
+- Added semantic Havan design tokens in `frontend/src/styles/tokens.css` using the rebuild specification's light-theme palette, spacing, radii, type scale, shadows, and touch target.
+- Added reset/accessibility typography in `styles/base.css` and small layout helpers in `styles/utilities.css`.
+- Switched the root layout to `next/font/google` with DM Sans and Fraunces, plus the required responsive viewport export.
+- Added the shared UI component set: Button, IconButton, Card, Chip, Segmented, Select, DateField, NumberStepper, Checkbox, TreeSelect, BottomSheet, Toast, Banner, ProgressBar, ProgressRing, Skeleton, EmptyState, and ErrorState.
+- Added responsive AppShell primitives: BottomNav, SideNav, PageHeader, and StickyActionBar.
+- Added CSS Modules for the shared component and shell layers; no new UI framework or CSS dependency was introduced.
+- Added shared component tests for loading-button accessibility and progress clamping.
+- Added temporary `/dev/ui` review page gated by `NEXT_PUBLIC_ENABLE_UI_DEV=true`, with representative component states.
+- Preserved the existing global stylesheet during the migration so legacy screens are not intentionally stripped before Phase 6.
+
+### Verification
+Not run in the GitHub workspace. Required before Phase 5 is GREEN:
+- frontend `npm test`
+- frontend `npx tsc --noEmit`
+- frontend `npm run lint`
+- frontend `npm run build`
+- manual review at 320, 360, 390, 768, 1024, and 1280 px for overflow and keyboard focus
+- contrast check of all semantic token pairs
