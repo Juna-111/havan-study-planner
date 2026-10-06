@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AcademicCatalogRequestCreate(BaseModel):
@@ -14,6 +14,7 @@ class AcademicCatalogRequestCreate(BaseModel):
 
 
 class AcademicCatalogRequestRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     account_id: int
     request_type: str
