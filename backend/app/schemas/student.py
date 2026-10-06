@@ -11,7 +11,7 @@ class AuthSignup(BaseModel):
 
 class AuthLogin(BaseModel):
     email: str = Field(min_length=5, max_length=255)
-    password: str = Field(min_length=8, max_length=128)
+    password: str = Field(min_length=1, max_length=128)
 
 
 class AuthAccountRead(BaseModel):
@@ -44,7 +44,7 @@ class StudentBase(BaseModel):
 
 
 class StudentCreate(StudentBase):
-    pass
+    study_days: list[Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]] = Field(min_length=1, max_length=7)
 
 
 class StudentUpdate(BaseModel):
