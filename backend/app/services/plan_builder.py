@@ -4,7 +4,6 @@ from datetime import date
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.time import today_local
 from app.db.models.curriculum import Chapter, Course, Topic
 from app.db.models.plan import Plan, PlanTask
 from app.db.models.student import StudentProfile
@@ -29,15 +28,6 @@ def _warning_fix(code: str) -> dict[str, str]:
     }.get(code, {})
 
 
-def _course_map(db: Session, topic_ids: set[int]) -> dict[int, Course]:
-    rows = list(db.scalars(
-        select(Topic, Course)
-        .join(Course, Topic.chapter.has(course_id=Course.id))
-        .where(Topic.id.in_(topic_ids))
-    ).all())
-    return {topic.id: course for topic, course in rows}
-
-
 def _result_to_out(
     db: Session,
     student: StudentProfile,
@@ -50,7 +40,7 @@ def _result_to_out(
     topic_map = {topic.id: topic for topic in topics}
     chapter_ids = {topic.chapter_id for topic in topics}
     chapters = list(db.scalars(select(Chapter).where(
-        __import__("app.db.models.curriculum", fromlist=["Chapter"]).Chapter.id.in_(chapter_ids)
+        Chapter.id.in_(chapter_ids)
     )).all()) if chapter_ids else []
     chapter_map = {chapter.id: chapter for chapter in chapters}
     course_ids = {chapter.course_id for chapter in chapters}
