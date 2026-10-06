@@ -2,7 +2,7 @@
 
 ## Phase 0 — Baseline and Safety
 
-Status: IN PROGRESS
+Status: RECORDED / LOCAL VERIFICATION PENDING
 
 ### Repository
 - Repository: `Juna-111/havan-study-planner`
