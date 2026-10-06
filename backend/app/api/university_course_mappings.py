@@ -83,6 +83,11 @@ def _validate_stream_and_course(
         raise HTTPException(status_code=404, detail="Course not found.")
     if str(course.status).upper() != "ACTIVE":
         raise HTTPException(status_code=422, detail="The selected course is not active.")
+    if course.stream_id is not None and course.stream_id != stream.id:
+        raise HTTPException(
+            status_code=422,
+            detail="The selected course belongs to a different stream and cannot be mapped here.",
+        )
 
     if stream.curriculum is None:
         raise HTTPException(status_code=422, detail="The selected stream has no curriculum.")
