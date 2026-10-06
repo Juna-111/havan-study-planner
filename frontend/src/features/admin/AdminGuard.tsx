@@ -1,6 +1,6 @@
 'use client'
 import {useEffect,useState} from 'react'
-import {apiFetch} from '../../lib/api'
+import {apiFetch} from '@/lib/api'
 type Account={role?:string}
 export default function AdminGuard({children}:{children:React.ReactNode}){
  const [state,setState]=useState<'loading'|'allowed'|'denied'>('loading')
