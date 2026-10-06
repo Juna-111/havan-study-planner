@@ -27,6 +27,8 @@ export default function AcademicSetupScreen() {
   const [busy, setBusy] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [selectedCurriculumId, setSelectedCurriculumId] = useState('')
+  const [selectedStreamId, setSelectedStreamId] = useState('')
 
   async function load() {
     try {
@@ -41,7 +43,23 @@ export default function AcademicSetupScreen() {
     } catch (value) { setError(value instanceof Error ? value.message : 'Could not load academic catalog.') }
   }
   useEffect(() => { load() }, [])
-  useEffect(() => { if (!curriculumIdForStream && curriculums[0]) setCurriculumIdForStream(String(curriculums[0].id)) }, [curriculums, curriculumIdForStream])
+  useEffect(() => {
+    if (!curriculumIdForStream && curriculums[0]) setCurriculumIdForStream(String(curriculums[0].id))
+  }, [curriculums, curriculumIdForStream])
+
+  const selectedUniversity = universities.find((item) => String(item.id) === universityId)
+  const visibleCurriculums = curriculums.filter((item) => String(item.university_id) === universityId)
+  const visibleStreams = streams.filter((item) => String(item.curriculum_id) === selectedCurriculumId)
+
+  useEffect(() => {
+    const first = visibleCurriculums.find((item) => item.status === 'ACTIVE') || visibleCurriculums[0]
+    setSelectedCurriculumId(first ? String(first.id) : '')
+  }, [universityId, curriculums])
+
+  useEffect(() => {
+    const first = visibleStreams.find((item) => item.status === 'ACTIVE') || visibleStreams[0]
+    setSelectedStreamId(first ? String(first.id) : '')
+  }, [selectedCurriculumId, streams])
 
   async function addUniversity() {
     if (!universityName.trim()) return
@@ -104,7 +122,38 @@ export default function AcademicSetupScreen() {
       {(message || error) && <div className={error ? styles.alert : styles.notice}>{error || message}</div>}
       <div className={quickStyles.quickGrid}>
         <div className={quickStyles.quickCard}>
-          <h2>Add stream</h2>
+          <h2>Academic path</h2>
+          <p>Inspect the exact hierarchy students use when they register.</p>
+          <label>University<select value={universityId} onChange={(e) => setUniversityId(e.target.value)}>
+            <option value="">Choose university</option>
+            {universities.map((item) => <option key={item.id} value={item.id}>{item.code} · {item.name}</option>)}
+          </select></label>
+          <label>Curriculum<select value={selectedCurriculumId} onChange={(e) => setSelectedCurriculumId(e.target.value)}>
+            <option value="">Choose curriculum</option>
+            {visibleCurriculums.map((item) => <option key={item.id} value={item.id}>{item.name} · v{item.version}</option>)}
+          </select></label>
+          <label>Stream<select value={selectedStreamId} onChange={(e) => setSelectedStreamId(e.target.value)}>
+            <option value="">Choose stream</option>
+            {visibleStreams.map((item) => <option key={item.id} value={item.id}>{item.code} · {item.name}</option>)}
+          </select></label>
+          <div className={styles.indent}>
+            <b>{selectedUniversity?.name || 'No university selected'}</b>
+            <span>{visibleCurriculums.length} curriculum{visibleCurriculums.length === 1 ? '' : 's'}</span>
+            <span>{visibleStreams.length} stream{visibleStreams.length === 1 ? '' : 's'} in selected curriculum</span>
+          </div>
+        </div>
+        <div className={quickStyles.quickCard}>
+          <h2>Manage streams</h2>
+          <p>Streams are the same records students select during registration.</p>
+          <div className={styles.indent}>
+            {visibleStreams.length ? visibleStreams.map((item) => (
+              <div key={item.id}>
+                <b>{item.code} · {item.name}</b>
+                <span>{item.status}</span>
+              </div>
+            )) : <span>No streams in this curriculum yet.</span>}
+          </div>
+          <h3>Add stream</h3>
           <p>Create the stream students must choose during registration.</p>
           <label>Curriculum<select value={curriculumIdForStream} onChange={(e) => setCurriculumIdForStream(e.target.value)}>
             <option value="">Choose curriculum</option>
