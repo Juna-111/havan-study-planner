@@ -29,6 +29,31 @@ export default function Onboarding() {
   const validAcademic = Boolean(name.trim() && university && curriculum && stream && selected.size)
   const canNext = step === 0 ? validAcademic : step === 1 ? days.length > 0 : true
 
+  function handleUniversity(value: string) {
+    setUniversity(value)
+    setCurriculum('')
+    setStream('')
+    setSelected(new Set())
+    setStarts({})
+  }
+
+  function handleCurriculum(value: string) {
+    setCurriculum(value)
+    setStream('')
+    setSelected(new Set())
+    setStarts({})
+  }
+
+  function handleStream(value: string) {
+    setStream(value)
+    setSelected(new Set())
+    setStarts({})
+  }
+
+  function handleStart(courseId: number, value: { chapter?: number; topic?: number }) {
+    setStarts((old) => ({ ...old, [courseId]: value }))
+  }
+
   async function finish() {
     setError('')
     try {
@@ -43,6 +68,7 @@ export default function Onboarding() {
           study_days: days,
         }),
       })
+
       for (const courseId of selected) {
         const start = starts[courseId]
         await apiFetch(`/students/profiles/${profile.id}/courses`, {
@@ -55,6 +81,7 @@ export default function Onboarding() {
           }),
         })
       }
+
       const account = await apiFetch<{ id: number; email: string; role: 'STUDENT' | 'ADMIN'; student_profile_id: number | null }>('/auth/me')
       const token = getAuthToken()
       if (token) saveAuth({ access_token: token, token_type: 'bearer', account })
@@ -64,17 +91,54 @@ export default function Onboarding() {
     }
   }
 
-  return <main className="content" style={{ maxWidth: 760, margin: '0 auto', paddingTop: 32 }}>
-    <span style={{ color: '#01017e', fontWeight: 800, letterSpacing: '.12em' }}>HAVAN</span>
-    <h1>Set up your academic profile</h1>
-    <p>Tell Havan where you are and when you study. You can change these choices later.</p>
-    <Segmented options={['Academic', 'Habits', 'Exams'] as const} value={['Academic', 'Habits', 'Exams'][step] as 'Academic' | 'Habits' | 'Exams'} onChange={(value) => setStep(['Academic', 'Habits', 'Exams'].indexOf(value))} />
-    {error && <ErrorState message={error} onRetry={() => setError('')} />}
-    {step === 0 && <StepAcademic name={name} university={university} curriculum={curriculum} stream={stream} selected={selected} starts={starts} onName={setName} onUniversity={setUniversity} onCurriculum={setCurriculum} onStream={setStream} onToggleCourse={(id, checked) => setSelected((old) => { const next = new Set(old); checked ? next.add(id) : next.delete(id); return next })} onStart={(courseId, value) => setStarts((old) => ({ ...old, [courseId]: value }))} />}
-    {step === 1 && <StepHabits days={days} hours={hours} onDays={setDays} onHours={setHours} />}
-    {step === 2 && <StepExams />}
-    <div className="row" style={{ marginTop: 20 }}>
-      {step > 0 && <Button variant="secondary" onClick={() => setStep(step - 1)}>Back</Button>}
-      {step < 2 ? <Button disabled={!canNext} onClick={() => setStep(step + 1)}>Continue</Button> : <Button disabled={!canNext} onClick={finish}>Finish setup</Button>}
-    </div>
-  </main>
+  return (
+    <main className="content" style={{ maxWidth: 760, margin: '0 auto', paddingTop: 32 }}>
+      <span style={{ color: '#01017e', fontWeight: 800, letterSpacing: '.12em' }}>HAVAN</span>
+      <h1>Set up your academic profile</h1>
+      <p>Tell Havan where you are and when you study. You can change these choices later.</p>
+      <Segmented
+        options={['Academic', 'Habits', 'Exams'] as const}
+        value={['Academic', 'Habits', 'Exams'][step] as 'Academic' | 'Habits' | 'Exams'}
+        onChange={(value) => setStep(['Academic', 'Habits', 'Exams'].indexOf(value))}
+      />
+      {error && <ErrorState message={error} onRetry={() => setError('')} />}
+      {step === 0 && (
+        <StepAcademic
+          name={name}
+          university={university}
+          curriculum={curriculum}
+          stream={stream}
+          selected={selected}
+          starts={starts}
+          onName={setName}
+          onUniversity={handleUniversity}
+          onCurriculum={handleCurriculum}
+          onStream={handleStream}
+          onToggleCourse={(id, checked) =>
+            setSelected((old) => {
+              const next = new Set(old)
+              checked ? next.add(id) : next.delete(id)
+              if (!checked) {
+                setStarts((current) => {
+                  const copy = { ...current }
+                  delete copy[id]
+                  return copy
+                })
+              }
+              return next
+            })
+          }
+          onStart={handleStart}
+        />
+      )}
+      {step === 1 && <StepHabits days={days} hours={hours} onDays={setDays} onHours={setHours} />}
+      {step === 2 && <StepExams />}
+      <div className="row" style={{ marginTop: 20 }}>
+        {step > 0 && <Button variant="secondary" onClick={() => setStep(step - 1)}>Back</Button>}
+        {step < 2
+          ? <Button disabled={!canNext} onClick={() => setStep(step + 1)}>Continue</Button>
+          : <Button disabled={!canNext} onClick={finish}>Finish setup</Button>}
+      </div>
+    </main>
+  )
+}

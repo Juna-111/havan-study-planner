@@ -4,7 +4,6 @@ import { type FormEvent, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { apiFetch } from '@/lib/api'
 import { getAuthToken, saveAuth, type AuthResponse } from '@/lib/auth'
-import './auth.css'
 
 type Mode = 'login' | 'signup' | 'forgot'
 type ForgotStep = 'email' | 'code' | 'done'
