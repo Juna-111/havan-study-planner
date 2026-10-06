@@ -8,6 +8,7 @@ from app.api.freshman_registry_import import router as freshman_registry_import_
 from app.api.havan_planner import router as havan_planner_router
 from app.api.health import router as health_router
 from app.api.planner import router as planner_router
+from app.api.plans import router as plans_router
 from app.api.student import router as student_router
 from app.api.university_course_mappings import router as university_course_mappings_router
 
@@ -22,6 +23,7 @@ for child_router in (
     university_course_mappings_router,
     student_router,
     planner_router,
+    plans_router,
     havan_planner_router,
     academic_quality_router,
 ):
