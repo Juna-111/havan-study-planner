@@ -1,4 +1,4 @@
-from __future__ import annotations
+"""Historical Havan planner persistence model.\n\nThe tables remain in migration history for data preservation; the active\nplanner uses the unified Plan model and this module is not used by the API.\n"""\n\nfrom __future__ import annotations
 
 from datetime import date, datetime
 from typing import Optional
