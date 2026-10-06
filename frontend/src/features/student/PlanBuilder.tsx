@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppShell, PageHeader, StickyActionBar } from '@/components/layout'
 import { Button, Card, EmptyState, ErrorState, NumberStepper, Segmented, TreeSelect } from '@/components/ui'
@@ -73,7 +73,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
     }
   }, [initialMode])
 
-  async function loadStudyData() {
+  const loadStudyData = useCallback(async () => {
     try {
       setError('')
       const [catalog, student] = await Promise.all([
@@ -86,11 +86,11 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
     } catch (value) {
       setError(value instanceof Error ? value.message : 'Could not load your study data.')
     }
-  }
+  }, [])
 
   useEffect(() => {
     void loadStudyData()
-  }, [])
+  }, [loadStudyData])
 
   const horizon = mode === 'today' ? 1 : mode === 'week' ? 7 : 28
   const minutesByDay = useMemo(
