@@ -166,10 +166,16 @@ def create_profile(payload: StudentCreate, db: DB, account: Annotated[StudentAcc
 
 
 @router.get("/profiles/by-client/{client_key}", response_model=StudentRead)
-def get_profile_by_client(client_key: str, db: DB, account: Annotated[StudentAccount, Depends(current_account)]):
+def get_profile_by_client(
+    client_key: str,
+    db: DB,
+    account: Annotated[StudentAccount, Depends(current_account)],
+):
     profile = db.scalar(select(StudentProfile).where(StudentProfile.client_key == client_key))
     if not profile:
         raise HTTPException(status_code=404, detail="Student profile not found")
+    if profile.account_id != account.id:
+        raise HTTPException(status_code=403, detail="You do not own this student profile")
     return profile
 
 
