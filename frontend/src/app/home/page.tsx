@@ -27,7 +27,7 @@ function HomeView() {
       <header className="home-hero">
         <span className="app-eyebrow">HAVAN</span>
         <h1>What should I do now?</h1>
-        <p>Havan recommends. You remain in control.</p>
+        <p>You choose what to study. Havan organizes your time.</p>
       </header>
 
       {error ? (
@@ -36,7 +36,7 @@ function HomeView() {
         <EmptyState
           title="No study plan yet"
           hint="Choose the topics you want to study. Havan will organize them around your available time."
-          action={<Button onClick={() => router.push('/plan/new')}>Build my plan</Button>}
+          action={<Button onClick={() => router.push('/student/havan')}>Choose study topics</Button>}
         />
       ) : (
         <div className="app-grid">
