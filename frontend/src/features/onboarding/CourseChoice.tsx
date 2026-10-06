@@ -20,7 +20,7 @@ export default function CourseChoice({
   course: Course
   checked: boolean
   start?: { chapter?: number; topic?: number }
-  onToggle: Props['onToggleCourse']
+  onToggle: Props['onToggle']
   onStart: Props['onStart']
 }) {
   const [chapters, setChapters] = useState<Opt[]>([])
