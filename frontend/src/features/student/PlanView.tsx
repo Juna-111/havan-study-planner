@@ -35,7 +35,7 @@ export default function PlanView() {
     return groups
   }, {}) : {}
   const orderedDays = Object.entries(groupedTasks).sort(([a], [b]) => a.localeCompare(b))
-  const act = async (id: number, action: 'START' | 'COMPLETE' | 'SKIP' | 'MOVE' | 'REPEAT') => {
+  const act = async (id: number, action: 'START' | 'COMPLETE' | 'SKIP' | 'MOVE' | 'REPEAT' | 'REMOVE') => {
     if (!p) return
     try {
       setE('')
