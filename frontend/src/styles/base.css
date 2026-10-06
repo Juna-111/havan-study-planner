@@ -175,3 +175,12 @@ button { cursor:pointer } :focus-visible { outline:3px solid rgba(1,1,126,.35); 
   .havan-destination-grid { grid-template-columns:1fr; gap:12px; }
   .havan-destination-card { min-height:0; gap:18px; }
 }
+
+.plan-review-list{display:grid;gap:8px;margin-top:14px}
+.plan-review-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;padding:12px 0;border-top:1px solid #eee}
+.plan-review-row div{display:grid;gap:2px}
+.plan-review-row strong{color:#151526}
+.plan-review-row span{color:#5d5d73;font-size:.8rem}
+.plan-review-unplaced{margin-top:14px;padding:12px;border-radius:10px;background:#fff4f3}
+.plan-review-unplaced p{margin:6px 0 0;color:#5d5d73;font-size:.875rem}
+@media(max-width:480px){.plan-review-row{grid-template-columns:1fr}.plan-review-row div:last-child{padding-top:2px}}
