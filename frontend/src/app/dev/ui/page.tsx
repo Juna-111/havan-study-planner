@@ -23,11 +23,11 @@ import {
 } from '@/components/ui'
 
 export default function Ui() {
-  if (process.env.NEXT_PUBLIC_ENABLE_UI_DEV !== 'true') return null
-
   const [selected, setSelected] = useState(new Set<string>())
   const [open, setOpen] = useState(false)
   const [toast, setToast] = useState(false)
+  if (process.env.NEXT_PUBLIC_ENABLE_UI_DEV !== 'true') return null
+
   const courses = [{
     id: 'math',
     name: 'Mathematics',
