@@ -37,7 +37,7 @@ def create(
     try:
         return save_plan(db, student, payload)
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise DomainError("INVALID_SELECTION", str(exc), 422)
 
 
 @router.get("/current", response_model=PlanOut)
@@ -71,5 +71,5 @@ def action(
             out.warnings.append({"code": warning, "severity": "info", "message": "Skipped. Tap Rebuild the rest to place it later.", "fix": {"rebuild": "Rebuild the rest"}})
         return out
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise DomainError("INVALID_SELECTION", str(exc), 422)
 
