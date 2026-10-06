@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from collections import defaultdict
-from datetime import date, datetime, timezone, timedelta
+from datetime import date, timezone, timedelta
 from typing import Iterable
 
 from sqlalchemy import select
@@ -9,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.core.time import parse_weekdays, today_local, to_index
 from app.db.models.curriculum import Chapter, Course, Topic
-from app.db.models.plan import Plan, PlanTask
+from app.db.models.plan import PlanTask
 from app.db.models.student import StudentExam, StudentProfile, StudentTopicProgress
 from app.schemas.plan import PlanInput
 from app.services.academic_resolver import resolved_course_ids
