@@ -10,6 +10,7 @@ def test_curriculum_routes_are_registered() -> None:
     assert "/api/v1/courses" in paths
     assert "/api/v1/chapters" in paths
     assert "/api/v1/topics" in paths
+    assert "/api/v1/students/onboarding" in paths
 
 
 def test_university_schema_validation() -> None:
@@ -22,3 +23,35 @@ def test_topic_schema_defaults_and_bounds() -> None:
     assert item.difficulty == 3
     assert item.estimated_study_minutes == 60
     assert item.exam_importance == 0.5
+
+
+def test_student_registration_schema_requires_courses() -> None:
+    import pytest
+    from pydantic import ValidationError
+    from app.schemas.student import StudentRegistrationCreate
+
+    with pytest.raises(ValidationError):
+        StudentRegistrationCreate(
+            name="Student",
+            university_id=1,
+            curriculum_id=1,
+            stream_id=1,
+            study_days=["mon"],
+            courses=[],
+        )
+
+
+def test_student_registration_schema_accepts_stream_and_selected_course() -> None:
+    from app.schemas.student import StudentRegistrationCreate
+
+    payload = StudentRegistrationCreate(
+        name="Student",
+        university_id=1,
+        curriculum_id=1,
+        stream_id=1,
+        study_days=["mon", "wed"],
+        courses=[{"course_id": 10}],
+    )
+
+    assert payload.stream_id == 1
+    assert payload.courses[0].course_id == 10

@@ -14,7 +14,7 @@ from app.db.session import get_db
 from app.services.academic_resolver import resolve_stream_courses, resolve_student_courses, resolved_course_ids
 from app.schemas.student import (
     CourseTopicStatus, ExamCreate, ExamRead, ExamUpdate, ProgressRead, ProgressUpsert, StudentContext,
-    StudentCourseAdd, StudentCourseRead, StudentCreate, StudentRead, StudentUpdate,
+    StudentCourseAdd, StudentCourseRead, StudentCreate, StudentRead, StudentUpdate, StudentRegistrationCreate,
 )
 
 router = APIRouter(prefix=f"{API_PREFIX}/students", tags=["students"], dependencies=[Depends(current_account)])
@@ -73,6 +73,12 @@ def validate_curriculum_context(db: Session, university_id: int, curriculum_id: 
     university = db.get(University, university_id)
     if not university or not curriculum or not stream:
         raise HTTPException(status_code=400, detail="University, curriculum, or stream not found")
+    if str(university.status).upper() != "ACTIVE":
+        raise HTTPException(status_code=400, detail="The selected university is not available for student registration")
+    if str(curriculum.status).upper() != "ACTIVE":
+        raise HTTPException(status_code=400, detail="The selected curriculum is not available for student registration")
+    if str(stream.status).upper() != "ACTIVE":
+        raise HTTPException(status_code=400, detail="The selected stream is not available for student registration")
     if curriculum.university_id != university_id:
         raise HTTPException(status_code=400, detail="Curriculum does not belong to the selected university")
     if stream.curriculum_id != curriculum_id:
@@ -251,39 +257,43 @@ def list_courses(student_id: int, db: DB):
     return [student_course_read_data(db, item, metadata) for item in resolved_student_courses(db, student_id)]
 
 
-@router.post("/profiles/{student_id}/courses", response_model=StudentCourseRead, status_code=201, dependencies=[Depends(require_student_owner)])
-def add_course(student_id: int, payload: StudentCourseAdd, db: DB):
-    profile = profile_or_404(db, student_id)
+def _apply_course_selection(db: Session, profile: StudentProfile, payload: StudentCourseAdd) -> StudentCourse:
     course = db.get(Course, payload.course_id)
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
+    if str(course.status).upper() != "ACTIVE":
+        raise HTTPException(status_code=400, detail="The selected course is not available")
     if not course_available_to_stream(db, course.id, profile.stream_id):
         raise HTTPException(status_code=400, detail="Course is outside the student's selected stream")
-    existing = db.scalar(select(StudentCourse).where(StudentCourse.student_id == student_id, StudentCourse.course_id == payload.course_id))
+
+    existing = db.scalar(select(StudentCourse).where(
+        StudentCourse.student_id == profile.id,
+        StudentCourse.course_id == payload.course_id,
+    ))
     if existing:
         existing.status = "ACTIVE"
         existing.confidence = payload.confidence
-        db.commit()
-        db.refresh(existing)
-        return student_course_read_data(db, existing)
+        existing_progress = db.scalar(select(StudentTopicProgress.id).where(
+            StudentTopicProgress.student_id == profile.id,
+            StudentTopicProgress.topic_id.in_(
+                select(Topic.id).join(Chapter, Chapter.id == Topic.chapter_id).where(Chapter.course_id == course.id)
+            ),
+        ).limit(1))
+        if existing_progress is not None or (
+            payload.starting_chapter_id is None and payload.starting_topic_id is None
+        ):
+            return existing
+        item = existing
+    else:
+        item = StudentCourse(student_id=profile.id, course_id=payload.course_id, confidence=payload.confidence)
+        db.add(item)
+        db.flush()
 
-    item = StudentCourse(
-        student_id=student_id,
-        course_id=payload.course_id,
-        confidence=payload.confidence,
-    )
-    db.add(item)
-    db.flush()
-
-    # A selected starting position means the student is telling Havan where
-    # they are in the course. Topics before that position are treated as
-    # already covered; the selected topic remains the first active target.
     if payload.starting_chapter_id is not None or payload.starting_topic_id is not None:
-        chapters = list(db.scalars(
-            select(Chapter)
-            .where(Chapter.course_id == course.id)
-            .order_by(Chapter.order_index, Chapter.id)
-        ).all())
+        chapters = list(db.scalars(select(Chapter).where(
+            Chapter.course_id == course.id,
+            func.upper(Chapter.status) == "ACTIVE",
+        ).order_by(Chapter.order_index, Chapter.id)).all())
         chapter_by_id = {chapter.id: chapter for chapter in chapters}
 
         if payload.starting_chapter_id is not None and payload.starting_chapter_id not in chapter_by_id:
@@ -292,8 +302,8 @@ def add_course(student_id: int, payload: StudentCourseAdd, db: DB):
         selected_topic = None
         if payload.starting_topic_id is not None:
             selected_topic = db.get(Topic, payload.starting_topic_id)
-            if selected_topic is None:
-                raise HTTPException(status_code=400, detail="Starting topic not found")
+            if selected_topic is None or str(selected_topic.status).upper() != "ACTIVE":
+                raise HTTPException(status_code=400, detail="Starting topic is not available")
             if selected_topic.chapter_id not in chapter_by_id:
                 raise HTTPException(status_code=400, detail="Starting topic does not belong to the selected course")
             if payload.starting_chapter_id is not None and selected_topic.chapter_id != payload.starting_chapter_id:
@@ -301,43 +311,117 @@ def add_course(student_id: int, payload: StudentCourseAdd, db: DB):
 
         target_chapter_id = payload.starting_chapter_id or selected_topic.chapter_id
         target_chapter = chapter_by_id[target_chapter_id]
-        topic_rows = list(db.scalars(
-            select(Topic)
-            .where(Topic.chapter_id.in_([chapter.id for chapter in chapters]))
-            .order_by(Topic.chapter_id, Topic.order_index, Topic.id)
-        ).all())
+        topic_rows = list(db.scalars(select(Topic).where(
+            Topic.chapter_id.in_([chapter.id for chapter in chapters]),
+            func.upper(Topic.status) == "ACTIVE",
+        ).order_by(Topic.chapter_id, Topic.order_index, Topic.id)).all())
         chapter_position = {chapter.id: index for index, chapter in enumerate(chapters)}
-        selected_topic_position = None
-        if selected_topic is not None:
-            selected_topic_position = (chapter_position[selected_topic.chapter_id], selected_topic.order_index, selected_topic.id)
+        selected_topic_position = None if selected_topic is None else (
+            chapter_position[selected_topic.chapter_id], selected_topic.order_index, selected_topic.id
+        )
 
         for topic in topic_rows:
             topic_position = (chapter_position[topic.chapter_id], topic.order_index, topic.id)
             if topic_position < (chapter_position[target_chapter.id], -1, -1) or (
                 selected_topic_position is not None and topic_position < selected_topic_position
             ):
-                db.add(StudentTopicProgress(
-                    student_id=student_id,
-                    topic_id=topic.id,
-                    status="COMPLETED",
-                    confidence=payload.confidence,
-                    completed_minutes=topic.estimated_study_minutes,
-                    study_sessions=1,
+                progress = db.scalar(select(StudentTopicProgress).where(
+                    StudentTopicProgress.student_id == profile.id,
+                    StudentTopicProgress.topic_id == topic.id,
                 ))
+                if progress is None:
+                    db.add(StudentTopicProgress(
+                        student_id=profile.id,
+                        topic_id=topic.id,
+                        status="COMPLETED",
+                        confidence=payload.confidence,
+                        completed_minutes=topic.estimated_study_minutes,
+                        study_sessions=1,
+                    ))
+                elif progress.status != "COMPLETED":
+                    progress.status = "COMPLETED"
+                    progress.confidence = payload.confidence
+                    progress.completed_minutes = max(progress.completed_minutes, topic.estimated_study_minutes)
+                    progress.study_sessions = max(progress.study_sessions, 1)
 
         if selected_topic is not None:
-            db.add(StudentTopicProgress(
-                student_id=student_id,
-                topic_id=selected_topic.id,
-                status="IN_PROGRESS",
-                confidence=payload.confidence,
-                completed_minutes=0,
-                study_sessions=0,
+            progress = db.scalar(select(StudentTopicProgress).where(
+                StudentTopicProgress.student_id == profile.id,
+                StudentTopicProgress.topic_id == selected_topic.id,
             ))
+            if progress is None:
+                db.add(StudentTopicProgress(
+                    student_id=profile.id,
+                    topic_id=selected_topic.id,
+                    status="IN_PROGRESS",
+                    confidence=payload.confidence,
+                    completed_minutes=0,
+                    study_sessions=0,
+                ))
+            elif progress.status != "COMPLETED":
+                progress.status = "IN_PROGRESS"
+                progress.confidence = payload.confidence
 
+    return item
+
+
+@router.post("/profiles/{student_id}/courses", response_model=StudentCourseRead, status_code=201, dependencies=[Depends(require_student_owner)])
+def add_course(student_id: int, payload: StudentCourseAdd, db: DB):
+    profile = profile_or_404(db, student_id)
+    item = _apply_course_selection(db, profile, payload)
     db.commit()
     db.refresh(item)
     return student_course_read_data(db, item)
+
+
+@router.post("/onboarding", response_model=StudentRead, status_code=status.HTTP_201_CREATED)
+def complete_onboarding(
+    payload: StudentRegistrationCreate,
+    db: DB,
+    account: Annotated[StudentAccount, Depends(current_account)],
+):
+    if len({item.course_id for item in payload.courses}) != len(payload.courses):
+        raise HTTPException(status_code=400, detail="Each course can only be selected once")
+
+    validate_curriculum_context(db, payload.university_id, payload.curriculum_id, payload.stream_id)
+
+    existing = db.scalar(select(StudentProfile).where(StudentProfile.account_id == account.id))
+    if existing is None:
+        profile = StudentProfile(
+            account_id=account.id,
+            client_key=payload.client_key or f"legacy-{uuid4().hex}",
+            name=payload.name,
+            university_id=payload.university_id,
+            curriculum_id=payload.curriculum_id,
+            stream_id=payload.stream_id,
+            study_hours_per_day=payload.study_hours_per_day,
+            study_days=payload.study_days,
+        )
+        db.add(profile)
+        db.flush()
+    else:
+        profile = existing
+        profile.name = payload.name
+        profile.university_id = payload.university_id
+        profile.curriculum_id = payload.curriculum_id
+        profile.stream_id = payload.stream_id
+        profile.study_hours_per_day = payload.study_hours_per_day
+        profile.study_days = payload.study_days
+
+    try:
+        for course in payload.courses:
+            _apply_course_selection(db, profile, StudentCourseAdd(
+                course_id=course.course_id,
+                confidence=course.confidence,
+                starting_chapter_id=course.starting_chapter_id,
+                starting_topic_id=course.starting_topic_id,
+            ))
+        db.commit()
+        db.refresh(profile)
+        return profile
+    except Exception:
+        db.rollback()
+        raise
 
 
 @router.delete("/profiles/{student_id}/courses/{course_id}", status_code=204, dependencies=[Depends(require_student_owner)])

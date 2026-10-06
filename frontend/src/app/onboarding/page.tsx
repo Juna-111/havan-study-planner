@@ -21,6 +21,7 @@ export default function Onboarding() {
   const [days, setDays] = useState<string[]>(['mon', 'tue', 'wed', 'thu', 'fri'])
   const [hours, setHours] = useState(2)
   const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (!getAuthToken()) router.replace('/auth')
@@ -55,32 +56,30 @@ export default function Onboarding() {
   }
 
   async function finish() {
+    if (saving) return
     setError('')
+    setSaving(true)
     try {
-      const profile = await apiFetch<{ id: number }>('/students/profiles', {
+      await apiFetch('/students/onboarding', {
         method: 'POST',
         body: JSON.stringify({
-          name,
+          name: name.trim(),
           university_id: Number(university),
           curriculum_id: Number(curriculum),
           stream_id: Number(stream),
           study_hours_per_day: hours,
           study_days: days,
+          courses: Array.from(selected).map((courseId) => {
+            const start = starts[courseId]
+            return {
+              course_id: courseId,
+              confidence: 3,
+              starting_chapter_id: start?.chapter,
+              starting_topic_id: start?.topic,
+            }
+          }),
         }),
       })
-
-      for (const courseId of selected) {
-        const start = starts[courseId]
-        await apiFetch(`/students/profiles/${profile.id}/courses`, {
-          method: 'POST',
-          body: JSON.stringify({
-            course_id: courseId,
-            confidence: 3,
-            starting_chapter_id: start?.chapter,
-            starting_topic_id: start?.topic,
-          }),
-        })
-      }
 
       const account = await apiFetch<{ id: number; email: string; role: 'STUDENT' | 'ADMIN'; student_profile_id: number | null }>('/auth/me')
       const token = getAuthToken()
@@ -88,6 +87,8 @@ export default function Onboarding() {
       router.replace('/home')
     } catch (value) {
       setError(value instanceof Error ? value.message : 'Could not save your academic setup.')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -137,7 +138,7 @@ export default function Onboarding() {
         {step > 0 && <Button variant="secondary" onClick={() => setStep(step - 1)}>Back</Button>}
         {step < 2
           ? <Button disabled={!canNext} onClick={() => setStep(step + 1)}>Continue</Button>
-          : <Button disabled={!canNext} onClick={finish}>Finish setup</Button>}
+          : <Button disabled={!canNext || saving} loading={saving} onClick={finish}>{saving ? 'Saving…' : 'Finish setup'}</Button>}
       </div>
     </main>
   )
