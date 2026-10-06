@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
+
+from app.core.errors import DomainError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -23,7 +25,7 @@ def preview(
     try:
         return preview_plan(db, student, payload)
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise DomainError("INVALID_SELECTION", str(exc), 422)
 
 
 @router.post("", response_model=PlanOut)
@@ -45,7 +47,7 @@ def current(
 ):
     plan = db.scalar(select(Plan).where(Plan.student_id == student.id, Plan.status == "ACTIVE").order_by(Plan.id.desc()))
     if not plan:
-        raise HTTPException(status_code=404, detail="You do not have a plan yet. Choose what to study and Havan will organize it.")
+        raise DomainError("NO_ACTIVE_PLAN", "You do not have a plan yet. Choose what to study and Havan will organize it.", 404)
     return read_plan(db, student, plan)
 
 
@@ -59,7 +61,7 @@ def action(
 ):
     plan = db.scalar(select(Plan).where(Plan.id == plan_id, Plan.student_id == student.id, Plan.status == "ACTIVE"))
     if not plan:
-        raise HTTPException(status_code=404, detail="Study plan not found.")
+        raise DomainError("NO_ACTIVE_PLAN", "Study plan not found.", 404)
     try:
         result, warning = apply_action(db, student, task_id, payload)
         if isinstance(result, PlanOut):
