@@ -150,6 +150,49 @@ def _result_to_out(
         created_at=saved_plan.created_at if saved_plan else None,
     )
 
+
+def read_plan(db: Session, student: StudentProfile, plan: Plan) -> PlanOut:
+    rows = list(db.scalars(select(PlanTask).where(PlanTask.plan_id == plan.id).order_by(PlanTask.planned_date, PlanTask.id)).all())
+    topic_ids = {row.topic_id for row in rows} | {item["topic_id"] for item in plan.unplaced}
+    topics = list(db.scalars(select(Topic).where(Topic.id.in_(topic_ids))).all()) if topic_ids else []
+    topic_map = {topic.id: topic for topic in topics}
+    chapters = list(db.scalars(select(Chapter).where(Chapter.id.in_({topic.chapter_id for topic in topics}))).all()) if topics else []
+    chapter_map = {chapter.id: chapter for chapter in chapters}
+    courses = list(db.scalars(select(Course).where(Course.id.in_({chapter.course_id for chapter in chapters}))).all()) if chapters else []
+    course_map = {course.id: course for course in courses}
+
+    tasks = []
+    for row in rows:
+        topic = topic_map[row.topic_id]
+        course = course_map[chapter_map[topic.chapter_id].course_id]
+        tasks.append({
+            "id": row.id, "course_id": course.id, "course_code": course.code, "course_name": course.name,
+            "topic_id": topic.id, "topic_name": topic.name, "planned_date": row.planned_date,
+            "minutes": row.minutes, "priority": row.priority, "reason": row.reason,
+            "reason_parts": row.reason_parts, "kind": row.kind, "status": row.status, "pinned": row.pinned,
+        })
+
+    readiness = []
+    for item in plan.readiness:
+        course = course_map.get(item["course_id"])
+        readiness.append({**item, "course_name": course.name if course else f"Course {item['course_id']}"})
+
+    warnings = [
+        {"code": item["code"], "severity": _warning_severity(item["code"]), "message": item["message"], "fix": _warning_fix(item["code"])}
+        for item in plan.warnings
+    ]
+    unplaced = []
+    for item in plan.unplaced:
+        course = course_map.get(item["course_id"])
+        unplaced.append({**item, "course_name": course.name if course else f"Course {item['course_id']}"})
+
+    return PlanOut(
+        id=plan.id, student_id=student.id, mode=plan.mode, horizon_days=plan.horizon_days,
+        start_date=plan.start_date, engine_version=plan.engine_version, total_minutes=sum(row.minutes for row in rows),
+        tasks=tasks, readiness=readiness, warnings=warnings, unplaced=unplaced,
+        saved=True, created_at=plan.created_at,
+    )
+
 def preview_plan(
     db: Session,
     student: StudentProfile,
