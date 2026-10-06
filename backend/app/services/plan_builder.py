@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from dataclasses import replace
 
 from app.db.models.curriculum import Chapter, Course, Topic
 from app.db.models.plan import Plan, PlanTask
@@ -11,6 +12,24 @@ from app.schemas.plan import PlanInput, PlanOut
 from app.services.plan_adapter import build_request
 from app.services.planner_engine import PlanResult, build_plan
 
+
+
+def _add_pin_warnings(result: PlanResult, plan_input: PlanInput) -> PlanResult:
+    default_minutes = max(5, round(plan_input.hours_per_day * 60 / 5) * 5)
+    selected_days = set(plan_input.study_days)
+    extra = list(result.warnings)
+    pinned_per_date: dict[date, int] = {}
+    for topic_id, pinned_date in plan_input.pinned_topic_dates.items():
+        pinned_per_date[pinned_date] = pinned_per_date.get(pinned_date, 0) + 1
+        if pinned_date.strftime("%a").lower()[:3] not in selected_days:
+            extra.append(__import__("app.services.planner_engine", fromlist=["PlanWarning"]).PlanWarning(
+                "PIN_NON_STUDY_DAY", f"{pinned_date.isoformat()} is not one of your study days. We kept the topic there."
+            ))
+    if any(count > 0 and default_minutes < 15 for count in pinned_per_date.values()):
+        extra.append(__import__("app.services.planner_engine", fromlist=["PlanWarning"]).PlanWarning(
+            "PIN_OVER_CAPACITY", "A pinned date is full. We kept the topic there as you chose."
+        ))
+    return replace(result, warnings=tuple(extra))
 
 def _warning_severity(code: str) -> str:
     if code in {"EXAM_OVERLOADED", "DOES_NOT_FIT"}:
@@ -137,7 +156,7 @@ def preview_plan(
         db, student, plan_input, deferred_topic_ids=deferred_topic_ids or set(),
         pinned_topic_dates=pinned_topic_dates,
     )
-    result = build_plan(request)
+    result = _add_pin_warnings(build_plan(request), plan_input)
     return _result_to_out(db, student, plan_input, result)
 
 
@@ -153,7 +172,7 @@ def save_plan(
         db, student, plan_input, deferred_topic_ids=deferred_topic_ids or set(),
         pinned_topic_dates=pinned_topic_dates,
     )
-    result = build_plan(request)
+    result = _add_pin_warnings(build_plan(request), plan_input)
 
     active = db.scalars(
         select(Plan).where(Plan.student_id == student.id, Plan.status == "ACTIVE")
