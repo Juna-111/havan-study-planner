@@ -2,7 +2,7 @@
 import{useEffect,useMemo,useRef,useState}from'react';import styles from'./ui.module.css'
 /** Shared Havan UI primitives. These components contain no business knowledge. */
 export function Button({children,variant='primary',size='md',loading=false,fullWidth=false,disabled=false,type='button',onClick}:{children:React.ReactNode;
-variant?:'primary'|'secondary'|'ghost'|'danger';
+variant?:'primary'|'secondary'|'ghost'|'danger'|'accent';
 size?:'md'|'lg';
 loading?:boolean;
 fullWidth?:boolean;
