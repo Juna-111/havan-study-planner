@@ -29,7 +29,8 @@ const [u, c, s] = await Promise.all([
 apiFetch<{ items: University[] }>('/universities?page=1&page_size=100'), apiFetch<{ items: Curriculum[] }>('/curriculums?page=1&page_size=100'), apiFetch<{ items: Stream[] }>('/streams?page=1&page_size=100'), ]) setUniversities(u.items) setCurriculums(c.items)
 setStreams(s.items)
 const activeUniversity = u.items.find((item) => item.status === 'ACTIVE')
-const nextUniversity = universityId || (activeUniversity ? String(activeUniversity.id) : '') setUniversityId(nextUniversity) } catch (value) {
+const nextUniversity = universityId || (activeUniversity ? String(activeUniversity.id) : ')
+setUniversityId(nextUniversity) } catch (value) {
 setError(value instanceof Error ? value.message : 'Could not load stream management data.') } } useEffect(() => { void load() }, [])
 const visibleCurriculums = useMemo( () => curriculums.filter((item) => String(item.university_id) === universityId),
 [curriculums, universityId], )
