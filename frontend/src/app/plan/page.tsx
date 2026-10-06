@@ -1,1 +1,113 @@
-'use client';import{useEffect,useState}from'react';import{AppShell,PageHeader}from'@/components/layout';import{Button,Card,Chip,EmptyState,ErrorState}from'@/components/ui';import{getCurrentPlan,planAction,type Plan}from'@/lib/plan';import{StudentGate}from'@/features/student/StudentGate';export default function PlanPage(){return <StudentGate><View/></StudentGate>}function View(){const[p,setP]=useState<Plan|null>(null);const[e,setE]=useState('');useEffect(()=>{getCurrentPlan().then(setP).catch(x=>setE(x instanceof Error?x.message:''))},[]);const act=async(id:number,a:'START'|'COMPLETE'|'SKIP')=>{if(!p)return;try{setP(await planAction(p.id!,id,a))}catch(x){setE(x instanceof Error?x.message:'Action failed.')}};return <AppShell><PageHeader title="Your plan" description="Every task has a reason. You decide what happens next." action={<Button variant="secondary" onClick={()=>location.href='/plan/new'}>Change plan</Button>}/>{e?<ErrorState onRetry={()=>location.reload()} message={e}/>:!p?<EmptyState title="No plan yet" hint="Build a plan from topics you choose." action={<Button onClick={()=>location.href='/plan/new'}>Build a plan</Button>}/>:<div className="stack">{p.warnings.map(w=><Chip key={w.code} tone={w.severity==='danger'?'danger':w.severity==='warn'?'warn':'info'}>{w.message}</Chip>)}{p.tasks.map(t=><Card key={t.id} as="article"><div className="row"><Chip tone={t.status==='DONE'?'success':'info'}>{t.status}</Chip><strong>{t.planned_date}</strong></div><h2 style={{margin:'10px 0 4px'}}>{t.topic_name}</h2><p>{t.reason}</p><small>{t.minutes} min · {t.course_name}</small><div className="row" style={{marginTop:12}}>{t.status!=='DONE'&&<Button onClick={()=>act(t.id,t.status==='PLANNED'?'START':'COMPLETE')}>{t.status==='PLANNED'?'Start':'Complete'}</Button>}<Button variant="ghost" onClick={()=>act(t.id,'SKIP')}>Skip</Button></div></Card>)}</div>}</AppShell>}
+'use client'
+
+import { useEffect, useState } from 'react'
+import { AppShell, PageHeader } from '@/components/layout'
+import { Button, Card, Chip, EmptyState, ErrorState } from '@/components/ui'
+import { getCurrentPlan, planAction, type Plan } from '@/lib/plan'
+import { StudentGate } from '@/features/student/StudentGate'
+
+export default function PlanPage() {
+  return (
+    <StudentGate>
+      <View />
+    </StudentGate>
+  )
+}
+
+function View() {
+  const [p, setP] = useState<Plan | null>(null)
+  const [e, setE] = useState('')
+
+  useEffect(() => {
+    getCurrentPlan()
+      .then(setP)
+      .catch((x) => setE(x instanceof Error ? x.message : ''))
+  }, [])
+
+  const act = async (id: number, action: 'START' | 'COMPLETE' | 'SKIP') => {
+    if (!p) return
+
+    try {
+      setP(await planAction(id, { action }))
+    } catch (x) {
+      setE(x instanceof Error ? x.message : 'Action failed.')
+    }
+  }
+
+  return (
+    <AppShell>
+      <PageHeader
+        title="Your plan"
+        description="Every task has a reason. You decide what happens next."
+        action={
+          <Button variant="secondary" onClick={() => (location.href = '/plan/new')}>
+            Change plan
+          </Button>
+        }
+      />
+
+      {e ? (
+        <ErrorState onRetry={() => location.reload()} message={e} />
+      ) : !p ? (
+        <EmptyState
+          title="No plan yet"
+          hint="Build a plan from topics you choose."
+          action={
+            <Button onClick={() => (location.href = '/plan/new')}>
+              Build a plan
+            </Button>
+          }
+        />
+      ) : (
+        <div className="stack">
+          {p.warnings.map((w) => (
+            <Chip
+              key={w.code}
+              tone={
+                w.severity === 'danger'
+                  ? 'danger'
+                  : w.severity === 'warn'
+                    ? 'warn'
+                    : 'info'
+              }
+            >
+              {w.message}
+            </Chip>
+          ))}
+
+          {p.tasks.map((t) => (
+            <Card key={t.id} as="article">
+              <div className="row">
+                <Chip tone={t.status === 'DONE' ? 'success' : 'info'}>
+                  {t.status}
+                </Chip>
+                <strong>{t.planned_date}</strong>
+              </div>
+
+              <h2 style={{ margin: '10px 0 4px' }}>{t.topic_name}</h2>
+              <p>{t.reason}</p>
+              <small>
+                {t.minutes} min · {t.course_name}
+              </small>
+
+              <div className="row" style={{ marginTop: 12 }}>
+                {t.status !== 'DONE' && (
+                  <Button
+                    onClick={() =>
+                      act(t.id, t.status === 'PLANNED' ? 'START' : 'COMPLETE')
+                    }
+                  >
+                    {t.status === 'PLANNED' ? 'Start' : 'Complete'}
+                  </Button>
+                )}
+                <Button variant="ghost" onClick={() => act(t.id, 'SKIP')}>
+                  Skip
+                </Button>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+    </AppShell>
+  )
+}
