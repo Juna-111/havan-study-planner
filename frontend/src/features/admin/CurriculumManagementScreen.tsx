@@ -8,12 +8,14 @@ type University = { id: number; name: string; code: string; status: string }
 type Curriculum = { id: number; university_id: number; name: string; version: string; academic_year?: string | null; status: string }
 type Stream = { id: number; curriculum_id: number; name: string; code: string; status: string }
 type Course = { id: number; stream_id?: number | null; code: string; name: string; credit_hours?: number | null; status: string }
+type Mapping = { id: number; stream_id: number; course_id: number; course_code: string; course_name: string; semester_number: number; status: string }
 
 export default function CurriculumManagementScreen() {
   const [universities, setUniversities] = useState<University[]>([])
   const [curriculums, setCurriculums] = useState<Curriculum[]>([])
   const [streams, setStreams] = useState<Stream[]>([])
   const [courses, setCourses] = useState<Course[]>([])
+  const [mappings, setMappings] = useState<Mapping[]>([])
   const [universityId, setUniversityId] = useState('')
   const [curriculumId, setCurriculumId] = useState('')
   const [streamId, setStreamId] = useState('')
@@ -41,14 +43,20 @@ export default function CurriculumManagementScreen() {
   async function loadCourses(id: string) {
     if (!id) {
       setCourses([])
+      setMappings([])
       return
     }
     try {
-      const result = await apiFetch<{ items: Course[] }>(`/courses?stream_id=${id}&page=1&page_size=100`)
-      setCourses(result.items)
+      const [courseResult, mappingResult] = await Promise.all([
+        apiFetch<{ items: Course[] }>(`/courses?stream_id=${id}&page=1&page_size=100`),
+        apiFetch<Mapping[]>(`/university-course-mappings?stream_id=${id}`),
+      ])
+      setCourses(courseResult.items)
+      setMappings(mappingResult)
     } catch (value) {
-      setError(value instanceof Error ? value.message : 'Could not load courses for this stream.')
+      setError(value instanceof Error ? value.message : 'Could not load dependencies for this stream.')
       setCourses([])
+      setMappings([])
     }
   }
 
@@ -65,6 +73,9 @@ export default function CurriculumManagementScreen() {
   const selectedUniversity = universities.find((item) => String(item.id) === universityId)
   const selectedCurriculum = curriculums.find((item) => String(item.id) === curriculumId)
   const selectedStream = streams.find((item) => String(item.id) === streamId)
+  const selectedUniversityCurriculums = curriculums.filter((item) => item.university_id === selectedUniversity?.id)
+  const selectedCurriculumStreams = streams.filter((item) => item.curriculum_id === selectedCurriculum?.id)
+  const activeMappings = mappings.filter((item) => item.status === 'ACTIVE')
 
   useEffect(() => {
     const first = visibleCurriculums.find((item) => item.status === 'ACTIVE') || visibleCurriculums[0]
@@ -96,6 +107,13 @@ export default function CurriculumManagementScreen() {
           <b>{selectedUniversity?.code || '—'} → {selectedCurriculum ? `v${selectedCurriculum.version}` : '—'} → {selectedStream?.code || '—'}</b>
         </div>
         <span>{courses.length} course{courses.length === 1 ? '' : 's'} in selected stream</span>
+      </div>
+
+      <div className={styles.stats}>
+        <div><span>University curricula</span><b>{selectedUniversityCurriculums.length}</b></div>
+        <div><span>Curriculum streams</span><b>{selectedCurriculumStreams.length}</b></div>
+        <div><span>Registered courses</span><b>{courses.length}</b></div>
+        <div><span>Active mappings</span><b>{activeMappings.length}</b></div>
       </div>
 
       <div className={styles.selectors}>
@@ -130,6 +148,7 @@ export default function CurriculumManagementScreen() {
           <div>
             <h2>Selected stream</h2>
             <p>{selectedStream ? `${selectedStream.code} · ${selectedStream.name}` : 'Choose a stream to inspect its courses.'}</p>
+            {selectedStream && <small>{selectedStream.status} · curriculum ID #{selectedStream.curriculum_id}</small>}
           </div>
           <b>{courses.length}</b>
         </div>
@@ -146,9 +165,19 @@ export default function CurriculumManagementScreen() {
               <small>{course.credit_hours == null ? 'Credit hours not set' : `${course.credit_hours} credit hours`}</small>
             </div>
             <small>{course.status}</small>
-            <span>Registry ID #{course.id}</span>
+            <span>{activeMappings.some((item) => item.course_id === course.id) ? 'Mapped' : 'Not mapped'} · Registry ID #{course.id}</span>
           </div>
         ))}
+      </div>
+
+      <div className={styles.panel}>
+        <h2>Hierarchy dependencies</h2>
+        <div className={styles.indent}>
+          <span>University contains {selectedUniversityCurriculums.length} curriculum record{selectedUniversityCurriculums.length === 1 ? '' : 's'}.</span>
+          <span>Selected curriculum contains {selectedCurriculumStreams.length} stream record{selectedCurriculumStreams.length === 1 ? '' : 's'}.</span>
+          <span>Selected stream exposes {courses.length} registered course record{courses.length === 1 ? '' : 's'} and {activeMappings.length} active mapping{activeMappings.length === 1 ? '' : 's'}.</span>
+          <span>Mapping is a separate relationship; inspecting this hierarchy does not create or duplicate course records.</span>
+        </div>
       </div>
 
       <div className={styles.panel}>
