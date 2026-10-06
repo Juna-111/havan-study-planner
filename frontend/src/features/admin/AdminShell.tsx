@@ -23,7 +23,7 @@ const groups = [
   },
   {
     label: 'QUALITY',
-    items: [['quality', 'Academic quality']],
+    items: [['quality', 'requests', 'Academic quality']],
   },
 ] as const
 
