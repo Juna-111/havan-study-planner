@@ -25,6 +25,14 @@ function View() {
       .catch((x) => setE(x instanceof Error ? x.message : ''))
   }, [])
 
+  const modeLabel = p?.mode === 'today' ? 'Today' : p?.mode === 'month' ? 'Month' : 'Week'
+  const completedCount = p?.tasks.filter((task) => task.status === 'DONE').length ?? 0
+  const plannedMinutes = p?.tasks.filter((task) => task.status !== 'SKIPPED').reduce((total, task) => total + task.minutes, 0) ?? 0
+  const groupedTasks = p ? p.tasks.reduce<Record<string, Plan['tasks']>>((groups, task) => {
+    ;(groups[task.planned_date] ||= []).push(task)
+    return groups
+  }, {}) : {}
+
   const act = async (id: number, action: 'START' | 'COMPLETE' | 'SKIP' | 'MOVE' | 'REPEAT') => {
     if (!p) return
 
@@ -66,6 +74,18 @@ function View() {
         />
       ) : (
         <div className="stack">
+          <Card padding="lg" className="plan-overview">
+            <div>
+              <span className="app-eyebrow">HAVAN {modeLabel.toUpperCase()}</span>
+              <h2>{completedCount} of {p.tasks.length} tasks complete</h2>
+              <p>{plannedMinutes} minutes planned across {p.horizon_days} {p.horizon_days === 1 ? 'day' : 'days'}.</p>
+            </div>
+            <div className="plan-overview-stats">
+              <strong>{p.total_minutes} min</strong>
+              <span>planned study time</span>
+            </div>
+          </Card>
+
           {p.warnings.map((w) => (
             <Chip
               key={w.code}
@@ -81,7 +101,13 @@ function View() {
             </Chip>
           ))}
 
-          {p.tasks.map((t) => (
+          {Object.entries(groupedTasks).map(([date, tasks]) => (
+            <section className="plan-day" key={date}>
+              <div className="plan-day-heading">
+                <h2>{date}</h2>
+                <span>{tasks.reduce((total, task) => total + task.minutes, 0)} min</span>
+              </div>
+              {tasks.map((t) => (
             <Card key={t.id} as="article" padding="lg" className="plan-task">
               <div className="row">
                 <Chip tone={t.status === 'DONE' ? 'success' : 'info'}>
@@ -133,6 +159,8 @@ function View() {
                 )}
               </div>
             </Card>
+              ))}
+            </section>
           ))}
         </div>
       )}
