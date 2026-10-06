@@ -2,18 +2,18 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.errors import DomainError
+from app.core.security import decode_access_token
 from app.db.models.student import StudentAccount, StudentProfile
 from app.db.session import get_db
-from app.core.security import decode_access_token
 
 bearer = HTTPBearer(auto_error=False)
 DB = Annotated[Session, Depends(get_db)]
-CurrentAccount = Annotated[StudentAccount, Depends(lambda: None)]
 
 
 def current_account(
@@ -21,32 +21,36 @@ def current_account(
     db: DB,
 ) -> StudentAccount:
     if credentials is None:
-        raise HTTPException(status_code=401, detail="Authentication required.")
+        raise DomainError("UNAUTHORIZED", "Authentication required.", 401)
     try:
         account_id, _ = decode_access_token(credentials.credentials)
     except ValueError:
-        raise HTTPException(status_code=401, detail="Your session is invalid or expired. Please sign in again.") from None
+        raise DomainError("UNAUTHORIZED", "Your session is invalid or expired. Please sign in again.", 401) from None
     account = db.get(StudentAccount, account_id)
     if account is None:
-        raise HTTPException(status_code=401, detail="Your session is invalid or expired. Please sign in again.")
+        raise DomainError("UNAUTHORIZED", "Your session is invalid or expired. Please sign in again.", 401)
     return account
 
 
 def current_student(account: Annotated[StudentAccount, Depends(current_account)], db: DB) -> StudentProfile:
     profile = db.scalar(select(StudentProfile).where(StudentProfile.account_id == account.id))
     if profile is None:
-        raise HTTPException(status_code=409, detail={"code": "ONBOARDING_REQUIRED", "message": "Complete your student profile first."})
+        raise DomainError("ONBOARDING_REQUIRED", "Complete your student profile first.", 409)
     return profile
 
 
 def require_admin(account: Annotated[StudentAccount, Depends(current_account)]) -> StudentAccount:
     if account.role != "ADMIN":
-        raise HTTPException(status_code=403, detail="Administrator access required.")
+        raise DomainError("FORBIDDEN", "Administrator access required.", 403)
     return account
 
 
-def require_student_owner(student_id: int, account: Annotated[StudentAccount, Depends(current_account)], db: DB) -> StudentProfile:
+def require_student_owner(
+    student_id: int,
+    account: Annotated[StudentAccount, Depends(current_account)],
+    db: DB,
+) -> StudentProfile:
     profile = db.get(StudentProfile, student_id)
     if profile is None or profile.account_id != account.id:
-        raise HTTPException(status_code=403, detail="You cannot access another student's data.")
+        raise DomainError("FORBIDDEN", "You cannot access another student's data.", 403)
     return profile
