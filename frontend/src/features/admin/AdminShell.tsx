@@ -7,6 +7,10 @@ export type AdminMode = 'overview' | 'academic' | 'mapping' | 'content' | 'impor
 
 const groups = [
   {
+    label: 'SYSTEM',
+    items: [['overview', 'Admin overview']],
+  },
+  {
     label: 'SETUP',
     items: [['academic', 'Academic catalog'], ['mapping', 'Course mapping']],
   },
