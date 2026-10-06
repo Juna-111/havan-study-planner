@@ -53,7 +53,7 @@ export default function QualityScreen({ onMode }: Props) {
   return (
     <section>
       <header className={styles.header}>
-        <span>QUALITY · D8</span>
+        <span>CONTROL · DATA QUALITY</span>
         <h1>Academic data readiness</h1>
         <p>Find missing hierarchy, mapping, and learning-content data before it reaches students.</p>
         <button className={styles.primary} disabled={checking} onClick={load}>
