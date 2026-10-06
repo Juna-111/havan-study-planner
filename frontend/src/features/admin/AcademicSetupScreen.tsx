@@ -1,361 +1,78 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { apiFetch } from '@/lib/api'
-import styles from './admin.module.css'
-import quickStyles from './admin-quick.module.css'
-
-type University = { id: number; name: string; code: string; status: string }
-type Curriculum = { id: number; university_id: number; name: string; version: string; academic_year?: string | null; status: string }
-type Stream = { id: number; curriculum_id: number; name: string; code: string; status: string }
-type Request = { id: number; request_type: 'UNIVERSITY' | 'CURRICULUM'; university_id?: number | null; name: string; code?: string | null; version?: string | null; academic_year?: string | null; status: string }
-
-export default function AcademicSetupScreen() {
-  const [universities, setUniversities] = useState<University[]>([])
-  const [curriculums, setCurriculums] = useState<Curriculum[]>([])
-  const [streams, setStreams] = useState<Stream[]>([])
-  const [requests, setRequests] = useState<Request[]>([])
-  const [universityId, setUniversityId] = useState('')
-  const [universityName, setUniversityName] = useState('')
-  const [universityCode, setUniversityCode] = useState('')
-  const [curriculumName, setCurriculumName] = useState('')
-  const [curriculumVersion, setCurriculumVersion] = useState('1.0')
-  const [curriculumYear, setCurriculumYear] = useState('')
-  const [streamName, setStreamName] = useState('')
-  const [streamCode, setStreamCode] = useState('')
-  const [curriculumIdForStream, setCurriculumIdForStream] = useState('')
-  const [busy, setBusy] = useState('')
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
-  const [selectedCurriculumId, setSelectedCurriculumId] = useState('')
-  const [selectedStreamId, setSelectedStreamId] = useState('')
-  const [editing, setEditing] = useState<{ type: 'university' | 'curriculum' | 'stream'; id: number } | null>(null)
-  const [editName, setEditName] = useState('')
-  const [editCode, setEditCode] = useState('')
-  const [editVersion, setEditVersion] = useState('')
-  const [editYear, setEditYear] = useState('')
-
-  async function load() {
-    try {
-      const [u, c, s, requestsResult] = await Promise.all([
-        apiFetch<{ items: University[] }>('/universities?page=1&page_size=100'),
-        apiFetch<{ items: Curriculum[] }>('/curriculums?page=1&page_size=100'),
-        apiFetch<{ items: Stream[] }>('/streams?page=1&page_size=100'),
-        apiFetch<Request[]>('/academic-catalog-requests'),
-      ])
-      setUniversities(u.items); setCurriculums(c.items); setStreams(s.items); setRequests(requestsResult)
-      if (!universityId && u.items[0]) setUniversityId(String(u.items[0].id))
-    } catch (value) { setError(value instanceof Error ? value.message : 'Could not load academic catalog.') }
-  }
-  useEffect(() => { load() }, [])
-  useEffect(() => {
-    if (!curriculumIdForStream && curriculums[0]) setCurriculumIdForStream(String(curriculums[0].id))
-  }, [curriculums, curriculumIdForStream])
-
-  const selectedUniversity = universities.find((item) => String(item.id) === universityId)
-  const visibleCurriculums = curriculums.filter((item) => String(item.university_id) === universityId)
-  const visibleStreams = streams.filter((item) => String(item.curriculum_id) === selectedCurriculumId)
-
-  useEffect(() => {
-    const first = visibleCurriculums.find((item) => item.status === 'ACTIVE') || visibleCurriculums[0]
-    setSelectedCurriculumId(first ? String(first.id) : '')
-  }, [universityId, curriculums])
-
-  useEffect(() => {
-    const first = visibleStreams.find((item) => item.status === 'ACTIVE') || visibleStreams[0]
-    setSelectedStreamId(first ? String(first.id) : '')
-  }, [selectedCurriculumId, streams])
-
-  async function addUniversity() {
-    if (!universityName.trim()) return
-    setBusy('university'); setError('')
-    try {
-      await apiFetch('/universities', { method: 'POST', body: JSON.stringify({ name: universityName.trim(), code: universityCode.trim().toUpperCase(), status: 'ACTIVE' }) })
-      setUniversityName(''); setUniversityCode(''); setMessage('University added to the Havan catalog.'); await load()
-    } catch (value) { setError(value instanceof Error ? value.message : 'Could not add university.') } finally { setBusy('') }
-  }
-
-  async function addCurriculum() {
-    if (!universityId || !curriculumName.trim() || !curriculumVersion.trim()) return
-    setBusy('curriculum'); setError('')
-    try {
-      await apiFetch('/curriculums', { method: 'POST', body: JSON.stringify({ university_id: Number(universityId), name: curriculumName.trim(), version: curriculumVersion.trim(), academic_year: curriculumYear.trim() || null, status: 'ACTIVE' }) })
-      setCurriculumName(''); setCurriculumYear(''); setMessage('Curriculum added to the selected university.'); await load()
-    } catch (value) { setError(value instanceof Error ? value.message : 'Could not add curriculum.') } finally { setBusy('') }
-  }
-
-  async function addStream() {
-    if (!curriculumIdForStream || !streamName.trim() || !streamCode.trim()) return
-    setBusy('stream')
-    setError('')
-    try {
-      await apiFetch('/streams', {
-        method: 'POST',
-        body: JSON.stringify({
-          curriculum_id: Number(curriculumIdForStream),
-          name: streamName.trim(),
-          code: streamCode.trim().toUpperCase(),
-          status: 'ACTIVE',
-        }),
-      })
-      setStreamName('')
-      setStreamCode('')
-      setMessage('Stream added. Students can now select it for this curriculum.')
-      await load()
-    } catch (value) {
-      setError(value instanceof Error ? value.message : 'Could not add stream.')
-    } finally {
-      setBusy('')
-    }
-  }
-
-  function beginEdit(type: 'university' | 'curriculum' | 'stream', id: number) {
-    const item = type === 'university'
-      ? universities.find((value) => value.id === id)
-      : type === 'curriculum'
-        ? curriculums.find((value) => value.id === id)
-        : streams.find((value) => value.id === id)
-    if (!item) return
-    setEditing({ type, id })
-    setEditName(item.name)
-    setEditCode('code' in item ? item.code : '')
-    setEditVersion('version' in item ? item.version : '')
-    setEditYear('academic_year' in item && item.academic_year ? item.academic_year : '')
-    setError('')
-    setMessage('')
-  }
-
-  function cancelEdit() {
-    setEditing(null)
-    setEditName('')
-    setEditCode('')
-    setEditVersion('')
-    setEditYear('')
-  }
-
-  async function saveEdit() {
-    if (!editing || !editName.trim()) return
-    setBusy('edit')
-    setError('')
-    try {
-      const body = editing.type === 'university'
-        ? { name: editName.trim(), code: editCode.trim().toUpperCase() }
-        : editing.type === 'curriculum'
-          ? { name: editName.trim(), version: editVersion.trim(), academic_year: editYear.trim() || null }
-          : { name: editName.trim(), code: editCode.trim().toUpperCase() }
-      await apiFetch('/' + (editing.type === 'university' ? 'universities' : editing.type === 'curriculum' ? 'curriculums' : 'streams') + '/' + editing.id, {
-        method: 'PATCH',
-        body: JSON.stringify(body),
-      })
-      setMessage('Academic record updated.')
-      cancelEdit()
-      await load()
-    } catch (value) {
-      setError(value instanceof Error ? value.message : 'Could not update the academic record.')
-    } finally {
-      setBusy('')
-    }
-  }
-
-  async function toggleStatus(type: 'university' | 'curriculum' | 'stream', item: University | Curriculum | Stream) {
-    const nextStatus = item.status === 'ACTIVE'
-      ? type === 'curriculum' ? 'ARCHIVED' : 'INACTIVE'
-      : 'ACTIVE'
-    const warning = item.status === 'ACTIVE'
-      ? 'Deactivate this record? Existing data will remain intact, but it will no longer be an active student option.'
-      : 'Activate this record again?'
-    if (!window.confirm(warning)) return
-    setBusy('status-' + type + '-' + item.id)
-    setError('')
-    try {
-      await apiFetch('/' + (type === 'university' ? 'universities' : type === 'curriculum' ? 'curriculums' : 'streams') + '/' + item.id, {
-        method: 'PATCH',
-        body: JSON.stringify({ status: nextStatus }),
-      })
-      setMessage(nextStatus === 'ACTIVE' ? 'Record activated.' : 'Record safely deactivated. Nothing was deleted.')
-      await load()
-    } catch (value) {
-      setError(value instanceof Error ? value.message : 'Could not change record status.')
-    } finally {
-      setBusy('')
-    }
-  }
-
-  async function review(id: number, status: 'APPROVED' | 'REJECTED') {
-    setBusy('request-' + id); setError('')
-    try {
-      await apiFetch('/academic-catalog-requests/' + id, { method: 'PATCH', body: JSON.stringify({ status }) })
-      setMessage(status === 'APPROVED' ? 'Request approved and added to the catalog.' : 'Request rejected.'); await load()
-    } catch (value) { setError(value instanceof Error ? value.message : 'Could not review request.') } finally { setBusy('') }
-  }
-
-  return (
-    <section>
-      <header className={styles.header}>
-        <span>SETUP · ACADEMIC CATALOG</span>
-        <h1>Build the academic catalog faster</h1>
-        <p>Add universities, curricula, and streams once, then students can select the correct academic path during setup. Student requests for missing options appear here for approval.</p>
-      </header>
-      {(message || error) && <div className={error ? styles.alert : styles.notice}>{error || message}</div>}
-      <div className={quickStyles.quickGrid}>
-        <div className={quickStyles.quickCard}>
-          <h2>Academic path</h2>
-          <p>Inspect the exact hierarchy students use when they register.</p>
-          <label>University<select value={universityId} onChange={(e) => setUniversityId(e.target.value)}>
-            <option value="">Choose university</option>
-            {universities.map((item) => <option key={item.id} value={item.id}>{item.code} · {item.name}</option>)}
-          </select></label>
-          <label>Curriculum<select value={selectedCurriculumId} onChange={(e) => setSelectedCurriculumId(e.target.value)}>
-            <option value="">Choose curriculum</option>
-            {visibleCurriculums.map((item) => <option key={item.id} value={item.id}>{item.name} · v{item.version}</option>)}
-          </select></label>
-          <label>Stream<select value={selectedStreamId} onChange={(e) => setSelectedStreamId(e.target.value)}>
-            <option value="">Choose stream</option>
-            {visibleStreams.map((item) => <option key={item.id} value={item.id}>{item.code} · {item.name}</option>)}
-          </select></label>
-          <div className={styles.indent}>
-            <b>{selectedUniversity?.name || 'No university selected'}</b>
-            <span>{visibleCurriculums.length} curriculum{visibleCurriculums.length === 1 ? '' : 's'}</span>
-            <span>{visibleStreams.length} stream{visibleStreams.length === 1 ? '' : 's'} in selected curriculum</span>
-          </div>
-        </div>
-        <div className={quickStyles.quickCard}>
-          <h2>Manage streams</h2>
-          <p>Streams are the same records students select during registration.</p>
-          <div className={styles.indent}>
-            {visibleStreams.length ? visibleStreams.map((item) => (
-              <div key={item.id}>
-                <b>{item.code} · {item.name}</b>
-                <span>{item.status}</span>
-              </div>
-            )) : <span>No streams in this curriculum yet.</span>}
-          </div>
-          <h3>Add stream</h3>
-          <p>Create the stream students must choose during registration.</p>
-          <label>Curriculum<select value={curriculumIdForStream} onChange={(e) => setCurriculumIdForStream(e.target.value)}>
-            <option value="">Choose curriculum</option>
-            {curriculums.map((item) => <option key={item.id} value={item.id}>{item.name} · v{item.version}</option>)}
-          </select></label>
-          <label>Stream name<input value={streamName} onChange={(e) => setStreamName(e.target.value)} placeholder="Natural Science" /></label>
-          <label>Stream code<input value={streamCode} onChange={(e) => setStreamCode(e.target.value)} placeholder="NAT" /></label>
-          <button className={styles.primary} disabled={busy === 'stream' || !curriculumIdForStream || !streamName.trim() || !streamCode.trim()} onClick={addStream}>
-            {busy === 'stream' ? 'Adding…' : 'Add stream'}
-          </button>
-        </div>
-
-        <div className={quickStyles.quickCard}>
-          <h2>Add university</h2><p>Name is required. Code is optional and Havan can generate one.</p>
-          <label>Name<input value={universityName} onChange={(e) => setUniversityName(e.target.value)} placeholder='Addis Ababa University' /></label>
-          <label>Code (optional)<input value={universityCode} onChange={(e) => setUniversityCode(e.target.value)} placeholder='AAU' /></label>
-          <button className={styles.primary} disabled={busy === 'university' || !universityName.trim()} onClick={addUniversity}>{busy === 'university' ? 'Adding…' : 'Add university'}</button>
-        </div>
-        <div className={quickStyles.quickCard}>
-          <h2>Add curriculum</h2><p>Pick the university first. Version keeps identities separate.</p>
-          <label>
-University<select value={universityId} onChange={(e) => setUniversityId(e.target.value)}>
-<option value=''>
-Choose university</option>
-{universities.map((item) => <option key={item.id} value={item.id}>
-{item.code} · {item.name}</option>)}</select>
-</label>
-          <label>Curriculum name<input value={curriculumName} onChange={(e) => setCurriculumName(e.target.value)} placeholder='2025 Freshman Curriculum' /></label>
-          <div className={quickStyles.twoFields}>
-<label>
-Version<input value={curriculumVersion} onChange={(e) => setCurriculumVersion(e.target.value)} />
-</label>
-<label>
-Academic year<input value={curriculumYear} onChange={(e) => setCurriculumYear(e.target.value)} placeholder='2025/26' />
-</label>
-</div>
-          <button className={styles.primary} disabled={busy === 'curriculum' || !universityId || !curriculumName.trim()} onClick={addCurriculum}>{busy === 'curriculum' ? 'Adding…' : 'Add curriculum'}</button>
-        </div>
-      </div>
-      <div className={styles.catalog}>
-        <div className={styles.crudHead}>
-          <div><h2>Current universities</h2><p>Manage the records students can select. Deactivation is reversible and does not delete children.</p></div>
-          <b>{universities.length}</b>
-        </div>
-        {universities.map((item) => {
-          const curriculumCount = curriculums.filter((c) => c.university_id === item.id).length
-          const activeCurriculumCount = curriculums.filter((c) => c.university_id === item.id && c.status === 'ACTIVE').length
-          return (
-            <div className={styles.row} key={item.id}>
-              <div><b>{item.code}</b><span>{item.name}</span><small>{curriculumCount} curricula · {activeCurriculumCount} active</small></div>
-              <small>{item.status}</small>
-              <div className={styles.actions}>
-                <button onClick={() => beginEdit('university', item.id)}>Edit</button>
-                <button className={item.status === 'ACTIVE' ? styles.danger : styles.primary} disabled={busy === 'status-university-' + item.id} onClick={() => toggleStatus('university', item)}>
-                  {item.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
-                </button>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-      <div className={styles.catalog}>
-        <div className={styles.crudHead}>
-          <div><h2>Curricula</h2><p>Curricula belong to one university and are uniquely identified by university, name, and version.</p></div>
-          <b>{curriculums.length}</b>
-        </div>
-        {curriculums.map((item) => {
-          const streamCount = streams.filter((stream) => stream.curriculum_id === item.id).length
-          return (
-            <div className={styles.row} key={item.id}>
-              <div><b>{item.name} · v{item.version}</b><span>{universities.find((u) => u.id === item.university_id)?.name || 'Unknown university'}</span><small>{streamCount} streams{item.academic_year ? ' · ' + item.academic_year : ''}</small></div>
-              <small>{item.status}</small>
-              <div className={styles.actions}>
-                <button onClick={() => beginEdit('curriculum', item.id)}>Edit</button>
-                <button className={item.status === 'ACTIVE' ? styles.danger : styles.primary} disabled={busy === 'status-curriculum-' + item.id} onClick={() => toggleStatus('curriculum', item)}>
-                  {item.status === 'ACTIVE' ? 'Archive' : 'Activate'}
-                </button>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-      <div className={styles.catalog}>
-        <div className={styles.crudHead}>
-          <div><h2>Streams</h2><p>These are the exact stream records exposed to student registration.</p></div>
-          <b>{streams.length}</b>
-        </div>
-        {streams.map((item) => (
-          <div className={styles.row} key={item.id}>
-            <div><b>{item.code} · {item.name}</b><span>{curriculums.find((c) => c.id === item.curriculum_id)?.name || 'Unknown curriculum'}</span></div>
-            <small>{item.status}</small>
-            <div className={styles.actions}>
-              <button onClick={() => beginEdit('stream', item.id)}>Edit</button>
-              <button className={item.status === 'ACTIVE' ? styles.danger : styles.primary} disabled={busy === 'status-stream-' + item.id} onClick={() => toggleStatus('stream', item)}>
-                {item.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-      {editing && (
-        <div className={styles.editor}>
-          <div className={styles.crudHead}><div><h2>Edit {editing.type}</h2><p>Update the existing record. No duplicate record is created.</p></div><button onClick={cancelEdit}>Cancel</button></div>
-          <label>Name<input value={editName} onChange={(e) => setEditName(e.target.value)} /></label>
-          {editing.type !== 'curriculum' && <label>Code<input value={editCode} onChange={(e) => setEditCode(e.target.value)} /></label>}
-          {editing.type === 'curriculum' && <div className={quickStyles.twoFields}><label>Version<input value={editVersion} onChange={(e) => setEditVersion(e.target.value)} /></label><label>Academic year<input value={editYear} onChange={(e) => setEditYear(e.target.value)} /></label></div>}
-          <div className={styles.actions}><button className={styles.primary} disabled={busy === 'edit' || !editName.trim()} onClick={saveEdit}>{busy === 'edit' ? 'Saving…' : 'Save changes'}</button></div>
-        </div>
-      )}
-      <div className={styles.preview}>
-        <h2>Student requests</h2><p>Students can request missing options without creating unsafe catalog records themselves.</p>
-        {!requests.length && <p className={styles.empty}>No requests waiting.</p>}
-       
-        {requests.map((item) => <div className={quickStyles.requestRow} key={item.id}><div>
-            <b>{item.request_type === 'UNIVERSITY' ? 'University' : 'Curriculum'} · {item.name}</b>
-            <span>{item.code || item.version || 'Details not supplied'}</span>
-            <small>{item.status}{item.academic_year ? ' · ' + item.academic_year : ''}</small>
-          </div>
-{item.status === 'PENDING' && <div className={styles.actions}>
-<button className={styles.primary} disabled={busy === 'request-' + item.id} onClick={() => review(item.id, 'APPROVED')}>
-Approve</button>
-<button className={styles.danger} disabled={busy === 'request-' + item.id} onClick={() => review(item.id, 'REJECTED')}>
-Reject</button>
-</div>}</div>)}
-      </div>
-    </section>
-  )
-}
+'use client' import { useEffect, useState } from 'react' import { apiFetch } from '@/lib/api' import styles from './admin.module.css' import quickStyles from './admin-quick.module.css' type University = { id: number; name: string; code: string; status: string }
+type Curriculum = { id: number; university_id: number; name: string; version: string; academic_year?: string | null; status: string } type Stream = { id: number; curriculum_id: number; name: string; code: string; status: string }
+type Request = { id: number; request_type: 'UNIVERSITY' | 'CURRICULUM'; university_id?: number | null; name: string; code?: string | null; version?: string | null; academic_year?: string | null; status: string } export default function AcademicSetupScreen() {
+const [universities, setUniversities] = useState<University[]>([]) const [curriculums, setCurriculums] = useState<Curriculum[]>([]) const [streams, setStreams] = useState<Stream[]>([]) const [requests, setRequests] = useState<Request[]>([])
+const [universityId, setUniversityId] = useState('') const [universityName, setUniversityName] = useState('') const [universityCode, setUniversityCode] = useState('') const [curriculumName, setCurriculumName] = useState('')
+const [curriculumVersion, setCurriculumVersion] = useState('1.0') const [curriculumYear, setCurriculumYear] = useState('') const [streamName, setStreamName] = useState('') const [streamCode, setStreamCode] = useState('')
+const [curriculumIdForStream, setCurriculumIdForStream] = useState('') const [busy, setBusy] = useState('') const [message, setMessage] = useState('') const [error, setError] = useState('') const [selectedCurriculumId, setSelectedCurriculumId] = useState('')
+const [selectedStreamId, setSelectedStreamId] = useState('') const [editing, setEditing] = useState<{ type: 'university' | 'curriculum' | 'stream'; id: number } | null>(null) const [editName, setEditName] = useState('') const [editCode, setEditCode] = useState('')
+const [editVersion, setEditVersion] = useState('') const [editYear, setEditYear] = useState('') async function load() { try { const [u, c, s, requestsResult] = await Promise.all([ apiFetch<{ items: University[] }>('/universities?page=1&page_size=100'),
+apiFetch<{ items: Curriculum[] }>('/curriculums?page=1&page_size=100'), apiFetch<{ items: Stream[] }>('/streams?page=1&page_size=100'), apiFetch<Request[]>('/academic-catalog-requests'), ])
+setUniversities(u.items); setCurriculums(c.items); setStreams(s.items); setRequests(requestsResult) if (!universityId && u.items[0]) setUniversityId(String(u.items[0].id))
+} catch (value) { setError(value instanceof Error ? value.message : 'Could not load academic catalog.') } } useEffect(() => { load() }, []) useEffect(() => { if (!curriculumIdForStream && curriculums[0]) setCurriculumIdForStream(String(curriculums[0].id))
+}, [curriculums, curriculumIdForStream]) const selectedUniversity = universities.find((item) => String(item.id) === universityId) const visibleCurriculums = curriculums.filter((item) => String(item.university_id) === universityId)
+const visibleStreams = streams.filter((item) => String(item.curriculum_id) === selectedCurriculumId) useEffect(() => { const first = visibleCurriculums.find((item) => item.status === 'ACTIVE') || visibleCurriculums[0]
+setSelectedCurriculumId(first ? String(first.id) : '') }, [universityId, curriculums]) useEffect(() => { const first = visibleStreams.find((item) => item.status === 'ACTIVE') || visibleStreams[0] setSelectedStreamId(first ? String(first.id) : '')
+}, [selectedCurriculumId, streams]) async function addUniversity() { if (!universityName.trim()) return setBusy('university'); setError('') try {
+await apiFetch('/universities', { method: 'POST', body: JSON.stringify({ name: universityName.trim(), code: universityCode.trim().toUpperCase(), status: 'ACTIVE' }) })
+setUniversityName(''); setUniversityCode(''); setMessage('University added to the Havan catalog.'); await load() } catch (value) { setError(value instanceof Error ? value.message : 'Could not add university.') } finally { setBusy('') } } async function addCurriculum() {
+if (!universityId || !curriculumName.trim() || !curriculumVersion.trim()) return setBusy('curriculum'); setError('') try {
+await apiFetch('/curriculums', { method: 'POST', body: JSON.stringify({ university_id: Number(universityId), name: curriculumName.trim(), version: curriculumVersion.trim(), academic_year: curriculumYear.trim() || null, status: 'ACTIVE' }) })
+setCurriculumName(''); setCurriculumYear(''); setMessage('Curriculum added to the selected university.'); await load() } catch (value) { setError(value instanceof Error ? value.message : 'Could not add curriculum.') } finally { setBusy('') } }
+async function addStream() { if (!curriculumIdForStream || !streamName.trim() || !streamCode.trim()) return setBusy('stream') setError('') try { await apiFetch('/streams', { method: 'POST', body: JSON.stringify({ curriculum_id: Number(curriculumIdForStream),
+name: streamName.trim(), code: streamCode.trim().toUpperCase(), status: 'ACTIVE', }), }) setStreamName('') setStreamCode('') setMessage('Stream added. Students can now select it for this curriculum.') await load() } catch (value) {
+setError(value instanceof Error ? value.message : 'Could not add stream.') } finally { setBusy('') } } function beginEdit(type: 'university' | 'curriculum' | 'stream', id: number) { const item = type === 'university' ? universities.find((value) => value.id === id)
+: type === 'curriculum' ? curriculums.find((value) => value.id === id) : streams.find((value) => value.id === id) if (!item) return setEditing({ type, id }) setEditName(item.name) setEditCode('code' in item ? item.code : '')
+setEditVersion('version' in item ? item.version : '') setEditYear('academic_year' in item && item.academic_year ? item.academic_year : '') setError('') setMessage('') } function cancelEdit() { setEditing(null) setEditName('') setEditCode('') setEditVersion('')
+setEditYear('') } async function saveEdit() { if (!editing || !editName.trim()) return setBusy('edit') setError('') try { const body = editing.type === 'university' ? { name: editName.trim(), code: editCode.trim().toUpperCase() } : editing.type === 'curriculum'
+? { name: editName.trim(), version: editVersion.trim(), academic_year: editYear.trim() || null } : { name: editName.trim(), code: editCode.trim().toUpperCase() }
+await apiFetch('/' + (editing.type === 'university' ? 'universities' : editing.type === 'curriculum' ? 'curriculums' : 'streams') + '/' + editing.id, { method: 'PATCH', body: JSON.stringify(body), }) setMessage('Academic record updated.') cancelEdit() await load()
+} catch (value) { setError(value instanceof Error ? value.message : 'Could not update the academic record.') } finally { setBusy('') } } async function toggleStatus(type: 'university' | 'curriculum' | 'stream', item: University | Curriculum | Stream) {
+const nextStatus = item.status === 'ACTIVE' ? type === 'curriculum' ? 'ARCHIVED' : 'INACTIVE' : 'ACTIVE' const warning = item.status === 'ACTIVE' ? 'Deactivate this record? Existing data will remain intact, but it will no longer be an active student option.'
+: 'Activate this record again?' if (!window.confirm(warning)) return setBusy('status-' + type + '-' + item.id) setError('') try { await apiFetch('/' + (type === 'university' ? 'universities' : type === 'curriculum' ? 'curriculums' : 'streams') + '/' + item.id, {
+method: 'PATCH', body: JSON.stringify({ status: nextStatus }), }) setMessage(nextStatus === 'ACTIVE' ? 'Record activated.' : 'Record safely deactivated. Nothing was deleted.') await load() } catch (value) {
+setError(value instanceof Error ? value.message : 'Could not change record status.') } finally { setBusy('') } } async function review(id: number, status: 'APPROVED' | 'REJECTED') { setBusy('request-' + id); setError('') try {
+await apiFetch('/academic-catalog-requests/' + id, { method: 'PATCH', body: JSON.stringify({ status }) }) setMessage(status === 'APPROVED' ? 'Request approved and added to the catalog.' : 'Request rejected.'); await load()
+} catch (value) { setError(value instanceof Error ? value.message : 'Could not review request.') } finally { setBusy('') } } return ( <section> <header className={styles.header}> <span>SETUP · ACADEMIC CATALOG</span> <h1>Build the academic catalog faster</h1>
+<p>Add universities, curricula, and streams once, then students can select the correct academic path during setup. Student requests for missing options appear here for approval.</p> </header>
+{(message || error) && <div className={error ? styles.alert : styles.notice}>{error || message}</div>} <div className={quickStyles.quickGrid}> <div className={quickStyles.quickCard}> <h2>Academic path</h2>
+<p>Inspect the exact hierarchy students use when they register.</p> <label>University<select value={universityId} onChange={(e) => setUniversityId(e.target.value)}> <option value="">Choose university</option>
+{universities.map((item) => <option key={item.id} value={item.id}>{item.code} · {item.name}</option>)} </select></label> <label>Curriculum<select value={selectedCurriculumId} onChange={(e) => setSelectedCurriculumId(e.target.value)}>
+<option value="">Choose curriculum</option> {visibleCurriculums.map((item) => <option key={item.id} value={item.id}>{item.name} · v{item.version}</option>)} </select></label>
+<label>Stream<select value={selectedStreamId} onChange={(e) => setSelectedStreamId(e.target.value)}> <option value="">Choose stream</option> {visibleStreams.map((item) => <option key={item.id} value={item.id}>{item.code} · {item.name}</option>)} </select></label>
+<div className={styles.indent}> <b>{selectedUniversity?.name || 'No university selected'}</b> <span>{visibleCurriculums.length} curriculum{visibleCurriculums.length === 1 ? '' : 's'}</span>
+<span>{visibleStreams.length} stream{visibleStreams.length === 1 ? '' : 's'} in selected curriculum</span> </div> </div> <div className={quickStyles.quickCard}> <h2>Manage streams</h2> <p>Streams are the same records students select during registration.</p>
+<div className={styles.indent}> {visibleStreams.length ? visibleStreams.map((item) => ( <div key={item.id}> <b>{item.code} · {item.name}</b> <span>{item.status}</span> </div> )) : <span>No streams in this curriculum yet.</span>} </div> <h3>Add stream</h3>
+<p>Create the stream students must choose during registration.</p> <label>Curriculum<select value={curriculumIdForStream} onChange={(e) => setCurriculumIdForStream(e.target.value)}> <option value="">Choose curriculum</option>
+{curriculums.map((item) => <option key={item.id} value={item.id}>{item.name} · v{item.version}</option>)} </select></label> <label>Stream name<input value={streamName} onChange={(e) => setStreamName(e.target.value)} placeholder="Natural Science" /></label>
+<label>Stream code<input value={streamCode} onChange={(e) => setStreamCode(e.target.value)} placeholder="NAT" /></label>
+<button className={styles.primary} disabled={busy === 'stream' || !curriculumIdForStream || !streamName.trim() || !streamCode.trim()} onClick={addStream}> {busy === 'stream' ? 'Adding…' : 'Add stream'} </button> </div> <div className={quickStyles.quickCard}>
+<h2>Add university</h2><p>Name is required. Code is optional and Havan can generate one.</p> <label>Name<input value={universityName} onChange={(e) => setUniversityName(e.target.value)} placeholder='Addis Ababa University' /></label>
+<label>Code (optional)<input value={universityCode} onChange={(e) => setUniversityCode(e.target.value)} placeholder='AAU' /></label>
+<button className={styles.primary} disabled={busy === 'university' || !universityName.trim()} onClick={addUniversity}>{busy === 'university' ? 'Adding…' : 'Add university'}</button> </div> <div className={quickStyles.quickCard}>
+<h2>Add curriculum</h2><p>Pick the university first. Version keeps identities separate.</p> <label> University<select value={universityId} onChange={(e) => setUniversityId(e.target.value)}> <option value=''> Choose university</option>
+{universities.map((item) => <option key={item.id} value={item.id}> {item.code} · {item.name}</option>)}</select> </label>
+<label>Curriculum name<input value={curriculumName} onChange={(e) => setCurriculumName(e.target.value)} placeholder='2025 Freshman Curriculum' /></label> <div className={quickStyles.twoFields}> <label>
+Version<input value={curriculumVersion} onChange={(e) => setCurriculumVersion(e.target.value)} /> </label> <label> Academic year<input value={curriculumYear} onChange={(e) => setCurriculumYear(e.target.value)} placeholder='2025/26' /> </label> </div>
+<button className={styles.primary} disabled={busy === 'curriculum' || !universityId || !curriculumName.trim()} onClick={addCurriculum}>{busy === 'curriculum' ? 'Adding…' : 'Add curriculum'}</button> </div> </div> <div className={styles.catalog}>
+<div className={styles.crudHead}> <div><h2>Current universities</h2><p>Manage the records students can select. Deactivation is reversible and does not delete children.</p></div> <b>{universities.length}</b> </div> {universities.map((item) => {
+const curriculumCount = curriculums.filter((c) => c.university_id === item.id).length const activeCurriculumCount = curriculums.filter((c) => c.university_id === item.id && c.status === 'ACTIVE').length return ( <div className={styles.row} key={item.id}>
+<div><b>{item.code}</b><span>{item.name}</span><small>{curriculumCount} curricula · {activeCurriculumCount} active</small></div> <small>{item.status}</small> <div className={styles.actions}> <button onClick={() => beginEdit('university', item.id)}>Edit</button>
+<button className={item.status === 'ACTIVE' ? styles.danger : styles.primary} disabled={busy === 'status-university-' + item.id} onClick={() => toggleStatus('university', item)}> {item.status === 'ACTIVE' ? 'Deactivate' : 'Activate'} </button> </div> </div> ) })} </div>
+<div className={styles.catalog}> <div className={styles.crudHead}> <div><h2>Curricula</h2><p>Curricula belong to one university and are uniquely identified by university, name, and version.</p></div> <b>{curriculums.length}</b> </div> {curriculums.map((item) => {
+const streamCount = streams.filter((stream) => stream.curriculum_id === item.id).length return ( <div className={styles.row} key={item.id}>
+<div><b>{item.name} · v{item.version}</b><span>{universities.find((u) => u.id === item.university_id)?.name || 'Unknown university'}</span><small>{streamCount} streams{item.academic_year ? ' · ' + item.academic_year : ''}</small></div> <small>{item.status}</small>
+<div className={styles.actions}> <button onClick={() => beginEdit('curriculum', item.id)}>Edit</button>
+<button className={item.status === 'ACTIVE' ? styles.danger : styles.primary} disabled={busy === 'status-curriculum-' + item.id} onClick={() => toggleStatus('curriculum', item)}> {item.status === 'ACTIVE' ? 'Archive' : 'Activate'} </button> </div> </div> ) })} </div>
+<div className={styles.catalog}> <div className={styles.crudHead}> <div><h2>Streams</h2><p>These are the exact stream records exposed to student registration.</p></div> <b>{streams.length}</b> </div> {streams.map((item) => ( <div className={styles.row} key={item.id}>
+<div><b>{item.code} · {item.name}</b><span>{curriculums.find((c) => c.id === item.curriculum_id)?.name || 'Unknown curriculum'}</span></div> <small>{item.status}</small> <div className={styles.actions}> <button onClick={() => beginEdit('stream', item.id)}>Edit</button>
+<button className={item.status === 'ACTIVE' ? styles.danger : styles.primary} disabled={busy === 'status-stream-' + item.id} onClick={() => toggleStatus('stream', item)}> {item.status === 'ACTIVE' ? 'Deactivate' : 'Activate'} </button> </div> </div> ))} </div>
+{editing && ( <div className={styles.editor}> <div className={styles.crudHead}><div><h2>Edit {editing.type}</h2><p>Update the existing record. No duplicate record is created.</p></div><button onClick={cancelEdit}>Cancel</button></div>
+<label>Name<input value={editName} onChange={(e) => setEditName(e.target.value)} /></label> {editing.type !== 'curriculum' && <label>Code<input value={editCode} onChange={(e) => setEditCode(e.target.value)} /></label>}
+{editing.type === 'curriculum' && <div className={quickStyles.twoFields}><label>Version<input value={editVersion} onChange={(e) => setEditVersion(e.target.value)} /></label><label>Academic year<input value={editYear} onChange={(e) => setEditYear(e.target.value)} /></label></div>}
+<div className={styles.actions}><button className={styles.primary} disabled={busy === 'edit' || !editName.trim()} onClick={saveEdit}>{busy === 'edit' ? 'Saving…' : 'Save changes'}</button></div> </div> )} <div className={styles.preview}>
+<h2>Student requests</h2><p>Students can request missing options without creating unsafe catalog records themselves.</p> {!requests.length && <p className={styles.empty}>No requests waiting.</p>}
+{requests.map((item) => <div className={quickStyles.requestRow} key={item.id}><div> <b>{item.request_type === 'UNIVERSITY' ? 'University' : 'Curriculum'} · {item.name}</b> <span>{item.code || item.version || 'Details not supplied'}</span>
+<small>{item.status}{item.academic_year ? ' · ' + item.academic_year : ''}</small> </div> {item.status === 'PENDING' && <div className={styles.actions}>
+<button className={styles.primary} disabled={busy === 'request-' + item.id} onClick={() => review(item.id, 'APPROVED')}> Approve</button> <button className={styles.danger} disabled={busy === 'request-' + item.id} onClick={() => review(item.id, 'REJECTED')}>
+Reject</button> </div>}</div>)} </div> </section> ) }
