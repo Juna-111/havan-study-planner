@@ -1,26 +1,27 @@
 'use client'
 
+import Link from 'next/link'
 import { AppShell } from '@/components/layout'
 import { Card } from '@/components/ui'
 
 const destinations = [
   {
-    href: '/plan/new?mode=today',
+    href: '/student/havan/today',
     title: 'Havan Today',
     label: '1 day',
-    description: 'Choose what you want to study today and give each topic a clear amount of time.',
+    description: 'Choose the exact courses, chapters, and topics you want to study today.',
   },
   {
-    href: '/plan/new?mode=week',
+    href: '/student/havan/week',
     title: 'Havan Week',
     label: '7 days',
-    description: 'Build a focused week from the courses, chapters, and topics you choose.',
+    description: 'Build a focused week from the topics you choose and the time you have.',
   },
   {
-    href: '/plan/new?mode=month',
+    href: '/student/havan/month',
     title: 'Havan Month',
     label: '28 days',
-    description: 'Spread your selected topics across a longer study period without losing control.',
+    description: 'Organize a longer study period while keeping every topic and time allocation clear.',
   },
 ]
 
@@ -31,20 +32,20 @@ export default function HavanHome() {
         <header className="havan-home-hero">
           <span className="app-eyebrow">HAVAN ACADEMY</span>
           <h1>Your study journey, your choice.</h1>
-          <p>Choose what you want to learn. Havan helps you organize your study time.</p>
+          <p>Choose what you want to learn and how much time you have. Havan organizes your choices into a clear study plan.</p>
         </header>
 
         <section className="havan-home-intro" aria-labelledby="havan-choose-heading">
           <div>
-            <span className="app-eyebrow">CHOOSE YOUR VIEW</span>
+            <span className="app-eyebrow">YOUR PLANNING OPTIONS</span>
             <h2 id="havan-choose-heading">Where do you want to study?</h2>
           </div>
-          <p>Start with today, plan the week, or think further ahead.</p>
+          <p>Start with today, plan the week, or organize the month.</p>
         </section>
 
         <div className="havan-destination-grid">
           {destinations.map((destination) => (
-            <a key={destination.href} href={destination.href} className="havan-destination">
+            <Link key={destination.href} href={destination.href} className="havan-destination">
               <Card padding="lg" className="havan-destination-card">
                 <div className="havan-destination-top">
                   <span className="havan-destination-label">{destination.label}</span>
@@ -54,13 +55,13 @@ export default function HavanHome() {
                 <p>{destination.description}</p>
                 <span className="havan-destination-action">Open {destination.title}</span>
               </Card>
-            </a>
+            </Link>
           ))}
         </div>
 
         <section className="havan-home-note" aria-label="How Havan works">
           <strong>How Havan works</strong>
-          <p>You choose the course, chapter, and topic. You decide how much time you have. Havan organizes that choice into a study plan.</p>
+          <p>You choose the course, chapter, and topic. You decide how much time you have. Havan organizes those choices into a study plan, then shows the important points available for each selected topic.</p>
         </section>
       </div>
     </AppShell>
