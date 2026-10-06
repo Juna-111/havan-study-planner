@@ -25,7 +25,7 @@ export default function AdminScreen() {
     registry: <CourseRegistryScreen />,
     content: <ContentScreen />,
     import: <ImportScreen />,
-    quality: <QualityScreen />,
+    quality: <QualityScreen onMode={setMode} />,
   }[mode]
 
   return (
