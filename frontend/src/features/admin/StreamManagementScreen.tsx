@@ -9,16 +9,37 @@ type Stream = { id: number; curriculum_id: number; name: string; code: string; s
 type Course = { id: number; code: string; name: string; status: string }
 type Mapping = { id: number; course_id: number; semester_number: number; status: string }
 type Form = { name: string; code: string; curriculum_id: string }
-export default function StreamManagementScreen() { const [universities, setUniversities] = useState<University[]>([]) const [curriculums, setCurriculums] = useState<Curriculum[]>([]) const [streams, setStreams] = useState<Stream[]>([])
-const [universityId, setUniversityId] = useState('') const [curriculumId, setCurriculumId] = useState('') const [streamId, setStreamId] = useState('') const [search, setSearch] = useState('')
-const [form, setForm] = useState<Form>({ name: '', code: '', curriculum_id: '' }) const [editing, setEditing] = useState<number | null>(null) const [editForm, setEditForm] = useState({ name: '', code: '' }) const [courses, setCourses] = useState<Course[]>([])
-const [mappings, setMappings] = useState<Mapping[]>([]) const [busy, setBusy] = useState('') const [message, setMessage] = useState('') const [error, setError] = useState('') async function load() { try { setError('') const [u, c, s] = await Promise.all([
+export default function StreamManagementScreen() {
+const [universities, setUniversities] = useState<University[]>([])
+const [curriculums, setCurriculums] = useState<Curriculum[]>([])
+const [streams, setStreams] = useState<Stream[]>([])
+const [universityId, setUniversityId] = useState('')
+const [curriculumId, setCurriculumId] = useState('')
+const [streamId, setStreamId] = useState('')
+const [search, setSearch] = useState('')
+const [form, setForm] = useState<Form>({ name: '', code: '', curriculum_id: '' })
+const [editing, setEditing] = useState<number | null>(null)
+const [editForm, setEditForm] = useState({ name: '', code: '' })
+const [courses, setCourses] = useState<Course[]>([])
+const [mappings, setMappings] = useState<Mapping[]>([])
+const [busy, setBusy] = useState('')
+const [message, setMessage] = useState('')
+const [error, setError] = useState('') async function load() { try { setError('')
+const [u, c, s] = await Promise.all([
 apiFetch<{ items: University[] }>('/universities?page=1&page_size=100'), apiFetch<{ items: Curriculum[] }>('/curriculums?page=1&page_size=100'), apiFetch<{ items: Stream[] }>('/streams?page=1&page_size=100'), ]) setUniversities(u.items) setCurriculums(c.items)
-setStreams(s.items) const activeUniversity = u.items.find((item) => item.status === 'ACTIVE') const nextUniversity = universityId || (activeUniversity ? String(activeUniversity.id) : '') setUniversityId(nextUniversity) } catch (value) {
-setError(value instanceof Error ? value.message : 'Could not load stream management data.') } } useEffect(() => { void load() }, []) const visibleCurriculums = useMemo( () => curriculums.filter((item) => String(item.university_id) === universityId),
-[curriculums, universityId], ) const visibleStreams = useMemo(() => { const source = streams.filter((item) => String(item.curriculum_id) === curriculumId) const query = search.trim().toLowerCase() return query
-? source.filter((item) => item.name.toLowerCase().includes(query) || item.code.toLowerCase().includes(query)) : source }, [streams, curriculumId, search]) const selectedStream = streams.find((item) => String(item.id) === streamId)
-const selectedCurriculum = curriculums.find((item) => String(item.id) === curriculumId) const activeCount = streams.filter((item) => String(item.curriculum_id) === curriculumId && item.status === 'ACTIVE').length useEffect(() => {
+setStreams(s.items)
+const activeUniversity = u.items.find((item) => item.status === 'ACTIVE')
+const nextUniversity = universityId || (activeUniversity ? String(activeUniversity.id) : '') setUniversityId(nextUniversity) } catch (value) {
+setError(value instanceof Error ? value.message : 'Could not load stream management data.') } } useEffect(() => { void load() }, [])
+const visibleCurriculums = useMemo( () => curriculums.filter((item) => String(item.university_id) === universityId),
+[curriculums, universityId], )
+const visibleStreams = useMemo(() => {
+const source = streams.filter((item) => String(item.curriculum_id) === curriculumId)
+const query = search.trim().toLowerCase() return query
+? source.filter((item) => item.name.toLowerCase().includes(query) || item.code.toLowerCase().includes(query)) : source }, [streams, curriculumId, search])
+const selectedStream = streams.find((item) => String(item.id) === streamId)
+const selectedCurriculum = curriculums.find((item) => String(item.id) === curriculumId)
+const activeCount = streams.filter((item) => String(item.curriculum_id) === curriculumId && item.status === 'ACTIVE').length useEffect(() => {
 const first = visibleCurriculums.find((item) => item.status === 'ACTIVE') || visibleCurriculums[0] setCurriculumId(first ? String(first.id) : '') }, [universityId, curriculums]) useEffect(() => {
 const first = streams.find((item) => String(item.curriculum_id) === curriculumId && item.status === 'ACTIVE') || streams.find((item) => String(item.curriculum_id) === curriculumId) setStreamId(first ? String(first.id) : '')
 setForm((old) => ({ ...old, curriculum_id: first ? String(first.curriculum_id) : curriculumId })) }, [curriculumId, streams]) useEffect(() => { if (!streamId) { setCourses([]) setMappings([]) return } let cancelled = false Promise.all([
@@ -30,7 +51,8 @@ code: form.code.trim().toUpperCase(), status: 'ACTIVE', }), }) setForm((old) => 
 setError(value instanceof Error ? value.message : 'Could not add stream.') } finally { setBusy('') } } function beginEdit(item: Stream) { setEditing(item.id) setEditForm({ name: item.name, code: item.code }) setError('') setMessage('') } async function saveEdit() {
 if (!editing || !editForm.name.trim() || !editForm.code.trim()) return setBusy('edit-' + editing) setError('') setMessage('') try { await apiFetch('/streams/' + editing, { method: 'PATCH',
 body: JSON.stringify({ name: editForm.name.trim(), code: editForm.code.trim().toUpperCase() }), }) setEditing(null) setMessage('Stream details updated without creating a new record.') await load() } catch (value) {
-setError(value instanceof Error ? value.message : 'Could not update stream.') } finally { setBusy('') } } async function toggleStatus(item: Stream) { const nextStatus = item.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' if (!window.confirm( nextStatus === 'INACTIVE'
+setError(value instanceof Error ? value.message : 'Could not update stream.') } finally { setBusy('') } } async function toggleStatus(item: Stream) {
+const nextStatus = item.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' if (!window.confirm( nextStatus === 'INACTIVE'
 ? 'Deactivate this stream? Existing courses and mappings stay intact, but students will no longer be able to select it.' : 'Activate this stream for student registration?', )) return setBusy('status-' + item.id) setError('') setMessage('') try {
 await apiFetch('/streams/' + item.id, { method: 'PATCH', body: JSON.stringify({ status: nextStatus }), }) setMessage(nextStatus === 'ACTIVE' ? 'Stream activated.' : 'Stream safely deactivated. Courses and mappings were preserved.') await load() } catch (value) {
 setError(value instanceof Error ? value.message : 'Could not change stream status.') } finally { setBusy('') } } return ( <section> <header className={styles.header}> <span>SETUP · STREAM MANAGEMENT</span> <h1>Control the streams students can choose</h1>
