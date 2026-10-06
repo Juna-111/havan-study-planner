@@ -63,12 +63,10 @@ def action(
     if not plan:
         raise DomainError("NO_ACTIVE_PLAN", "Study plan not found.", 404)
     try:
-        result, warning = apply_action(db, student, task_id, payload)
-        if isinstance(result, PlanOut):
-            return result
+        result, warnings = apply_action(db, student, task_id, payload)
         out = read_plan(db, student, result)
-        if warning:
-            out.warnings.append({"code": warning, "severity": "info", "message": "Skipped. Tap Rebuild the rest to place it later.", "fix": {"rebuild": "Rebuild the rest"}})
+        for code in warnings:
+            out.warnings.append({"code": code, "severity": "info", "message": code, "fix": {}})
         return out
     except ValueError as exc:
         raise DomainError("INVALID_SELECTION", str(exc), 422)
