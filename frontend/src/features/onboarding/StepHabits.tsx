@@ -36,7 +36,7 @@ export default function StepHabits({ days, hours, onDays, onHours }: StepHabitsP
         special case invented by calendars.
       </p>
 
-      <div className="row">
+      <div className="onboarding-days">
         {DAYS.map(([key, label]) => (
           <button
             key={key}
