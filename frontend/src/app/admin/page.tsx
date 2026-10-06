@@ -9,6 +9,7 @@ import CurriculumManagementScreen from '@/features/admin/CurriculumManagementScr
 import StreamManagementScreen from '@/features/admin/StreamManagementScreen'
 import MappingScreen from '@/features/admin/MappingScreen'
 import ContentScreen from '@/features/admin/ContentScreen'
+import CourseRegistryScreen from '@/features/admin/CourseRegistryScreen'
 import ImportScreen from '@/features/admin/ImportScreen'
 import QualityScreen from '@/features/admin/QualityScreen'
 
@@ -21,6 +22,7 @@ export default function AdminScreen() {
     curriculum: <CurriculumManagementScreen />,
     streams: <StreamManagementScreen />,
     mapping: <MappingScreen />,
+    registry: <CourseRegistryScreen />,
     content: <ContentScreen />,
     import: <ImportScreen />,
     quality: <QualityScreen />,
