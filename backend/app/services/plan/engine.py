@@ -771,7 +771,7 @@ def allocate_selected_topics(
     - never adds an unselected topic;
     - adapts workload to observed pace;
     - protects exam deadlines for selected topics;
-    - spreads work across selected courses;
+    - spreads work across selected courses and days;
     - keeps chapter/topic order as a soft learning-sequence signal;
     - avoids tiny fragments and over-capacity days;
     - explains every allocation with transparent reason parts.
@@ -792,9 +792,10 @@ def allocate_selected_topics(
         for offset in range(horizon)
         if request.calendar.capacity(today + timedelta(days=offset)) > 0
     ]
+    engine_version = "3.1.0-intelligent-choice"
     if not study_days:
         return PlanResult(
-            engine_version="3.0.0-intelligent-choice",
+            engine_version=engine_version,
             today=today,
             sessions=(),
             readiness=(),
@@ -807,7 +808,10 @@ def allocate_selected_topics(
 
     pace = _clamp(request.pace_factor, cfg.min_pace_factor, cfg.max_pace_factor)
     remaining = {
-        topic.topic_id: max(cfg.min_session_minutes, math.ceil(topic.estimated_minutes * pace / 5) * 5)
+        topic.topic_id: max(
+            cfg.min_session_minutes,
+            math.ceil(topic.estimated_minutes * pace / 5) * 5,
+        )
         for topic in selected
     }
 
@@ -816,16 +820,95 @@ def allocate_selected_topics(
         if exam.exam_date >= today:
             exams_by_course[exam.course_id].append(exam)
     for exams in exams_by_course.values():
-        exams.sort(key=lambda exam: exam.exam_date)
+        exams.sort(key=lambda exam: (exam.exam_date, exam.importance, exam.exam_type))
 
     def next_exam(topic: PlannerTopic, day: date) -> PlannerExam | None:
-        for exam in exams_by_course.get(topic.course_id, ()):
-            if exam.exam_date >= day and exam.covers(topic.topic_id):
-                return exam
-        return None
+        return next(
+            (
+                exam for exam in exams_by_course.get(topic.course_id, ())
+                if exam.exam_date >= day and exam.covers(topic.topic_id)
+            ),
+            None,
+        )
 
-    capacities = {day: request.calendar.capacity(day) for day in study_days}
+    # Readiness is calculated from the same selected-workload definition used
+    # by the allocator. It is a constraint report, never a source of topics.
+    readiness: list[ExamReadiness] = []
+    readiness_warnings: list[PlanWarning] = []
+    for exam in sorted(
+        (exam for exams in exams_by_course.values() for exam in exams),
+        key=lambda item: (item.exam_date, item.course_id, item.exam_type),
+    ):
+        last_day = _last_study_day(exam, today, cfg)
+        required = sum(
+            remaining[topic.topic_id]
+            for topic in selected
+            if topic.course_id == exam.course_id and exam.covers(topic.topic_id)
+        )
+        end = max(today, last_day)
+        available = sum(
+            request.calendar.capacity(today + timedelta(days=offset))
+            for offset in range((end - today).days + 1)
+        )
+        study_days_left = sum(
+            1
+            for offset in range((end - today).days + 1)
+            if request.calendar.capacity(today + timedelta(days=offset)) > 0
+        )
+        cumulative = sum(
+            earlier_required
+            for earlier_exam in sorted(
+                (item for exams in exams_by_course.values() for item in exams),
+                key=lambda item: (item.exam_date, item.course_id, item.exam_type),
+            )
+            if earlier_exam.exam_date <= exam.exam_date
+            for earlier_required in [
+                sum(
+                    remaining[topic.topic_id]
+                    for topic in selected
+                    if topic.course_id == earlier_exam.course_id
+                    and earlier_exam.covers(topic.topic_id)
+                )
+            ]
+        )
+        shortfall = max(0, cumulative - available)
+        pressure = cumulative / available if available > 0 else (math.inf if cumulative else 0.0)
+        if cumulative <= 0:
+            status = "ON_TRACK"
+        elif pressure > 1.0:
+            status = "OVERLOADED"
+        elif pressure > cfg.tight_ratio:
+            status = "TIGHT"
+        else:
+            status = "ON_TRACK"
+        readiness.append(ExamReadiness(
+            course_id=exam.course_id,
+            exam_type=exam.exam_type,
+            exam_date=exam.exam_date,
+            days_left=(exam.exam_date - today).days,
+            study_days_left=study_days_left,
+            required_minutes=required,
+            cumulative_required_minutes=cumulative,
+            available_minutes=available,
+            shortfall_minutes=shortfall,
+            extra_minutes_per_study_day=(
+                math.ceil(shortfall / max(1, study_days_left)) if shortfall else 0
+            ),
+            status=status,
+        ))
+        if status == "OVERLOADED":
+            readiness_warnings.append(PlanWarning(
+                "EXAM_OVERLOADED",
+                f"{exam.exam_type} (course {exam.course_id}) needs about "
+                f"{shortfall} more minutes than your study time allows.",
+            ))
+
+    capacities = {
+        day: request.calendar.capacity(day)
+        for day in study_days
+    }
     used_course: dict[date, dict[int, int]] = defaultdict(lambda: defaultdict(int))
+    placed_today: dict[date, set[int]] = defaultdict(set)
     sessions: list[PlannedSession] = []
     pinned = dict(request.pinned_topic_dates)
     deferred = set(request.deferred_topic_ids)
@@ -833,61 +916,74 @@ def allocate_selected_topics(
     def rank(topic: PlannerTopic, day: date) -> tuple[float, float, float, float, float]:
         exam = next_exam(topic, day)
         days_left = (exam.exam_date - day).days if exam else None
-        deadline_pressure = 0.0
-        if days_left is not None:
-            deadline_pressure = 1.0 if days_left <= 0 else 1.0 / (days_left + 1)
-        workload_pressure = min(1.0, remaining[topic.topic_id] / max(1, sum(capacities.values())))
+        deadline_pressure = (
+            1.0 if days_left is not None and days_left <= 0
+            else (1.0 / (days_left + 1) if days_left is not None else 0.0)
+        )
+        total_remaining = max(1, sum(remaining.values()))
+        workload_pressure = min(1.0, remaining[topic.topic_id] / total_remaining)
         continuation = 0.08 if topic.progress_status == "IN_PROGRESS" else 0.0
         confidence_need = max(0.0, (4 - topic.progress_confidence) / 15)
         sequence = 1.0 / (1 + topic.chapter_order * 0.25 + topic.topic_order * 0.05)
         course_load = used_course[day].get(topic.course_id, 0)
         total_day = sum(used_course[day].values())
         share_penalty = course_load / max(1, total_day)
-        coverage_bonus = (
-            0.18
-            if total_day > 0 and topic.course_id not in used_course[day]
-            else 0.0
-        )
+        coverage_bonus = 0.18 if total_day > 0 and topic.course_id not in used_course[day] else 0.0
+        repeat_penalty = 0.12 if topic.topic_id in placed_today[day] else 0.0
         deferred_penalty = 0.10 if topic.topic_id in deferred and day == study_days[0] else 0.0
-        return (
-            (deadline_pressure * 0.42)
-            + (workload_pressure * 0.16)
+        score = (
+            deadline_pressure * 0.42
+            + workload_pressure * 0.16
             + continuation
             + confidence_need
-            + (sequence * 0.16)
+            + sequence * 0.16
             + coverage_bonus
-            - (share_penalty * 0.35)
-            - deferred_penalty,
+            - share_penalty * 0.35
+            - repeat_penalty
+            - deferred_penalty
+        )
+        return (
+            score,
             -float(remaining[topic.topic_id]),
             -float(topic.chapter_order),
             -float(topic.topic_order),
             -float(topic.topic_id),
         )
 
-    def add_session(topic: PlannerTopic, day: date, minutes: int, pinned_session: bool = False) -> None:
+    def add_session(
+        topic: PlannerTopic,
+        day: date,
+        minutes: int,
+        *,
+        pinned_session: bool = False,
+    ) -> None:
         parts: tuple[ReasonPart, ...] = (
             ("student_selected", {}),
             ("adaptive_allocation", {}),
         )
         exam = next_exam(topic, day)
         if exam:
-            parts += (("exam_in", {"exam_type": exam.exam_type, "days": max(0, (exam.exam_date - day).days)}),)
+            parts += ((
+                "exam_in",
+                {"exam_type": exam.exam_type, "days": max(0, (exam.exam_date - day).days)},
+            ),)
         if topic.progress_status == "IN_PROGRESS":
             parts += (("started", {}),)
         if topic.progress_confidence <= 2:
             parts += (("conf_low", {}),)
         if pinned_session:
             parts += (("pinned", {}),)
+        score = rank(topic, day)[0]
         sessions.append(PlannedSession(
             topic_id=topic.topic_id,
             course_id=topic.course_id,
             planned_date=day,
             minutes=minutes,
-            priority=rank(topic, day)[0],
+            priority=score,
             reason=render_reason(parts),
             kind="STUDY",
             components={
-                "allocation_score": rank(topic, day)[0],
+                "allocation_score": score,
                 "pace_factor": pace,
                 "remaining_minutes": float(remaining[topic.topic_id]),
             },
@@ -896,9 +992,9 @@ def allocate_selected_topics(
         remaining[topic.topic_id] -= minutes
         capacities[day] -= minutes
         used_course[day][topic.course_id] += minutes
+        placed_today[day].add(topic.topic_id)
 
-    # Honour explicit dates first. A student's pinned choice is stronger than
-    # the allocator's balancing heuristics.
+    # Explicit student dates are honoured before automatic balancing.
     for topic in selected:
         target = pinned.get(topic.topic_id)
         if target is None or remaining[topic.topic_id] <= 0:
@@ -906,34 +1002,48 @@ def allocate_selected_topics(
         if target not in capacities:
             capacities[target] = request.calendar.capacity(target)
             used_course[target] = defaultdict(int)
-        available = capacities[target]
-        chunk = min(remaining[topic.topic_id], available, cfg.max_session_minutes)
+            placed_today[target] = set()
+        chunk = min(remaining[topic.topic_id], capacities[target], cfg.max_session_minutes)
         chunk = (chunk // 5) * 5
         if chunk >= cfg.min_session_minutes:
             add_session(topic, target, chunk, pinned_session=True)
 
-    # Allocate the remaining work one meaningful block at a time. The
-    # allocator re-evaluates after every block, so the schedule adapts to the
-    # changing remaining workload and course balance.
+    # Allocate one meaningful block at a time. Prefer a new topic/course on a
+    # day, but permit a repeat when it is the only viable work left.
     while any(value > 0 for value in remaining.values()):
-        candidate_days = [day for day in study_days if capacities.get(day, 0) >= cfg.min_session_minutes]
+        candidate_days = [
+            day for day in study_days
+            if capacities.get(day, 0) >= cfg.min_session_minutes
+        ]
         if not candidate_days:
             break
+
         best_pair = None
         for day in candidate_days:
-            for topic in selected:
-                if remaining[topic.topic_id] < cfg.min_session_minutes:
-                    continue
-                if topic.topic_id in pinned and day < pinned[topic.topic_id]:
-                    continue
-                if topic.topic_id in deferred and day == study_days[0] and len(study_days) > 1:
-                    continue
+            eligible = [
+                topic for topic in selected
+                if remaining[topic.topic_id] >= cfg.min_session_minutes
+                and not (
+                    topic.topic_id in pinned
+                    and day < pinned[topic.topic_id]
+                )
+                and not (
+                    topic.topic_id in deferred
+                    and day == study_days[0]
+                    and len(study_days) > 1
+                )
+            ]
+            if not eligible:
+                continue
+            fresh = [topic for topic in eligible if topic.topic_id not in placed_today[day]]
+            pool = fresh or eligible
+            for topic in pool:
                 score = rank(topic, day)
-                # Prefer an earlier day when the topic has a near deadline;
-                # otherwise favour the day with the most remaining capacity.
+                # Earlier days win; within a day, rank drives the choice.
                 day_key = (score, -day.toordinal(), capacities[day])
                 if best_pair is None or day_key > best_pair[0]:
                     best_pair = (day_key, topic, day)
+
         if best_pair is None:
             break
         _, topic, day = best_pair
@@ -944,33 +1054,24 @@ def allocate_selected_topics(
             continue
         add_session(topic, day, chunk)
 
-    # If a final fragment remains, report it rather than inventing extra time.
     unplaced = tuple(
         UnplacedTopic(topic.topic_id, topic.name, topic.course_id, minutes, "no_capacity")
         for topic in selected
         if (minutes := remaining[topic.topic_id]) > 0
     )
-    warnings: list[PlanWarning] = []
+    warnings = list(readiness_warnings)
     if unplaced:
         warnings.append(PlanWarning(
             "DOES_NOT_FIT",
             "Some selected topics need more time than the available study capacity.",
         ))
 
-    # Readiness is a constraint report, not a topic recommender. We reuse
-    # the established readiness calculation but never copy its scheduled
-    # sessions into this student-choice result.
-    baseline = build_plan(request, config)
-    readiness_warnings = tuple(
-        warning for warning in baseline.warnings
-        if warning.code in {"EXAM_OVERLOADED", "NO_STUDY_TIME"}
-    )
     return PlanResult(
-        engine_version="3.0.0-intelligent-choice",
+        engine_version=engine_version,
         today=today,
         sessions=tuple(sessions),
-        readiness=baseline.readiness,
-        warnings=tuple(dict.fromkeys((*readiness_warnings, *warnings))),
+        readiness=tuple(readiness),
+        warnings=tuple(dict.fromkeys(warnings)),
         unplaced=unplaced,
     )
 
