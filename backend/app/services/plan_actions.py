@@ -11,7 +11,6 @@ from app.db.models.plan import Plan, PlanTask
 from app.db.models.student import StudentProfile, StudentTopicProgress
 from app.schemas.plan import PlanAction, PlanInput
 from app.services.plan.engine import blend_confidence
-from app.services.plan_adapter import build_request
 from app.services.plan_builder import build_student_choice_result, read_plan
 
 
@@ -53,14 +52,13 @@ def _rebuild_future(
         "known_topic_ids": list(dict.fromkeys(snapshot.known_topic_ids + list(preserved_topic_ids))),
         "pinned_topic_dates": {**snapshot.pinned_topic_dates, **preserved_pins},
     })
-    request = build_request(
+    result = build_student_choice_result(
         db,
         student,
         rebuilt_input,
         deferred_topic_ids=deferred_topic_ids,
         pinned_topic_dates=preserved_pins,
     )
-    result = _add_pin_warnings(build_plan(request), rebuilt_input)
 
     future_rows = db.scalars(
         select(PlanTask).where(
