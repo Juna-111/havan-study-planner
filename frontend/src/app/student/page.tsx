@@ -649,7 +649,7 @@ export default function StudentPage() {
                 <HavanStepper value={draft.studyHours} min={0.5} max={12} step={0.5} suffix="h / day" onChange={(value) => setDraft({ ...draft, studyHours: value })} />
               </label>
               <span className="day-label">Normal study days</span>
-              <div className="day-pick">{WEEKDAYS.map((day) => <button key={day.key} className={draft.studyDays.includes(day.id) ? 'day selected' : 'day'} onClick={() => setDraft({ ...draft, studyDays: draft.studyDays.includes(day.id) ? draft.studyDays.filter((id) => id !== day.id) : [...draft.studyDays, day.id] })}>{day.label}</button>)}</div>
+              <div className="day-pick">{WEEKDAYS.map((day) => <button key={day.key} className={draft.studyDays.includes(day.key) ? 'day selected' : 'day'} onClick={() => setDraft({ ...draft, studyDays: draft.studyDays.includes(day.key) ? draft.studyDays.filter((id) => id !== day.key) : [...draft.studyDays, day.key] })}>{day.label}</button>)}</div>
               <div className="capacity"><b>{(draft.studyHours * draft.studyDays.length).toFixed(1)}h</b><span>normal weekly study capacity</span></div>
               <div className="review-card"><b>{draft.name}</b><span>{universities.find((item) => String(item.id) === draft.universityId)?.name}</span><span>{streams.find((item) => String(item.id) === draft.streamId)?.name}</span><span>{selectedCount} courses · {draftExams.length} exams · {draft.studyHours}h/day</span></div>
               {error && <div className="student-error">{error}</div>}
