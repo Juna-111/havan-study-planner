@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import Optional
+from typing import Optional, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -32,14 +32,14 @@ class PasswordChange(BaseModel):
 
 
 class StudentBase(BaseModel):
-    client_key: str = Field(min_length=8, max_length=120)
+    client_key: Optional[str] = Field(default=None, min_length=8, max_length=120)
     account_id: Optional[int] = Field(default=None, gt=0)
     name: str = Field(min_length=2, max_length=120)
     university_id: int = Field(gt=0)
     curriculum_id: int = Field(gt=0)
     stream_id: int = Field(gt=0)
     study_hours_per_day: float = Field(default=2.0, ge=0.5, le=12)
-    study_days: list[int] = Field(default_factory=list, min_length=1, max_length=7)
+    study_days: list[Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]] = Field(default_factory=list, min_length=1, max_length=7)
 
 
 class StudentCreate(StudentBase):
@@ -52,7 +52,7 @@ class StudentUpdate(BaseModel):
     curriculum_id: Optional[int] = Field(default=None, gt=0)
     stream_id: Optional[int] = Field(default=None, gt=0)
     study_hours_per_day: Optional[float] = Field(default=None, ge=0.5, le=12)
-    study_days: Optional[list[int]] = Field(default=None, min_length=1, max_length=7)
+    study_days: Optional[list[Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]]] = Field(default=None, min_length=1, max_length=7)
 
 
 class StudentRead(StudentBase):
