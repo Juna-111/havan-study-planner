@@ -92,10 +92,10 @@ export default function Onboarding() {
   }
 
   return (
-    <main className="content" style={{ maxWidth: 760, margin: '0 auto', paddingTop: 32 }}>
-      <span style={{ color: '#01017e', fontWeight: 800, letterSpacing: '.12em' }}>HAVAN</span>
+    <main className="onboarding-shell">
+      <span className="onboarding-brand">HAVAN</span>
       <h1>Set up your academic profile</h1>
-      <p>Tell Havan where you are and when you study. You can change these choices later.</p>
+      <p className="onboarding-intro">Tell Havan where you are and when you study. You can change these choices later.</p>
       <Segmented
         options={['Academic', 'Habits', 'Exams'] as const}
         value={['Academic', 'Habits', 'Exams'][step] as 'Academic' | 'Habits' | 'Exams'}
@@ -133,7 +133,7 @@ export default function Onboarding() {
       )}
       {step === 1 && <StepHabits days={days} hours={hours} onDays={setDays} onHours={setHours} />}
       {step === 2 && <StepExams />}
-      <div className="row" style={{ marginTop: 20 }}>
+      <div className="onboarding-actions">
         {step > 0 && <Button variant="secondary" onClick={() => setStep(step - 1)}>Back</Button>}
         {step < 2
           ? <Button disabled={!canNext} onClick={() => setStep(step + 1)}>Continue</Button>
