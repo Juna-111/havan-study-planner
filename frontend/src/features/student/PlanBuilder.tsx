@@ -45,8 +45,8 @@ const modeCopy: Record<PlanMode, { title: string; description: string; horizon: 
 function criticalPoints(value?: string | null) {
   if (!value?.trim()) return []
   return value
-    .split(/\\r?\\n|•/)
-    .map((item) => item.replace(/^[-*]\\s*/, '').trim())
+    .split(/\r?\n|•/)
+    .map((item) => item.replace(/^[-*]\s*/, '').trim())
     .filter(Boolean)
 }
 
@@ -111,6 +111,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
     mode,
     horizon_days: horizon,
     topic_ids: [...selected],
+    known_topic_ids: [],
     study_days: profile?.study_days ?? [],
     minutes_by_weekday: minutesByDay,
     hours_per_day: hours,
