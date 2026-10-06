@@ -22,7 +22,7 @@ export default function AuthPage() {
   const [message, setMessage] = useState('')
 
   useEffect(() => {
-    if (getAuthToken()) router.replace('/student')
+    if (getAuthToken()) router.replace('/home')
   }, [router])
 
   function switchMode(next: Mode) {
@@ -108,7 +108,7 @@ export default function AuthPage() {
         body: JSON.stringify({ email, password }),
       })
       saveAuth(response)
-      window.location.href = response.account.student_profile_id ? '/student' : '/student?setup=1'
+      window.location.href = response.account.student_profile_id ? '/home' : '/onboarding'
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Authentication failed.')
     } finally {
