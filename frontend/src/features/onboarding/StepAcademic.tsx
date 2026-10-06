@@ -1,14 +1,11 @@
 'use client'
-
 import { useEffect, useRef, useState } from 'react'
 import { Card, Checkbox, Select } from '@/components/ui'
 import { apiFetch } from '@/lib/api'
 import AcademicCatalogRequest from './AcademicCatalogRequest'
-
 type Opt = { id: number; name: string; status?: string }
 type Course = { id: number; code: string; name: string }
 type Page<T> = { items: T[]; page: number; page_size: number; total: number; pages: number }
-
 type Props = {
   name: string
   university: string
@@ -23,7 +20,6 @@ type Props = {
   onToggleCourse: (id: number, checked: boolean) => void
   onStart: (courseId: number, value: { chapter?: number; topic?: number }) => void
 }
-
 export default function StepAcademic(props: Props) {
   const [unis, setUnis] = useState<Opt[]>([])
   const [curricula, setCurricula] = useState<Opt[]>([])
@@ -31,11 +27,9 @@ export default function StepAcademic(props: Props) {
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState({ universities: true, curricula: false, streams: false, courses: false })
   const [loadError, setLoadError] = useState('')
-
   const universityRequest = useRef(0)
   const curriculumRequest = useRef(0)
   const streamRequest = useRef(0)
-
   useEffect(() => {
     let cancelled = false
     setLoading((old) => ({ ...old, universities: true }))
@@ -51,7 +45,6 @@ export default function StepAcademic(props: Props) {
       })
     return () => { cancelled = true }
   }, [])
-
   useEffect(() => {
     setCurricula([])
     setStreams([])
@@ -75,7 +68,6 @@ export default function StepAcademic(props: Props) {
       })
     return () => { cancelled = true }
   }, [props.university])
-
   useEffect(() => {
     setStreams([])
     setCourses([])
@@ -98,7 +90,6 @@ export default function StepAcademic(props: Props) {
       })
     return () => { cancelled = true }
   }, [props.curriculum])
-
   useEffect(() => {
     setCourses([])
     setLoadError('')
@@ -118,7 +109,6 @@ export default function StepAcademic(props: Props) {
       })
     return () => { cancelled = true }
   }, [props.stream])
-
   return (
     <div className="stack">
       <Card>
@@ -155,16 +145,13 @@ export default function StepAcademic(props: Props) {
           </div>
         </div>
       </Card>
-
       {loadError && (
         <Card>
           <p className="app-copy" role="alert">{loadError}</p>
           <button type="button" onClick={() => window.location.reload()}>Reload</button>
         </Card>
       )}
-
       <AcademicCatalogRequest universityId={props.university} />
-
       <Card>
         <h2>Choose your courses</h2>
         {!props.stream ? (
@@ -184,7 +171,6 @@ export default function StepAcademic(props: Props) {
     </div>
   )
 }
-
 function CourseChoice({
   course, checked, start, onToggle, onStart,
 }: {
@@ -200,7 +186,6 @@ function CourseChoice({
   const [topicLoading, setTopicLoading] = useState(false)
   const chapterRequest = useRef(0)
   const topicRequest = useRef(0)
-
   useEffect(() => {
     setChapters([])
     setTopics([])
@@ -218,7 +203,6 @@ function CourseChoice({
       })
     return () => { cancelled = true }
   }, [checked, course.id])
-
   useEffect(() => {
     setTopics([])
     if (!start?.chapter) return
@@ -235,15 +219,12 @@ function CourseChoice({
       })
     return () => { cancelled = true }
   }, [start?.chapter])
-
   function handleChapter(value: string) {
     onStart(course.id, { chapter: value ? Number(value) : undefined })
   }
-
   function handleTopic(value: string) {
     onStart(course.id, { chapter: start?.chapter, topic: value ? Number(value) : undefined })
   }
-
   return (
     <Card>
       <Checkbox label={course.code + ' · ' + course.name} checked={checked} onChange={(value) => onToggle(course.id, value)} />
