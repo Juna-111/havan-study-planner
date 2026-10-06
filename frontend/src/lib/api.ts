@@ -1,4 +1,13 @@
-import { clearAuth, getAuthToken } from '@/lib/auth'\n\nexport type ApiValidationError = {\n  field: string\n  message: string\n  type: string\n}\n\ntype ApiErrorDetail = string | ApiValidationError[]\n
+import { clearAuth, getAuthToken } from '@/lib/auth'
+
+export type ApiValidationError = {
+  field: string
+  message: string
+  type: string
+}
+
+type ApiErrorDetail = string | ApiValidationError[]
+
 
 const rawApiBaseUrl = process.env.NEXT_PUBLIC_API_URL?.trim()
 const API_BASE_URL = rawApiBaseUrl
@@ -18,16 +27,34 @@ const PUBLIC_AUTH_PATHS = new Set([
 
 export class ApiError extends Error {
   status: number
-  detail?: string
+  detail?: ApiErrorDetail
   code?: string
 
-  constructor(status: number, message: string, detail?: string, code?: string) {
-    super(typeof message === 'string' ? message : 'API request failed.')
+  constructor(status: number, message: string, detail?: ApiErrorDetail, code?: string) {
+    super(message)
     this.name = 'ApiError'
     this.status = status
     this.detail = detail
     this.code = code
   }
+
+  get fieldErrors(): ApiValidationError[] {
+    return Array.isArray(this.detail) ? this.detail : []
+  }
+}
+
+function formatDetail(detail: unknown): string {
+  if (typeof detail === 'string') return detail
+  if (Array.isArray(detail)) {
+    const fields = detail.filter((item): item is ApiValidationError => (
+      Boolean(item)
+      && typeof item === 'object'
+      && typeof (item as ApiValidationError).field === 'string'
+      && typeof (item as ApiValidationError).message === 'string'
+    ))
+    if (fields.length) return fields.map((item) => `${item.field}: ${item.message}`).join(' · ')
+  }
+  return 'The request could not be completed.'
 }
 
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -63,16 +90,24 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
           window.location.replace('/auth')
         }
       }
-      const detail = typeof body?.detail === 'string' ? body.detail : 'Authentication required.'
-      throw new ApiError(401, detail, detail, typeof body?.code === 'string' ? body.code : undefined)
+      const detail = body?.detail
+      throw new ApiError(
+        401,
+        formatDetail(detail) || 'Authentication required.',
+        typeof detail === 'string' || Array.isArray(detail) ? detail as ApiErrorDetail : undefined,
+        typeof body?.code === 'string' ? body.code : undefined,
+      )
     }
 
     if (!response.ok) {
-      const detail = typeof body?.detail === 'string'
-        ? body.detail
-        : 'The request could not be completed.'
+      const detail = body?.detail
       const code = typeof body?.code === 'string' ? body.code : undefined
-      throw new ApiError(response.status, detail, detail, code)
+      throw new ApiError(
+        response.status,
+        formatDetail(detail),
+        typeof detail === 'string' || Array.isArray(detail) ? detail as ApiErrorDetail : undefined,
+        code,
+      )
     }
 
     if (response.status === 204) return undefined as T
