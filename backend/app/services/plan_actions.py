@@ -45,6 +45,8 @@ def apply_action(
     if not task:
         raise ValueError("Study task not found.")
 
+    if task.status == "DONE" and payload.action == "COMPLETE":
+        return plan, None
     if task.status == "DONE" and payload.action != "REPEAT":
         raise ValueError("A completed task can only be repeated.")
 
