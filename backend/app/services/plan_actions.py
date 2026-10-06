@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -11,6 +11,7 @@ from app.db.models.plan import Plan, PlanTask
 from app.db.models.student import StudentProfile, StudentTopicProgress
 from app.schemas.plan import PlanAction, PlanInput
 from app.services.plan.engine import blend_confidence
+from app.services.academic_resolver import resolved_course_ids
 from app.services.plan_builder import build_student_choice_result, read_plan
 
 
@@ -125,6 +126,10 @@ def _rebuild_future(
     return plan
 
 
+def _validate_target_date(plan: Plan, target: date) -> None:
+    if not (plan.start_date <= target <= plan.start_date + timedelta(days=plan.horizon_days - 1)):
+        raise ValueError("Choose a date inside this plan's planning window.")
+
 def apply_action(
     db: Session,
     student: StudentProfile,
@@ -139,6 +144,44 @@ def apply_action(
             PlanTask.student_id == student.id,
         )
     )
+
+    if payload.action == "ADD" and task_id == 0:
+        if payload.target_topic_id is None:
+            raise ValueError("Choose a topic to add.")
+        topic = db.get(Topic, payload.target_topic_id)
+        if not topic or str(topic.status).upper() != "ACTIVE":
+            raise ValueError("The selected topic is not active.")
+        chapter = db.get(Chapter, topic.chapter_id)
+        if chapter is None or chapter.course_id not in resolved_course_ids(db, student.id):
+            raise ValueError("The selected topic is outside your active curriculum.")
+        snapshot = _input_from_snapshot(plan)
+        if topic.id in snapshot.topic_ids:
+            raise ValueError("That topic is already part of this plan.")
+        target = payload.target_date or today_local()
+        _validate_target_date(plan, target)
+        minutes = min(20, max(5, topic.estimated_study_minutes))
+        db.add(PlanTask(
+            plan_id=plan.id,
+            student_id=student.id,
+            course_id=chapter.course_id,
+            topic_id=topic.id,
+            planned_date=target,
+            minutes=minutes,
+            priority=0,
+            reason="You added this topic to your plan.",
+            reason_parts=[["manual_add", {}]],
+            kind="STUDY",
+            status="PLANNED",
+            pinned=True,
+        ))
+        plan.input_snapshot = snapshot.model_copy(update={
+            "topic_ids": list(dict.fromkeys(snapshot.topic_ids + [topic.id])),
+            "pinned_topic_dates": {**snapshot.pinned_topic_dates, topic.id: target},
+        }).model_dump(mode="json")
+        db.commit()
+        db.refresh(plan)
+        return plan, []
+
     if not task:
         raise ValueError("Study task not found.")
 
