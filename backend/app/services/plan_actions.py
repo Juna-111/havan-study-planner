@@ -10,9 +10,9 @@ from app.db.models.curriculum import Chapter, Course, Topic
 from app.db.models.plan import Plan, PlanTask
 from app.db.models.student import StudentProfile, StudentTopicProgress
 from app.schemas.plan import PlanAction, PlanInput
-from app.services.plan.engine import blend_confidence, build_plan
+from app.services.plan.engine import blend_confidence
 from app.services.plan_adapter import build_request
-from app.services.plan_builder import _add_pin_warnings, read_plan
+from app.services.plan_builder import build_student_choice_result, read_plan
 
 
 def _active_plan(db: Session, student_id: int) -> Plan:
