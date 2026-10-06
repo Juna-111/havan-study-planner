@@ -57,6 +57,7 @@ def topic(
         chapter_id=chapter_id,
         status=status,
         name=name,
+        important_points="Key concept",
         difficulty=difficulty,
         estimated_study_minutes=minutes,
         exam_importance=exam_importance,
