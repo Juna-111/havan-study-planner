@@ -100,7 +100,7 @@ def test_exam_readiness_overloaded():
         today=date(2026, 10, 5),
         topics=tuple(topic(i, minutes=100) for i in range(1, 4)),
         exams=(PlannerExam(1, date(2026, 10, 8), 4, "MID"),),
-        calendar=calendar(100),
+        calendar=calendar(100, frozenset({0, 1})),
         horizon_days=3,
     )
     result = build_plan(request)
