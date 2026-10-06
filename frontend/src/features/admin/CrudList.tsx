@@ -23,17 +23,6 @@ type Config = {
 
 export const entityConfigs: Config[] = [
   {
-    key: 'courses',
-    label: 'Courses',
-    endpoint: '/courses',
-    create: false,
-    fields: [
-      { key: 'code', label: 'Code' },
-      { key: 'name', label: 'Name' },
-      { key: 'credit_hours', label: 'Credits', type: 'number' },
-    ],
-  },
-  {
     key: 'chapters',
     label: 'Chapters',
     endpoint: '/chapters',
@@ -41,7 +30,8 @@ export const entityConfigs: Config[] = [
     fields: [
       { key: 'name', label: 'Name' },
       { key: 'order_index', label: 'Order', type: 'number' },
-      { key: 'important_points', label: 'Important points', type: 'textarea' },
+      { key: 'important_points', label: 'Critical points', type: 'textarea' },
+      { key: 'status', label: 'Status' },
     ],
   },
   {
@@ -52,18 +42,12 @@ export const entityConfigs: Config[] = [
     fields: [
       { key: 'name', label: 'Name' },
       { key: 'order_index', label: 'Order', type: 'number' },
-      {
-        key: 'estimated_study_minutes',
-        label: 'Study minutes',
-        type: 'number',
-      },
+      { key: 'estimated_study_minutes', label: 'Study minutes', type: 'number' },
       { key: 'difficulty', label: 'Difficulty 1–5', type: 'number' },
-      {
-        key: 'exam_importance',
-        label: 'Exam importance 0–1',
-        type: 'number',
-      },
-      { key: 'important_points', label: 'Important points', type: 'textarea' },
+      { key: 'exam_importance', label: 'Exam importance 0–1', type: 'number' },
+      { key: 'conceptual_importance', label: 'Conceptual importance 0–1', type: 'number' },
+      { key: 'important_points', label: 'Critical points', type: 'textarea' },
+      { key: 'status', label: 'Status' },
     ],
   },
 ]
