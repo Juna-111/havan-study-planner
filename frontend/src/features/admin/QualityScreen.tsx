@@ -76,7 +76,7 @@ export default function QualityScreen({ onMode }: Props) {
               ['Warnings', data.summary.warnings],
               ['Info', data.summary.info],
               ['Records', data.summary.total_records],
-              ['Ready courses', data.counts.courses ? data.readiness.active_course_mappings : 0],
+              ['Ready courses', data.readiness.ready_courses],
             ].map(([label, value]) => (
               <div key={String(label)}><span>{label}</span><b>{value}</b></div>
             ))}
