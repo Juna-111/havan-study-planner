@@ -10,7 +10,7 @@ from app.db.models.plan import Plan, PlanTask
 from app.db.models.student import StudentProfile
 from app.schemas.plan import PlanInput, PlanOut
 from app.services.plan_adapter import build_request
-from app.services.plan.engine import PlanResult, build_plan
+from app.services.plan.engine import PlanResult, PlanWarning, build_plan
 
 
 
@@ -22,7 +22,7 @@ def _add_pin_warnings(result: PlanResult, plan_input: PlanInput) -> PlanResult:
     for topic_id, pinned_date in plan_input.pinned_topic_dates.items():
         pinned_per_date[pinned_date] = pinned_per_date.get(pinned_date, 0) + 1
         if pinned_date.weekday() not in selected_days:
-            extra.append(__import__("app.services.planner_engine", fromlist=["PlanWarning"]).PlanWarning(
+            extra.append(PlanWarning(
                 "PIN_NON_STUDY_DAY", f"{pinned_date.isoformat()} is not one of your study days. We kept the topic there."
             ))
     for pinned_date in pinned_per_date:
