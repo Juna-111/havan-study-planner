@@ -1,3 +1,5 @@
+from app.core.config import get_settings
+API_PREFIX = get_settings().api_prefix
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
@@ -11,7 +13,7 @@ from app.schemas.curriculum import (
 )
 
 router = APIRouter(
-    prefix="/api/v1/university-course-mappings",
+    prefix=f"{API_PREFIX}/university-course-mappings",
     tags=["university-course-mappings"],
 )
 DB = Depends(get_db)
