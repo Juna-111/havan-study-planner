@@ -9,7 +9,7 @@ from app.db.models.student import StudentProfile
 from app.db.session import get_db
 from app.schemas.plan import PlanAction, PlanInput, PlanOut
 from app.services.plan_actions import apply_action
-from app.services.plan_builder import preview_plan, save_plan
+from app.services.plan_builder import preview_plan, read_plan, save_plan
 
 router = APIRouter(prefix=f"{API_PREFIX}/plans", tags=["plans"])
 
@@ -43,17 +43,10 @@ def current(
     student: StudentProfile = Depends(current_student),
     db: Session = Depends(get_db),
 ):
-    plan = db.scalar(
-        select(Plan).where(Plan.student_id == student.id, Plan.status == "ACTIVE")
-        .order_by(Plan.id.desc())
-    )
+    plan = db.scalar(select(Plan).where(Plan.student_id == student.id, Plan.status == "ACTIVE").order_by(Plan.id.desc()))
     if not plan:
         raise HTTPException(status_code=404, detail="You do not have a plan yet. Choose what to study and Havan will organize it.")
-    snapshot = PlanInput.model_validate(plan.input_snapshot)
-    try:
-        return save_snapshot_response(db, student, plan, snapshot)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+    return read_plan(db, student, plan)
 
 
 @router.post("/{plan_id}/tasks/{task_id}/actions", response_model=PlanOut)
@@ -71,8 +64,10 @@ def action(
         result, warning = apply_action(db, student, task_id, payload)
         if isinstance(result, PlanOut):
             return result
-        snapshot = PlanInput.model_validate(result.input_snapshot)
-        return save_snapshot_response(db, student, result, snapshot, extra_warning=warning)
+        out = read_plan(db, student, result)
+        if warning:
+            out.warnings.append({"code": warning, "severity": "info", "message": "Skipped. Tap Rebuild the rest to place it later.", "fix": {"rebuild": "Rebuild the rest"}})
+        return out
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
