@@ -558,6 +558,8 @@ def build_plan(request: PlanRequest, config: PlannerConfig = DEFAULT_CONFIG) -> 
     # 5. Work items: study for unfinished topics, review for completed ----
     works: dict[int, _Work] = {}
     for topic in topics:
+        if topic.topic_id in satisfied:
+            continue
         if topic.topic_id in completed:
             if topic.last_studied_on is not None:
                 works[topic.topic_id] = _Work(topic, "REVIEW", cfg.review_minutes)
@@ -822,3 +824,14 @@ def schedule_tasks(
     from app.core.time import parse_weekdays as canonical_parse_weekdays
     return canonical_parse_weekdays(values, tuple(default))
 t
+
+def suggest_extras(request: PlanRequest, extra_topics: Sequence[PlannerTopic], k: int = 5, config: PlannerConfig = DEFAULT_CONFIG) -> tuple[ScoredTopic, ...]:
+    """Score optional topics without ever adding them to the plan."""
+    selected = {topic.topic_id for topic in request.topics}
+    candidates = [topic for topic in extra_topics if topic.topic_id not in selected]
+    scored = []
+    for topic in candidates:
+        exam = next((item for item in sorted(request.exams, key=lambda value: value.exam_date)
+                     if item.course_id == topic.course_id and item.exam_date >= request.today and item.covers(topic.topic_id)), None)
+        scored.append(score_topic(topic, exam, request.today, config=config))
+    return tuple(sorted(scored, key=lambda item: (-item.score, item.topic.course_id, item.topic.topic_id))[:max(0, k)])
