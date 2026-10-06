@@ -244,6 +244,7 @@ def apply_action(
     if payload.action == "MOVE":
         if payload.target_date is None:
             raise ValueError("Choose a date for this task.")
+        _validate_target_date(plan, payload.target_date)
         task.planned_date = payload.target_date
         task.pinned = True
         task.status = "PLANNED"
@@ -251,6 +252,10 @@ def apply_action(
         if payload.target_date.weekday() not in {to_index(day) for day in _input_from_snapshot(plan).study_days}:
             warnings.append("PIN_NON_STUDY_DAY")
         snapshot = _input_from_snapshot(plan)
+        snapshot = snapshot.model_copy(update={
+            "pinned_topic_dates": {**snapshot.pinned_topic_dates, task.topic_id: payload.target_date},
+        })
+        plan.input_snapshot = snapshot.model_dump(mode="json")
         weekday_key = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")[payload.target_date.weekday()]
         configured_capacity = snapshot.minutes_by_weekday.get(
             weekday_key,
@@ -274,6 +279,7 @@ def apply_action(
 
     if payload.action == "REPEAT":
         target = payload.target_date or task.planned_date
+        _validate_target_date(plan, target)
         db.add(PlanTask(
             plan_id=plan.id,
             student_id=student.id,
@@ -304,6 +310,16 @@ def apply_action(
                 "minutes": task.minutes,
                 "reason_code": "removed",
             }]
+        snapshot = _input_from_snapshot(plan)
+        snapshot = snapshot.model_copy(update={
+            "topic_ids": [topic_id for topic_id in snapshot.topic_ids if topic_id != task.topic_id],
+            "pinned_topic_dates": {
+                topic_id: planned_date
+                for topic_id, planned_date in snapshot.pinned_topic_dates.items()
+                if topic_id != task.topic_id
+            },
+        })
+        plan.input_snapshot = snapshot.model_dump(mode="json")
         db.delete(task)
         db.commit()
         return plan, []
