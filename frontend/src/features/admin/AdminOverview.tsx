@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { apiFetch } from '@/lib/api'
 import styles from './admin.module.css'
 
-type Props = { onMode: (mode: 'academic' | 'mapping' | 'content' | 'import' | 'quality') => void }
+type Props = { onMode: (mode: 'academic' | 'curriculum' | 'streams' | 'mapping' | 'content' | 'import' | 'quality') => void }
 type Page<T> = { items: T[] }
 type Item = { id: number; status: string }
 
@@ -35,7 +35,7 @@ export default function AdminOverview({ onMode }: Props) {
   const cards = [
     ['Active universities', stats.universities, 'academic'],
     ['Active curricula', stats.curricula, 'academic'],
-    ['Active streams', stats.streams, 'academic'],
+    ['Active streams', stats.streams, 'streams'],
     ['Course Registry', stats.courses, 'content'],
     ['Active course mappings', stats.mappings, 'mapping'],
     ['Pending requests', stats.requests, 'academic'],
