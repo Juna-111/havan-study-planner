@@ -26,12 +26,14 @@ function View() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    getMyStudentProfile<Profile>().then((value) => {
-      setProfile(value)
-      setName(value.name)
-      setHours(value.study_hours_per_day)
-      setDays(value.study_days)
-    }).catch((value) => setError(value instanceof Error ? value.message : 'Could not load your profile.'))
+    getMyStudentProfile<Profile>()
+      .then((value) => {
+        setProfile(value)
+        setName(value.name)
+        setHours(value.study_hours_per_day)
+        setDays(value.study_days)
+      })
+      .catch((value) => setError(value instanceof Error ? value.message : 'Could not load your profile.'))
   }, [])
 
   async function save() {
@@ -48,13 +50,40 @@ function View() {
     }
   }
 
-  return <AppShell>
-    <PageHeader title="Settings" description="Your account and study preferences." />
-    {error && <ErrorState message={error} onRetry={() => setError('')} />}
-    <div className="stack">
-      <Card><Chip tone="info">ACCOUNT</Chip><h2>{getSavedAccount()?.email ?? 'Student account'}</h2><p>Profile #{getSavedAccount()?.student_profile_id ?? '—'}</p></Card>
-      {profile && <Card><h2>Profile</h2><label className="field">Name<input value={name} onChange={(event) => setName(event.target.value)} /></label><NumberStepper label="Hours per study day" value={hours} min={1} max={12} onChange={setHours} /><h3>Study days</h3><div className="row">{DAYS.map((day) => <button key={day} type="button" aria-pressed={days.includes(day)} onClick={() => setDays((old) => old.includes(day) ? old.filter((item) => item !== day) : [...old, day])}>{day}</button>)}</div><Button onClick={save}>Save changes</Button>{message && <p>{message}</p>}</Card>}
-      <Button variant="danger" onClick={() => { clearAuth(); router.replace('/auth') }}>Sign out</Button>
-    </div>
-  </AppShell>
+  return (
+    <AppShell>
+      <PageHeader title="Settings" description="Your account and study preferences." />
+      {error && <ErrorState message={error} onRetry={() => setError('')} />}
+      <div className="app-section">
+        <Card padding="lg" className="settings-card">
+          <Chip tone="info">ACCOUNT</Chip>
+          <div className="settings-account">
+            <h2>{getSavedAccount()?.email ?? 'Student account'}</h2>
+            <p className="app-meta">Profile #{getSavedAccount()?.student_profile_id ?? '—'}</p>
+          </div>
+        </Card>
+        {profile && (
+          <Card padding="lg" className="settings-card">
+            <h2>Profile</h2>
+            <label className="app-field">
+              Name
+              <input value={name} onChange={(event) => setName(event.target.value)} />
+            </label>
+            <NumberStepper label="Hours per study day" value={hours} min={1} max={12} onChange={setHours} />
+            <div className="app-section">
+              <h3>Study days</h3>
+              <div className="day-toggle-group">
+                {DAYS.map((day) => (
+                  <button className="day-toggle" key={day} type="button" aria-pressed={days.includes(day)} onClick={() => setDays((old) => old.includes(day) ? old.filter((item) => item !== day) : [...old, day])}>{day}</button>
+                ))}
+              </div>
+            </div>
+            <Button onClick={save}>Save changes</Button>
+            {message && <p className="app-meta">{message}</p>}
+          </Card>
+        )}
+        <Button variant="danger" onClick={() => { clearAuth(); router.replace('/auth') }}>Sign out</Button>
+      </div>
+    </AppShell>
+  )
 }
