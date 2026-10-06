@@ -1,8 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react' import { apiFetch } from '@/lib/api' import styles from './admin.module.css' import quickStyles from './admin-quick.module.css' type University = { id: number; name: string; code: string; status: string }
-type Curriculum = { id: number; university_id: number; name: string; version: string; academic_year?: string | null; status: string } type Stream = { id: number; curriculum_id: number; name: string; code: string; status: string }
-type Request = { id: number; request_type: 'UNIVERSITY' | 'CURRICULUM'; university_id?: number | null; name: string; code?: string | null; version?: string | null; academic_year?: string | null; status: string } export default function AcademicSetupScreen() {
+import { useEffect, useState } from 'react'
+import { apiFetch } from '@/lib/api'
+import styles from './admin.module.css'
+import quickStyles from './admin-quick.module.css'
+type University = { id: number; name: string; code: string; status: string }
+type Curriculum = { id: number; university_id: number; name: string; version: string; academic_year?: string | null; status: string }
+type Stream = { id: number; curriculum_id: number; name: string; code: string; status: string }
+type Request = { id: number; request_type: 'UNIVERSITY' | 'CURRICULUM'; university_id?: number | null; name: string; code?: string | null; version?: string | null; academic_year?: string | null; status: string }
+export default function AcademicSetupScreen() {
 const [universities, setUniversities] = useState<University[]>([]) const [curriculums, setCurriculums] = useState<Curriculum[]>([]) const [streams, setStreams] = useState<Stream[]>([]) const [requests, setRequests] = useState<Request[]>([])
 const [universityId, setUniversityId] = useState('') const [universityName, setUniversityName] = useState('') const [universityCode, setUniversityCode] = useState('') const [curriculumName, setCurriculumName] = useState('')
 const [curriculumVersion, setCurriculumVersion] = useState('1.0') const [curriculumYear, setCurriculumYear] = useState('') const [streamName, setStreamName] = useState('') const [streamCode, setStreamCode] = useState('')
@@ -23,15 +29,20 @@ await apiFetch('/curriculums', { method: 'POST', body: JSON.stringify({ universi
 setCurriculumName(''); setCurriculumYear(''); setMessage('Curriculum added to the selected university.'); await load() } catch (value) { setError(value instanceof Error ? value.message : 'Could not add curriculum.') } finally { setBusy('') } }
 async function addStream() { if (!curriculumIdForStream || !streamName.trim() || !streamCode.trim()) return setBusy('stream') setError('') try { await apiFetch('/streams', { method: 'POST', body: JSON.stringify({ curriculum_id: Number(curriculumIdForStream),
 name: streamName.trim(), code: streamCode.trim().toUpperCase(), status: 'ACTIVE', }), }) setStreamName('') setStreamCode('') setMessage('Stream added. Students can now select it for this curriculum.') await load() } catch (value) {
-setError(value instanceof Error ? value.message : 'Could not add stream.') } finally { setBusy('') } } function beginEdit(type: 'university' | 'curriculum' | 'stream', id: number) { const item = type === 'university' ? universities.find((value) => value.id === id)
-: type === 'curriculum' ? curriculums.find((value) => value.id === id) : streams.find((value) => value.id === id) if (!item) return setEditing({ type, id }) setEditName(item.name) setEditCode('code' in item ? item.code : '')
+setError(value instanceof Error ? value.message : 'Could not add stream.') } finally { setBusy('') } } function beginEdit(type: 'university' | 'curriculum' | 'stream', id: number) { const item =
+type === 'university' ? universities.find((value) => value.id === id)
+:
+type === 'curriculum' ? curriculums.find((value) => value.id === id) : streams.find((value) => value.id === id) if (!item) return setEditing({ type, id }) setEditName(item.name) setEditCode('code' in item ? item.code : '')
 setEditVersion('version' in item ? item.version : '') setEditYear('academic_year' in item && item.academic_year ? item.academic_year : '') setError('') setMessage('') } function cancelEdit() { setEditing(null) setEditName('') setEditCode('') setEditVersion('')
 setEditYear('') } async function saveEdit() { if (!editing || !editName.trim()) return setBusy('edit') setError('') try { const body = editing.type === 'university' ? { name: editName.trim(), code: editCode.trim().toUpperCase() } : editing.type === 'curriculum'
 ? { name: editName.trim(), version: editVersion.trim(), academic_year: editYear.trim() || null } : { name: editName.trim(), code: editCode.trim().toUpperCase() }
 await apiFetch('/' + (editing.type === 'university' ? 'universities' : editing.type === 'curriculum' ? 'curriculums' : 'streams') + '/' + editing.id, { method: 'PATCH', body: JSON.stringify(body), }) setMessage('Academic record updated.') cancelEdit() await load()
 } catch (value) { setError(value instanceof Error ? value.message : 'Could not update the academic record.') } finally { setBusy('') } } async function toggleStatus(type: 'university' | 'curriculum' | 'stream', item: University | Curriculum | Stream) {
-const nextStatus = item.status === 'ACTIVE' ? type === 'curriculum' ? 'ARCHIVED' : 'INACTIVE' : 'ACTIVE' const warning = item.status === 'ACTIVE' ? 'Deactivate this record? Existing data will remain intact, but it will no longer be an active student option.'
-: 'Activate this record again?' if (!window.confirm(warning)) return setBusy('status-' + type + '-' + item.id) setError('') try { await apiFetch('/' + (type === 'university' ? 'universities' : type === 'curriculum' ? 'curriculums' : 'streams') + '/' + item.id, {
+const nextStatus = item.status === 'ACTIVE' ?
+type === 'curriculum' ? 'ARCHIVED' : 'INACTIVE' : 'ACTIVE' const warning = item.status === 'ACTIVE' ? 'Deactivate this record? Existing data will remain intact, but it will no longer be an active student option.'
+: 'Activate this record again?' if (!window.confirm(warning)) return setBusy('status-' +
+type + '-' + item.id) setError('') try { await apiFetch('/' + (type === 'university' ? 'universities' :
+type === 'curriculum' ? 'curriculums' : 'streams') + '/' + item.id, {
 method: 'PATCH', body: JSON.stringify({ status: nextStatus }), }) setMessage(nextStatus === 'ACTIVE' ? 'Record activated.' : 'Record safely deactivated. Nothing was deleted.') await load() } catch (value) {
 setError(value instanceof Error ? value.message : 'Could not change record status.') } finally { setBusy('') } } async function review(id: number, status: 'APPROVED' | 'REJECTED') { setBusy('request-' + id); setError('') try {
 await apiFetch('/academic-catalog-requests/' + id, { method: 'PATCH', body: JSON.stringify({ status }) }) setMessage(status === 'APPROVED' ? 'Request approved and added to the catalog.' : 'Request rejected.'); await load()
