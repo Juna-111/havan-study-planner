@@ -40,7 +40,7 @@ class StudentBase(BaseModel):
     curriculum_id: int = Field(gt=0)
     stream_id: int = Field(gt=0)
     study_hours_per_day: float = Field(default=2.0, ge=0.5, le=12)
-    study_days: list[Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]] = Field(default_factory=list, min_length=1, max_length=7)
+    study_days: list[Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]] = Field(default_factory=list, max_length=7)
 
 
 class StudentCreate(StudentBase):
@@ -96,6 +96,8 @@ class ProgressRead(ProgressUpsert):
     last_studied_at: Optional[datetime]
     completed_minutes: int
     study_sessions: int
+    topic_name: Optional[str] = None
+    course_name: Optional[str] = None
 
 
 class ExamCreate(BaseModel):
