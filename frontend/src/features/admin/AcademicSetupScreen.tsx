@@ -29,6 +29,11 @@ export default function AcademicSetupScreen() {
   const [error, setError] = useState('')
   const [selectedCurriculumId, setSelectedCurriculumId] = useState('')
   const [selectedStreamId, setSelectedStreamId] = useState('')
+  const [editing, setEditing] = useState<{ type: 'university' | 'curriculum' | 'stream'; id: number } | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editCode, setEditCode] = useState('')
+  const [editVersion, setEditVersion] = useState('')
+  const [editYear, setEditYear] = useState('')
 
   async function load() {
     try {
@@ -99,6 +104,78 @@ export default function AcademicSetupScreen() {
       await load()
     } catch (value) {
       setError(value instanceof Error ? value.message : 'Could not add stream.')
+    } finally {
+      setBusy('')
+    }
+  }
+
+  function beginEdit(type: 'university' | 'curriculum' | 'stream', id: number) {
+    const item = type === 'university'
+      ? universities.find((value) => value.id === id)
+      : type === 'curriculum'
+        ? curriculums.find((value) => value.id === id)
+        : streams.find((value) => value.id === id)
+    if (!item) return
+    setEditing({ type, id })
+    setEditName(item.name)
+    setEditCode('code' in item ? item.code : '')
+    setEditVersion('version' in item ? item.version : '')
+    setEditYear('academic_year' in item && item.academic_year ? item.academic_year : '')
+    setError('')
+    setMessage('')
+  }
+
+  function cancelEdit() {
+    setEditing(null)
+    setEditName('')
+    setEditCode('')
+    setEditVersion('')
+    setEditYear('')
+  }
+
+  async function saveEdit() {
+    if (!editing || !editName.trim()) return
+    setBusy('edit')
+    setError('')
+    try {
+      const body = editing.type === 'university'
+        ? { name: editName.trim(), code: editCode.trim().toUpperCase() }
+        : editing.type === 'curriculum'
+          ? { name: editName.trim(), version: editVersion.trim(), academic_year: editYear.trim() || null }
+          : { name: editName.trim(), code: editCode.trim().toUpperCase() }
+      await apiFetch('/' + (editing.type === 'university' ? 'universities' : editing.type === 'curriculum' ? 'curriculums' : 'streams') + '/' + editing.id, {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      })
+      setMessage('Academic record updated.')
+      cancelEdit()
+      await load()
+    } catch (value) {
+      setError(value instanceof Error ? value.message : 'Could not update the academic record.')
+    } finally {
+      setBusy('')
+    }
+  }
+
+  async function toggleStatus(type: 'university' | 'curriculum' | 'stream', item: University | Curriculum | Stream) {
+    const nextStatus = item.status === 'ACTIVE'
+      ? type === 'curriculum' ? 'ARCHIVED' : 'INACTIVE'
+      : 'ACTIVE'
+    const warning = item.status === 'ACTIVE'
+      ? 'Deactivate this record? Existing data will remain intact, but it will no longer be an active student option.'
+      : 'Activate this record again?'
+    if (!window.confirm(warning)) return
+    setBusy('status-' + type + '-' + item.id)
+    setError('')
+    try {
+      await apiFetch('/' + (type === 'university' ? 'universities' : type === 'curriculum' ? 'curriculums' : 'streams') + '/' + item.id, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: nextStatus }),
+      })
+      setMessage(nextStatus === 'ACTIVE' ? 'Record activated.' : 'Record safely deactivated. Nothing was deleted.')
+      await load()
+    } catch (value) {
+      setError(value instanceof Error ? value.message : 'Could not change record status.')
     } finally {
       setBusy('')
     }
@@ -194,9 +271,75 @@ Academic year<input value={curriculumYear} onChange={(e) => setCurriculumYear(e.
         </div>
       </div>
       <div className={styles.catalog}>
-        <div className={styles.crudHead}><div><h2>Current universities</h2><p>These are the options students see in setup.</p></div><b>{universities.length}</b></div>
-        {universities.map((item) => <div className={styles.row} key={item.id}><div><b>{item.code}</b><span>{item.name}</span></div><small>{curriculums.filter((c) => c.university_id === item.id).length} curricula</small></div>)}
+        <div className={styles.crudHead}>
+          <div><h2>Current universities</h2><p>Manage the records students can select. Deactivation is reversible and does not delete children.</p></div>
+          <b>{universities.length}</b>
+        </div>
+        {universities.map((item) => {
+          const curriculumCount = curriculums.filter((c) => c.university_id === item.id).length
+          const activeCurriculumCount = curriculums.filter((c) => c.university_id === item.id && c.status === 'ACTIVE').length
+          return (
+            <div className={styles.row} key={item.id}>
+              <div><b>{item.code}</b><span>{item.name}</span><small>{curriculumCount} curricula · {activeCurriculumCount} active</small></div>
+              <small>{item.status}</small>
+              <div className={styles.actions}>
+                <button onClick={() => beginEdit('university', item.id)}>Edit</button>
+                <button className={item.status === 'ACTIVE' ? styles.danger : styles.primary} disabled={busy === 'status-university-' + item.id} onClick={() => toggleStatus('university', item)}>
+                  {item.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+                </button>
+              </div>
+            </div>
+          )
+        })}
       </div>
+      <div className={styles.catalog}>
+        <div className={styles.crudHead}>
+          <div><h2>Curricula</h2><p>Curricula belong to one university and are uniquely identified by university, name, and version.</p></div>
+          <b>{curriculums.length}</b>
+        </div>
+        {curriculums.map((item) => {
+          const streamCount = streams.filter((stream) => stream.curriculum_id === item.id).length
+          return (
+            <div className={styles.row} key={item.id}>
+              <div><b>{item.name} · v{item.version}</b><span>{universities.find((u) => u.id === item.university_id)?.name || 'Unknown university'}</span><small>{streamCount} streams{item.academic_year ? ' · ' + item.academic_year : ''}</small></div>
+              <small>{item.status}</small>
+              <div className={styles.actions}>
+                <button onClick={() => beginEdit('curriculum', item.id)}>Edit</button>
+                <button className={item.status === 'ACTIVE' ? styles.danger : styles.primary} disabled={busy === 'status-curriculum-' + item.id} onClick={() => toggleStatus('curriculum', item)}>
+                  {item.status === 'ACTIVE' ? 'Archive' : 'Activate'}
+                </button>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+      <div className={styles.catalog}>
+        <div className={styles.crudHead}>
+          <div><h2>Streams</h2><p>These are the exact stream records exposed to student registration.</p></div>
+          <b>{streams.length}</b>
+        </div>
+        {streams.map((item) => (
+          <div className={styles.row} key={item.id}>
+            <div><b>{item.code} · {item.name}</b><span>{curriculums.find((c) => c.id === item.curriculum_id)?.name || 'Unknown curriculum'}</span></div>
+            <small>{item.status}</small>
+            <div className={styles.actions}>
+              <button onClick={() => beginEdit('stream', item.id)}>Edit</button>
+              <button className={item.status === 'ACTIVE' ? styles.danger : styles.primary} disabled={busy === 'status-stream-' + item.id} onClick={() => toggleStatus('stream', item)}>
+                {item.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+      {editing && (
+        <div className={styles.editor}>
+          <div className={styles.crudHead}><div><h2>Edit {editing.type}</h2><p>Update the existing record. No duplicate record is created.</p></div><button onClick={cancelEdit}>Cancel</button></div>
+          <label>Name<input value={editName} onChange={(e) => setEditName(e.target.value)} /></label>
+          {editing.type !== 'curriculum' && <label>Code<input value={editCode} onChange={(e) => setEditCode(e.target.value)} /></label>}
+          {editing.type === 'curriculum' && <div className={quickStyles.twoFields}><label>Version<input value={editVersion} onChange={(e) => setEditVersion(e.target.value)} /></label><label>Academic year<input value={editYear} onChange={(e) => setEditYear(e.target.value)} /></label></div>}
+          <div className={styles.actions}><button className={styles.primary} disabled={busy === 'edit' || !editName.trim()} onClick={saveEdit}>{busy === 'edit' ? 'Saving…' : 'Save changes'}</button></div>
+        </div>
+      )}
       <div className={styles.preview}>
         <h2>Student requests</h2><p>Students can request missing options without creating unsafe catalog records themselves.</p>
         {!requests.length && <p className={styles.empty}>No requests waiting.</p>}
