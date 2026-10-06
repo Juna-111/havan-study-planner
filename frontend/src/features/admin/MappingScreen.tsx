@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { apiFetch } from '@/lib/api'
 import styles from './admin.module.css'
 
-type U = { id: number; name: string; code: string }
+type U = { id: number; name: string; code: string; status: string }
 type C = { id: number; university_id: number; name: string; version: string; status: string }
 type S = { id: number; curriculum_id: number; name: string; code: string; status: string }
 type Course = { id: number; code: string; name: string; credit_hours: number | null; academic_scope: string; status: string }
@@ -31,6 +31,9 @@ export default function MappingScreen() {
   const [search, setSearch] = useState('')
   const [busy, setBusy] = useState<number | null>(null)
   const [error, setError] = useState('')
+  const selectedUniversity = universities.find((item) => String(item.id) === universityId)
+  const selectedCurriculum = curriculums.find((item) => String(item.id) === curriculumId)
+  const selectedStream = streams.find((item) => String(item.id) === streamId)
 
   useEffect(() => {
     Promise.all([
@@ -44,15 +47,16 @@ export default function MappingScreen() {
         setCurriculums(curriculumsResult.items)
         setStreams(streamsResult.items)
         setCourses(coursesResult)
-        if (universitiesResult.items[0]) {
-          setUniversityId(String(universitiesResult.items[0].id))
+        const firstActiveUniversity = universitiesResult.items.find((item) => item.status === 'ACTIVE')
+        if (firstActiveUniversity) {
+          setUniversityId(String(firstActiveUniversity.id))
         }
       })
       .catch((value) => setError(value instanceof Error ? value.message : 'Could not load mapping data.'))
   }, [])
 
   const availableCurriculums = useMemo(
-    () => curriculums.filter((item) => String(item.university_id) === universityId),
+    () => curriculums.filter((item) => String(item.university_id) === universityId && item.status === 'ACTIVE'),
     [curriculums, universityId],
   )
   const availableStreams = useMemo(
@@ -166,14 +170,20 @@ export default function MappingScreen() {
       <header className={styles.header}>
         <span>SETUP</span>
         <h1>Universities & mapping</h1>
-        <p>Choose a stream, then place each course in Semester 1 or 2. Course content stays reusable.</p>
+        <p>Choose the academic path, then place Course Registry courses into Semester 1 or 2. Mapping changes usage only, never the canonical course.</p>
       </header>
       {error && <div className={styles.alert}>{error}</div>}
+      {selectedUniversity && selectedCurriculum && selectedStream && (
+        <div className={styles.health}>
+          <div><b>Mapping path</b><span>{selectedUniversity.code} · {selectedUniversity.name} → {selectedCurriculum.name} · v{selectedCurriculum.version} → {selectedStream.code} · {selectedStream.name}</span></div>
+          <small>Active academic path</small>
+        </div>
+      )}
       <div className={styles.selectors}>
         <label>
           University
           <select value={universityId} onChange={(event) => setUniversityId(event.target.value)}>
-            {universities.map((item) => (
+            {universities.filter((item) => item.status === 'ACTIVE').map((item) => (
               <option key={item.id} value={item.id}>{item.code} · {item.name}</option>
             ))}
           </select>
