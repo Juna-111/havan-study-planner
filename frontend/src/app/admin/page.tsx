@@ -3,15 +3,17 @@
 import { useState } from 'react'
 import AdminGuard from '@/features/admin/AdminGuard'
 import AdminShell, { type AdminMode } from '@/features/admin/AdminShell'
+import AcademicSetupScreen from '@/features/admin/AcademicSetupScreen'
 import MappingScreen from '@/features/admin/MappingScreen'
 import ContentScreen from '@/features/admin/ContentScreen'
 import ImportScreen from '@/features/admin/ImportScreen'
 import QualityScreen from '@/features/admin/QualityScreen'
 
 export default function AdminScreen() {
-  const [mode, setMode] = useState<AdminMode>('mapping')
+  const [mode, setMode] = useState<AdminMode>('academic')
 
   const screen = {
+    academic: <AcademicSetupScreen />,
     mapping: <MappingScreen />,
     content: <ContentScreen />,
     import: <ImportScreen />,
