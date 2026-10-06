@@ -826,7 +826,6 @@ def allocate_selected_topics(
 
     capacities = {day: request.calendar.capacity(day) for day in study_days}
     used_course: dict[date, dict[int, int]] = defaultdict(lambda: defaultdict(int))
-    placed_on_day: dict[date, set[int]] = defaultdict(set)
     sessions: list[PlannedSession] = []
     pinned = dict(request.pinned_topic_dates)
     deferred = set(request.deferred_topic_ids)
@@ -844,6 +843,11 @@ def allocate_selected_topics(
         course_load = used_course[day].get(topic.course_id, 0)
         total_day = sum(used_course[day].values())
         share_penalty = course_load / max(1, total_day)
+        coverage_bonus = (
+            0.18
+            if total_day > 0 and topic.course_id not in used_course[day]
+            else 0.0
+        )
         deferred_penalty = 0.10 if topic.topic_id in deferred and day == study_days[0] else 0.0
         return (
             (deadline_pressure * 0.42)
@@ -851,7 +855,8 @@ def allocate_selected_topics(
             + continuation
             + confidence_need
             + (sequence * 0.16)
-            - (share_penalty * 0.12)
+            + coverage_bonus
+            - (share_penalty * 0.35)
             - deferred_penalty,
             -float(remaining[topic.topic_id]),
             -float(topic.chapter_order),
@@ -882,7 +887,7 @@ def allocate_selected_topics(
             reason=render_reason(parts),
             kind="STUDY",
             components={
-                "deadline_pressure": rank(topic, day)[0],
+                "allocation_score": rank(topic, day)[0],
                 "pace_factor": pace,
                 "remaining_minutes": float(remaining[topic.topic_id]),
             },
@@ -891,7 +896,6 @@ def allocate_selected_topics(
         remaining[topic.topic_id] -= minutes
         capacities[day] -= minutes
         used_course[day][topic.course_id] += minutes
-        placed_on_day[day].add(topic.topic_id)
 
     # Honour explicit dates first. A student's pinned choice is stronger than
     # the allocator's balancing heuristics.
