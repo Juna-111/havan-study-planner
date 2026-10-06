@@ -1,3 +1,5 @@
+from app.core.config import get_settings
+API_PREFIX = get_settings().api_prefix
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
@@ -6,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.services.academic_quality import run_academic_quality_checks
 
-router = APIRouter(prefix="/api/v1", tags=["academic-quality"])
+router = APIRouter(prefix=API_PREFIX, tags=["academic-quality"])
 DB = Annotated[Session, Depends(get_db)]
 
 
