@@ -117,7 +117,8 @@ function Builder() {
                           checked={selected.has(topic.id)}
                           onChange={(checked) => setSelected((old) => {
                             const next = new Set(old)
-                            checked ? next.add(topic.id) : next.delete(topic.id)
+                            if (checked) next.add(topic.id)
+                            else next.delete(topic.id)
                             return next
                           })}
                         />
