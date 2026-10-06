@@ -15,7 +15,7 @@ type Issue = {
 type Quality = {
   summary: { total_records: number; issues: number; errors: number; warnings: number; info: number; active_curriculums: number }
   counts: Record<string, number>
-  readiness: { status: 'ready' | 'warning' | 'error'; active_course_mappings: number }
+  readiness: { status: 'ready' | 'warning' | 'error'; active_course_mappings: number; ready_courses: number }
   issues: Issue[]
 }
 
