@@ -4,6 +4,9 @@ from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+API_PREFIX = "/api/v1"
+
+
 class Settings(BaseSettings):
     app_name: str = "Havan Study Planner API"
     environment: str = "development"
