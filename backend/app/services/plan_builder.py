@@ -10,7 +10,7 @@ from app.db.models.plan import Plan, PlanTask
 from app.db.models.student import StudentProfile
 from app.schemas.plan import PlanInput, PlanOut
 from app.services.plan_adapter import build_request
-from app.services.planner_engine import PlanResult, build_plan
+from app.services.plan.engine import PlanResult, build_plan
 
 
 
