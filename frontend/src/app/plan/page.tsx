@@ -32,6 +32,7 @@ function View() {
     ;(groups[task.planned_date] ||= []).push(task)
     return groups
   }, {}) : {}
+  const orderedDays = Object.entries(groupedTasks).sort(([a], [b]) => a.localeCompare(b))
 
   const act = async (id: number, action: 'START' | 'COMPLETE' | 'SKIP' | 'MOVE' | 'REPEAT') => {
     if (!p) return
@@ -101,64 +102,58 @@ function View() {
             </Chip>
           ))}
 
-          {Object.entries(groupedTasks).map(([date, tasks]) => (
+          {orderedDays.map(([date, tasks]) => (
             <section className="plan-day" key={date}>
               <div className="plan-day-heading">
                 <h2>{date}</h2>
                 <span>{tasks.reduce((total, task) => total + task.minutes, 0)} min</span>
               </div>
               {tasks.map((t) => (
-            <Card key={t.id} as="article" padding="lg" className="plan-task">
-              <div className="row">
-                <Chip tone={t.status === 'DONE' ? 'success' : 'info'}>
-                  {t.status}
-                </Chip>
-                <strong>{t.planned_date}</strong>
-              </div>
+                <Card key={t.id} as="article" padding="lg" className="plan-task">
+                  <div className="row">
+                    <Chip tone={t.status === 'DONE' ? 'success' : 'info'}>
+                      {t.status}
+                    </Chip>
+                    <strong>{t.planned_date}</strong>
+                  </div>
 
-              <h2 className="plan-task-title">{t.topic_name}</h2>
-              <p>{t.reason}</p>
-              <small>
-                {t.minutes} min · {t.course_name}
-              </small>
+                  <h2 className="plan-task-title">{t.topic_name}</h2>
+                  <p>{t.reason}</p>
+                  <small>
+                    {t.minutes} min · {t.course_name}
+                  </small>
 
-              <div className="plan-task-actions">
-                {t.status !== 'DONE' && (
-                  <Button
-                    onClick={() =>
-                      act(t.id, t.status === 'PLANNED' ? 'START' : 'COMPLETE')
-                    }
-                  >
-                    {t.status === 'PLANNED' ? 'Start' : 'Complete'}
-                  </Button>
-                )}
-                {t.status !== 'DONE' && (
-                  <Button variant="ghost" onClick={() => act(t.id, 'SKIP')}>
-                    Skip
-                  </Button>
-                )}
-                {t.status === 'DONE' && (
-                  <Button variant="ghost" onClick={() => act(t.id, 'REPEAT')}>
-                    Repeat
-                  </Button>
-                )}
-                {t.status !== 'DONE' && (
-                  <>
+                  <div className="plan-task-actions">
+                    {t.status !== 'DONE' && (
+                      <Button
+                        onClick={() =>
+                          act(t.id, t.status === 'PLANNED' ? 'START' : 'COMPLETE')
+                        }
+                      >
+                        {t.status === 'PLANNED' ? 'Start' : 'Complete'}
+                      </Button>
+                    )}
+                    {t.status !== 'DONE' && (
+                      <Button variant="ghost" onClick={() => act(t.id, 'SKIP')}>
+                        Skip
+                      </Button>
+                    )}
                     <label className="plan-task-date">
-                      <span>Move to</span>
+                      <span>{t.status === 'DONE' ? 'Repeat on' : 'Move to'}</span>
                       <input
                         type="date"
                         value={targetDates[t.id] || ''}
                         onChange={(event) => setTargetDates((old) => ({ ...old, [t.id]: event.target.value }))}
                       />
                     </label>
-                    <Button variant="secondary" onClick={() => act(t.id, 'MOVE')}>
-                      Reschedule
+                    <Button
+                      variant={t.status === 'DONE' ? 'ghost' : 'secondary'}
+                      onClick={() => act(t.id, t.status === 'DONE' ? 'REPEAT' : 'MOVE')}
+                    >
+                      {t.status === 'DONE' ? 'Repeat' : 'Reschedule'}
                     </Button>
-                  </>
-                )}
-              </div>
-            </Card>
+                  </div>
+                </Card>
               ))}
             </section>
           ))}
