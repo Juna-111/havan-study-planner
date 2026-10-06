@@ -1,4 +1,5 @@
 from app.core.config import API_PREFIX
+from app.core.deps import current_account, require_student_owner
 from collections import defaultdict
 from datetime import date, datetime, timedelta, timezone
 
@@ -14,7 +15,7 @@ from app.db.session import get_db
 from app.schemas.planner import PlanGenerateRequest, StudyPlanDay, StudyPlanRead, StudyTaskAction
 from app.services.planner import generate_plan, load_plan, replan_remaining
 
-router = APIRouter(prefix="/api/v1/planner", tags=["planner"])
+router = APIRouter(prefix=f"{API_PREFIX}/planner", tags=["planner"])
 
 
 def _validate_move_target(
@@ -95,12 +96,12 @@ def generate_from_request(
     payload: PlanGenerateRequest,
     db: Session = Depends(get_db),
 ):
-    if payload.student_id is None:
+    account = current_account_from_request\n    if payload.student_id is None:
         raise HTTPException(status_code=422, detail="student_id is required")
     return _generate(db, payload.student_id, payload.horizon_days)
 
 
-@router.post("/students/{student_id}/generate", response_model=StudyPlanRead)
+@router.post("/students/{student_id}/generate", dependencies=[Depends(require_student_owner)], response_model=StudyPlanRead)
 def create_plan(
     student_id: int,
     payload: PlanGenerateRequest,
@@ -109,7 +110,7 @@ def create_plan(
     return _generate(db, student_id, payload.horizon_days)
 
 
-@router.post("/students/{student_id}/replan", response_model=StudyPlanRead)
+@router.post("/students/{student_id}/replan", dependencies=[Depends(require_student_owner)], response_model=StudyPlanRead)
 def replan_student(
     student_id: int,
     payload: PlanGenerateRequest,
@@ -124,7 +125,7 @@ def replan_student(
 
 
 
-@router.post("/students/{student_id}/add", response_model=StudyPlanRead)
+@router.post("/students/{student_id}/add", dependencies=[Depends(require_student_owner)], response_model=StudyPlanRead)
 def add_student_task(
     student_id: int,
     payload: StudyTaskAction,
@@ -175,7 +176,7 @@ def add_student_task(
     db.commit()
     return _plan_response(plan, _tasks_for_plan(db, plan.id))
 
-@router.post("/students/{student_id}/tasks/{task_id}/action", response_model=StudyPlanRead)
+@router.post("/students/{student_id}/tasks/{task_id}/action", dependencies=[Depends(require_student_owner)], response_model=StudyPlanRead)
 def act_on_task(
     student_id: int,
     task_id: int,
@@ -382,7 +383,7 @@ def act_on_task(
     return _plan_response(plan, _tasks_for_plan(db, plan.id))
 
 
-@router.get("/students/{student_id}/latest", response_model=StudyPlanRead)
+@router.get("/students/{student_id}/latest", dependencies=[Depends(require_student_owner)], response_model=StudyPlanRead)
 def latest_plan(student_id: int, db: Session = Depends(get_db)):
     plan = load_plan(db, student_id)
     if not plan:
