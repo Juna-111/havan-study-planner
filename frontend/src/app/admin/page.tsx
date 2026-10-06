@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import AdminGuard from '@/features/admin/AdminGuard'\nimport AdminOverview from '@/features/admin/AdminOverview'
+import AdminGuard from '@/features/admin/AdminGuard'
+import AdminOverview from '@/features/admin/AdminOverview'
 import AdminShell, { type AdminMode } from '@/features/admin/AdminShell'
 import AcademicSetupScreen from '@/features/admin/AcademicSetupScreen'
 import MappingScreen from '@/features/admin/MappingScreen'
@@ -13,6 +14,7 @@ export default function AdminScreen() {
   const [mode, setMode] = useState<AdminMode>('overview')
 
   const screen = {
+    overview: <AdminOverview onMode={setMode} />,
     academic: <AcademicSetupScreen />,
     mapping: <MappingScreen />,
     content: <ContentScreen />,
