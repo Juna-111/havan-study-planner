@@ -104,7 +104,7 @@ def get_my_exams(student: Annotated[StudentProfile, Depends(current_student)], d
     return list_exams(student.id, db)
 
 
-@router.post("/profiles", response_model=StudentRead, status_code=status.HTTP_201_CREATED)\ndef
+@router.post("/profiles", response_model=StudentRead, status_code=status.HTTP_201_CREATED)
 def create_profile(payload: StudentCreate, db: DB, account: Annotated[StudentAccount, Depends(current_account)]):
     validate_curriculum_context(db, payload.university_id, payload.curriculum_id, payload.stream_id)
     existing = db.scalar(select(StudentProfile).where(StudentProfile.account_id == account.id))
