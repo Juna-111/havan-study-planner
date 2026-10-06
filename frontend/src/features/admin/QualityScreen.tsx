@@ -13,23 +13,15 @@ type Issue = {
 }
 
 type Quality = {
-  summary: {
-    total_records: number
-    issues: number
-    errors: number
-    warnings: number
-    info: number
-    active_curriculums: number
-  }
+  summary: { total_records: number; issues: number; errors: number; warnings: number; info: number; active_curriculums: number }
   counts: Record<string, number>
-  readiness: {
-    status: 'ready' | 'warning' | 'error'
-    active_course_mappings: number
-  }
+  readiness: { status: 'ready' | 'warning' | 'error'; active_course_mappings: number }
   issues: Issue[]
 }
 
-export default function QualityScreen() {
+type Props = { onMode: (mode: 'academic' | 'mapping' | 'registry' | 'content') => void }
+
+export default function QualityScreen({ onMode }: Props) {
   const [data, setData] = useState<Quality | null>(null)
   const [filter, setFilter] = useState('all')
   const [error, setError] = useState('')
@@ -40,13 +32,7 @@ export default function QualityScreen() {
     setChecking(true)
     apiFetch<Quality>('/academic-quality')
       .then(setData)
-      .catch((value) =>
-        setError(
-          value instanceof Error
-            ? value.message
-            : 'Could not load quality checks.',
-        ),
-      )
+      .catch((value) => setError(value instanceof Error ? value.message : 'Could not load quality checks.'))
       .finally(() => setChecking(false))
   }
 
@@ -57,12 +43,19 @@ export default function QualityScreen() {
     [data, filter],
   )
 
+  function fix(issue: Issue) {
+    if (issue.entity_type === 'course_mapping') onMode('mapping')
+    else if (issue.entity_type === 'course') onMode('registry')
+    else if (issue.entity_type === 'chapter' || issue.entity_type === 'topic') onMode('content')
+    else onMode('academic')
+  }
+
   return (
     <section>
       <header className={styles.header}>
-        <span>QUALITY</span>
-        <h1>Academic quality</h1>
-        <p>Check the data that feeds the Havan planner before it reaches students.</p>
+        <span>QUALITY · D8</span>
+        <h1>Academic data readiness</h1>
+        <p>Find missing hierarchy, mapping, and learning-content data before it reaches students.</p>
         <button className={styles.primary} disabled={checking} onClick={load}>
           {checking ? 'Checking…' : 'Recheck data'}
         </button>
@@ -70,22 +63,11 @@ export default function QualityScreen() {
 
       {error && <div className={styles.alert}>{error}</div>}
 
-      {!data && !error ? (
-        <div className={styles.empty}>Running checks…</div>
-      ) : data ? (
+      {!data && !error ? <div className={styles.empty}>Running checks…</div> : data ? (
         <>
           <div className={styles.health}>
-            <b>
-              {data.summary.errors
-                ? 'Action needed'
-                : data.summary.warnings
-                  ? 'Review recommended'
-                  : 'Academic data is clean'}
-            </b>
-            <span>
-              {data.summary.issues} issues · {data.readiness.active_course_mappings}{' '}
-              active course mappings
-            </span>
+            <b>{data.summary.errors ? 'Action needed' : data.summary.warnings ? 'Review recommended' : 'Academic data is clean'}</b>
+            <span>{data.summary.issues} issues · readiness: {data.readiness.status}</span>
           </div>
 
           <div className={styles.stats}>
@@ -94,42 +76,31 @@ export default function QualityScreen() {
               ['Warnings', data.summary.warnings],
               ['Info', data.summary.info],
               ['Records', data.summary.total_records],
+              ['Ready courses', data.counts.courses ? data.readiness.active_course_mappings : 0],
             ].map(([label, value]) => (
-              <div key={String(label)}>
-                <span>{label}</span>
-                <b>{value}</b>
-              </div>
+              <div key={String(label)}><span>{label}</span><b>{value}</b></div>
             ))}
           </div>
 
           <div className={styles.tabs}>
             {['all', 'error', 'warning', 'info'].map((value) => (
-              <button
-                className={filter === value ? styles.active : ''}
-                key={value}
-                onClick={() => setFilter(value)}
-              >
-                {value}
-              </button>
+              <button className={filter === value ? styles.active : ''} key={value} onClick={() => setFilter(value)}>{value}</button>
             ))}
           </div>
 
           <div className={styles.issueList}>
-            {issues.map((item, index) => (
-              <article className={styles.issue} key={index}>
+            {issues.map((item) => (
+              <article className={styles.issue} key={item.entity_type + '-' + item.entity_id + '-' + item.title}>
                 <b>{item.severity}</b>
                 <div>
                   <strong>{item.title}</strong>
                   <p>{item.message}</p>
-                  <small>
-                    {item.entity_type} #{item.entity_id}
-                  </small>
+                  <small>{item.entity_type} #{item.entity_id}</small>
                 </div>
+                <button onClick={() => fix(item)}>Review</button>
               </article>
             ))}
-            {!issues.length && (
-              <div className={styles.empty}>No issues in this filter.</div>
-            )}
+            {!issues.length && <div className={styles.empty}>No issues in this filter.</div>}
           </div>
         </>
       ) : null}
