@@ -1,6 +1,6 @@
 'use client'
 import {useEffect,useMemo,useState} from 'react'
-import {apiFetch} from '../../lib/api'
+import {apiFetch} from '@/lib/api'
 import styles from './admin.module.css'
 type U={id:number;name:string;code:string};type C={id:number;university_id:number;name:string;version:string;status:string};type S={id:number;curriculum_id:number;name:string;code:string;status:string};type Course={id:number;code:string;name:string;credit_hours:number|null;academic_scope:string;status:string};type M={id:number;stream_id:number;course_id:number;course_code:string;course_name:string;credit_hours:number|null;semester_number:number;order_index:number}
 export default function MappingScreen(){
