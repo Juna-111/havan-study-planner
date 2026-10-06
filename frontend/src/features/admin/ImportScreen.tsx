@@ -16,83 +16,96 @@ export default function ImportScreen() {
   const [file, setFile] = useState<File | null>(null)
   const [version, setVersion] = useState('1.0')
   const [preview, setPreview] = useState<Preview[]>([])
-  const [busy, setBusy] = useState(false)
+  const [busy, setBusy] = useState<'preview' | 'save' | null>(null)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+
+  function clearResult() {
+    setPreview([])
+    setMessage('')
+    setError('')
+  }
 
   async function previewImport() {
     if (!file) {
       setError('Choose a .txt or .md file.')
       return
     }
-    setBusy(true)
+    setBusy('preview')
     setError('')
+    setMessage('')
     try {
       const fd = new FormData()
       fd.append('file', file)
-      setPreview(await apiFetch<Preview[]>('/freshman-registry-import/preview?content_version=' + encodeURIComponent(version), { method: 'POST', body: fd }))
-      setMessage('Preview ready. Nothing is saved yet.')
+      const result = await apiFetch<Preview[]>(
+        '/freshman-registry-import/preview?content_version=' + encodeURIComponent(version.trim() || '1.0'),
+        { method: 'POST', body: fd },
+      )
+      setPreview(result)
+      setMessage(result.length + ' course' + (result.length === 1 ? '' : 's') + ' parsed. Nothing is saved yet.')
     } catch (e) {
+      setPreview([])
       setError(e instanceof Error ? e.message : 'Could not preview the file.')
     } finally {
-      setBusy(false)
+      setBusy(null)
     }
   }
 
   async function save() {
-    setBusy(true)
+    if (!preview.length) return
+    setBusy('save')
     setError('')
     try {
-      await apiFetch('/freshman-registry-import/commit', { method: 'POST', body: JSON.stringify(preview) })
-      setMessage('Import saved.')
+      const result = await apiFetch<Preview[]>('/freshman-registry-import/commit', {
+        method: 'POST',
+        body: JSON.stringify(preview),
+      })
+      setMessage(result.length + ' course' + (result.length === 1 ? '' : 's') + ' imported successfully.')
       setPreview([])
       setFile(null)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not save the import.')
+      setError(e instanceof Error ? e.message : 'Could not save the import. No records were saved.')
     } finally {
-      setBusy(false)
+      setBusy(null)
     }
   }
+
+  const topicCount = preview.reduce((sum, course) => sum + course.chapters.reduce((chapterSum, chapter) => chapterSum + chapter.topics.length, 0), 0)
 
   return (
     <section>
       <header className={styles.header}>
-        <span>CONTENT · IMPORT</span>
-        <h1>Import courses</h1>
-        <p>Upload UTF-8 .txt or .md course files, review the hierarchy, then save it to the reusable registry.</p>
+        <span>CONTENT · D9 IMPORT</span>
+        <h1>Import academic content safely</h1>
+        <p>Preview the established Course → Chapter → Topic format before anything is written to the registry.</p>
       </header>
       {(message || error) && <div className={error ? styles.alert : styles.notice}>{error || message}</div>}
       <div className={styles.importCard}>
-        <label>
-          Content version
-          <input value={version} onChange={(e) => setVersion(e.target.value)} />
-        </label>
-        <input type="file" accept=".txt,.md,text/plain,text/markdown" onChange={(e) => { setFile(e.target.files?.[0] || null); setPreview([]) }} />
-        <pre>{'Course: [Math 1011] Applied Mathematics I\nChapter: Measurement\n  • Physical quantities [3]\n  • Units and dimensions [2]'}</pre>
-        <button className={styles.primary} disabled={busy || !file} onClick={previewImport}>
-          {busy ? 'Working…' : 'Preview course'}
-        </button>
+        <label>Content version<input value={version} onChange={(e) => setVersion(e.target.value)} /></label>
+        <input type="file" accept=".txt,.md,text/plain,text/markdown" onChange={(e) => { setFile(e.target.files?.[0] || null); clearResult() }} />
+        <pre>{'Course: [PHY101] Physics\nChapter: Measurement\n  • Physical quantities [3]\n  • Units and dimensions [2]'}</pre>
+        <div className={styles.actions}>
+          <button disabled={busy !== null || !file} onClick={previewImport}>{busy === 'preview' ? 'Parsing…' : 'Preview import'}</button>
+          <button className={styles.primary} disabled={busy !== null || !preview.length} onClick={save}>{busy === 'save' ? 'Saving…' : 'Confirm and save'}</button>
+        </div>
       </div>
       {preview.length > 0 && (
         <div className={styles.preview}>
-          <h2>Review before saving</h2>
-          {preview.map((course, index) => (
-            <div key={index}>
+          <h2>Import review</h2>
+          <p>{preview.length} courses · {topicCount} topics. Duplicate registry identities are rejected before saving.</p>
+          {preview.map((course) => (
+            <article key={course.code + '-' + course.content_version}>
               <b>{course.code} · {course.name}</b>
-              {course.chapters.map((chapter, chapterIndex) => (
-                <div className={styles.indent} key={chapterIndex}>
+              <small>Version {course.content_version}</small>
+              {course.chapters.map((chapter) => (
+                <div className={styles.indent} key={chapter.name}>
                   <strong>{chapter.name}</strong>
-                  {chapter.topics.map((topic, topicIndex) => (
-                    <span key={topicIndex}>{topic.name} · difficulty {topic.difficulty}</span>
-                  ))}
+                  {chapter.topics.map((topic) => <span key={topic.name}>{topic.name} · difficulty {topic.difficulty}</span>)}
                 </div>
               ))}
-            </div>
+            </article>
           ))}
-          <div className={styles.actions}>
-            <button onClick={() => setPreview([])}>Cancel</button>
-            <button className={styles.primary} disabled={busy} onClick={save}>Confirm and save</button>
-          </div>
+          <button onClick={clearResult}>Discard preview</button>
         </div>
       )}
     </section>
