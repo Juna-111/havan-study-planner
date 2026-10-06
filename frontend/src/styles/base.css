@@ -1,5 +1,15 @@
 * { box-sizing:border-box } html { min-width:320px; background:var(--color-canvas) }
-body { margin:0; min-width:320px; min-height:100svh; color:var(--color-ink); background:var(--color-canvas); font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; line-height:1.5; font-synthesis:none; -webkit-font-smoothing:antialiased }
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100svh;
+  color: var(--color-ink);
+  background: var(--color-canvas);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.5;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+}
 
 button,input,select,textarea { font:inherit }
 
