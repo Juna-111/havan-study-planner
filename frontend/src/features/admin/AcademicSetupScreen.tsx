@@ -36,7 +36,7 @@ export default function AcademicSetupScreen() {
   useEffect(() => { load() }, [])
 
   async function addUniversity() {
-    if (!universityName.trim() || !universityCode.trim()) return
+    if (!universityName.trim()) return
     setBusy('university'); setError('')
     try {
       await apiFetch('/universities', { method: 'POST', body: JSON.stringify({ name: universityName.trim(), code: universityCode.trim().toUpperCase(), status: 'ACTIVE' }) })
