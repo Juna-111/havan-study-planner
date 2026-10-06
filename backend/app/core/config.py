@@ -35,9 +35,18 @@ class Settings(BaseSettings):
         populate_by_name=True,
     )
 
+    @model_validator(mode="before")
+    @classmethod
+    def reject_explicit_production_placeholder(cls, values: object) -> object:
+        if isinstance(values, dict) and str(values.get("environment", "")).strip().lower() == "production":
+            secret = values.get("auth_secret", values.get("AUTH_SECRET"))
+            if secret == "change-this-secret-in-production" or (isinstance(secret, str) and len(secret) < 32):
+                raise RuntimeError("AUTH_SECRET must be set to 32+ random characters")
+        return values
+
     @model_validator(mode="after")
     def validate_production_secret(self) -> "Settings":
-        if self.environment == "production" and (
+        if self.environment.strip().lower() == "production" and (
             self.auth_secret == "change-this-secret-in-production" or len(self.auth_secret) < 32
         ):
             raise RuntimeError("AUTH_SECRET must be set to 32+ random characters")

@@ -64,5 +64,5 @@ def test_cors_has_no_wildcard_host_regex():
 
 
 def test_password_reset_does_not_create_schema_at_runtime():
-    source = Path(__file__).resolve().parents[1] / "app" / "api" / "auth.py"
+    source = Path(__file__).resolve().parents[2] / "app" / "api" / "auth.py"
     assert "__table__.create" not in source.read_text(encoding="utf-8")
