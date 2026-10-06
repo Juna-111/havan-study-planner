@@ -130,6 +130,20 @@ def apply_action(
         if task.status not in {"PLANNED", "IN_PROGRESS", "MOVED"}:
             raise ValueError("Only planned work can be removed.")
         task.status = "REMOVED"
+        existing = {item.get("topic_id") for item in plan.unplaced}
+        if task.topic_id not in existing:
+            plan.unplaced = list(plan.unplaced) + [{
+                "topic_id": task.topic_id,
+                "topic_name": db.get(Topic, task.topic_id).name if db.get(Topic, task.topic_id) else "Selected topic",
+                "course_id": task.course_id,
+                "minutes": task.minutes,
+                "reason_code": "removed",
+            }]
+        plan.total_minutes = sum(
+            row.minutes for row in db.scalars(
+                select(PlanTask).where(PlanTask.plan_id == plan.id, PlanTask.status != "REMOVED")
+            ).all()
+        )
         db.commit()
         return plan, None
 
