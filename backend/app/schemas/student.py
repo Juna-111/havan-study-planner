@@ -17,6 +17,7 @@ class AuthLogin(BaseModel):
 class AuthAccountRead(BaseModel):
     id: int
     email: str
+    role: Literal["STUDENT", "ADMIN"]
     student_profile_id: Optional[int] = None
 
 
