@@ -30,6 +30,7 @@ export function PlanBuilder() {
   const [hours, setHours] = useState(2)
   const [error, setError] = useState('')
   const [preview, setPreview] = useState<Plan | null>(null)
+  const [busy, setBusy] = useState<'preview' | 'save' | null>(null)
 
   useEffect(() => {
     const requestedMode = new URLSearchParams(window.location.search).get('mode')
@@ -80,21 +81,29 @@ export function PlanBuilder() {
   }), [mode, horizon, selected, known, profile?.study_days, minutesByDay, hours])
 
   async function previewIt() {
+    if (busy) return
     try {
       setError('')
+      setBusy('preview')
       setPreview(await previewPlan(input))
     } catch (value) {
       setError(value instanceof Error ? value.message : 'Could not preview your plan.')
+    } finally {
+      setBusy(null)
     }
   }
 
   async function saveIt() {
+    if (busy) return
     try {
       setError('')
+      setBusy('save')
       await savePlan(input)
       router.push('/plan')
     } catch (value) {
       setError(value instanceof Error ? value.message : 'Could not save your plan.')
+    } finally {
+      setBusy(null)
     }
   }
 
@@ -219,8 +228,12 @@ export function PlanBuilder() {
       )}
 
       <StickyActionBar>
-        <Button disabled={!selected.size} variant="secondary" onClick={previewIt}>Preview</Button>
-        <Button disabled={!selected.size} onClick={saveIt}>Create plan</Button>
+        <Button disabled={!selected.size || busy !== null} variant="secondary" onClick={previewIt}>
+          {busy === 'preview' ? 'Previewing...' : 'Preview'}
+        </Button>
+        <Button disabled={!selected.size || busy !== null} onClick={saveIt}>
+          {busy === 'save' ? 'Creating...' : 'Create plan'}
+        </Button>
       </StickyActionBar>
     </AppShell>
   )
