@@ -123,3 +123,36 @@ Not run in the GitHub workspace. Required before Phase 5 is GREEN:
 - frontend `npm run build`
 - manual review at 320, 360, 390, 768, 1024, and 1280 px for overflow and keyboard focus
 - contrast check of all semantic token pairs
+
+
+## Phase 6 — Student Screens on the New API
+
+Status: IMPLEMENTED / LOCAL VERIFICATION PENDING
+
+### Branch
+- `rebuild/phase-6-student-api`
+- Base: Phase 5 Design System
+
+### Implemented
+- Added the new student routes: `/home`, `/plan`, `/plan/new`, `/progress`, `/settings`, and `/onboarding`.
+- Added `StudentGate` so private student screens require an authenticated STUDENT account with a student profile.
+- Added a typed frontend Plan API client for current plans, plan creation, and task actions. Browser code does not contain allocation or scheduling logic.
+- Rebuilt plan creation around explicit student topic selection, study horizon, and available hours, then delegates organization to the backend Plan engine.
+- Rebuilt the plan screen around persisted Plan tasks and explicit START, COMPLETE, and SKIP actions, including the backend-provided one-sentence reason.
+- Added student home, progress, settings, and onboarding surfaces using the new account/profile APIs.
+- Onboarding creates an account-bound student profile and selected courses through the protected student APIs.
+- Redirected the legacy `/student/*` planner, Havan Today/Week/Month, and setup routes into the single new student journey instead of maintaining duplicate implementations.
+- Updated authentication redirects to land on `/home` or `/onboarding`.
+- Added a frontend test for the Plan task-action API client.
+- Removed the old student dashboard/planner implementation from the active route path; old route files now only redirect.
+
+### Verification
+Not run in the GitHub workspace. Required before Phase 6 is GREEN:
+- frontend `npm test`
+- frontend `npx tsc --noEmit`
+- frontend `npm run lint`
+- frontend `npm run build`
+- backend Plan/security tests and scratch-database migration checks
+- manual student journey review at 320, 360, 390, 768, 1024, and 1280 px
+- verify no horizontal scroll and no browser-side allocation/scheduling implementation
+- verify student isolation by attempting plan access/actions with a different authenticated student
