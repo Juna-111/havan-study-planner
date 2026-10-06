@@ -42,10 +42,10 @@ export default function PlanView() {
     <AppShell>
       <PageHeader
         title="Your plan"
-        description="Every task has a reason. You decide what happens next."
+        description="You chose these topics. Now control how each study task fits your time."
         action={
-          <Button variant="secondary" onClick={() => (location.href = '/plan/new')}>
-            Change plan
+          <Button variant="secondary" onClick={() => (location.href = '/student/havan')}>
+            Change selected topics
           </Button>
         }
       />
@@ -54,7 +54,7 @@ export default function PlanView() {
       ) : !p ? (
         <EmptyState
           title="No plan yet"
-          hint="Build a plan from topics you choose."
+          hint="Choose study topics from topics you choose."
           action={
             <Button onClick={() => (location.href = '/plan/new')}>
               Build a plan
