@@ -11,19 +11,28 @@ const groups = [
     items: [['overview', 'Admin overview']],
   },
   {
-    label: 'SETUP',
-    items: [['academic', 'Academic catalog'], ['curriculum', 'Curriculum hierarchy'], ['streams', 'Stream management'], ['mapping', 'Course mapping']],
+    label: 'ACADEMIC SETUP',
+    items: [
+      ['academic', 'Academic catalog'],
+      ['curriculum', 'Curriculum hierarchy'],
+      ['streams', 'Stream management'],
+      ['mapping', 'Course mapping'],
+    ],
   },
   {
-    label: 'CONTENT',
+    label: 'ACADEMIC CONTENT',
     items: [
-      ['content', 'Courses, chapters & topics'], ['registry', 'Course Registry'],
+      ['registry', 'Course Registry'],
+      ['content', 'Chapters & topics'],
       ['import', 'Import courses'],
     ],
   },
   {
-    label: 'QUALITY',
-    items: [['quality', 'Academic quality'], ['requests', 'Student requests']],
+    label: 'CONTROL',
+    items: [
+      ['quality', 'Academic quality'],
+      ['requests', 'Student requests'],
+    ],
   },
 ] as const
 
@@ -57,23 +66,26 @@ export default function AdminShell({
           </div>
         </div>
 
-        {groups.map((group) => (
-          <div className={styles.group} key={group.label}>
-            <span>{group.label}</span>
-            {group.items.map(([id, label]) => (
-              <button
-                key={id}
-                className={mode === id ? styles.active : ''}
-                onClick={() => {
-                  onMode(id)
-                  setOpen(false)
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        ))}
+        <nav aria-label="Admin navigation">
+          {groups.map((group) => (
+            <div className={styles.group} key={group.label}>
+              <span>{group.label}</span>
+              {group.items.map(([id, label]) => (
+                <button
+                  key={id}
+                  className={mode === id ? styles.active : ''}
+                  aria-current={mode === id ? 'page' : undefined}
+                  onClick={() => {
+                    onMode(id)
+                    setOpen(false)
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          ))}
+        </nav>
 
         <a href="/home" className={styles.homeLink}>
           Open student home ↗
