@@ -5,7 +5,7 @@ import { Card, Checkbox, Select } from '@/components/ui'
 import { apiFetch } from '@/lib/api'
 import AcademicCatalogRequest from './AcademicCatalogRequest'
 
-type Opt = { id: number; name: string }
+type Opt = { id: number; name: string; status?: string }
 type Course = { id: number; code: string; name: string }
 type Page<T> = { items: T[]; page: number; page_size: number; total: number; pages: number }
 
@@ -65,7 +65,10 @@ export default function StepAcademic(props: Props) {
           </label>
           <Select label="University" value={props.university} onChange={props.onUniversity} options={unis.map((x) => ({ value: String(x.id), label: x.name }))} />
           <Select label="Curriculum" value={props.curriculum} onChange={props.onCurriculum} options={curricula.map((x) => ({ value: String(x.id), label: x.name }))} />
-          <Select label="Stream" value={props.stream} onChange={props.onStream} options={streams.map((x) => ({ value: String(x.id), label: x.name }))} />
+          <div>
+            <Select label="Stream (required)" value={props.stream} onChange={props.onStream} options={streams.filter((x) => x.status === 'ACTIVE').map((x) => ({ value: String(x.id), label: x.name }))} />
+            {props.curriculum && !streams.some((x) => x.status === 'ACTIVE') && <p className="app-copy">No active stream has been added for this curriculum yet. Ask the Havan admin to add it.</p>}
+          </div>
         </div>
       </Card>
 
