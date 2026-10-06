@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from dataclasses import replace
 
+from app.core.time import to_index
 from app.db.models.curriculum import Chapter, Course, Topic
 from app.db.models.plan import Plan, PlanTask
 from app.db.models.student import StudentProfile
@@ -31,7 +32,7 @@ def _add_pin_warnings(result: PlanResult, plan_input: PlanInput) -> PlanResult:
             if session.planned_date == pinned_date and session.topic_id in plan_input.pinned_topic_dates
         )
         if pinned_minutes > default_minutes:
-            extra.append(__import__("app.services.planner_engine", fromlist=["PlanWarning"]).PlanWarning(
+            extra.append(PlanWarning(
                 "PIN_OVER_CAPACITY", f"{pinned_date.isoformat()} is full. We kept the pinned topic there as you chose."
             ))
 
