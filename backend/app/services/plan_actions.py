@@ -209,7 +209,12 @@ def apply_action(
         warnings: list[str] = []
         if payload.target_date.weekday() not in {to_index(day) for day in _input_from_snapshot(plan).study_days}:
             warnings.append("PIN_NON_STUDY_DAY")
-        capacity = student.study_hours_per_day * 60
+        snapshot = _input_from_snapshot(plan)
+        weekday_key = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")[payload.target_date.weekday()]
+        configured_capacity = snapshot.minutes_by_weekday.get(
+            weekday_key,
+            max(5, round(snapshot.hours_per_day * 60 / 5) * 5),
+        )
         used = sum(
             row.minutes
             for row in db.scalars(
@@ -221,7 +226,7 @@ def apply_action(
                 )
             ).all()
         )
-        if used + task.minutes > capacity:
+        if used + task.minutes > configured_capacity:
             warnings.append("MOVE_OVER_CAPACITY")
         db.commit()
         return plan, warnings
