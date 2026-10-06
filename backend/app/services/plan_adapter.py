@@ -143,20 +143,25 @@ def build_request(
     default_minutes = max(5, round(plan_input.hours_per_day * 60 / 5) * 5)
     pin_dates = pinned_topic_dates or plan_input.pinned_topic_dates
     pin_topic_ids = set(pin_dates)
-    pin_minutes = {
-        topic.id: max(5, topic.estimated_study_minutes - int(progress[topic.id].completed_minutes if topic.id in progress else 0))
-        for topic in topics if topic.id in pin_topic_ids
-    }
     for pinned_date in pin_dates.values():
         weekdays = frozenset(set(weekdays) | {pinned_date.weekday()})
     minutes_by_weekday = {
         day: minutes_by_weekday.get(day, default_minutes)
         for day in weekdays
     }
+    capacity_overrides = {}
+    for pinned_date in pin_dates.values():
+        extra = sum(
+            max(5, topic.estimated_study_minutes - int(progress[topic.id].completed_minutes if topic.id in progress else 0))
+            for topic in topics
+            if pin_dates.get(topic.id) == pinned_date
+        )
+        capacity_overrides[pinned_date] = default_minutes + extra
     calendar = StudyCalendar(
         study_weekdays=weekdays,
         daily_minutes=default_minutes,
         minutes_by_weekday=minutes_by_weekday,
+        capacity_overrides=capacity_overrides,
         done_minutes={today: _done_minutes_today(db, student.id, today)},
     )
 
