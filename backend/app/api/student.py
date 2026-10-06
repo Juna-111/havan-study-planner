@@ -1,5 +1,5 @@
 from app.core.config import API_PREFIX
-from app.core.deps import current_account, require_student_owner
+from app.core.deps import current_account, current_student, require_student_owner
 from datetime import datetime, timezone
 from typing import Annotated
 
@@ -76,6 +76,31 @@ def validate_curriculum_context(db: Session, university_id: int, curriculum_id: 
         raise HTTPException(status_code=400, detail="Curriculum does not belong to the selected university")
     if stream.curriculum_id != curriculum_id:
         raise HTTPException(status_code=400, detail="Stream does not belong to the selected curriculum")
+
+
+@router.get("/me/profile", response_model=StudentRead)
+def get_my_profile(student: Annotated[StudentProfile, Depends(current_student)]):
+    return student
+
+
+@router.get("/me/context", response_model=StudentContext)
+def get_my_context(student: Annotated[StudentProfile, Depends(current_student)], db: DB):
+    return get_context(student.id, db)
+
+
+@router.get("/me/courses", response_model=list[StudentCourseRead])
+def get_my_courses(student: Annotated[StudentProfile, Depends(current_student)], db: DB):
+    return list_courses(student.id, db)
+
+
+@router.get("/me/progress", response_model=list[ProgressRead])
+def get_my_progress(student: Annotated[StudentProfile, Depends(current_student)], db: DB):
+    return list_progress(student.id, db)
+
+
+@router.get("/me/exams", response_model=list[ExamRead])
+def get_my_exams(student: Annotated[StudentProfile, Depends(current_student)], db: DB):
+    return list_exams(student.id, db)
 
 
 @router.post("/profiles", response_model=StudentRead, status_code=status.HTTP_201_CREATED)\ndef
