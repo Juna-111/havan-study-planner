@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.time import today_local
-from app.db.models.curriculum import Course, Topic
+from app.db.models.curriculum import Chapter, Course, Topic
 from app.db.models.plan import Plan, PlanTask
 from app.db.models.student import StudentProfile
 from app.schemas.plan import PlanInput, PlanOut
@@ -48,16 +48,25 @@ def _result_to_out(
     topic_ids = {session.topic_id for session in result.sessions} | {item.topic_id for item in result.unplaced}
     topics = list(db.scalars(select(Topic).where(Topic.id.in_(topic_ids))).all()) if topic_ids else []
     topic_map = {topic.id: topic for topic in topics}
-    course_ids = {topic.chapter.course_id for topic in topics if topic.chapter}
+    chapter_ids = {topic.chapter_id for topic in topics}
+    chapters = list(db.scalars(select(Chapter).where(
+        __import__("app.db.models.curriculum", fromlist=["Chapter"]).Chapter.id.in_(chapter_ids)
+    )).all()) if chapter_ids else []
+    chapter_map = {chapter.id: chapter for chapter in chapters}
+    course_ids = {chapter.course_id for chapter in chapters}
     courses = list(db.scalars(select(Course).where(Course.id.in_(course_ids))).all()) if course_ids else []
     course_map = {course.id: course for course in courses}
+    saved_tasks = list(db.scalars(
+        select(PlanTask).where(PlanTask.plan_id == saved_plan.id).order_by(PlanTask.id)
+    ).all()) if saved_plan else []
 
     tasks = []
-    for index, session in enumerate(result.sessions, start=1):
+    for index, session in enumerate(result.sessions):
         topic = topic_map[session.topic_id]
-        course = course_map[session.course_id]
+        course_id = chapter_map[topic.chapter_id].course_id
+        course = course_map[course_id]
         tasks.append({
-            "id": saved_plan.tasks[index - 1].id if saved_plan and index <= len(saved_plan.tasks) else 0,
+            "id": saved_tasks[index].id if index < len(saved_tasks) else 0,
             "course_id": course.id,
             "course_code": course.code,
             "course_name": course.name,
@@ -69,7 +78,7 @@ def _result_to_out(
             "reason": session.reason,
             "reason_parts": [list(part) for part in session.reason_parts],
             "kind": session.kind,
-            "status": "PLANNED",
+            "status": saved_tasks[index].status if index < len(saved_tasks) else "PLANNED",
             "pinned": topic.id in plan_input.pinned_topic_dates,
         })
 
@@ -89,23 +98,22 @@ def _result_to_out(
             "extra_minutes_per_study_day": item.extra_minutes_per_study_day,
         })
 
-    warnings = [
-        {
-            "code": item.code,
-            "severity": _warning_severity(item.code),
-            "message": item.message,
-            "fix": _warning_fix(item.code),
-        }
-        for item in result.warnings
-    ]
+    warnings = [{
+        "code": item.code,
+        "severity": _warning_severity(item.code),
+        "message": item.message,
+        "fix": _warning_fix(item.code),
+    } for item in result.warnings]
+
     unplaced = []
     for item in result.unplaced:
         topic = topic_map[item.topic_id]
-        course = course_map[item.course_id]
+        course_id = chapter_map[topic.chapter_id].course_id
+        course = course_map[course_id]
         unplaced.append({
             "topic_id": item.topic_id,
             "topic_name": item.topic_name,
-            "course_id": item.course_id,
+            "course_id": course_id,
             "course_name": course.name,
             "minutes": item.remaining_minutes,
             "reason_code": item.reason_code,
@@ -118,7 +126,7 @@ def _result_to_out(
         horizon_days=plan_input.horizon_days,
         start_date=result.today,
         engine_version=result.engine_version,
-        total_minutes=sum(item["minutes"] for item in tasks),
+        total_minutes=sum(item.minutes for item in result.sessions),
         tasks=tasks,
         readiness=readiness,
         warnings=warnings,
@@ -126,7 +134,6 @@ def _result_to_out(
         saved=saved_plan is not None,
         created_at=saved_plan.created_at if saved_plan else None,
     )
-
 
 def preview_plan(
     db: Session,
