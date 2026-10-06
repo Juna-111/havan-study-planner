@@ -6,6 +6,51 @@ import { apiFetch } from '../../lib/api'
 import { clearAuth, getAuthToken, getSavedAccount, type AuthAccount } from '../../lib/auth'
 import './student.css'
 
+type Item = Record<string, unknown>
+type Collection = { items: Item[]; total: number }
+
+se client'
+
+import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { apiFetch } from '../../lib/api'
+import { clearAuth, getAuthToken, getSavedAccount, type AuthAccount } from '../../lib/auth'
+import './student.css'
+
+type Item = Record<string, any>
+type Collection = { items: Item[]; total: number }
+
+const DAYS = [
+  { id: 0, short: 'Sun' },
+  { id: 1, short: 'Mon' },
+  { id: 2, short: 'Tue' },
+  { id: 3, short: 'Wed' },
+  { id: 4, short: 'Thu' },
+  { id: 5, short: 'Fri' },
+  { id: 6, short: 'Sat' },
+]
+
+const apiList = async (path: string) => (await apiFetch<Collection>(path)).items
+
+use client'
+
+import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { apiFetch } from '../../lib/api'
+import { clearAuth, getAuthToken, getSavedAccount, type AuthAccount } from '../../lib/auth'
+import './student.css'
+
+type Item = Record<string, any>
+type Collection = { items: Item[]; total: number }
+
+se client'
+
+import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { apiFetch } from '../../lib/api'
+import { clearAuth, getAuthToken, getSavedAccount, type AuthAccount } from '../../lib/auth'
+import './student.css'
+
 type Item = Record<string, any>
 type Collection = { items: Item[]; total: number }
 
@@ -118,7 +163,7 @@ export default function StudentPage() {
     courseIds: [] as string[],
     confidence: {} as Record<string, number>,
     studyHours: 2,
-    studyDays: [1, 2, 3, 4, 5],
+    studyDays: ['mon', 'tue', 'wed', 'thu', 'fri'] as Weekday[],
     startingPosition: {} as Record<string, { chapterId: string; topicId: string }>,
   })
 
@@ -286,7 +331,6 @@ export default function StudentPage() {
       const created = await apiFetch<Item>('/students/profiles', {
         method: 'POST',
         body: JSON.stringify({
-          client_key: clientKey(),
           account_id: account?.id ?? undefined,
           name: draft.name.trim(),
           university_id: Number(draft.universityId),
@@ -605,7 +649,7 @@ export default function StudentPage() {
                 <HavanStepper value={draft.studyHours} min={0.5} max={12} step={0.5} suffix="h / day" onChange={(value) => setDraft({ ...draft, studyHours: value })} />
               </label>
               <span className="day-label">Normal study days</span>
-              <div className="day-pick">{DAYS.map((day) => <button key={day.id} className={draft.studyDays.includes(day.id) ? 'day selected' : 'day'} onClick={() => setDraft({ ...draft, studyDays: draft.studyDays.includes(day.id) ? draft.studyDays.filter((id) => id !== day.id) : [...draft.studyDays, day.id] })}>{day.short}</button>)}</div>
+              <div className="day-pick">{WEEKDAYS.map((day) => <button key={day.key} className={draft.studyDays.includes(day.key) ? 'day selected' : 'day'} onClick={() => setDraft({ ...draft, studyDays: draft.studyDays.includes(day.key) ? draft.studyDays.filter((id) => id !== day.key) : [...draft.studyDays, day.key] })}>{day.label}</button>)}</div>
               <div className="capacity"><b>{(draft.studyHours * draft.studyDays.length).toFixed(1)}h</b><span>normal weekly study capacity</span></div>
               <div className="review-card"><b>{draft.name}</b><span>{universities.find((item) => String(item.id) === draft.universityId)?.name}</span><span>{streams.find((item) => String(item.id) === draft.streamId)?.name}</span><span>{selectedCount} courses · {draftExams.length} exams · {draft.studyHours}h/day</span></div>
               {error && <div className="student-error">{error}</div>}

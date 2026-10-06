@@ -1,49 +1,67 @@
-const rawApiBaseUrl = process.env.NEXT_PUBLIC_API_URL?.trim()
+import { getAuthToken, clearAuth } from '@/lib/auth'
 
-// The frontend talks to FastAPI through /api/v1 routes. Keep the configured
-// value as the backend origin, even if someone accidentally includes /api/v1.
+const rawApiBaseUrl = process.env.NEXT_PUBLIC_API_URL?.trim()
 const API_BASE_URL = rawApiBaseUrl
   ? rawApiBaseUrl.replace(/\/+$/, '').replace(/\/api\/v1$/, '')
   : process.env.NODE_ENV === 'production'
     ? ''
     : 'http://localhost:8000'
-
 const API_V1_PREFIX = '/api/v1'
+const DEFAULT_TIMEOUT_MS = 12_000
 
-export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+export class ApiError extends Error {
+  status: number
+  detail?: string
+
+  constructor(status: number, message: string, detail?: string) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+    this.detail = detail
+  }
+}
+
+export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (!API_BASE_URL) {
-    throw new Error('NEXT_PUBLIC_API_URL is not configured for the deployed frontend.')
+    throw new ApiError(0, 'Havan backend URL is not configured.')
   }
 
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
   const url = `${API_BASE_URL}${API_V1_PREFIX}${normalizedPath}`
-
-  const isFormData = typeof FormData !== 'undefined' && init?.body instanceof FormData
-  const headers = new Headers(init?.headers)
+  const headers = new Headers(init.headers)
+  const isFormData = typeof FormData !== 'undefined' && init.body instanceof FormData
   if (!isFormData && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
 
-  if (typeof window !== 'undefined' && !headers.has('Authorization')) {
-    const token = window.localStorage.getItem('havan_auth_token')
-    if (token) headers.set('Authorization', `Bearer ${token}`)
-  }
+  const token = getAuthToken()
+  if (token && !headers.has('Authorization')) headers.set('Authorization', `Bearer ${token}`)
 
-  let response: Response
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS)
   try {
-    response = await fetch(url, {...init, headers})
-  } catch {
-    throw new Error('Cannot reach the Havan backend. Check NEXT_PUBLIC_API_URL and the backend CORS settings.')
+    const response = await fetch(url, { ...init, headers, signal: init.signal ?? controller.signal })
+    if (response.status === 401) {
+      clearAuth()
+      throw new ApiError(401, 'Your session has expired. Please sign in again.')
+    }
+    if (!response.ok) {
+      let detail: string | undefined
+      try {
+        const body = await response.json() as { detail?: string }
+        detail = body.detail
+      } catch {}
+      throw new ApiError(response.status, detail || `API request failed: ${response.status}`, detail)
+    }
+    if (response.status === 204) return undefined as T
+    return await response.json() as T
+  } catch (error) {
+    if (error instanceof ApiError) throw error
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new ApiError(408, 'The request took too long. Please try again.')
+    }
+    throw new ApiError(0, 'Cannot reach the Havan backend. Check your connection and try again.')
+  } finally {
+    clearTimeout(timeout)
   }
-
-  if (!response.ok) {
-    let message = 'API request failed: ' + response.status
-    try {
-      const body = await response.json() as { detail?: string }
-      if (body.detail) message = body.detail
-    } catch {}
-    throw new Error(message)
-  }
-  if (response.status === 204) return undefined as T
-  return response.json() as Promise<T>
 }
 
 export const getApiBaseUrl = () => API_BASE_URL

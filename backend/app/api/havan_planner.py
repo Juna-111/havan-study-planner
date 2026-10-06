@@ -1,4 +1,5 @@
 from app.core.config import API_PREFIX
+from app.core.time import today_local
 from app.core.deps import require_student_owner
 import json
 from datetime import date, timedelta
@@ -49,7 +50,7 @@ def _validate_tasks(db: Session, student_id: int, payload: HavanPlanCreate) -> N
     if sum(int(item.minutes) for item in payload.tasks) != payload.total_minutes:
         raise HTTPException(status_code=400, detail="Plan total_minutes must equal the sum of all topic task minutes")
 
-    today = date.today()
+    today = today_local()
     horizon_end = today + timedelta(days=payload.horizon_days - 1)
     daily_totals: dict[date, int] = {}
     for item in payload.tasks:

@@ -32,7 +32,7 @@ class StudentProfile(Base):
     curriculum_id: Mapped[int] = mapped_column(ForeignKey("curriculums.id"), nullable=False)
     stream_id: Mapped[int] = mapped_column(ForeignKey("streams.id"), nullable=False)
     study_hours_per_day: Mapped[float] = mapped_column(nullable=False, default=2.0, server_default="2")
-    study_days: Mapped[list] = mapped_column(JSON, nullable=False, default=list, server_default="[]")
+    study_days: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list, server_default="[]")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
