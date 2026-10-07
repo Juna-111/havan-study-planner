@@ -167,6 +167,26 @@ class PlannerExam:
         return self.scope_topic_ids is None or topic_id in self.scope_topic_ids
 
 
+
+@dataclass(frozen=True)
+class StudyCalendar:
+    """When and how long the student can study. Weekdays use Python numbering
+    (Monday = 0). Use ``parse_weekdays`` to convert stored values."""
+
+    study_weekdays: frozenset[int] = frozenset({0, 1, 2, 3, 4})
+    daily_minutes: int = 120
+    minutes_by_weekday: Mapping[int, int] = field(default_factory=dict)
+    capacity_overrides: Mapping[date, int] = field(default_factory=dict)
+    blackout_dates: frozenset[date] = frozenset()
+    # Minutes already studied (completed or in progress) on a given day.
+    done_minutes: Mapping[date, int] = field(default_factory=dict)
+
+    def capacity(self, day: date) -> int:
+        if day in self.blackout_dates or day.weekday() not in self.study_weekdays:
+            return 0
+        base = int(self.capacity_overrides.get(day, self.minutes_by_weekday.get(day.weekday(), self.daily_minutes)))
+        return max(0, base - int(self.done_minutes.get(day, 0)))
+
 @dataclass(frozen=True)
 class PlanRequest:
     today: date
