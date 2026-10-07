@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv, io, re
+from urllib.parse import urlparse, urlunparse
 from dataclasses import dataclass
 from fastapi import HTTPException
 from sqlalchemy import func, select
@@ -64,9 +65,29 @@ def parse_promotion_file(raw:bytes)->list[PromotionImportRow]:
   except ValueError as e:raise HTTPException(422,f"Promotion block {i}: order_index must be an integer.") from e
   status=_clean(row.get("status","ACTIVE")).upper()
   if status not in{"ACTIVE","INACTIVE"}:raise HTTPException(422,f"Promotion block {i}: status must be ACTIVE or INACTIVE.")
-  result.append(PromotionImportRow(i,row["course_code"],row["chapter"],_clean(row.get("topic")) or None,row["platform_name"],_clean(row.get("description")) or None,row["button_text"],row["url"],order,status))
+  parsed_url=urlparse(row["url"].strip())
+  if parsed_url.scheme.lower() not in {"http","https"} or not parsed_url.netloc: raise HTTPException(422,f"Promotion block {i}: url must be a valid http or https URL.")
+  normalized_url=urlunparse((parsed_url.scheme.lower(),parsed_url.netloc.lower(),re.sub(r"/{2,}","/",parsed_url.path or "/"),parsed_url.params,parsed_url.query,parsed_url.fragment))
+  result.append(PromotionImportRow(i,row["course_code"],row["chapter"],_clean(row.get("topic")) or None,row["platform_name"],_clean(row.get("description")) or None,row["button_text"],normalized_url,order,status))
  return result
-def preview_university_import(rows:list[UniversityImportRow])->dict:
+def _validate_university_references(db:Session,rows:list[UniversityImportRow])->None:
+ for row in rows:
+  course=db.scalar(select(Course).where(func.upper(Course.code)==row.course_code.strip().upper(),Course.academic_scope=="FRESHMAN",Course.status=="ACTIVE"))
+  if course is None: raise HTTPException(422,f"University CSV line {row.line}: course {row.course_code} is not in the active Freshman Course Registry.")
+  if course.name.strip().casefold()!=row.course_name.strip().casefold(): raise HTTPException(409,f"University CSV line {row.line}: course {row.course_code} name conflicts with the Freshman Course Registry.")
+  if row.credit_hours is not None and course.credit_hours is not None and course.credit_hours!=row.credit_hours: raise HTTPException(409,f"University CSV line {row.line}: course {row.course_code} credit hours conflict with the Freshman Course Registry.")
+  university=db.scalar(select(University).where(func.upper(University.code)==row.university_code.strip().upper()))
+  if university is not None and university.name.strip().casefold()!=row.university_name.strip().casefold(): raise HTTPException(409,f"University code {row.university_code} already belongs to another university.")
+  if university is None: continue
+  curriculum=db.scalar(select(Curriculum).where(Curriculum.university_id==university.id,func.lower(Curriculum.name)==row.curriculum.strip().lower(),Curriculum.version==row.curriculum_version.strip()))
+  if curriculum is None: continue
+  stream=db.scalar(select(Stream).where(Stream.curriculum_id==curriculum.id,func.upper(Stream.code)==row.stream_code.strip().upper()))
+  if stream is not None and stream.name.strip().casefold()!=row.stream_name.strip().casefold(): raise HTTPException(409,f"University CSV line {row.line}: stream code {row.stream_code} already belongs to another stream.")
+  if stream is None: continue
+  mapping=db.scalar(select(UniversityCourseMapping).where(UniversityCourseMapping.stream_id==stream.id,UniversityCourseMapping.course_id==course.id))
+  if mapping is not None and mapping.status!="ARCHIVED" and mapping.semester_number!=row.semester: raise HTTPException(409,f"University CSV line {row.line}: course {row.course_code} is already mapped to semester {mapping.semester_number}.")
+
+def preview_university_import(rows:list[UniversityImportRow],db:Session|None=None)->dict:
  seen=set(); course_semesters={}
  for row in rows:
   course_key=(row.university_code.strip().upper(),row.curriculum.strip().casefold(),row.curriculum_version.strip().casefold(),row.stream_code.strip().upper(),row.course_code.strip().upper())
@@ -78,6 +99,7 @@ def preview_university_import(rows:list[UniversityImportRow])->dict:
   if previous is not None and previous!=row.semester:
    raise HTTPException(422,f"University CSV lines contain course {row.course_code} in both semesters for the same stream.")
   course_semesters[course_key]=row.semester
+ if db is not None: _validate_university_references(db,rows)
  return {"rows":len(rows),"universities":len({r.university_code.strip().upper() for r in rows}),"curriculums":len({(r.university_code.strip().upper(),r.curriculum.strip().casefold(),r.curriculum_version.strip().casefold()) for r in rows}),"streams":len({(r.university_code.strip().upper(),r.curriculum.strip().casefold(),r.curriculum_version.strip().casefold(),r.stream_code.strip().upper()) for r in rows}),"course_mappings":len(rows)}
 
 def commit_university_import(db:Session,rows:list[UniversityImportRow])->dict:
@@ -137,7 +159,7 @@ def commit_university_import(db:Session,rows:list[UniversityImportRow])->dict:
 def preview_promotion_import(db:Session,rows:list[PromotionImportRow])->dict:
  errors=[]
  for row in rows:
-  c=db.scalar(select(Course).where(func.upper(Course.code)==row.course_code.strip().upper(),Course.academic_scope=="FRESHMAN"))
+  c=db.scalar(select(Course).where(func.upper(Course.code)==row.course_code.strip().upper(),Course.academic_scope=="FRESHMAN",Course.status=="ACTIVE"))
   if c is None:errors.append(f"Promotion {row.line}: course {row.course_code} was not found.");continue
   ch=db.scalar(select(Chapter).where(Chapter.course_id==c.id,func.lower(Chapter.name)==row.chapter_name.strip().lower()))
   if ch is None:errors.append(f"Promotion {row.line}: chapter '{row.chapter_name}' was not found.")
