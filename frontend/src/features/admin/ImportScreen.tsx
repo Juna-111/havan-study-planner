@@ -17,7 +17,7 @@ export default function ImportScreen() {
   const [message,setMessage]=useState('')
   const [error,setError]=useState('')
 
-  const kind:ImportKind = file?.name.toLowerCase().endsWith('.csv') ? 'university' : file?.name.toLowerCase().endsWith('.txt') || file?.name.toLowerCase().endsWith('.md') ? 'course' : 'course'
+  const kind:ImportKind = file?.name.toLowerCase().endsWith('.csv') ? 'university' : /promotion|havan/.test(file?.name.toLowerCase() || '') ? 'promotion' : 'course'
 
   function clear(){setCoursePreview([]);setSummary(null);setMessage('');setError('')}
 
