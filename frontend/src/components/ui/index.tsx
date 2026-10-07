@@ -131,10 +131,10 @@ x.topics)).filter(t=>
 selected.has(t.id)).reduce((a,t)=>
 a+t.minutes,0),[courses,selected]);
 return <div className={styles.tree}>
-<div className={styles.total}>{selected.size} topics · {total} min</div>{courses.map(c=>
-<section key={c.id}>
-<h3>{c.name}</h3>{c.chapters.map(ch=>{const o=open.has(ch.id);return <div className={styles.chapter} key={ch.id}>
-<button type="button" onClick={()=>setOpen(p=>{const n=new Set(p);n.has(ch.id)?n.delete(ch.id):n.add(ch.id);return n})} aria-expanded={o}>{ch.name}</button>{o&&<div className={styles.topics}>{ch.topics.map(t=>
+<div className={styles.total} role="status" aria-live="polite">{selected.size} topics · {total} min selected</div>{courses.map(c=>
+<section className={styles.treeCourse} key={c.id}>
+<div className={styles.courseHeading}><span>COURSE</span><h3>{c.name}</h3></div>{c.chapters.map(ch=>{const o=open.has(ch.id);return <div className={styles.chapter} key={ch.id}>
+<button className={styles.chapterButton} type="button" onClick={()=>setOpen(p=>{const n=new Set(p);n.has(ch.id)?n.delete(ch.id):n.add(ch.id);return n})} aria-expanded={o}>{ch.name}</button>{o&&<div className={styles.topics} role="group" aria-label={`Topics in ${ch.name}`}>{ch.topics.map(t=>
 <label className={styles.topic} key={t.id}>
 <input type="checkbox" checked={selected.has(t.id)} onChange={()=>{const n=new Set(selected);n.has(t.id)?n.delete(t.id):n.add(t.id);onChange(n)}}/>
 <span>{t.name}<small>{t.minutes} min</small>
