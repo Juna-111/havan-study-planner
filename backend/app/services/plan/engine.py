@@ -468,6 +468,30 @@ def allocate_selected_topics(
         if request.calendar.capacity(today + timedelta(days=offset)) > 0
     ]
     capacities = {day: request.calendar.capacity(day) for day in study_days}
+    if not study_days:
+        return PlanResult(
+            engine_version=ENGINE_VERSION,
+            today=today,
+            sessions=(),
+            readiness=tuple(readiness),
+            warnings=tuple([
+                *readiness_warnings,
+                PlanWarning(
+                    "NO_STUDY_TIME",
+                    "There is no free study time inside the planning window.",
+                ),
+            ]),
+            unplaced=tuple(
+                UnplacedTopic(
+                    topic.topic_id,
+                    topic.name,
+                    topic.course_id,
+                    remaining[topic.topic_id],
+                    "no_capacity",
+                )
+                for topic in selected
+            ),
+        )
     sessions: list[PlannedSession] = []
     pinned = dict(request.pinned_topic_dates)
     deferred = set(request.deferred_topic_ids)
