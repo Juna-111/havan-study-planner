@@ -119,25 +119,90 @@ return <>
 </header>{children}</section>
 </>
 }
-type Topic={id:string;name:string;minutes:number};type Chapter={id:string;name:string;topics:Topic[]};type Course={id:string;name:string;chapters:Chapter[]}
-export function TreeSelect({courses,selected,onChange}:{courses:Course[];
-selected:ReadonlySet<string>;
-onChange:(s:Set<string>)=>
-void}){const[open,setOpen]=useState<Set<string>>(new Set());
-const total=useMemo(()=>
-courses.flatMap(c=>
-c.chapters.flatMap(x=>
-x.topics)).filter(t=>
-selected.has(t.id)).reduce((a,t)=>
-a+t.minutes,0),[courses,selected]);
-return <div className={styles.tree}>
-<div className={styles.total} role="status" aria-live="polite">{selected.size} topics · {total} min selected</div>{courses.map(c=>
-<section className={styles.treeCourse} key={c.id}>
-<div className={styles.courseHeading}><span>COURSE</span><h3>{c.name}</h3></div>{c.chapters.map(ch=>{const o=open.has(ch.id);return <div className={styles.chapter} key={ch.id}>
-<button className={styles.chapterButton} type="button" onClick={()=>setOpen(p=>{const n=new Set(p);n.has(ch.id)?n.delete(ch.id):n.add(ch.id);return n})} aria-expanded={o}>{ch.name}</button>{o&&<div className={styles.topics} role="group" aria-label={`Topics in ${ch.name}`}>{ch.topics.map(t=>
-<label className={styles.topic} key={t.id}>
-<input type="checkbox" checked={selected.has(t.id)} onChange={()=>{const n=new Set(selected);n.has(t.id)?n.delete(t.id):n.add(t.id);onChange(n)}}/>
-<span>{t.name}<small>{t.minutes} min</small>
-</span>
-</label>)}</div>}</div>})}</section>)}</div>
+type Topic = { id: string; name: string; minutes: number }
+type Chapter = { id: string; name: string; topics: Topic[] }
+type Course = { id: string; name: string; chapters: Chapter[] }
+
+export function TreeSelect({
+  courses,
+  selected,
+  onChange,
+}: {
+  courses: Course[]
+  selected: ReadonlySet<string>
+  onChange: (selection: Set<string>) => void
+}) {
+  const [open, setOpen] = useState<Set<string>>(new Set())
+  const total = useMemo(
+    () =>
+      courses
+        .flatMap((course) => course.chapters.flatMap((chapter) => chapter.topics))
+        .filter((topic) => selected.has(topic.id))
+        .reduce((sum, topic) => sum + topic.minutes, 0),
+    [courses, selected],
+  )
+
+  return (
+    <div className={styles.tree}>
+      <div className={styles.total} role="status" aria-live="polite">
+        {selected.size} topics · {total} min selected
+      </div>
+      {courses.map((course) => (
+        <section className={styles.treeCourse} key={course.id}>
+          <div className={styles.courseHeading}>
+            <span>COURSE</span>
+            <h3>{course.name}</h3>
+          </div>
+          {course.chapters.map((chapter) => {
+            const isOpen = open.has(chapter.id)
+            return (
+              <div className={styles.chapter} key={chapter.id}>
+                <button
+                  className={styles.chapterButton}
+                  type="button"
+                  onClick={() =>
+                    setOpen((previous) => {
+                      const next = new Set(previous)
+                      if (next.has(chapter.id)) next.delete(chapter.id)
+                      else next.add(chapter.id)
+                      return next
+                    })
+                  }
+                  aria-expanded={isOpen}
+                >
+                  {chapter.name}
+                </button>
+                {isOpen && (
+                  <div
+                    className={styles.topics}
+                    role="group"
+                    aria-label={`Topics in ${chapter.name}`}
+                  >
+                    {chapter.topics.map((topic) => (
+                      <label className={styles.topic} key={topic.id}>
+                        <input
+                          type="checkbox"
+                          checked={selected.has(topic.id)}
+                          onChange={() => {
+                            const next = new Set(selected)
+                            if (next.has(topic.id)) next.delete(topic.id)
+                            else next.add(topic.id)
+                            onChange(next)
+                          }}
+                        />
+                        <span>
+                          {topic.name}
+                          <small>{topic.minutes} min</small>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </section>
+      ))}
+    </div>
+  )
 }
