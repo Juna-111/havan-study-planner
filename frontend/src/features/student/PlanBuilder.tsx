@@ -145,7 +145,10 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
     try {
       setError('')
       setBusy('save')
-      await savePlan(input)
+      const saved = await savePlan(input)
+      if (!saved.saved || !saved.id) {
+        throw new Error('Havan did not confirm that your plan was saved. Please try again.')
+      }
       router.push('/plan')
     } catch (value) {
       setError(value instanceof Error ? value.message : 'Could not save your plan.')
