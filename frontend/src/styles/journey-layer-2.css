@@ -6,46 +6,37 @@
   border-radius: 0.8rem;
   background: var(--color-white);
 }
-
 .havan-plan-resource-empty strong {
   color: var(--color-primary, var(--color-primary));
 }
-
 .havan-plan-resource-empty span {
   color: var(--color-muted, var(--color-muted));
   font-size: 0.8rem;
   line-height: 1.5;
 }
-
 @media (max-width: 800px) {
   .havan-plan-resource-grid {
     grid-template-columns: 1fr;
   }
-
-  .havan-plan-resource-card {
+.havan-plan-resource-card {
     min-height: auto;
   }
 }
-
 @media (max-width: 520px) {
   .havan-plan-resources {
     padding: 0.85rem;
   }
-
-  .havan-plan-resources-heading {
+.havan-plan-resources-heading {
     flex-direction: column;
     gap: 0.55rem;
   }
-
-  .havan-plan-resource-badge {
+.havan-plan-resource-badge {
     width: fit-content;
   }
 }
-
 .havan-plan-promotions{display:grid;gap:.65rem;margin-top:1rem;padding:.85rem;border:1px solid var(--color-border-blue);border-radius:.9rem;background:linear-gradient(145deg,var(--color-canvas-soft),var(--color-white))}
 .havan-plan-promotions-heading{display:grid;gap:.15rem}.havan-plan-promotions-heading strong{color:var(--color-primary,var(--color-primary))}
 .havan-plan-promotion-links{display:grid;gap:.5rem}.havan-plan-promotion{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.72rem .8rem;border:1px solid var(--color-border-blue);border-radius:.75rem;background:var(--color-white);text-decoration:none;color:inherit}.havan-plan-promotion:hover,.havan-plan-promotion:focus-visible{border-color:var(--color-primary,var(--color-primary));box-shadow:0 5px 16px rgba(1,1,126,.08)}.havan-plan-promotion span{display:grid;gap:.18rem;min-width:0}.havan-plan-promotion strong{color:var(--color-primary,var(--color-primary))}.havan-plan-promotion small{color:var(--color-muted,var(--color-muted));line-height:1.4}.havan-plan-promotion>b{flex:none;color:var(--color-primary,var(--color-primary));font-size:.78rem}@media(max-width:600px){.havan-plan-promotion{align-items:flex-start;flex-direction:column}.havan-plan-promotion>b{width:100%}}
-
 /* Havan Home: restore the branded navigation-card structure. */
 .havan-home{
   width:min(100%,1080px);
@@ -228,25 +219,24 @@
 }
 @media(max-width:900px){
   .havan-home{padding:22px 18px 40px}
-  .havan-destination-grid{grid-template-columns:1fr}
-  .havan-destination-card{min-height:0}
+.havan-destination-grid{grid-template-columns:1fr}
+.havan-destination-card{min-height:0}
 }
 @media(max-width:600px){
   .havan-home{padding:14px 12px 32px}
-  .havan-home-hero{padding:22px 20px;border-radius:20px}
-  .havan-home-hero h1{font-size:2rem}
-  .havan-home-intro{display:grid;gap:5px;margin-top:24px}
-  .havan-home-intro h2{font-size:1.25rem}
-  .havan-destination-grid{gap:12px}
-  .havan-destination-card{padding:20px!important;border-radius:16px}
-  .havan-destination-card h2{margin-top:20px}
+.havan-home-hero{padding:22px 20px;border-radius:20px}
+.havan-home-hero h1{font-size:2rem}
+.havan-home-intro{display:grid;gap:5px;margin-top:24px}
+.havan-home-intro h2{font-size:1.25rem}
+.havan-destination-grid{gap:12px}
+.havan-destination-card{padding:20px!important;border-radius:16px}
+.havan-destination-card h2{margin-top:20px}
 }
 @media(prefers-reduced-motion:reduce){
   .havan-destination-card,.havan-destination-arrow{transition:none}
-  .havan-destination:hover .havan-destination-card{transform:none}
-  .havan-destination:hover .havan-destination-arrow{transform:none}
+.havan-destination:hover .havan-destination-card{transform:none}
+.havan-destination:hover .havan-destination-arrow{transform:none}
 }
-
 /* Final Havan builder polish: no browser-default form surfaces. */
 .havan-plan-controls select,
 .havan-plan-controls input,
@@ -275,4 +265,3 @@
 .havan-plan-unplaced{display:grid;gap:5px;padding:12px;border:1px solid var(--color-line-light);border-radius:12px;background:var(--color-white)}
 .havan-plan-unplaced strong{color:var(--color-primary)}
 .havan-plan-unplaced span{color:var(--color-muted);font-size:.82rem}
-
