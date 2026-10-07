@@ -86,6 +86,7 @@ class StudentExam(Base):
     exam_type: Mapped[str] = mapped_column(String(30), nullable=False)
     exam_date: Mapped[date] = mapped_column(Date, nullable=False)
     importance: Mapped[int] = mapped_column(Integer, nullable=False, default=3, server_default="3")
+    selected_topic_ids: Mapped[list[int]] = mapped_column(JSON, nullable=False, default=list, server_default="[]")
     student: Mapped[StudentProfile] = relationship(back_populates="exams")
 
 
