@@ -20,11 +20,9 @@ function isActivePath(pathname: string, href: string) {
 
 export function BottomNav() {
   const pathname = usePathname()
-  const mobileNavigation = navigation.slice(0, 4)
-
   return (
     <nav className={styles.bottom} aria-label="Main navigation">
-      {mobileNavigation.map(([href, label]) => (
+      {navigation.map(([href, label]) => (
         <Link
           key={href}
           href={href}
