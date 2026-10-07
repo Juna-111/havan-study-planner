@@ -328,3 +328,205 @@
 .havan-plan-promotions{display:grid;gap:.65rem;margin-top:1rem;padding:.85rem;border:1px solid #dfe2f2;border-radius:.9rem;background:linear-gradient(145deg,#f7f8ff,#fff)}
 .havan-plan-promotions-heading{display:grid;gap:.15rem}.havan-plan-promotions-heading strong{color:var(--color-primary,#01017e)}
 .havan-plan-promotion-links{display:grid;gap:.5rem}.havan-plan-promotion{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.72rem .8rem;border:1px solid #dfe2f2;border-radius:.75rem;background:#fff;text-decoration:none;color:inherit}.havan-plan-promotion:hover,.havan-plan-promotion:focus-visible{border-color:var(--color-primary,#01017e);box-shadow:0 5px 16px rgba(1,1,126,.08)}.havan-plan-promotion span{display:grid;gap:.18rem;min-width:0}.havan-plan-promotion strong{color:var(--color-primary,#01017e)}.havan-plan-promotion small{color:var(--color-muted,#666);line-height:1.4}.havan-plan-promotion>b{flex:none;color:var(--color-primary,#01017e);font-size:.78rem}@media(max-width:600px){.havan-plan-promotion{align-items:flex-start;flex-direction:column}.havan-plan-promotion>b{width:100%}}
+
+
+/* Havan Home: restore the branded navigation-card structure. */
+.havan-home{
+  width:min(100%,1080px);
+  margin:0 auto;
+  padding:28px 24px 48px;
+}
+.havan-home-hero{
+  position:relative;
+  overflow:hidden;
+  padding:28px 30px 30px;
+  border:1px solid #e1e3f2;
+  border-radius:24px;
+  background:linear-gradient(135deg,#ffffff 0%,#f6f7ff 100%);
+  box-shadow:0 14px 36px rgba(1,1,126,.08);
+}
+.havan-home-hero::after{
+  content:"";
+  position:absolute;
+  width:230px;
+  height:230px;
+  right:-90px;
+  top:-120px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(1,1,126,.14),transparent 68%);
+  pointer-events:none;
+}
+.havan-home-hero .app-eyebrow,
+.havan-home-intro .app-eyebrow{
+  display:block;
+  color:var(--color-primary,#01017e);
+  font-size:.7rem;
+  font-weight:900;
+  letter-spacing:.14em;
+}
+.havan-home-hero h1{
+  position:relative;
+  z-index:1;
+  max-width:760px;
+  margin:8px 0 8px;
+  color:var(--color-primary,#01017e);
+  font-size:clamp(2rem,4vw,3rem);
+  line-height:1.08;
+}
+.havan-home-hero p{
+  position:relative;
+  z-index:1;
+  max-width:760px;
+  margin:0;
+  color:var(--color-muted,#666);
+  font-size:1rem;
+  line-height:1.65;
+}
+.havan-home-intro{
+  display:flex;
+  align-items:end;
+  justify-content:space-between;
+  gap:24px;
+  margin:30px 2px 14px;
+}
+.havan-home-intro h2{
+  margin:5px 0 0;
+  color:var(--color-ink,#151526);
+  font-size:1.45rem;
+}
+.havan-home-intro>p{
+  margin:0 0 2px;
+  color:var(--color-muted,#666);
+  font-size:.88rem;
+}
+.havan-destination-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:16px;
+}
+.havan-destination{
+  display:block;
+  min-width:0;
+  color:inherit;
+  text-decoration:none;
+}
+.havan-destination:focus-visible{
+  outline:3px solid rgba(250,3,2,.28);
+  outline-offset:4px;
+  border-radius:18px;
+}
+.havan-destination-card{
+  position:relative;
+  min-height:245px;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  border:1px solid #e0e2ee;
+  border-top:4px solid var(--color-primary,#01017e);
+  border-radius:18px;
+  background:#fff;
+  box-shadow:0 8px 24px rgba(1,1,126,.07);
+  transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease;
+}
+.havan-destination:nth-child(2) .havan-destination-card{
+  border-top-color:var(--color-accent,#fa0302);
+}
+.havan-destination:nth-child(3) .havan-destination-card{
+  border-top-color:#4d4db3;
+}
+.havan-destination:hover .havan-destination-card{
+  transform:translateY(-5px);
+  border-color:#cfd2e6;
+  box-shadow:0 16px 34px rgba(1,1,126,.13);
+}
+.havan-destination-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.havan-destination-label{
+  padding:5px 9px;
+  border-radius:999px;
+  background:var(--color-primary-soft,#eef0ff);
+  color:var(--color-primary,#01017e);
+  font-size:.7rem;
+  font-weight:900;
+}
+.havan-destination:nth-child(2) .havan-destination-label{
+  background:var(--color-accent-soft,#fff0ef);
+  color:var(--color-accent,#fa0302);
+}
+.havan-destination-arrow{
+  display:grid;
+  place-items:center;
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  background:#f2f3fa;
+  color:var(--color-primary,#01017e);
+  font-size:1.1rem;
+  transition:transform .2s ease,background .2s ease,color .2s ease;
+}
+.havan-destination:hover .havan-destination-arrow{
+  transform:translateX(3px);
+  background:var(--color-primary,#01017e);
+  color:#fff;
+}
+.havan-destination-card h2{
+  margin:25px 0 8px;
+  color:var(--color-primary,#01017e);
+  font-size:1.35rem;
+}
+.havan-destination-card p{
+  margin:0;
+  color:var(--color-muted,#666);
+  font-size:.88rem;
+  line-height:1.6;
+}
+.havan-destination-action{
+  margin-top:auto;
+  padding-top:22px;
+  color:var(--color-primary,#01017e);
+  font-size:.78rem;
+  font-weight:900;
+}
+.havan-home-note{
+  display:grid;
+  gap:5px;
+  margin-top:18px;
+  padding:18px 20px;
+  border:1px solid #e0e2ee;
+  border-radius:16px;
+  background:#f8f9ff;
+}
+.havan-home-note strong{
+  color:var(--color-primary,#01017e);
+  font-size:.88rem;
+}
+.havan-home-note p{
+  margin:0;
+  color:var(--color-muted,#666);
+  font-size:.82rem;
+  line-height:1.55;
+}
+@media(max-width:900px){
+  .havan-home{padding:22px 18px 40px}
+  .havan-destination-grid{grid-template-columns:1fr}
+  .havan-destination-card{min-height:0}
+}
+@media(max-width:600px){
+  .havan-home{padding:14px 12px 32px}
+  .havan-home-hero{padding:22px 20px;border-radius:20px}
+  .havan-home-hero h1{font-size:2rem}
+  .havan-home-intro{display:grid;gap:5px;margin-top:24px}
+  .havan-home-intro h2{font-size:1.25rem}
+  .havan-destination-grid{gap:12px}
+  .havan-destination-card{padding:20px!important;border-radius:16px}
+  .havan-destination-card h2{margin-top:20px}
+}
+@media(prefers-reduced-motion:reduce){
+  .havan-destination-card,.havan-destination-arrow{transition:none}
+  .havan-destination:hover .havan-destination-card{transform:none}
+  .havan-destination:hover .havan-destination-arrow{transform:none}
+}
