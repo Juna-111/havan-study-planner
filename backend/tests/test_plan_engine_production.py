@@ -92,3 +92,44 @@ def test_exam_day_can_be_used_when_enabled():
         config=PlannerConfig(study_on_exam_day=True),
     )
     assert [session.planned_date for session in result.sessions] == [TODAY]
+
+
+def test_allocator_fills_chronologically_and_protects_earliest_deadline():
+    urgent = topic(1, minutes=120)
+    later = topic(2, minutes=120)
+    result = allocate_selected_topics(
+        PlanRequest(
+            today=TODAY,
+            topics=(later, urgent),
+            exams=(
+                PlannerExam(1, TODAY + timedelta(days=2), 5, "MIDTERM"),
+            ),
+            calendar=calendar(120),
+            horizon_days=5,
+        )
+    )
+    first_day_topics = [
+        session.topic_id for session in result.sessions if session.planned_date == TODAY
+    ]
+    assert first_day_topics
+    assert first_day_topics[0] == 1
+    assert all(
+        session.planned_date < TODAY + timedelta(days=2)
+        for session in result.sessions
+        if session.topic_id == 1
+    )
+
+
+def test_allocator_is_deterministic_across_repeated_runs():
+    request = PlanRequest(
+        today=TODAY,
+        topics=tuple(topic(i, course_id=(i % 3) + 1, minutes=95) for i in range(1, 9)),
+        exams=(
+            PlannerExam(1, TODAY + timedelta(days=4), 5, "FINAL"),
+            PlannerExam(2, TODAY + timedelta(days=7), 4, "MIDTERM"),
+        ),
+        calendar=calendar(180),
+        horizon_days=10,
+    )
+    outputs = [allocate_selected_topics(request) for _ in range(20)]
+    assert all(output == outputs[0] for output in outputs[1:])
