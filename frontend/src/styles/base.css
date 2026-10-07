@@ -426,3 +426,31 @@ button { cursor:pointer } :focus-visible { outline:3px solid rgba(1,1,126,.35); 
   .exam-hero,.exam-hero-glow,.exam-insight-card{animation:none;transition:none}
   .exam-insight-card:hover{transform:none}
 }
+
+
+.exam-scope{display:grid;gap:12px;padding:16px;border:1px solid var(--color-line);border-radius:16px;background:linear-gradient(100deg,var(--color-primary-soft),#fff)}
+.exam-scope>div:first-child{display:grid;gap:5px}
+.exam-scope h3{color:var(--color-primary);font-size:1.05rem}
+.exam-scope p{color:var(--color-muted);font-size:.82rem;line-height:1.5}
+.exam-scope-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.exam-scope-actions span{color:var(--color-primary);font-size:.78rem;font-weight:800}
+.exam-topic-groups{display:grid;gap:10px;max-height:360px;overflow:auto;padding-right:3px}
+.exam-topic-group{display:grid;gap:7px;padding:11px;border:1px solid var(--color-line);border-radius:12px;background:#fff}
+.exam-topic-group>strong{color:var(--color-ink);font-size:.86rem}
+.exam-topic-group>div{display:grid;gap:6px}
+.exam-topic-option{display:grid;grid-template-columns:22px minmax(0,1fr) auto;align-items:center;gap:8px;min-height:44px;padding:7px 9px;border:1px solid transparent;border-radius:10px;color:var(--color-muted);font-size:.8rem;cursor:pointer;transition:background .18s ease,border-color .18s ease,transform .18s ease}
+.exam-topic-option:hover{background:var(--color-primary-soft);border-color:#d9dcf4;transform:translateX(2px)}
+.exam-topic-option input{width:18px;height:18px;accent-color:var(--color-primary)}
+.exam-topic-option span{min-width:0}
+.exam-topic-option small{color:var(--color-muted);white-space:nowrap}
+.exam-scope-status{margin:0;padding:7px 10px;border-radius:9px;background:var(--color-primary-soft);color:var(--color-primary);font-size:.76rem;font-weight:800}
+.exam-strategy{display:grid;gap:4px;padding:12px;border-left:3px solid var(--color-accent);border-radius:10px;background:var(--color-accent-soft)}
+.exam-strategy strong{color:var(--color-primary);font-size:.8rem}
+.exam-strategy span{color:var(--color-muted);font-size:.78rem;line-height:1.5}
+@media(max-width:600px){
+  .exam-topic-option{grid-template-columns:22px minmax(0,1fr)}
+  .exam-topic-option small{grid-column:2}
+}
+@media(prefers-reduced-motion:reduce){
+  .exam-topic-option{transition:none}
+}
