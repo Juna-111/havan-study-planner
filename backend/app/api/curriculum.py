@@ -163,7 +163,7 @@ def delete_topic(item_id:int,db:DB): delete_item(db,get_or_404(db,Topic,item_id)
 
 
 @router.get("/promotions")
-def promotions(db: DB, chapter_id: int | None = None, topic_id: int | None = None, page: int = Query(1, ge=1), page_size: int = Query(1, ge=1, le=100)):
+def promotions(db: DB, chapter_id: int | None = None, topic_id: int | None = None, page: int = Query(1, ge=1), page_size: int = Query(50, ge=1, le=100)):
     if (chapter_id is None) == (topic_id is None): raise HTTPException(status_code=400, detail="Choose a chapter or topic.")
     return collection(db, HavanPromotion, PromotionRead, page, page_size, {"chapter_id": chapter_id, "topic_id": topic_id})
 
