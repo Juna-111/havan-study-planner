@@ -10,6 +10,7 @@ type ImportKind = 'course' | 'university' | 'promotion'
 
 export default function ImportScreen() {
   const [file,setFile]=useState<File|null>(null)
+  const [kind,setKind]=useState<ImportKind>('course')
   const [version,setVersion]=useState('1.0')
   const [coursePreview,setCoursePreview]=useState<CoursePreview[]>([])
   const [summary,setSummary]=useState<{kind:ImportKind;data:Record<string,number>}|null>(null)
@@ -17,9 +18,16 @@ export default function ImportScreen() {
   const [message,setMessage]=useState('')
   const [error,setError]=useState('')
 
-  const kind:ImportKind = file?.name.toLowerCase().endsWith('.csv') ? 'university' : /promotion|havan/.test(file?.name.toLowerCase() || '') ? 'promotion' : 'course'
-
   function clear(){setCoursePreview([]);setSummary(null);setMessage('');setError('')}
+  async function selectFile(next: File|null){
+    setFile(next); clear()
+    if(!next){setKind('course');return}
+    if(next.name.toLowerCase().endsWith('.csv')){setKind('university');return}
+    try{
+      const first=(await next.text()).split(/\\r?\\n/).map((line)=>line.trim()).find(Boolean)?.toUpperCase()
+      setKind(first==='TYPE: HAVAN_PROMOTION_V1'?'promotion':'course')
+    }catch{setKind('course')}
+  }
 
   async function preview(){
     if(!file){setError('Choose a .csv, .txt or .md file.');return}
@@ -73,11 +81,11 @@ export default function ImportScreen() {
     </header>
     {(message||error)&&<div className={error?styles.alert:styles.notice}>{error||message}</div>}
     <div className={styles.importCard}>
-      <div className={styles.importStatus}><div><span>FILE TYPE</span><strong>{file?kind.toUpperCase():'WAITING FOR FILE'}</strong></div><small>{file?file.name:'CSV = university setup · TXT/MD = course or promotion content'}</small></div>
+      <div className={styles.importStatus}><div><span>FILE TYPE</span><strong>{file?kind.toUpperCase():'WAITING FOR FILE'}</strong></div><small>{file?file.name:'CSV = university setup · TXT/MD = course; promotion files must declare TYPE: HAVAN_PROMOTION_V1'}</small></div>
       {file&&kind==='course'&&<label>Course content version<input value={version} onChange={e=>setVersion(e.target.value)} /></label>}
       <div className={styles.filePicker}>
         <div><span className={styles.fieldKicker}>SOURCE FILE</span><strong>{file?file.name:'No file selected'}</strong><small>.csv, .txt or .md · UTF-8 · maximum 5 MB</small></div>
-        <label className={styles.fileButton}><span>{file?'Change file':'Choose file'}</span><input type="file" accept=".csv,.txt,.md,text/csv,text/plain,text/markdown" onChange={e=>{setFile(e.target.files?.[0]||null);clear()}} /></label>
+        <label className={styles.fileButton}><span>{file?'Change file':'Choose file'}</span><input type="file" accept=".csv,.txt,.md,text/csv,text/plain,text/markdown" onChange={e=>{void selectFile(e.target.files?.[0]||null)}} /></label>
       </div>
       <div className={styles.actions}>
         <button disabled={busy!==null||!file} onClick={()=>void preview()}>{busy==='preview'?'Validating…':'Validate & preview'}</button>
