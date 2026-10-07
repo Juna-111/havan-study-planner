@@ -60,8 +60,13 @@ export async function getCurrentPlan(): Promise<Plan | null> {
   }
 }
 
-export const savePlan = (input: PlanInput) =>
-  apiFetch<Plan>('/plans', { method: 'POST', body: JSON.stringify(input) })
+export async function savePlan(input: PlanInput): Promise<Plan> {
+  const plan = await apiFetch<Plan>('/plans', { method: 'POST', body: JSON.stringify(input) })
+  if (!plan.saved || !plan.id) {
+    throw new ApiError(500, 'Havan did not confirm that your plan was saved. Please try again.')
+  }
+  return plan
+}
 
 export const previewPlan = (input: PlanInput) =>
   apiFetch<Plan>('/plans/preview', { method: 'POST', body: JSON.stringify(input) })
