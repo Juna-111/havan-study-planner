@@ -131,6 +131,26 @@ class CourseRead(ORMModel):
     id: int; stream_id: Optional[int]; code: str; name: str; description: Optional[str]; credit_hours: Optional[int]; status: str
 
 
+class PromotionBase(BaseModel):
+    platform_name: str = Field(min_length=2, max_length=100)
+    description: Optional[str] = Field(default=None, max_length=1000)
+    button_text: str = Field(min_length=2, max_length=100)
+    url: str = Field(min_length=1, max_length=2000)
+    order_index: int = Field(default=1, ge=1)
+    status: str = Field(default="ACTIVE", pattern=r"^(ACTIVE|INACTIVE)$")
+class PromotionCreate(PromotionBase):
+    chapter_id: Optional[int] = Field(default=None, gt=0)
+    topic_id: Optional[int] = Field(default=None, gt=0)
+class PromotionUpdate(BaseModel):
+    platform_name: Optional[str] = Field(default=None, min_length=2, max_length=100)
+    description: Optional[str] = Field(default=None, max_length=1000)
+    button_text: Optional[str] = Field(default=None, min_length=2, max_length=100)
+    url: Optional[str] = Field(default=None, min_length=1, max_length=2000)
+    order_index: Optional[int] = Field(default=None, ge=1)
+    status: Optional[str] = Field(default=None, pattern=r"^(ACTIVE|INACTIVE)$")
+class PromotionRead(ORMModel):
+    id: int; chapter_id: Optional[int]; topic_id: Optional[int]; platform_name: str; description: Optional[str]; button_text: str; url: str; order_index: int; status: str
+
 class ChapterBase(BaseModel):
     course_id: int = Field(gt=0)
     name: str = Field(min_length=2, max_length=200)
