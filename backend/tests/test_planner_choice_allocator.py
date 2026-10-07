@@ -100,9 +100,22 @@ def test_allocator_honours_deferred_topic_when_capacity_allows():
     assert [s.topic_id for s in result.sessions if s.planned_date == TODAY] == [2]
 
 
-def test_allocator_rejects_invalid_topic_session_minutes():
-    with pytest.raises(ValueError, match="5-120"):
-        make_plan([topic(1)], minutes=60, horizon=1, topic_minutes={1: 121})
+def test_adapter_rejects_invalid_topic_session_minutes():
+    from types import SimpleNamespace
+
+    from app.core.errors import PlanValidationError
+    from app.schemas.plan import PlanInput
+    from app.services.plan_adapter import build_request
+
+    with pytest.raises(PlanValidationError, match="between 5 and 120"):
+        build_request(
+            SimpleNamespace(),
+            SimpleNamespace(id=1),
+            PlanInput(
+                topic_ids=[1],
+                topic_minutes={1: 121},
+            ),
+        )
 
 
 def test_allocator_scales_with_observed_pace():
