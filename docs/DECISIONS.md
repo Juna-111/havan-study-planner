@@ -1,5 +1,3 @@
-[object Object]
-
 ## Final fixes decisions — 2026-10-06
 
 - The canonical planner engine is physically located at `backend/app/services/plan/engine.py`; the former `planner_engine.py` path is removed.
