@@ -135,7 +135,7 @@ export default function AuthForm() {
         <div className="auth-brand-inner">
           <span className="auth-mark">H</span>
           <h1>Plan with clarity.</h1>
-          <p>Havan turns your academic position, workload, confidence, exams, and available time into a study plan you can actually control.</p>
+          <p>Choose what you want to study, tell Havan how much time you have, and keep control of your plan.</p>
           <div className="auth-points">
             <div className="auth-point"><b>✓</b><span>Your profile stays connected to your study progress.</span></div>
             <div className="auth-point"><b>✓</b><span>Return anytime and continue where you stopped.</span></div>
@@ -145,7 +145,7 @@ export default function AuthForm() {
       </section>
       <section className="auth-panel">
         <div className="auth-card">
-          <span className="eyebrow">HAVAN STUDY PLANNER</span>
+          <span className="eyebrow">HAVAN ACADEMY · STUDY PLANNER</span>
           <h2>{title}</h2>
           <p className="lead">{lead}</p>
 
@@ -226,7 +226,7 @@ export default function AuthForm() {
             </>
           )}
 
-          <p className="auth-note">Your academic profile is separate from your authentication credentials. Havan stores the profile ID with your account so your work can be recovered across sessions.</p>
+          <p className="auth-note">Your account keeps your academic profile and study plans connected across sessions. You stay in control of what you study and when.</p>
         </div>
       </section>
     </main>
