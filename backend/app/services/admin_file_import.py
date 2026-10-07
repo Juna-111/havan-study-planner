@@ -51,7 +51,9 @@ def parse_promotion_file(raw:bytes)->list[PromotionImportRow]:
  try:text=raw.decode("utf-8-sig")
  except UnicodeDecodeError as e:raise HTTPException(422,"The Havan promotion file must be UTF-8 text.") from e
  result=[];required=["course_code","chapter","platform_name","button_text","url"]
- for i,row in enumerate(_promotion_blocks(text),1):
+ blocks=_promotion_blocks(text)
+ if not blocks:raise HTTPException(422,"The Havan promotion file contains no promotion blocks.")
+ for i,row in enumerate(blocks,1):
   missing=[k for k in required if not _clean(row.get(k))]
   if missing:raise HTTPException(422,f"Promotion block {i}: missing {', '.join(missing)}.")
   try:order=int(row.get("order_index","1"))
@@ -59,7 +61,6 @@ def parse_promotion_file(raw:bytes)->list[PromotionImportRow]:
   status=_clean(row.get("status","ACTIVE")).upper()
   if status not in{"ACTIVE","INACTIVE"}:raise HTTPException(422,f"Promotion block {i}: status must be ACTIVE or INACTIVE.")
   result.append(PromotionImportRow(i,row["course_code"],row["chapter"],_clean(row.get("topic")) or None,row["platform_name"],_clean(row.get("description")) or None,row["button_text"],row["url"],order,status))
- if not result:raise HTTPException(422,"The Havan promotion file contains no promotion blocks.")
  return result
 def preview_university_import(rows:list[UniversityImportRow])->dict:
  seen=set()
