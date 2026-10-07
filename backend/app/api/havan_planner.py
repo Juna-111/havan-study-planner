@@ -101,7 +101,7 @@ def _read_havan_from_out(
             ).order_by(HavanPromotion.order_index, HavanPromotion.id)
         ).all()
         tasks.append(HavanPlanTaskRead(
-            id=task.id or 0,
+            id=task.id,
             course_id=task.course_id,
             course_code=task.course_code,
             course_name=task.course_name,
