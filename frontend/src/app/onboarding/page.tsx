@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button, ErrorState, Segmented } from '@/components/ui'
+import { Button, Card, ErrorState, Segmented } from '@/components/ui'
 import { StepAcademic } from '@/features/onboarding'
 import StepHabits from '@/features/onboarding/StepHabits'
 import StepExams from '@/features/onboarding/StepExams'
@@ -29,6 +29,8 @@ export default function Onboarding() {
 
   const validAcademic = Boolean(name.trim() && university && curriculum && stream && selected.size)
   const canNext = step === 0 ? validAcademic : step === 1 ? days.length > 0 : true
+  const stepLabels = ['Academic', 'Habits', 'Exams'] as const
+  const selectedCount = selected.size
 
   function handleUniversity(value: string) {
     setUniversity(value)
@@ -94,13 +96,31 @@ export default function Onboarding() {
 
   return (
     <main className="onboarding-shell">
-      <span className="onboarding-brand">HAVAN</span>
-      <h1>Set up your academic profile</h1>
-      <p className="onboarding-intro">Tell Havan where you are and when you study. You can change these choices later.</p>
+      <div className="onboarding-brand-row">
+        <span className="onboarding-brand">HAVAN ACADEMY</span>
+        <span className="onboarding-step-count">Step {step + 1} of 3</span>
+      </div>
+      <h1>Build your Havan study journey</h1>
+      <p className="onboarding-intro">Set your academic context, choose the courses you want to work with, and tell Havan when you normally study.</p>
+      <div className="onboarding-progress" aria-label="Onboarding progress">
+        {stepLabels.map((label, index) => (
+          <button
+            key={label}
+            type="button"
+            className={index === step ? 'onboarding-progress-step active' : index < step ? 'onboarding-progress-step complete' : 'onboarding-progress-step'}
+            onClick={() => index <= step && setStep(index)}
+            disabled={index > step}
+            aria-current={index === step ? 'step' : undefined}
+          >
+            <span>{index + 1}</span>
+            <strong>{label}</strong>
+          </button>
+        ))}
+      </div>
       <Segmented
-        options={['Academic', 'Habits', 'Exams'] as const}
-        value={['Academic', 'Habits', 'Exams'][step] as 'Academic' | 'Habits' | 'Exams'}
-        onChange={(value) => setStep(['Academic', 'Habits', 'Exams'].indexOf(value))}
+        options={stepLabels}
+        value={stepLabels[step]}
+        onChange={(value) => setStep(stepLabels.indexOf(value))}
       />
       {error && <ErrorState message={error} onRetry={() => setError('')} />}
       {step === 0 && (
@@ -134,6 +154,11 @@ export default function Onboarding() {
       )}
       {step === 1 && <StepHabits days={days} hours={hours} onDays={setDays} onHours={setHours} />}
       {step === 2 && <StepExams />}
+      <Card className="onboarding-summary">
+        <div><strong>{selectedCount}</strong><span>course{selectedCount === 1 ? '' : 's'} selected</span></div>
+        <div><strong>{hours}</strong><span>hours per study day</span></div>
+        <div><strong>{days.length}</strong><span>study day{days.length === 1 ? '' : 's'}</span></div>
+      </Card>
       <div className="onboarding-actions">
         {step > 0 && <Button variant="secondary" onClick={() => setStep(step - 1)}>Back</Button>}
         {step < 2
