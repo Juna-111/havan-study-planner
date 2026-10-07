@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta, timezone
+from dataclasses import replace
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -38,6 +39,8 @@ def _rebuild_future(
     deferred_topic_ids: set[int],
 ) -> Plan:
     today = today_local()
+    window_end = plan.start_date + timedelta(days=plan.horizon_days - 1)
+    planning_start = max(today, plan.start_date)
     preserved_pins = {
         row.topic_id: row.planned_date
         for row in db.scalars(
@@ -45,13 +48,20 @@ def _rebuild_future(
                 PlanTask.plan_id == plan.id,
                 PlanTask.pinned.is_(True),
                 PlanTask.status != "SKIPPED",
+                PlanTask.planned_date >= planning_start,
+                PlanTask.planned_date <= window_end,
             )
         ).all()
     }
     preserved_topic_ids = set(preserved_pins)
+    future_snapshot_pins = {
+        topic_id: pinned_date
+        for topic_id, pinned_date in snapshot.pinned_topic_dates.items()
+        if planning_start <= pinned_date <= window_end
+    }
+    future_snapshot_pins.update(preserved_pins)
     rebuilt_input = snapshot.model_copy(update={
-        "known_topic_ids": list(dict.fromkeys(snapshot.known_topic_ids + list(preserved_topic_ids))),
-        "pinned_topic_dates": {**snapshot.pinned_topic_dates, **preserved_pins},
+        "pinned_topic_dates": future_snapshot_pins,
     })
     result = build_student_choice_result(
         db,
@@ -59,12 +69,19 @@ def _rebuild_future(
         rebuilt_input,
         deferred_topic_ids=deferred_topic_ids,
         pinned_topic_dates=preserved_pins,
+        today=planning_start,
     )
+    result = replace(result, sessions=tuple(
+        session for session in result.sessions
+        if session.topic_id not in preserved_topic_ids
+        or session.planned_date == preserved_pins.get(session.topic_id)
+    ))
 
     future_rows = db.scalars(
         select(PlanTask).where(
             PlanTask.plan_id == plan.id,
-            PlanTask.planned_date >= today,
+            PlanTask.planned_date >= planning_start,
+            PlanTask.planned_date <= window_end,
             PlanTask.status == "PLANNED",
             PlanTask.pinned.is_(False),
         )
