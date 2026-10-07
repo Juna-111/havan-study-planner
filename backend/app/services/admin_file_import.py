@@ -137,19 +137,24 @@ def commit_university_import(db:Session,rows:list[UniversityImportRow])->dict:
 def preview_promotion_import(db:Session,rows:list[PromotionImportRow])->dict:
  errors=[]
  for row in rows:
-  c=db.scalar(select(Course).where(Course.code==row.course_code,Course.academic_scope=="FRESHMAN"))
+  c=db.scalar(select(Course).where(func.upper(Course.code)==row.course_code.strip().upper(),Course.academic_scope=="FRESHMAN"))
   if c is None:errors.append(f"Promotion {row.line}: course {row.course_code} was not found.");continue
-  ch=db.scalar(select(Chapter).where(Chapter.course_id==c.id,Chapter.name==row.chapter_name))
+  ch=db.scalar(select(Chapter).where(Chapter.course_id==c.id,func.lower(Chapter.name)==row.chapter_name.strip().lower()))
   if ch is None:errors.append(f"Promotion {row.line}: chapter '{row.chapter_name}' was not found.")
-  elif row.topic_name and db.scalar(select(Topic.id).where(Topic.chapter_id==ch.id,Topic.name==row.topic_name)) is None:errors.append(f"Promotion {row.line}: topic '{row.topic_name}' was not found.")
+  elif row.topic_name and db.scalar(select(Topic.id).where(Topic.chapter_id==ch.id,func.lower(Topic.name)==row.topic_name.strip().lower())) is None:errors.append(f"Promotion {row.line}: topic '{row.topic_name}' was not found.")
  if errors:raise HTTPException(422,detail=errors)
+ seen=set()
+ for row in rows:
+  key=(row.course_code.strip().upper(),row.chapter_name.strip().casefold(),(row.topic_name or "").strip().casefold(),row.platform_name.strip().casefold(),row.url.strip())
+  if key in seen:raise HTTPException(422,f"Promotion block {row.line}: duplicate promotion target in the uploaded file.")
+  seen.add(key)
  return {"promotions":len(rows)}
 def commit_promotion_import(db:Session,rows:list[PromotionImportRow])->dict:
  preview_promotion_import(db,rows)
  try:
   created=updated=0
   for row in rows:
-   c=db.scalar(select(Course).where(Course.code==row.course_code,Course.academic_scope=="FRESHMAN"));ch=db.scalar(select(Chapter).where(Chapter.course_id==c.id,Chapter.name==row.chapter_name));topic=db.scalar(select(Topic).where(Topic.chapter_id==ch.id,Topic.name==row.topic_name)) if row.topic_name else None
+   c=db.scalar(select(Course).where(func.upper(Course.code)==row.course_code.strip().upper(),Course.academic_scope=="FRESHMAN"));ch=db.scalar(select(Chapter).where(Chapter.course_id==c.id,func.lower(Chapter.name)==row.chapter_name.strip().lower()));topic=db.scalar(select(Topic).where(Topic.chapter_id==ch.id,func.lower(Topic.name)==row.topic_name.strip().lower())) if row.topic_name else None
    stmt=select(HavanPromotion).where(HavanPromotion.topic_id==topic.id if topic else HavanPromotion.chapter_id==ch.id);same=next((p for p in db.scalars(stmt).all() if p.platform_name.casefold()==row.platform_name.casefold() and p.url==row.url),None)
    if same:same.description=row.description;same.button_text=row.button_text;same.order_index=row.order_index;same.status=row.status;updated+=1
    else:db.add(HavanPromotion(chapter_id=None if topic else ch.id,topic_id=topic.id if topic else None,platform_name=row.platform_name,description=row.description,button_text=row.button_text,order_index=row.order_index,url=row.url,status=row.status));created+=1
