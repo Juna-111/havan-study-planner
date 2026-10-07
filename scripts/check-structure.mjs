@@ -23,14 +23,14 @@ for (const file of walk(src)) {
   const base = path.basename(file)
   const longestLine = Math.max(...text.split(/\r?\n/).map((line) => line.length))
 
-  if (base === 'page.tsx' && lines(file) > 180) failures.push(`${rel}: page exceeds 150 lines`)
-  if (file.endsWith('.tsx') && base !== 'page.tsx' && lines(file) > 400) failures.push(`${rel}: component exceeds 250 lines`)
-  if (file.endsWith('.css') && lines(file) > 320) failures.push(`${rel}: CSS exceeds 250 lines`)
+  if (base === 'page.tsx' && lines(file) > 180) failures.push(`${rel}: page exceeds 180 lines`)
+  if (file.endsWith('.tsx') && base !== 'page.tsx' && lines(file) > 400) failures.push(`${rel}: component exceeds 400 lines`)
+  if (file.endsWith('.css') && lines(file) > 320) failures.push(`${rel}: CSS exceeds 320 lines`)
   if (file.includes('/api/') && file.endsWith('.py') && lines(file) > 200) failures.push(`${rel}: router exceeds 200 lines`)
   if (/(:\s*any\b|as\s+any\b|<any>|Record<[^>]+,\s*any>)/.test(text)) failures.push(`${rel}: explicit any type`)
   if (/(from\s+['"]\.\.\/\.\.\/|import\s+['"]\.\.\/\.\.\/)/.test(text)) failures.push(`${rel}: use @/ alias instead of ../../ imports`)
   if (text.includes("localStorage.getItem('havan_student_key')") || text.includes('localStorage.getItem("havan_student_key")')) failures.push(`${rel}: legacy client-key identity access`)
-  if (longestLine > 800) failures.push(`${rel}: minified or unformatted line exceeds 300 characters`)
+  if (longestLine > 800) failures.push(`${rel}: line exceeds 800 characters`)
   if (base !== 'tokens.css' && /#[0-9a-fA-F]{3,8}\\b/.test(text)) failures.push(`${rel}: raw hex color outside tokens.css`)
 }
 
