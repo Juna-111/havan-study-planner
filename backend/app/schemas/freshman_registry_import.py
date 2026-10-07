@@ -23,6 +23,7 @@ class FreshmanRegistryPreview(BaseModel):
 
 
 class FreshmanRegistryResult(FreshmanRegistryPreview):
+    action: str
     course_id: int
     registry_key: str
     created_chapters: int
