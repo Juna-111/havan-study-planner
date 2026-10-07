@@ -164,7 +164,7 @@
 .havan-destination-label{
   padding:5px 9px;
   border-radius:999px;
-  background:var(--color-primary-soft,#eef0ff);
+  background:var(--color-primary-soft,var(--color-primary-soft));
   color:var(--color-primary,var(--color-primary));
   font-size:.7rem;
   font-weight:900;
