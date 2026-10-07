@@ -91,7 +91,22 @@ export default function HavanPlanView() {
 
                   <div className="havan-plan-resources">
                     <strong>Havan Academy resources</strong>
-                    <span>{task.academy_video_url || task.academy_notes_url || task.academy_questions_url ? 'Resources available' : 'Video, notes, and Freshman Exam Questions will appear when published.'}</span>
+                    {(task.academy_video_url || task.academy_notes_url || task.academy_questions_url) ? (
+                      <>
+                        <span>Resources published for this selected topic.</span>
+                        <div className="havan-plan-resource-links">
+                          {task.academy_video_url && <a href={task.academy_video_url} target="_blank" rel="noreferrer">Course video ↗</a>}
+                          {task.academy_notes_url && <a href={task.academy_notes_url} target="_blank" rel="noreferrer">Study notes ↗</a>}
+                          {task.academy_questions_url && (
+                            <a href={task.academy_questions_url} target="_blank" rel="noreferrer">
+                              Freshman Exam Questions{task.freshman_question_count ? ` · ${task.freshman_question_count}` : ''} ↗
+                            </a>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <span>Video, notes, and Freshman Exam Questions will appear when published for this topic.</span>
+                    )}
                   </div>
 
                   <div className="havan-plan-task-actions">
