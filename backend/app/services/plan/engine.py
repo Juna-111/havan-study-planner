@@ -550,7 +550,7 @@ def allocate_selected_topics(
                 and day <= deadline(topic)
                 and not (
                     topic.topic_id in pinned
-                    and day < pinned[topic.topic_id]
+                    and day <= pinned[topic.topic_id]
                 )
                 and not (
                     topic.topic_id in deferred
