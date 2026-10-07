@@ -70,7 +70,7 @@ def _read_havan_from_out(
     plan_id: int | None,
     input_snapshot: dict,
 ) -> HavanPlanRead:
-    topic_ids = {task["topic_id"] for task in out.tasks}
+    topic_ids = {task.topic_id for task in out.tasks}
     topics = list(db.scalars(select(Topic).where(Topic.id.in_(topic_ids))).all()) if topic_ids else []
     topic_map = {topic.id: topic for topic in topics}
     chapter_ids = {topic.chapter_id for topic in topics}
@@ -79,7 +79,7 @@ def _read_havan_from_out(
 
     tasks = []
     for task in out.tasks:
-        topic = topic_map.get(task["topic_id"])
+        topic = topic_map.get(task.topic_id)
         chapter = chapter_map.get(topic.chapter_id) if topic else None
         if not topic or not chapter:
             continue
@@ -90,15 +90,15 @@ def _read_havan_from_out(
             ).order_by(HavanPromotion.order_index, HavanPromotion.id)
         ).all()
         tasks.append(HavanPlanTaskRead(
-            id=task["id"] or 0,
-            course_id=task["course_id"],
-            course_code=task["course_code"],
-            course_name=task["course_name"],
+            id=task.id or 0,
+            course_id=task.course_id,
+            course_code=task.course_code,
+            course_name=task.course_name,
             chapter_name=task["chapter_name"],
-            topic_id=task["topic_id"],
-            topic_name=task["topic_name"],
-            planned_date=task["planned_date"],
-            minutes=task["minutes"],
+            topic_id=task.topic_id,
+            topic_name=task.topic_name,
+            planned_date=task.planned_date,
+            minutes=task.minutes,
             important_points=topic.important_points,
             promotions=[HavanPromotionRead.model_validate({
                 "id": p.id,
@@ -108,7 +108,7 @@ def _read_havan_from_out(
                 "url": p.url,
                 "status": p.status,
             }) for p in promotions],
-            status=task["status"],
+            status=task.status,
         ))
 
     snapshot = PlanInput.model_validate(input_snapshot)
