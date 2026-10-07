@@ -130,10 +130,10 @@ export default function AuthForm() {
       : 'Create one account so your Havan profile is available every time you return.'
 
   return (
-    <main className="auth-shell">
-      <section className="auth-brand-panel">
+    <main className={`auth-shell ${busy ? 'auth-is-busy' : ''}`}>
+      <section className="auth-brand-panel auth-reveal auth-reveal-1">
         <div className="auth-brand-inner">
-          <span className="auth-mark">H</span>
+          <span className="auth-mark" aria-hidden="true">H</span>
           <h1>Plan with clarity.</h1>
           <p>Choose what you want to study, tell Havan how much time you have, and keep control of your plan.</p>
           <div className="auth-points">
@@ -143,13 +143,13 @@ export default function AuthForm() {
           </div>
         </div>
       </section>
-      <section className="auth-panel">
+      <section className="auth-panel auth-reveal auth-reveal-2">
         <div className="auth-card">
           <span className="eyebrow">HAVAN ACADEMY · STUDY PLANNER</span>
           <h2>{title}</h2>
           <p className="lead">{lead}</p>
 
-          <form className="auth-form" onSubmit={submit}>
+          <form className="auth-form" onSubmit={submit} aria-busy={busy}>
             <label>
               Email
               <input type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
@@ -192,8 +192,8 @@ export default function AuthForm() {
             {error && <div className="auth-error">{error}</div>}
             {message && <div className="auth-message">{message}</div>}
 
-            <button className="auth-submit" disabled={busy}>
-              {busy ? 'Please wait…' : isForgot
+            <button className="auth-submit" disabled={busy}>{busy && <span className="auth-button-pulse" aria-hidden="true"><i /><i /><i /></span>}
+              {busy ? 'Working…' : isForgot
                 ? forgotStep === 'email' ? 'Send verification code'
                   : forgotStep === 'code' ? 'Verify code'
                     : 'Reset password'
