@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { apiFetch } from '@/lib/api'
 import CrudList, { entityConfigs, type EntityKey } from './CrudList'
+import PromotionManager from './PromotionManager'
 import styles from './admin.module.css'
 
 type Item = { id: number; name: string; code?: string }
@@ -95,10 +96,10 @@ export default function ContentScreen() {
       ) : entity === 'topics' && !chapterId ? (
         <div className={styles.empty}>Choose a chapter before editing its topics.</div>
       ) : (
-        <CrudList
-          config={config}
-          parentId={entity === 'chapters' ? courseId : chapterId}
-        />
+        <>
+          <CrudList config={config} parentId={entity === 'chapters' ? courseId : chapterId} />
+          {entity === 'topics' && chapterId && <PromotionManager parentType="topic" parentId={chapterId} />}
+        </>
       )}
     </section>
   )
