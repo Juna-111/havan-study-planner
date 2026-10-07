@@ -324,3 +324,7 @@
     width: fit-content;
   }
 }
+
+.havan-plan-promotions{display:grid;gap:.65rem;margin-top:1rem;padding:.85rem;border:1px solid #dfe2f2;border-radius:.9rem;background:linear-gradient(145deg,#f7f8ff,#fff)}
+.havan-plan-promotions-heading{display:grid;gap:.15rem}.havan-plan-promotions-heading strong{color:var(--color-primary,#01017e)}
+.havan-plan-promotion-links{display:grid;gap:.5rem}.havan-plan-promotion{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.72rem .8rem;border:1px solid #dfe2f2;border-radius:.75rem;background:#fff;text-decoration:none;color:inherit}.havan-plan-promotion:hover,.havan-plan-promotion:focus-visible{border-color:var(--color-primary,#01017e);box-shadow:0 5px 16px rgba(1,1,126,.08)}.havan-plan-promotion span{display:grid;gap:.18rem;min-width:0}.havan-plan-promotion strong{color:var(--color-primary,#01017e)}.havan-plan-promotion small{color:var(--color-muted,#666);line-height:1.4}.havan-plan-promotion>b{flex:none;color:var(--color-primary,#01017e);font-size:.78rem}@media(max-width:600px){.havan-plan-promotion{align-items:flex-start;flex-direction:column}.havan-plan-promotion>b{width:100%}}
