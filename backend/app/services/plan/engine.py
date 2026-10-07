@@ -68,27 +68,12 @@ class PlannerConfig:
     """Every tunable number in one place. Stored version + config make a plan
     reproducible."""
 
-    # Exams.
-    urgency_horizon_days: int = 30
+    # Exams and scheduling.
     study_on_exam_day: bool = False
-    tight_ratio: float = 0.85          # workload / time above this is "TIGHT"
-
-    # Scheduling shape.
-    min_session_minutes: int = 15      # never leave a fragment shorter than this
-    max_session_minutes: int = 60      # one sitting per topic before switching
-    interleave_penalty: float = 0.12   # spread a day across courses
+    tight_ratio: float = 0.85
+    min_session_minutes: int = 15
+    max_session_minutes: int = 60
     max_course_day_share: float = 0.60
-    same_day_repeat_penalty: float = 0.25
-    deferred_penalty: float = 0.10
-
-    # Spaced revision.
-    review_minutes: int = 20
-    review_priority_scale: float = 0.70
-    review_exam_window_days: int = 21
-    review_day_share: float = 0.30
-    review_interval_days: Mapping[int, int] = field(
-        default_factory=lambda: {1: 2, 2: 3, 3: 5, 4: 8, 5: 12}
-    )
 
     # Personal pace.
     min_pace_factor: float = 0.5
@@ -109,24 +94,9 @@ DEFAULT_CONFIG = PlannerConfig()
 MESSAGES: dict[str, dict[str, str]] = {
     "en": {
         "exam_in": "{exam_type} is in {days} day(s)",
-        "exam_today": "{exam_type} is today",
-        "student_selected": "you selected this topic",
-        "adaptive_allocation": "Havan allocated time using your available capacity and current study progress",
-        "no_exam": "no upcoming exam is driving this allocation",
-        "exam_high": "the assessment has high importance",
-        "exam_importance": "the assessment importance is {value}/5",
-        "topic_exam_high": "the topic has high exam importance",
-        "topic_exam_mid": "the topic has moderate exam importance",
-        "difficulty": "{label} difficulty (rated by senior students)",
         "started": "you have already started it, so this session continues your progress",
-        "not_started": "it is not started yet",
         "conf_low": "low confidence in this topic",
-        "conf_high": "your confidence is already strong",
-        "workload": "the work left before this exam is about {percent}% of your available study time",
-        "early_chapter": "it comes early in the course sequence",
         "pinned": "you chose this date",
-        "deferred": "you postponed it, so it is placed later",
-        "review_due": "revision is due: {days} day(s) since you last studied it",
     },
 }
 
