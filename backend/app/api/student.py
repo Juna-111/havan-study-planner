@@ -511,8 +511,8 @@ def _validate_exam_scope(db: Session, profile: StudentProfile, course_id: int, t
     course = db.get(Course, course_id)
     if not course:
         raise HTTPException(status_code=404, detail="Exam course not found")
-    if not course_available_to_stream(db, course.id, profile.stream_id):
-        raise HTTPException(status_code=400, detail="Exam course is outside the student's selected stream")
+    if course.id not in resolved_course_ids(db, profile.id):
+        raise HTTPException(status_code=400, detail="Exam course is not part of the student's active university curriculum")
     if not topic_ids:
         return
     unique_ids = set(topic_ids)
