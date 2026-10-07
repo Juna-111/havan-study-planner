@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { AppShell, PageHeader, StickyActionBar } from '@/components/layout'
 import { Button, Card, EmptyState, ErrorState, NumberStepper, Segmented, TreeSelect } from '@/components/ui'
 import { apiFetch } from '@/lib/api'
-import { previewPlan, savePlan, type Plan, type PlanMode } from '@/lib/plan'
+import { createHavanPlan, previewHavanPlan, type HavanPlan, type HavanPlanMode } from '@/lib/havanPlan'
 
 type Topic = {
   id: number
@@ -21,10 +21,10 @@ type Course = { id: number; code: string; name: string; chapters: Chapter[] }
 type Profile = { study_hours_per_day: number; study_days: string[] }
 
 type PlanBuilderProps = {
-  initialMode?: PlanMode
+  initialMode?: HavanPlanMode
 }
 
-const modeCopy: Record<PlanMode, { title: string; description: string; horizon: string }> = {
+const modeCopy: Record<HavanPlanMode, { title: string; description: string; horizon: string }> = {
   today: {
     title: 'Havan Today',
     description: 'Choose exactly what you want to study today. Havan allocates your available time across those topics.',
@@ -55,11 +55,10 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
   const [courses, setCourses] = useState<Course[]>([])
   const [profile, setProfile] = useState<Profile | null>(null)
   const [selected, setSelected] = useState<Set<number>>(new Set())
-  const [topicMinutes, setTopicMinutes] = useState<Record<number, number>>({})
-  const [mode, setMode] = useState<PlanMode>(initialMode ?? 'week')
+  const [mode, setMode] = useState<HavanPlanMode>(initialMode ?? 'week')
   const [hours, setHours] = useState(2)
   const [error, setError] = useState('')
-  const [preview, setPreview] = useState<Plan | null>(null)
+  const [preview, setPreview] = useState<HavanPlan | null>(null)
   const [busy, setBusy] = useState<'preview' | 'save' | null>(null)
   const [previewPulse, setPreviewPulse] = useState(false)
 
@@ -71,7 +70,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
 
     const requestedMode = new URLSearchParams(window.location.search).get('mode')
     if (requestedMode === 'today' || requestedMode === 'week' || requestedMode === 'month') {
-      setMode(requestedMode)
+      setMode(requestedMode as HavanPlanMode)
     }
   }, [initialMode])
 
@@ -95,12 +94,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
   }, [loadStudyData])
 
   const horizon = mode === 'today' ? 1 : mode === 'week' ? 7 : 28
-  const minutesByDay = useMemo(
-    () => Object.fromEntries((profile?.study_days ?? []).map((day) => [day, hours * 60])),
-    [profile?.study_days, hours],
-  )
-
-  const selectedTopics = useMemo(
+    const selectedTopics = useMemo(
     () => courses
       .flatMap((course) => course.chapters.flatMap((chapter) => chapter.topics))
       .filter((topic) => selected.has(topic.id)),
@@ -119,19 +113,19 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
     mode,
     horizon_days: horizon,
     topic_ids: [...selected],
-    known_topic_ids: [],
     study_days: profile?.study_days ?? [],
-    minutes_by_weekday: minutesByDay,
-    hours_per_day: hours,
-    topic_minutes: topicMinutes,
-  }), [mode, horizon, selected, profile?.study_days, minutesByDay, hours, topicMinutes])
+    hours_per_day: Object.fromEntries(
+      (mode === 'today' ? [new Date().getDay()] : (profile?.study_days ?? []).map((day) => ({ mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6, sun: 0 }[day] ?? 0)))
+        .map((weekday) => [weekday, hours]),
+    ),
+  }), [mode, horizon, selected, profile?.study_days, hours])
 
   async function previewIt() {
     if (busy || !selected.size) return
     try {
       setError('')
       setBusy('preview')
-      const nextPreview = await previewPlan(input)
+      const nextPreview = await previewHavanPlan(input)
       setPreview(nextPreview)
       setPreviewPulse(true)
       window.setTimeout(() => setPreviewPulse(false), 700)
@@ -147,11 +141,9 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
     try {
       setError('')
       setBusy('save')
-      const saved = await savePlan(input)
-      if (!saved.saved || !saved.id) {
-        throw new Error('Havan did not confirm that your plan was saved. Please try again.')
-      }
-      router.push('/plan')
+      const saved = await createHavanPlan(input)
+      if (!saved.id) throw new Error('Havan did not confirm that your plan was saved. Please try again.')
+      router.push('/student/havan/plan')
     } catch (value) {
       setError(value instanceof Error ? value.message : 'Could not save your plan.')
     } finally {
@@ -237,16 +229,6 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
               onChange={(next) => {
                 const ids = new Set([...next].map(Number))
                 setSelected(ids)
-                setTopicMinutes((current) => {
-                  const nextMinutes = { ...current }
-                  for (const id of Object.keys(nextMinutes).map(Number)) if (!ids.has(id)) delete nextMinutes[id]
-                  for (const course of courses) for (const chapter of course.chapters) for (const topic of chapter.topics) {
-                    if (ids.has(topic.id) && !nextMinutes[topic.id]) {
-                      nextMinutes[topic.id] = Math.max(20, Math.min(35, 20 + (topic.difficulty - 1) * 3 + (topic.estimated_study_minutes >= 120 ? 3 : 0)))
-                    }
-                  }
-                  return nextMinutes
-                })
                 setPreview(null)
               }}
             />
@@ -254,12 +236,18 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
 
           {selectedTopics.length > 0 && (
             <Card padding="lg" className="havan-topic-time-card havan-motion-enter">
-              <div><span className="app-eyebrow">STEP 2 · SESSION TIME</span><h2>Set time for each topic</h2><p className="app-meta">First-time topics start with a focused 20–35 minute session. Adjust any topic to fit your study pace.</p></div>
-              <div className="havan-topic-time-list">
-                {selectedTopics.map((topic) => <div className="havan-topic-time-row" key={topic.id}><div><strong>{topic.name}</strong><span>{topic.estimated_study_minutes} min total content · difficulty {topic.difficulty}/5</span></div><NumberStepper label="Session minutes" value={topicMinutes[topic.id] ?? 25} min={5} max={120} step={5} onChange={(value) => { setTopicMinutes((current) => ({ ...current, [topic.id]: value })); setPreview(null) }} /></div>)}
+              <div>
+                <span className="app-eyebrow">STEP 2 · AUTOMATIC ALLOCATION</span>
+                <h2>Havan will divide your time</h2>
+                <p className="app-meta">Topic estimated study time determines each selected topic's share. You do not need to enter minutes manually. The preview uses the same Havan engine that creates the saved plan.</p>
+              </div>
+              <div className="plan-capacity">
+                <div><strong>{selectedMinutes} min estimated content</strong><span>Across {selectedTopics.length} selected topics</span></div>
+                <div><strong>{mode === 'today' ? hours * 60 : hours * 60} min per study day</strong><span>{studyDayCount} selected study days per week</span></div>
               </div>
             </Card>
           )}
+
 
           {selectedTopics.length > 0 && (
             <Card padding="lg" className="havan-critical-points havan-motion-enter" style={{ '--motion-delay': '110ms' } as React.CSSProperties}>
@@ -334,15 +322,15 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
               ) : (
                 <>
                   <p className="app-copy">
-                    {preview.total_minutes} minutes placed. {preview.unplaced.length} topics could not fit.
+                    {preview.total_minutes} minutes allocated across {preview.tasks.length} study tasks. Every task comes from a topic you selected.
                   </p>
                   {preview.tasks.length > 0 && (
                     <div className="plan-review-list">
                       {preview.tasks.map((task, index) => (
-                        <div className="plan-review-row havan-allocation-row" style={{ '--motion-delay': `${index * 55}ms` } as React.CSSProperties} key={task.id}>
+                        <div className="plan-review-row havan-allocation-row" style={{ '--motion-delay': `${index * 55}ms` } as React.CSSProperties} key={`${task.topic_id}-${task.planned_date}-${index}`}>
                           <div>
                             <strong>{task.topic_name}</strong>
-                            <span>{task.course_code} · {task.course_name}</span>
+                            <span>{task.course_code} · {task.chapter_name}</span>
                           </div>
                           <div>
                             <strong>{task.minutes} min</strong>
@@ -351,19 +339,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
                         </div>
                       ))}
                     </div>
-                  )}
-                  {preview.unplaced.length > 0 && (
-                    <div className="plan-review-unplaced havan-motion-enter">
-                      <strong>Could not fit</strong>
-                      {preview.unplaced.map((item) => (
-                        <p key={item.topic_id}>{item.topic_name} · {item.minutes} min</p>
-                      ))}
-                    </div>
-                  )}
-                  {preview.warnings.slice(0, 3).map((warning) => (
-                    <p className="app-meta" key={warning.code}>{warning.message}</p>
-                  ))}
-                </>
+                  )}                </>
               )}
             </Card>
           )}

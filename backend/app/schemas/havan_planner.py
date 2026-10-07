@@ -1,29 +1,28 @@
 from datetime import date
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
-class HavanPlanTaskInput(BaseModel):
-    course_id: int = Field(gt=0)
-    topic_id: int = Field(gt=0)
-    planned_date: date
-    minutes: int = Field(gt=0)
-
-
 class HavanPlanCreate(BaseModel):
-    mode: str = Field(pattern="^(today|week|month)$")
+    mode: Literal["today", "week", "month"]
     horizon_days: int = Field(ge=1, le=31)
-    study_days: list[int] = Field(default_factory=list)
+    topic_ids: list[int] = Field(min_length=1, max_length=500)
+    study_days: list[int] = Field(default_factory=list, max_length=7)
     hours_per_day: dict[int, float] = Field(default_factory=dict)
-    total_minutes: int = Field(ge=1)
-    tasks: list[HavanPlanTaskInput] = Field(min_length=1)
 
 
 class HavanPlanTaskRead(BaseModel):
     id: int
     course_id: int
+    course_code: str
+    course_name: str
+    chapter_name: str
     topic_id: int
+    topic_name: str
     planned_date: date
     minutes: int
+    important_points: str | None = None
     academy_video_url: str | None = None
     academy_notes_url: str | None = None
     academy_questions_url: str | None = None
@@ -32,7 +31,7 @@ class HavanPlanTaskRead(BaseModel):
 
 
 class HavanPlanRead(BaseModel):
-    id: int
+    id: int | None
     student_id: int
     mode: str
     horizon_days: int
@@ -40,3 +39,7 @@ class HavanPlanRead(BaseModel):
     hours_per_day: dict[int, float]
     total_minutes: int
     tasks: list[HavanPlanTaskRead]
+
+
+class HavanPlanTaskAction(BaseModel):
+    action: Literal["START", "COMPLETE"]

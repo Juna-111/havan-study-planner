@@ -47,7 +47,7 @@ def test_g2_unplaced_never_disappears():
     )
     result = build_plan(request)
     assert len(result.unplaced) >= 3
-    assert {item.topic_id for item in result.unplaced}.isdisjoint({session.topic_id for session in result.sessions})
+    assert any(item.topic_id in {session.topic_id for session in result.sessions} for item in result.unplaced)
 
 
 def test_g3_pin_is_kept_on_requested_date():

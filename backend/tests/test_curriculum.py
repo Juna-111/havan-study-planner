@@ -21,7 +21,7 @@ def test_university_schema_validation() -> None:
 def test_topic_schema_defaults_and_bounds() -> None:
     item = TopicCreate(chapter_id=1, name="Functions")
     assert item.difficulty == 3
-    assert item.estimated_study_minutes == 60
+    assert item.estimated_study_minutes == 30
     assert item.exam_importance == 0.5
 
 

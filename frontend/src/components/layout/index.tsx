@@ -8,14 +8,15 @@ import styles from './layout.module.css'
 
 const navigation = [
   ['/student/havan', 'Havan'],
-  ['/plan', 'Plan'],
+  ['/student/havan/plan', 'Plan'],
   ['/exam-planning', 'Exam Planning'],
   ['/progress', 'Progress'],
   ['/settings', 'Settings'],
 ] as const
 
 function isActivePath(pathname: string, href: string) {
-  return pathname === href || (href !== '/student/havan' && pathname.startsWith(`${href}/`))
+  if (href === '/student/havan') return pathname === href || (pathname.startsWith(`${href}/`) && pathname !== '/student/havan/plan')
+  return pathname === href || pathname.startsWith(`${href}/`)
 }
 
 export function BottomNav() {

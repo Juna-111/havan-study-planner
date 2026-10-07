@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import Optional, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class AuthSignup(BaseModel):
@@ -88,6 +88,13 @@ class StudentRegistrationCreate(BaseModel):
     study_days: list[Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]] = Field(min_length=1, max_length=7)
     courses: list[StudentRegistrationCourse] = Field(min_length=1, max_length=100)
     exams: list[StudentRegistrationExam] = Field(default_factory=list, max_length=100)
+
+    @field_validator("study_days")
+    @classmethod
+    def unique_study_days(cls, value: list[str]) -> list[str]:
+        if len(set(value)) != len(value):
+            raise ValueError("Study days cannot be selected more than once")
+        return value
 
 class StudentCourseAdd(BaseModel):
     course_id: int = Field(gt=0)

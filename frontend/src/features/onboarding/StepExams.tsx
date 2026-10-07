@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Button, Card, DateField, Select } from '@/components/ui'
 import { apiFetch } from '@/lib/api'
+import { todayLocalISO } from '@/lib/dates'
 
 type Course = { id: number; code: string; name: string }
 type Topic = { id: number; name: string; estimated_study_minutes: number; status: string }
@@ -146,7 +147,7 @@ export default function StepExams({
           <div className="onboarding-exam-grid">
             <Select label="Course" value={courseId} onChange={setCourseId} options={courses.map((course) => ({ value: String(course.id), label: course.code + ' · ' + course.name }))} disabled={loading} />
             <Select label="Exam type" value={examType} onChange={setExamType} options={TYPES} />
-            <DateField label="Exam date" value={examDate} min={new Date().toISOString().slice(0, 10)} onChange={setExamDate} />
+            <DateField label="Exam date" value={examDate} min={todayLocalISO()} onChange={setExamDate} />
             <Select
               label="Importance"
               value={importance}

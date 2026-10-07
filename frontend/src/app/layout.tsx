@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import '../styles/tokens.css'
 import '../styles/base.css'
+import '../styles/base-extra-1.css'
 import '../styles/journey.css'
 import '../styles/utilities.css'
 
