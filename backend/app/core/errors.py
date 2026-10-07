@@ -15,6 +15,10 @@ class DomainError(Exception):
         self.status = status
 
 
+class PlanValidationError(DomainError):
+    """A user-fixable planning input error, distinct from unexpected bugs."""
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(DomainError)
     async def domain_error(request: Request, exc: DomainError) -> JSONResponse:
