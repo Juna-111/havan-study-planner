@@ -43,14 +43,21 @@ ADDIS_ABABA_TZ = "Africa/Addis_Ababa"
 def _clamp(value: float, low: float = 0.0, high: float = 1.0) -> float:
     return max(low, min(high, value))
 
-def session_limit_minutes(topic: PlannerTopic) -> int:
+def session_limit_minutes(
+    topic: PlannerTopic,
+    config: PlannerConfig | None = None,
+) -> int:
+    cfg = config or DEFAULT_CONFIG
     if topic.session_minutes is not None:
-        return max(5, min(120, topic.session_minutes))
+        return max(
+            cfg.min_session_minutes,
+            min(cfg.max_session_minutes, topic.session_minutes),
+        )
     if topic.progress_status != "NOT_STARTED":
-        return 60
-    scope_bonus = 3 if topic.estimated_minutes >= 120 else 0
-    return max(20, min(35, 20 + (max(1, topic.difficulty) - 1) * 3 + scope_bonus))
-
+        return cfg.max_session_minutes
+    scope_bonus = 5 if topic.estimated_minutes >= 120 else 0
+    base = 20 + (max(1, topic.difficulty) - 1) * 5 + scope_bonus
+    return max(cfg.min_session_minutes, min(cfg.max_session_minutes, base))
 
 
 # --------------------------------------------------------------------------
