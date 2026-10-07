@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func, select
 from app.db.session import get_db
-from app.db.models.curriculum import Chapter, Course, Curriculum, Stream, Topic, University, UniversityCourseMapping
+from app.db.models.curriculum import Chapter, Course, Curriculum, HavanPromotion, Stream, Topic, University, UniversityCourseMapping
 from app.schemas.curriculum import *
 from app.services.academic_resolver import resolve_stream_courses
 from app.services.curriculum import create_item, delete_item, get_or_404, list_items, update_item
@@ -160,3 +160,20 @@ def get_topic(item_id:int,db:DB): return get_or_404(db,Topic,item_id)
 def update_topic(item_id:int,payload:TopicUpdate,db:DB): return update_item(db,get_or_404(db,Topic,item_id),payload.model_dump(exclude_unset=True))
 @router.delete("/topics/{item_id}", dependencies=[Depends(require_admin)],status_code=204)
 def delete_topic(item_id:int,db:DB): delete_item(db,get_or_404(db,Topic,item_id))
+
+
+@router.get("/promotions")
+def promotions(db: DB, chapter_id: int | None = None, topic_id: int | None = None, page: int = Query(1, ge=1), page_size: int = Query(1, ge=1, le=100)):
+    if (chapter_id is None) == (topic_id is None): raise HTTPException(status_code=400, detail="Choose a chapter or topic.")
+    return collection(db, HavanPromotion, PromotionRead, page, page_size, {"chapter_id": chapter_id, "topic_id": topic_id})
+
+@router.post("/promotions", dependencies=[Depends(require_admin)], response_model=PromotionRead, status_code=201)
+def create_promotion(payload: PromotionCreate, db: DB):
+    if (payload.chapter_id is None) == (payload.topic_id is None): raise HTTPException(status_code=422, detail="A promotion must belong to exactly one chapter or topic.")
+    return create_item(db, HavanPromotion, payload.model_dump())
+
+@router.patch("/promotions/{item_id}", dependencies=[Depends(require_admin)], response_model=PromotionRead)
+def update_promotion(item_id: int, payload: PromotionUpdate, db: DB): return update_item(db, get_or_404(db, HavanPromotion, item_id), payload.model_dump(exclude_unset=True))
+
+@router.delete("/promotions/{item_id}", dependencies=[Depends(require_admin)], status_code=204)
+def delete_promotion(item_id: int, db: DB): delete_item(db, get_or_404(db, HavanPromotion, item_id))
