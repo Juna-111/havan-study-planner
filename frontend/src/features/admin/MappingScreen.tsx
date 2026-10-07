@@ -7,7 +7,6 @@ import styles from './admin.module.css'
 type U = { id: number; name: string; code: string; status: string }
 type C = { id: number; university_id: number; name: string; version: string; status: string }
 type S = { id: number; curriculum_id: number; name: string; code: string; status: string }
-type Course = { id: number; code: string; name: string; credit_hours: number | null; academic_scope: string; status: string }
 type M = {
   id: number
   stream_id: number
@@ -23,12 +22,10 @@ export default function MappingScreen() {
   const [universities, setUniversities] = useState<U[]>([])
   const [curriculums, setCurriculums] = useState<C[]>([])
   const [streams, setStreams] = useState<S[]>([])
-  const [courses, setCourses] = useState<Course[]>([])
   const [maps, setMaps] = useState<M[]>([])
   const [universityId, setUniversityId] = useState('')
   const [curriculumId, setCurriculumId] = useState('')
   const [streamId, setStreamId] = useState('')
-  const [search, setSearch] = useState('')
   const [error, setError] = useState('')
   const selectedUniversity = universities.find((item) => String(item.id) === universityId)
   const selectedCurriculum = curriculums.find((item) => String(item.id) === curriculumId)
@@ -39,13 +36,11 @@ export default function MappingScreen() {
       apiFetch<{ items: U[] }>('/universities?page=1&page_size=100'),
       apiFetch<{ items: C[] }>('/curriculums?page=1&page_size=100'),
       apiFetch<{ items: S[] }>('/streams?page=1&page_size=100'),
-      apiFetch<Course[]>('/university-course-mappings/courses?status_filter=ACTIVE'),
     ])
-      .then(([universitiesResult, curriculumsResult, streamsResult, coursesResult]) => {
+      .then(([universitiesResult, curriculumsResult, streamsResult]) => {
         setUniversities(universitiesResult.items)
         setCurriculums(curriculumsResult.items)
         setStreams(streamsResult.items)
-        setCourses(coursesResult)
         const firstActiveUniversity = universitiesResult.items.find((item) => item.status === 'ACTIVE')
         if (firstActiveUniversity) {
           setUniversityId(String(firstActiveUniversity.id))
@@ -62,11 +57,6 @@ export default function MappingScreen() {
     () => streams.filter((item) => String(item.curriculum_id) === curriculumId && item.status === 'ACTIVE'),
     [streams, curriculumId],
   )
-  const filtered = courses.filter((item) => {
-    const query = search.toLowerCase().trim()
-    return !query || item.code.toLowerCase().includes(query) || item.name.toLowerCase().includes(query)
-  })
-
   useEffect(() => {
     const item = availableCurriculums.find((value) => value.status === 'ACTIVE') || availableCurriculums[0]
     setCurriculumId(item ? String(item.id) : '')
