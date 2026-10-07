@@ -507,7 +507,6 @@ def reset_progress(student_id: int, topic_id: int, db: DB):
         db.commit()
 
 
-@router.get("/profiles/{student_id}/exams", response_model=list[ExamRead], dependencies=[Depends(require_student_owner)])
 def _validate_exam_scope(db: Session, profile: StudentProfile, course_id: int, topic_ids: list[int]) -> None:
     course = db.get(Course, course_id)
     if not course:
@@ -532,6 +531,7 @@ def _validate_exam_scope(db: Session, profile: StudentProfile, course_id: int, t
         raise HTTPException(status_code=400, detail="Every exam-scope topic must belong to the selected course and be active")
 
 
+@router.get("/profiles/{student_id}/exams", response_model=list[ExamRead], dependencies=[Depends(require_student_owner)])
 def list_exams(student_id: int, db: DB):
     profile_or_404(db, student_id)
     return list(db.scalars(select(StudentExam).where(StudentExam.student_id == student_id).order_by(StudentExam.exam_date)).all())
