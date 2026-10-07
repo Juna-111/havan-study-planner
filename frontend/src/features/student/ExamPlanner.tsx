@@ -39,7 +39,8 @@ export default function ExamPlanner(){
   const [exams,setExams]=useState<Exam[]>([])
   const [loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[error,setError]=useState('')
   const [courseId,setCourseId]=useState(''),[examType,setExamType]=useState('Final'),[examDate,setExamDate]=useState(''),[importance,setImportance]=useState('3')
-  const [editingId,setEditingId]=useState<number|null>(null)\n  const [selectedTopicIds,setSelectedTopicIds]=useState<number[]>([])
+  const [editingId,setEditingId]=useState<number|null>(null)
+  const [selectedTopicIds,setSelectedTopicIds]=useState<number[]>([])
 
   const load=useCallback(async()=>{
     setLoading(true);setError('')
@@ -60,7 +61,10 @@ export default function ExamPlanner(){
     if(!profile)return []
     return exams.map(exam=>{
       const course=courses.find(item=>item.id===exam.course_id)
-      const allTopics=course?.chapters.flatMap(ch=>ch.topics.filter(topic=>topic.status.toUpperCase()==='ACTIVE'))??[]\n      const scopedIds=new Set(exam.selected_topic_ids??[])\n      const scopeExplicit=scopedIds.size>0\n      const topics=scopeExplicit?allTopics.filter(topic=>scopedIds.has(topic.id)):allTopics
+      const allTopics=course?.chapters.flatMap(ch=>ch.topics.filter(topic=>topic.status.toUpperCase()==='ACTIVE'))??[]
+      const scopedIds=new Set(exam.selected_topic_ids??[])
+      const scopeExplicit=scopedIds.size>0
+      const topics=scopeExplicit?allTopics.filter(topic=>scopedIds.has(topic.id)):allTopics
       const completedTopics=topics.filter(topic=>progressMap.get(topic.id)?.status==='COMPLETED').length
       const workload=topics.map(topic=>{
         const item=progressMap.get(topic.id)
