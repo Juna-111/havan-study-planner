@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { apiFetch } from '@/lib/api'
 import styles from './admin.module.css'
 
-type CoursePreview = { code:string; name:string; content_version:string; category_codes:string[]; chapters:{name:string;topics:{name:string;difficulty:number;important_points?:string|null}[]}[] }
+type CoursePreview = { code:string; name:string; content_version:string; category_codes:string[]; action:string; chapters:{name:string;topics:{name:string;difficulty:number;important_points?:string|null}[]}[] }
 
 type ImportKind = 'course' | 'university' | 'promotion'
 
@@ -53,7 +53,8 @@ export default function ImportScreen() {
         setMessage('Havan promotion import applied: '+data.created+' created, '+data.updated+' updated.')
       }else{
         if(!coursePreview.length)return
-        const data=await apiFetch<CoursePreview[]>('/freshman-registry-import/commit',{method:'POST',body:JSON.stringify(coursePreview)})
+        const fd=new FormData();fd.append('file',file);fd.append('content_version',version.trim()||'1.0')
+        const data=await apiFetch<CoursePreview[]>('/freshman-registry-import/commit',{method:'POST',body:fd})
         setMessage(data.length+' course'+(data.length===1?'':'s')+' imported successfully.')
       }
       setCoursePreview([]);setSummary(null);setFile(null)
@@ -84,6 +85,6 @@ export default function ImportScreen() {
       </div>
     </div>
     {summary&&<div className={styles.preview}><h2>Import review</h2><p>{summary.kind==='university'?summary.data.rows+' CSV rows → '+summary.data.universities+' universities · '+summary.data.curriculums+' curricula · '+summary.data.streams+' streams · '+summary.data.course_mappings+' course mappings.':'Promotion blocks: '+summary.data.promotions+'.'}</p><small>No database changes are made until Apply import.</small></div>}
-    {coursePreview.length>0&&<div className={styles.preview}><h2>Course content review</h2><p>{coursePreview.length} courses · {courseTopics} topics.</p>{coursePreview.map(c=><article key={c.code+'-'+c.content_version}><b>{c.code} · {c.name}</b><small>Version {c.content_version}</small>{c.chapters.map(ch=><div className={styles.indent} key={ch.name}><strong>{ch.name}</strong>{ch.topics.map(t=><span key={t.name}>{t.name} · difficulty {t.difficulty}{t.important_points?' · critical points added':''}</span>)}</div>)}</article>)}</div>}
+    {coursePreview.length>0&&<div className={styles.preview}><h2>Course content review</h2><p>{coursePreview.length} courses · {courseTopics} topics.</p>{coursePreview.map(c=><article key={c.code+'-'+c.content_version}><b>{c.code} · {c.name}</b><small>Version {c.content_version} · {c.action}</small>{c.chapters.map(ch=><div className={styles.indent} key={ch.name}><strong>{ch.name}</strong>{ch.topics.map(t=><span key={t.name}>{t.name} · difficulty {t.difficulty}{t.important_points?' · critical points added':''}</span>)}</div>)}</article>)}</div>}
   </section>
 }
