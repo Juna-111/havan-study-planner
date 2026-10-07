@@ -19,13 +19,12 @@
 .onboarding-day:hover{border-color:var(--color-primary);background:var(--color-primary-soft)}
 @media(max-width:600px){
   .onboarding-brand-row{align-items:flex-start}
-  .onboarding-progress{gap:6px}
-  .onboarding-progress-step{grid-template-columns:1fr;justify-items:center;text-align:center;padding:8px 5px}
-  .onboarding-progress-step strong{max-width:100%;font-size:.72rem}
-  .onboarding-summary{grid-template-columns:1fr 1fr}
-  .onboarding-summary>div:last-child{grid-column:1/-1}
+.onboarding-progress{gap:6px}
+.onboarding-progress-step{grid-template-columns:1fr;justify-items:center;text-align:center;padding:8px 5px}
+.onboarding-progress-step strong{max-width:100%;font-size:.72rem}
+.onboarding-summary{grid-template-columns:1fr 1fr}
+.onboarding-summary>div:last-child{grid-column:1/-1}
 }
-
 /* Phase F: Havan interaction motion. Motion confirms student actions without taking control away. */
 .havan-motion-enter{animation:havan-rise-in .48s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--motion-delay,0ms)}
 .havan-allocation-row{animation:havan-slide-in .42s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--motion-delay,0ms)}
@@ -49,10 +48,9 @@
 @keyframes havan-ready{0%{transform:scale(.985);border-color:var(--color-primary)}45%{transform:scale(1.012);box-shadow:0 0 0 7px var(--color-primary-soft)}100%{transform:scale(1);box-shadow:var(--shadow-card)}}
 @media(prefers-reduced-motion:reduce){
   .havan-motion-enter,.havan-allocation-row,.havan-task-celebrate,.havan-task-added,.havan-is-building,.havan-plan-ready,.plan-capacity{animation:none!important}
-  .havan-task-card,.plan-review-row,.havan-chapter-guidance-item,.havan-topic-insight{transition:none!important}
-  .havan-task-card:hover,.plan-review-row:hover,.havan-chapter-guidance-item:hover,.havan-topic-insight:hover{transform:none}
+.havan-task-card,.plan-review-row,.havan-chapter-guidance-item,.havan-topic-insight{transition:none!important}
+.havan-task-card:hover,.plan-review-row:hover,.havan-chapter-guidance-item:hover,.havan-topic-insight:hover{transform:none}
 }
-
 /* Havan Focus: a lightweight, student-controlled session layer. */
 .plan-focus-row{margin-top:14px}
 .plan-focus-panel{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px;border:1px solid rgba(255,255,255,.18);border-radius:14px;background:linear-gradient(90deg,var(--color-primary-bright),var(--color-primary));box-shadow:0 12px 28px rgba(1,1,126,.18);color:var(--color-white)}
@@ -66,13 +64,12 @@
 .plan-focus-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 @media(max-width:600px){
   .plan-focus-panel{align-items:stretch;flex-direction:column}
-  .plan-focus-actions{display:grid;grid-template-columns:1fr 1fr}
-  .plan-focus-actions>*{min-height:48px}
+.plan-focus-actions{display:grid;grid-template-columns:1fr 1fr}
+.plan-focus-actions>*{min-height:48px}
 }
 @media(prefers-reduced-motion:reduce){
   .plan-focus-panel{transition:none}
 }
-
 .havan-exam-placeholder {
   display: grid;
   gap: 16px;
@@ -116,7 +113,6 @@
 @media (prefers-reduced-motion: reduce) {
   .havan-exam-placeholder { animation: none; }
 }
-
 /* Havan Exam Planning: a separate, data-driven preparation workspace. */
 .exam-planner{display:grid;gap:20px;padding:8px 0 48px}
 .exam-planner-loading{display:grid;gap:16px;padding:20px 0}
@@ -171,17 +167,16 @@
 .exam-intelligence-list span{color:var(--color-muted);font-size:.8rem}
 @media(max-width:700px){
   .exam-hero{grid-template-columns:1fr;padding:20px}
-  .exam-hero-stats{min-width:0}
-  .exam-form-grid,.exam-insight-grid,.exam-intelligence{grid-template-columns:1fr}
-  .exam-section-heading{align-items:flex-start;flex-direction:column}
-  .exam-source-note{text-align:left}
-  .exam-metrics{grid-template-columns:1fr}
+.exam-hero-stats{min-width:0}
+.exam-form-grid,.exam-insight-grid,.exam-intelligence{grid-template-columns:1fr}
+.exam-section-heading{align-items:flex-start;flex-direction:column}
+.exam-source-note{text-align:left}
+.exam-metrics{grid-template-columns:1fr}
 }
 @media(prefers-reduced-motion:reduce){
   .exam-hero,.exam-hero-glow,.exam-insight-card{animation:none;transition:none}
-  .exam-insight-card:hover{transform:none}
+.exam-insight-card:hover{transform:none}
 }
-
 .exam-scope{display:grid;gap:12px;padding:16px;border:1px solid var(--color-line);border-radius:16px;background:linear-gradient(100deg,var(--color-primary-soft),var(--color-white))}
 .exam-scope>div:first-child{display:grid;gap:5px}
 .exam-scope h3{color:var(--color-primary);font-size:1.05rem}
@@ -204,26 +199,24 @@
 .exam-strategy small{color:var(--color-primary);font-size:.72rem;font-weight:800;line-height:1.45}
 @media(max-width:600px){
   .exam-topic-option{grid-template-columns:22px minmax(0,1fr)}
-  .exam-topic-option small{grid-column:2}
+.exam-topic-option small{grid-column:2}
 }
 @media(prefers-reduced-motion:reduce){
   .exam-topic-option{transition:none}
 }
-
 /* Havan plan cards: the saved study plan is a branded student space, not a generic data table. */
 .plan-overview,.plan-task{transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}
 .plan-overview:hover,.plan-task:hover{transform:translateY(-2px);box-shadow:0 16px 38px rgba(1,1,126,.2)}
 @media(max-width:600px){
   .plan-add-topic .row{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
-  .plan-add-topic .row select,.plan-add-topic .row button{width:100%;min-width:0;min-height:48px}
-  .plan-overview{grid-template-columns:1fr;align-items:start}
-  .plan-overview-stats{text-align:left}
+.plan-add-topic .row select,.plan-add-topic .row button{width:100%;min-width:0;min-height:48px}
+.plan-overview{grid-template-columns:1fr;align-items:start}
+.plan-overview-stats{text-align:left}
 }
 @media(prefers-reduced-motion:reduce){
   .plan-overview,.plan-task{transition:none}
-  .plan-overview:hover,.plan-task:hover{transform:none}
+.plan-overview:hover,.plan-task:hover{transform:none}
 }
-
 /* Exam cards share Havan trust cues while red remains reserved for urgency. */
 .exam-insight-card{background:linear-gradient(155deg,var(--color-primary-dark) 0%,var(--color-primary) 68%,var(--color-primary-mid) 100%);border-color:rgba(255,255,255,.13);color:var(--color-white);box-shadow:0 12px 30px rgba(1,1,126,.16);overflow:hidden;position:relative}
 .exam-insight-card::before{content:'';position:absolute;inset:0 0 auto 0;height:3px;background:var(--color-primary)}
@@ -235,7 +228,6 @@
 .exam-insight-card .exam-strategy{background:rgba(250,3,2,.13);border-left-color:var(--color-accent)}
 .exam-insight-card .exam-strategy strong,.exam-insight-card .exam-strategy small{color:var(--color-white)}
 .exam-insight-card .exam-strategy span{color:rgba(255,255,255,.72)}
-
 /* Final Havan plan-card identity: the saved plan itself is branded, not only Focus mode. */
 .plan-task{
   background:linear-gradient(155deg,var(--color-primary-dark) 0%,var(--color-primary) 68%,var(--color-primary-mid) 100%) !important;
