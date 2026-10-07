@@ -63,17 +63,17 @@ def parse_promotion_file(raw:bytes)->list[PromotionImportRow]:
   result.append(PromotionImportRow(i,row["course_code"],row["chapter"],_clean(row.get("topic")) or None,row["platform_name"],_clean(row.get("description")) or None,row["button_text"],row["url"],order,status))
  return result
 def preview_university_import(rows:list[UniversityImportRow])->dict:
- seen=set(); stream_courses={}
+ seen=set(); course_semesters={}
  for row in rows:
-  key=(row.university_code.strip().upper(),row.curriculum.strip().casefold(),row.curriculum_version.strip().casefold(),row.stream_code.strip().upper(),row.course_code.strip().upper())
-  if key in seen:
+  course_key=(row.university_code.strip().upper(),row.curriculum.strip().casefold(),row.curriculum_version.strip().casefold(),row.stream_code.strip().upper(),row.course_code.strip().upper())
+  exact_key=course_key+(row.semester,)
+  if exact_key in seen:
    raise HTTPException(422,f"University CSV line {row.line}: duplicate course mapping in file.")
-  seen.add(key)
-  stream_key=key[:4]
-  previous=stream_courses.get(key)
+  seen.add(exact_key)
+  previous=course_semesters.get(course_key)
   if previous is not None and previous!=row.semester:
    raise HTTPException(422,f"University CSV lines contain course {row.course_code} in both semesters for the same stream.")
-  stream_courses[key]=row.semester
+  course_semesters[course_key]=row.semester
  return {"rows":len(rows),"universities":len({r.university_code.strip().upper() for r in rows}),"curriculums":len({(r.university_code.strip().upper(),r.curriculum.strip().casefold(),r.curriculum_version.strip().casefold()) for r in rows}),"streams":len({(r.university_code.strip().upper(),r.curriculum.strip().casefold(),r.curriculum_version.strip().casefold(),r.stream_code.strip().upper()) for r in rows}),"course_mappings":len(rows)}
 
 def commit_university_import(db:Session,rows:list[UniversityImportRow])->dict:
