@@ -102,14 +102,7 @@ def test_allocator_honours_deferred_topic_when_capacity_allows():
 
 def test_allocator_rejects_invalid_topic_session_minutes():
     with pytest.raises(ValueError, match="5-120"):
-        from app.services.plan.engine import PlanRequest
-        PlanRequest(
-            today=TODAY,
-            topics=(topic(1),),
-            calendar=StudyCalendar(study_weekdays=frozenset(range(7)), daily_minutes=60),
-            horizon_days=1,
-            topic_minutes={1: 121},
-        )
+        make_plan([topic(1)], minutes=60, horizon=1, topic_minutes={1: 121})
 
 
 def test_allocator_scales_with_observed_pace():
@@ -127,7 +120,6 @@ def test_no_study_time_is_reported():
         [topic(1)],
         minutes=0,
         horizon=1,
-        calendar={"daily_minutes": 0},
     )
     assert not result.sessions
     assert any(w.code == "NO_STUDY_TIME" for w in result.warnings)
