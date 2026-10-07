@@ -38,20 +38,30 @@ def _add_pin_warnings(result: PlanResult, plan_input: PlanInput) -> PlanResult:
 
     return replace(result, warnings=tuple(extra))
 
-def _warning_severity(code: str) -> str:
-    if code in {"EXAM_OVERLOADED", "DOES_NOT_FIT"}:
-        return "danger" if code == "EXAM_OVERLOADED" else "warn"
-    return "info"
+WARNING_CATALOG: dict[str, tuple[str, str, dict[str, str]]] = {
+    "DOES_NOT_FIT": ("warn", "Some selected topics could not fit before their available deadlines.", {"add_time": "Add time", "add_day": "Add a study day", "remove_topics": "Remove topics"}),
+    "EXAM_OVERLOADED": ("danger", "Your selected work needs {shortfall} more minutes before this exam.", {"add_time": "Add time", "choose_topics": "Choose fewer topics"}),
+    "PIN_OVER_CAPACITY": ("warn", "This date is over your configured study capacity, but Havan kept your choice.", {"keep": "Keep this date"}),
+    "PIN_NON_STUDY_DAY": ("info", "You chose a date that is not normally a study day. Havan kept it for this topic.", {"keep": "Keep this date"}),
+    "PIN_AFTER_EXAM": ("danger", "You chose a date after this topic's exam deadline. Havan kept your choice.", {"keep": "Keep this date"}),
+    "SKIPPED_NEEDS_REBUILD": ("info", "This task was skipped. Rebuild the remaining plan to reorganize future work.", {"rebuild": "Rebuild the rest"}),
+    "MOVE_OVER_CAPACITY": ("warn", "This move puts the task beyond your configured capacity for that date.", {"keep": "Keep this date"}),
+    "NO_STUDY_TIME": ("warn", "There is no free study time inside the planning window.", {"add_time": "Add time", "add_day": "Add a study day"}),
+    "NOTHING_TO_PLAN": ("info", "There is no unfinished selected work to schedule.", {}),
+}
 
 
-def _warning_fix(code: str) -> dict[str, str]:
+def warning_payload(code: str, *, shortfall: int | None = None) -> dict[str, object]:
+    severity, template, fix = WARNING_CATALOG.get(
+        code,
+        ("info", "Havan could not complete one planning step. Please review your choices.", {}),
+    )
     return {
-        "DOES_NOT_FIT": {"add_time": "Add time", "add_day": "Add a study day", "remove_topics": "Remove topics"},
-        "EXAM_OVERLOADED": {"add_time": "Add time", "choose_topics": "Choose fewer topics"},
-        "PIN_OVER_CAPACITY": {"keep": "Keep this date"},
-        "PIN_NON_STUDY_DAY": {"keep": "Keep this date"},
-        "SKIPPED_NEEDS_REBUILD": {"rebuild": "Rebuild the rest"},
-    }.get(code, {})
+        "code": code,
+        "severity": severity,
+        "message": template.format(shortfall=shortfall or 0),
+        "fix": fix,
+    }
 
 
 def _result_to_out(
@@ -75,20 +85,14 @@ def _result_to_out(
     saved_tasks = list(db.scalars(
         select(PlanTask).where(PlanTask.plan_id == saved_plan.id).order_by(PlanTask.id)
     ).all()) if saved_plan else []
-    saved_task_map = {}
-    for row in saved_tasks:
-        key = (row.topic_id, row.planned_date, row.kind)
-        saved_task_map.setdefault(key, row)
 
     tasks = []
-    for session in result.sessions:
+    for index, session in enumerate(result.sessions):
         topic = topic_map[session.topic_id]
         course_id = chapter_map[topic.chapter_id].course_id
         course = course_map[course_id]
         tasks.append({
-            "id": saved_task_map.get((session.topic_id, session.planned_date, session.kind)).id
-            if saved_task_map.get((session.topic_id, session.planned_date, session.kind))
-            else 0,
+            "id": saved_tasks[index].id if saved_plan and index < len(saved_tasks) else None,
             "course_id": course.id,
             "course_code": course.code,
             "course_name": course.name,
@@ -101,9 +105,7 @@ def _result_to_out(
             "reason": session.reason,
             "reason_parts": [list(part) for part in session.reason_parts],
             "kind": session.kind,
-            "status": saved_task_map.get((session.topic_id, session.planned_date, session.kind)).status
-            if saved_task_map.get((session.topic_id, session.planned_date, session.kind))
-            else "PLANNED",
+            "status": saved_tasks[index].status if saved_plan and index < len(saved_tasks) else "PLANNED",
             "pinned": topic.id in plan_input.pinned_topic_dates,
         })
 
@@ -123,12 +125,20 @@ def _result_to_out(
             "extra_minutes_per_study_day": item.extra_minutes_per_study_day,
         })
 
-    warnings = [{
-        "code": item.code,
-        "severity": _warning_severity(item.code),
-        "message": item.message,
-        "fix": _warning_fix(item.code),
-    } for item in result.warnings]
+    warnings = [
+        warning_payload(
+            item.code,
+            shortfall=next(
+                (
+                    readiness.shortfall_minutes
+                    for readiness in result.readiness
+                    if item.code == "EXAM_OVERLOADED" and readiness.status == "OVERLOADED"
+                ),
+                None,
+            ),
+        )
+        for item in result.warnings
+    ]
 
     unplaced = []
     for item in result.unplaced:
@@ -210,6 +220,7 @@ def build_student_choice_result(
     *,
     deferred_topic_ids: set[int] | None = None,
     pinned_topic_dates: dict[int, date] | None = None,
+    today: date | None = None,
 ) -> PlanResult:
     """Build a smart plan without changing the student's topic choices."""
     request = build_request(
@@ -218,6 +229,7 @@ def build_student_choice_result(
         plan_input,
         deferred_topic_ids=deferred_topic_ids or set(),
         pinned_topic_dates=pinned_topic_dates,
+        today=today,
     )
     return allocate_selected_topics(request)
 
@@ -228,8 +240,14 @@ def preview_plan(
     *,
     deferred_topic_ids: set[int] | None = None,
     pinned_topic_dates: dict[int, date] | None = None,
+    today: date | None = None,
 ) -> PlanOut:
-    result = build_student_choice_result(db, student, plan_input, deferred_topic_ids=deferred_topic_ids, pinned_topic_dates=pinned_topic_dates)
+    result = build_student_choice_result(
+        db, student, plan_input,
+        deferred_topic_ids=deferred_topic_ids,
+        pinned_topic_dates=pinned_topic_dates,
+        today=today,
+    )
     return _result_to_out(db, student, plan_input, result)
 
 
@@ -240,11 +258,13 @@ def save_plan(
     *,
     deferred_topic_ids: set[int] | None = None,
     pinned_topic_dates: dict[int, date] | None = None,
+    today: date | None = None,
 ) -> PlanOut:
     result = build_student_choice_result(
         db, student, plan_input,
         deferred_topic_ids=deferred_topic_ids,
         pinned_topic_dates=pinned_topic_dates,
+        today=today,
     )
 
     active = db.scalars(
@@ -293,4 +313,4 @@ def save_plan(
         ))
     db.commit()
     db.refresh(plan)
-    return _result_to_out(db, student, plan_input, result, plan)
+    return read_plan(db, student, plan)
