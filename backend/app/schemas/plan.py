@@ -27,7 +27,7 @@ class PlanInput(BaseModel):
 
 
 class TaskOut(BaseModel):
-    id: int
+    id: int | None
     course_id: int
     course_code: str
     course_name: str
