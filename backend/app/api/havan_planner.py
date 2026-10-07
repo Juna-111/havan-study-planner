@@ -126,6 +126,8 @@ def _read_havan_from_out(
         hours_per_day=hours,
         total_minutes=out.total_minutes,
         tasks=tasks,
+        warnings=out.warnings,
+        unplaced=out.unplaced,
     )
 
 
