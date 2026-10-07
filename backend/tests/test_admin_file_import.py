@@ -91,3 +91,27 @@ AAU,Addis Ababa University,Harmonized Freshman,2026,2026/27,NAT,Natural Science,
 
     with pytest.raises(HTTPException, match="both semesters"):
         preview_university_import(rows)
+
+
+def test_promotion_file_normalizes_valid_https_url():
+    raw = f"""PROMOTION_FILE_MARKER
+course_code: PHY101
+chapter: Measurement
+platform_name: Havan Academy
+button_text: Open
+url: https://www.havanacademy.com//physics
+"""
+    rows = parse_promotion_file(raw.encode())
+    assert rows[0].url == "https://www.havanacademy.com/physics"
+
+
+def test_promotion_file_rejects_invalid_url():
+    raw = f"""PROMOTION_FILE_MARKER
+course_code: PHY101
+chapter: Measurement
+platform_name: Havan Academy
+button_text: Open
+url: not-a-url
+"""
+    with pytest.raises(HTTPException, match="valid http or https URL"):
+        parse_promotion_file(raw.encode())
