@@ -133,3 +133,18 @@ def test_allocator_is_deterministic_across_repeated_runs():
     )
     outputs = [allocate_selected_topics(request) for _ in range(20)]
     assert all(output == outputs[0] for output in outputs[1:])
+
+
+def test_small_remainders_are_merged_instead_of_stranded():
+    result = allocate_selected_topics(
+        PlanRequest(
+            today=TODAY,
+            topics=(topic(1, minutes=70), topic(2, minutes=70)),
+            calendar=calendar(600),
+            horizon_days=5,
+        )
+    )
+    assert result.unplaced == ()
+    assert not any(w.code == "DOES_NOT_FIT" for w in result.warnings)
+    assert sum(session.minutes for session in result.sessions) == 140
+    assert all(session.minutes >= DEFAULT_CONFIG.min_session_minutes for session in result.sessions)
