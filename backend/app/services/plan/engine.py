@@ -792,7 +792,7 @@ def allocate_selected_topics(
         for offset in range(horizon)
         if request.calendar.capacity(today + timedelta(days=offset)) > 0
     ]
-    engine_version = "3.1.0-intelligent-choice"
+    engine_version = "3.1.0-choice"
     if not study_days:
         return PlanResult(
             engine_version=engine_version,
