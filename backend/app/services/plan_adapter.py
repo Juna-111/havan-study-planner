@@ -59,6 +59,7 @@ def build_request(
     today: date | None = None,
     deferred_topic_ids: Iterable[int] = (),
     pinned_topic_dates: dict[int, date] | None = None,
+    frozen_topic_ids: Iterable[int] = (),
 ) -> PlanRequest:
     today = today or today_local()
     selected_ids = list(dict.fromkeys(plan_input.topic_ids))
@@ -175,4 +176,5 @@ def build_request(
         deferred_topic_ids=frozenset(deferred_topic_ids),
         pinned_topic_dates=pinned_topic_dates or plan_input.pinned_topic_dates,
         known_topic_ids=frozenset(known_ids),
+        frozen_topic_ids=frozenset(frozen_topic_ids),
     )
