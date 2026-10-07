@@ -90,7 +90,7 @@
 .onboarding-course-choice-copy strong{font-size:.95rem;letter-spacing:.01em}
 .onboarding-course-choice-copy span{font-size:.84rem;color:var(--color-muted);overflow-wrap:anywhere}
 .onboarding-course-card.selected .onboarding-course-choice-copy span{color:rgba(255,255,255,.76)}
-.onboarding-course-choice-state{padding:6px 9px;border-radius:999px;background:#eef0ff;color:var(--color-primary);font-size:.72rem;font-weight:900;white-space:nowrap}
+.onboarding-course-choice-state{padding:6px 9px;border-radius:999px;background:var(--color-primary-soft);color:var(--color-primary);font-size:.72rem;font-weight:900;white-space:nowrap}
 .onboarding-course-card.selected .onboarding-course-choice-state{background:var(--color-accent);color:var(--color-white)}
 .onboarding-habits-card,.onboarding-exams-card{display:grid;gap:18px}
 .onboarding-habits-block,.onboarding-hours-block{display:grid;gap:10px;padding:14px;border:1px solid var(--color-line-light);border-radius:16px;background:var(--color-surface-soft)}
@@ -121,7 +121,7 @@
 .onboarding-exam-summary span,.onboarding-exam-summary small{color:var(--color-muted)}
 .onboarding-empty-state,.onboarding-loading-state{display:grid;gap:5px;padding:16px;border:1px dashed var(--color-line-strong);border-radius:14px;background:var(--color-surface-soft);color:var(--color-ink)}
 .onboarding-empty-state p,.onboarding-loading-state span{color:var(--color-muted)}
-.onboarding-inline-error{padding:10px 12px;border-radius:12px;background:var(--color-danger-soft);color:#a32120!important}
+.onboarding-inline-error{padding:10px 12px;border-radius:12px;background:var(--color-danger-soft);color:var(--color-danger-dark)!important}
 .havan-builder-days{display:grid;gap:10px;padding:14px;border:1px solid var(--color-line);border-radius:16px;background:var(--color-surface-soft)}
 .havan-builder-days-heading{display:flex;justify-content:space-between;gap:10px;color:var(--color-primary)}
 .havan-builder-days-heading span{color:var(--color-muted);font-size:.78rem}
@@ -212,7 +212,7 @@
   flex: none;
   padding: 0.35rem 0.6rem;
   border-radius: 999px;
-  background: var(--color-primary-soft, #eef0ff);
+  background: var(--color-primary-soft, var(--color-primary-soft));
   color: var(--color-primary, var(--color-primary));
   font-size: 0.68rem;
   font-weight: 800;
