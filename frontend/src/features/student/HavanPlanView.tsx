@@ -230,8 +230,6 @@ export default function HavanPlanView() {
                   </span>
                   <span className="havan-plan-chapter">{task.chapter_name}</span>
                   <h3>{task.topic_name}</h3>
-                  {task.reason && <p className="havan-plan-reason">{task.reason}</p>}
-
                   {points.length > 0 && (
                     <div className="havan-plan-points">
                       <strong>Critical points</strong>
