@@ -1,0 +1,251 @@
+/* Phase G: Havan onboarding journey */
+.onboarding-brand-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}
+.onboarding-step-count{color:var(--color-muted);font-size:.78rem;font-weight:800}
+.onboarding-progress{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:18px 0 12px}
+.onboarding-progress-step{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:8px;min-width:0;padding:10px 12px;border:1px solid var(--color-line);border-radius:13px;background:var(--color-surface);color:var(--color-muted);text-align:left}
+.onboarding-progress-step span{display:grid;place-items:center;width:28px;height:28px;border-radius:9px;background:var(--color-canvas);font-size:.8rem;font-weight:900}
+.onboarding-progress-step strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.8rem}
+.onboarding-progress-step.active{border-color:var(--color-primary);background:var(--color-primary-soft);color:var(--color-primary);box-shadow:var(--shadow-brand)}
+.onboarding-progress-step.active span,.onboarding-progress-step.complete span{background:var(--color-primary);color:#fff}
+.onboarding-progress-step.complete{border-color:#d7d9ee;color:var(--color-primary)}
+.onboarding-progress-step:disabled{cursor:not-allowed;opacity:.72}
+.onboarding-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px;border-top:3px solid var(--color-accent);background:linear-gradient(90deg,var(--color-accent-soft),#fff)}
+.onboarding-summary>div{display:grid;gap:2px}
+.onboarding-summary strong{color:var(--color-primary);font-size:1.15rem}
+.onboarding-summary span{color:var(--color-muted);font-size:.76rem}
+.auth-submit:hover{background:var(--color-accent-hover)}
+.auth-form input:focus-visible{outline:3px solid var(--color-primary-soft);outline-offset:0}
+.onboarding-field input:focus-visible{outline:3px solid var(--color-primary-soft);outline-offset:0}
+.onboarding-day:hover{border-color:var(--color-primary);background:var(--color-primary-soft)}
+@media(max-width:600px){
+  .onboarding-brand-row{align-items:flex-start}
+  .onboarding-progress{gap:6px}
+  .onboarding-progress-step{grid-template-columns:1fr;justify-items:center;text-align:center;padding:8px 5px}
+  .onboarding-progress-step strong{max-width:100%;font-size:.72rem}
+  .onboarding-summary{grid-template-columns:1fr 1fr}
+  .onboarding-summary>div:last-child{grid-column:1/-1}
+}
+
+/* Phase F: Havan interaction motion. Motion confirms student actions without taking control away. */
+.havan-motion-enter{animation:havan-rise-in .48s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--motion-delay,0ms)}
+.havan-allocation-row{animation:havan-slide-in .42s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--motion-delay,0ms)}
+.havan-task-card{transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}
+.havan-task-card:hover{transform:translateY(-2px);border-color:#d9dcf4;box-shadow:var(--shadow-brand)}
+.havan-task-celebrate{animation:havan-complete .62s cubic-bezier(.2,.9,.2,1) both}
+.havan-task-added{animation:havan-add .68s cubic-bezier(.2,.9,.2,1) both}
+.havan-is-building{animation:havan-breathe .8s ease-in-out infinite}
+.havan-plan-ready{animation:havan-ready .68s cubic-bezier(.2,.9,.2,1) both}
+.plan-capacity{animation:havan-soft-pop .45s ease-out both}
+.plan-review-row{transition:background .18s ease,transform .18s ease}
+.plan-review-row:hover{background:var(--color-primary-soft);transform:translateX(3px)}
+.havan-chapter-guidance-item,.havan-topic-insight{transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+.havan-chapter-guidance-item:hover,.havan-topic-insight:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(1,1,126,.08);border-color:#d9dcf4}
+@keyframes havan-rise-in{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes havan-slide-in{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+@keyframes havan-soft-pop{from{opacity:0;transform:scale(.985)}to{opacity:1;transform:scale(1)}}
+@keyframes havan-add{0%{opacity:0;transform:translateY(18px) scale(.97);box-shadow:0 0 0 rgba(250,3,2,0)}55%{opacity:1;transform:translateY(-3px) scale(1.01);box-shadow:0 0 0 7px var(--color-accent-soft)}100%{transform:translateY(0) scale(1);box-shadow:none}}
+@keyframes havan-complete{0%{transform:scale(1);border-color:var(--color-line)}35%{transform:scale(1.015);border-color:var(--color-primary);box-shadow:0 0 0 7px var(--color-primary-soft)}70%{transform:scale(.995)}100%{transform:scale(1);border-color:var(--color-line);box-shadow:var(--shadow-card)}}
+@keyframes havan-breathe{0%,100%{box-shadow:var(--shadow-brand);transform:translateY(0)}50%{box-shadow:0 14px 34px rgba(1,1,126,.16);transform:translateY(-1px)}}
+@keyframes havan-ready{0%{transform:scale(.985);border-color:var(--color-primary)}45%{transform:scale(1.012);box-shadow:0 0 0 7px var(--color-primary-soft)}100%{transform:scale(1);box-shadow:var(--shadow-card)}}
+@media(prefers-reduced-motion:reduce){
+  .havan-motion-enter,.havan-allocation-row,.havan-task-celebrate,.havan-task-added,.havan-is-building,.havan-plan-ready,.plan-capacity{animation:none!important}
+  .havan-task-card,.plan-review-row,.havan-chapter-guidance-item,.havan-topic-insight{transition:none!important}
+  .havan-task-card:hover,.plan-review-row:hover,.havan-chapter-guidance-item:hover,.havan-topic-insight:hover{transform:none}
+}
+
+/* Havan Focus: a lightweight, student-controlled session layer. */
+.plan-focus-row{margin-top:14px}
+.plan-focus-panel{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px;border:1px solid rgba(255,255,255,.18);border-radius:14px;background:linear-gradient(90deg,#08088e,#01017e);box-shadow:0 12px 28px rgba(1,1,126,.18);color:#fff}
+.plan-focus-panel .app-eyebrow{color:rgba(255,255,255,.7)}
+.plan-focus-panel strong{color:#fff!important}
+.plan-focus-panel small{color:rgba(255,255,255,.72)!important}
+.plan-focus-panel .button.secondary{color:var(--color-primary);background:#fff;border-color:#fff}
+.plan-focus-panel>div:first-child{display:grid;gap:3px;min-width:0}
+.plan-focus-panel strong{color:var(--color-primary);font-size:clamp(1.8rem,7vw,2.5rem);font-variant-numeric:tabular-nums;letter-spacing:.03em}
+.plan-focus-panel small{color:var(--color-muted);line-height:1.45}
+.plan-focus-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+@media(max-width:600px){
+  .plan-focus-panel{align-items:stretch;flex-direction:column}
+  .plan-focus-actions{display:grid;grid-template-columns:1fr 1fr}
+  .plan-focus-actions>*{min-height:48px}
+}
+@media(prefers-reduced-motion:reduce){
+  .plan-focus-panel{transition:none}
+}
+
+.havan-exam-placeholder {
+  display: grid;
+  gap: 16px;
+  border-top: 4px solid var(--color-accent);
+  box-shadow: var(--shadow-brand);
+  animation: havan-rise-in .48s cubic-bezier(.2,.8,.2,1) both;
+}
+.havan-exam-placeholder > span {
+  color: var(--color-accent);
+  font-size: .75rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+}
+.havan-exam-placeholder h2 {
+  max-width: 720px;
+  color: var(--color-primary);
+  font-size: clamp(1.4rem, 4vw, 2rem);
+}
+.havan-exam-placeholder p {
+  max-width: 720px;
+  color: var(--color-muted);
+  line-height: 1.65;
+}
+.havan-exam-placeholder > div {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--color-primary-soft);
+}
+.havan-exam-placeholder > div strong {
+  color: var(--color-primary);
+}
+.havan-exam-placeholder ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 20px;
+  color: var(--color-muted);
+}
+@media (prefers-reduced-motion: reduce) {
+  .havan-exam-placeholder { animation: none; }
+}
+
+/* Havan Exam Planning: a separate, data-driven preparation workspace. */
+.exam-planner{display:grid;gap:20px;padding:8px 0 48px}
+.exam-planner-loading{display:grid;gap:16px;padding:20px 0}
+.exam-hero{position:relative;overflow:hidden;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:end;padding:24px;border:1px solid rgba(255,255,255,.14);border-radius:20px;background:linear-gradient(145deg,#01017e 0%,#08088e 62%,#02025d 100%);color:#fff;box-shadow:0 18px 40px rgba(1,1,126,.16);animation:havan-rise-in .48s cubic-bezier(.2,.8,.2,1) both}
+.exam-hero-glow{position:absolute;width:210px;height:210px;right:-70px;top:-90px;border:1px solid rgba(255,255,255,.16);border-radius:50%;box-shadow:0 0 0 28px rgba(255,255,255,.035),0 0 0 58px rgba(250,3,2,.04);animation:havan-nav-orbit 10s ease-in-out infinite}
+.exam-eyebrow,.exam-kicker{font-size:.72rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase}
+.exam-eyebrow{color:rgba(255,255,255,.72)}
+.exam-hero h2{position:relative;max-width:650px;margin:6px 0;color:#fff;font-size:clamp(1.65rem,5vw,2.6rem);line-height:1.05}
+.exam-hero p{position:relative;max-width:680px;color:rgba(255,255,255,.76);line-height:1.6}
+.exam-hero-stats{position:relative;display:grid;grid-template-columns:repeat(2,minmax(90px,1fr));gap:10px;min-width:210px}
+.exam-hero-stats div{display:grid;gap:2px;padding:12px;border:1px solid rgba(255,255,255,.14);border-radius:14px;background:rgba(255,255,255,.08);backdrop-filter:blur(5px)}
+.exam-hero-stats strong{font-size:1.45rem}
+.exam-hero-stats span{color:rgba(255,255,255,.7);font-size:.72rem}
+.exam-error{padding:12px 14px;border-left:4px solid var(--color-accent);border-radius:12px;background:var(--color-accent-soft);color:#8e2422;font-size:.9rem}
+.exam-editor{display:grid;gap:18px;border-top:3px solid var(--color-primary);box-shadow:var(--shadow-brand)}
+.exam-section{display:grid;gap:12px}
+.exam-section-heading{display:flex;justify-content:space-between;align-items:end;gap:16px}
+.exam-section-heading>div{display:grid;gap:4px}
+.exam-section-heading h2{color:var(--color-primary);font-size:1.45rem}
+.exam-kicker{color:var(--color-accent)}
+.exam-source-note{max-width:360px;color:var(--color-muted);font-size:.76rem;line-height:1.45;text-align:right}
+.exam-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.exam-form-grid .field{display:grid;gap:7px;color:var(--color-ink);font-size:.875rem;font-weight:700}
+.exam-form-grid input{width:100%;min-height:48px;padding:0 12px;border:1px solid var(--color-line);border-radius:12px;background:#fff;color:var(--color-ink);outline:none}
+.exam-form-grid input:focus{border-color:var(--color-primary);box-shadow:0 0 0 3px var(--color-primary-soft)}
+.exam-editor-actions{display:flex;gap:10px;flex-wrap:wrap}
+.exam-insight-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.exam-insight-card{display:grid;gap:14px;border-top:3px solid var(--color-primary);transition:transform .2s ease,box-shadow .2s ease}
+.exam-insight-card:nth-child(2n){border-top-color:var(--color-accent)}
+.exam-insight-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-brand)}
+.exam-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.exam-card-top>div{display:grid;gap:5px;min-width:0}
+.exam-card-top h3{color:var(--color-ink);font-size:1.2rem;line-height:1.2}
+.exam-countdown{display:flex;align-items:baseline;gap:7px}
+.exam-countdown strong{color:var(--color-primary);font-size:2.3rem;line-height:1;font-variant-numeric:tabular-nums}
+.exam-countdown span{color:var(--color-muted);font-size:.8rem}
+.exam-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.exam-metrics span{display:grid;gap:2px;padding:10px;border-radius:12px;background:var(--color-primary-soft);color:var(--color-muted);font-size:.72rem;line-height:1.35}
+.exam-metrics b{color:var(--color-primary);font-size:.9rem}
+.exam-explanation{color:var(--color-muted);font-size:.86rem;line-height:1.55}
+.exam-card-actions{display:flex;gap:8px;flex-wrap:wrap}
+.exam-empty{display:grid;gap:7px;border-left:4px solid var(--color-primary);background:linear-gradient(90deg,var(--color-primary-soft),#fff)}
+.exam-empty strong{color:var(--color-primary)}
+.exam-empty p{color:var(--color-muted);line-height:1.55}
+.exam-intelligence{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.8fr);gap:20px;border-top:3px solid var(--color-accent);background:linear-gradient(100deg,var(--color-accent-soft),#fff);box-shadow:var(--shadow-brand)}
+.exam-intelligence>div:first-child{display:grid;gap:7px}
+.exam-intelligence h2{color:var(--color-primary);font-size:1.45rem}
+.exam-intelligence p{color:var(--color-muted);line-height:1.6}
+.exam-intelligence-list{display:grid;gap:8px}
+.exam-intelligence-list div{display:grid;grid-template-columns:30px 1fr;align-items:center;gap:9px;padding:9px;border-radius:11px;background:#fff}
+.exam-intelligence-list strong{display:grid;place-items:center;width:28px;height:28px;border-radius:9px;background:var(--color-primary);color:#fff;font-size:.8rem}
+.exam-intelligence-list span{color:var(--color-muted);font-size:.8rem}
+@media(max-width:700px){
+  .exam-hero{grid-template-columns:1fr;padding:20px}
+  .exam-hero-stats{min-width:0}
+  .exam-form-grid,.exam-insight-grid,.exam-intelligence{grid-template-columns:1fr}
+  .exam-section-heading{align-items:flex-start;flex-direction:column}
+  .exam-source-note{text-align:left}
+  .exam-metrics{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  .exam-hero,.exam-hero-glow,.exam-insight-card{animation:none;transition:none}
+  .exam-insight-card:hover{transform:none}
+}
+
+.exam-scope{display:grid;gap:12px;padding:16px;border:1px solid var(--color-line);border-radius:16px;background:linear-gradient(100deg,var(--color-primary-soft),#fff)}
+.exam-scope>div:first-child{display:grid;gap:5px}
+.exam-scope h3{color:var(--color-primary);font-size:1.05rem}
+.exam-scope p{color:var(--color-muted);font-size:.82rem;line-height:1.5}
+.exam-scope-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.exam-scope-actions span{color:var(--color-primary);font-size:.78rem;font-weight:800}
+.exam-topic-groups{display:grid;gap:10px;max-height:360px;overflow:auto;padding-right:3px}
+.exam-topic-group{display:grid;gap:7px;padding:11px;border:1px solid var(--color-line);border-radius:12px;background:#fff}
+.exam-topic-group>strong{color:var(--color-ink);font-size:.86rem}
+.exam-topic-group>div{display:grid;gap:6px}
+.exam-topic-option{display:grid;grid-template-columns:22px minmax(0,1fr) auto;align-items:center;gap:8px;min-height:44px;padding:7px 9px;border:1px solid transparent;border-radius:10px;color:var(--color-muted);font-size:.8rem;cursor:pointer;transition:background .18s ease,border-color .18s ease,transform .18s ease}
+.exam-topic-option:hover{background:var(--color-primary-soft);border-color:#d9dcf4;transform:translateX(2px)}
+.exam-topic-option input{width:18px;height:18px;accent-color:var(--color-primary)}
+.exam-topic-option span{min-width:0}
+.exam-topic-option small{color:var(--color-muted);white-space:nowrap}
+.exam-scope-status{margin:0;padding:7px 10px;border-radius:9px;background:var(--color-primary-soft);color:var(--color-primary);font-size:.76rem;font-weight:800}
+.exam-strategy{display:grid;gap:4px;padding:12px;border-left:3px solid var(--color-accent);border-radius:10px;background:var(--color-accent-soft)}
+.exam-strategy strong{color:var(--color-primary);font-size:.8rem}
+.exam-strategy span{color:var(--color-muted);font-size:.78rem;line-height:1.5}
+.exam-strategy small{color:var(--color-primary);font-size:.72rem;font-weight:800;line-height:1.45}
+@media(max-width:600px){
+  .exam-topic-option{grid-template-columns:22px minmax(0,1fr)}
+  .exam-topic-option small{grid-column:2}
+}
+@media(prefers-reduced-motion:reduce){
+  .exam-topic-option{transition:none}
+}
+
+/* Havan plan cards: the saved study plan is a branded student space, not a generic data table. */
+.plan-overview,.plan-task{transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}
+.plan-overview:hover,.plan-task:hover{transform:translateY(-2px);box-shadow:0 16px 38px rgba(1,1,126,.2)}
+@media(max-width:600px){
+  .plan-add-topic .row{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+  .plan-add-topic .row select,.plan-add-topic .row button{width:100%;min-width:0;min-height:48px}
+  .plan-overview{grid-template-columns:1fr;align-items:start}
+  .plan-overview-stats{text-align:left}
+}
+@media(prefers-reduced-motion:reduce){
+  .plan-overview,.plan-task{transition:none}
+  .plan-overview:hover,.plan-task:hover{transform:none}
+}
+
+/* Exam cards share Havan trust cues while red remains reserved for urgency. */
+.exam-insight-card{background:linear-gradient(155deg,#02025f 0%,#01017e 68%,#090993 100%);border-color:rgba(255,255,255,.13);color:#fff;box-shadow:0 12px 30px rgba(1,1,126,.16);overflow:hidden;position:relative}
+.exam-insight-card::before{content:'';position:absolute;inset:0 0 auto 0;height:3px;background:var(--color-primary)}
+.exam-insight-card:nth-child(2n)::before{background:var(--color-accent)}
+.exam-insight-card .exam-card-top h3,.exam-insight-card .exam-countdown strong{color:#fff}
+.exam-insight-card .exam-card-top span,.exam-insight-card .exam-explanation{color:rgba(255,255,255,.72)}
+.exam-insight-card .exam-metrics span{background:rgba(255,255,255,.1);color:rgba(255,255,255,.7)}
+.exam-insight-card .exam-metrics b{color:#fff}
+.exam-insight-card .exam-strategy{background:rgba(250,3,2,.13);border-left-color:var(--color-accent)}
+.exam-insight-card .exam-strategy strong,.exam-insight-card .exam-strategy small{color:#fff}
+.exam-insight-card .exam-strategy span{color:rgba(255,255,255,.72)}
+
+/* Final Havan plan-card identity: the saved plan itself is branded, not only Focus mode. */
+.plan-task{
+  background:linear-gradient(155deg,#02025f 0%,#01017e 68%,#090993 100%) !important;
+  color:#fff !important;
+  border-color:rgba(255,255,255,.16) !important;
+  box-shadow:0 12px 30px rgba(1,1,126,.16) !important;
+}
+.plan-task .chip.info{color:#fff;background:rgba(255,255,255,.14)}
+.plan-task .chip.success{color:#fff;background:rgba(18,119,90,.78)}
+.plan-task .button.primary{color:#fff}
+.plan-task .button.secondary{color:var(--color-primary);background:#fff;border-color:#fff}
+.plan-task .button.ghost{color:#fff;background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16)}
+.plan-task .button.ghost:hover:not(:disabled){background:rgba(255,255,255,.16)}
