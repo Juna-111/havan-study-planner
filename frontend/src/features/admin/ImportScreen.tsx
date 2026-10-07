@@ -80,9 +80,30 @@ export default function ImportScreen() {
         <p>Preview the established Course → Chapter → Topic format before anything is written to the registry.</p>
       </header>
       {(message || error) && <div className={error ? styles.alert : styles.notice}>{error || message}</div>}
+      <div className={styles.importStatus}>
+        <div>
+          <span>IMPORT WORKFLOW</span>
+          <strong>{busy === 'preview' ? 'Parsing file' : busy === 'save' ? 'Saving to Course Registry' : preview.length ? 'Preview ready' : file ? 'File ready' : 'Waiting for a course file'}</strong>
+        </div>
+        <small>{preview.length ? 'No registry record is written until you confirm the import.' : 'The status reflects the actual import state on this screen.'}</small>
+      </div>
       <div className={styles.importCard}>
         <label>Content version<input value={version} onChange={(e) => setVersion(e.target.value)} /></label>
-        <input type="file" accept=".txt,.md,text/plain,text/markdown" onChange={(e) => { setFile(e.target.files?.[0] || null); clearResult() }} />
+        <div className={styles.filePicker}>
+          <div>
+            <span className={styles.fieldKicker}>SOURCE FILE</span>
+            <strong>{file ? file.name : 'No course file selected'}</strong>
+            <small>.txt or .md · UTF-8 · maximum 5 MB</small>
+          </div>
+          <label className={styles.fileButton}>
+            <span>{file ? 'Change file' : 'Choose course file'}</span>
+            <input
+              type="file"
+              accept=".txt,.md,text/plain,text/markdown"
+              onChange={(e) => { setFile(e.target.files?.[0] || null); clearResult() }}
+            />
+          </label>
+        </div>
         <pre>{'Course: [PHY101] Physics\nChapter: Measurement\n  • Physical quantities [3]\n  • Units and dimensions [2]'}</pre>
         <div className={styles.actions}>
           <button disabled={busy !== null || !file} onClick={previewImport}>{busy === 'preview' ? 'Parsing…' : 'Preview import'}</button>

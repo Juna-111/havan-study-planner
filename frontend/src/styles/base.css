@@ -517,3 +517,57 @@ button { cursor:pointer } :focus-visible { outline:3px solid rgba(1,1,126,.35); 
 .plan-task .button.secondary{color:var(--color-primary);background:#fff;border-color:#fff}
 .plan-task .button.ghost{color:#fff;background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16)}
 .plan-task .button.ghost:hover:not(:disabled){background:rgba(255,255,255,.16)}
+
+/* Final Havan student identity for saved plans and exam cards. */
+.plan-task{
+  background:linear-gradient(155deg,#02025f 0%,#01017e 68%,#090993 100%) !important;
+  color:#fff !important;
+  border:1px solid rgba(255,255,255,.16) !important;
+  box-shadow:0 14px 34px rgba(1,1,126,.2) !important;
+}
+.plan-task h2,.plan-task h3,.plan-task strong,.plan-task p,.plan-task small,.plan-task label,.plan-task span{
+  color:#fff !important;
+}
+.plan-task .chip.info{background:rgba(255,255,255,.14) !important;color:#fff !important}
+.plan-task .chip.success{background:rgba(18,119,90,.82) !important;color:#fff !important}
+.plan-task .button.primary{background:var(--color-accent) !important;color:#fff !important;border-color:var(--color-accent) !important}
+.plan-task .button.secondary{background:#fff !important;color:var(--color-primary) !important;border-color:#fff !important}
+.plan-task .button.ghost{background:rgba(255,255,255,.08) !important;color:#fff !important;border-color:rgba(255,255,255,.2) !important}
+.plan-task .plan-task-date input{
+  color:var(--color-ink) !important;
+  background:#fff !important;
+  border-color:#fff !important;
+}
+.exam-insight-card{
+  background:linear-gradient(155deg,#650a09 0%,#8f1513 62%,#b61b18 100%) !important;
+  color:#fff !important;
+  border:1px solid rgba(250,3,2,.3) !important;
+  box-shadow:0 14px 34px rgba(130,15,13,.2) !important;
+}
+.exam-insight-card h3,.exam-insight-card strong,.exam-insight-card p,.exam-insight-card span,.exam-insight-card small{
+  color:#fff !important;
+}
+.exam-insight-card .exam-metrics span{
+  background:rgba(255,255,255,.12) !important;
+  color:rgba(255,255,255,.76) !important;
+}
+.exam-insight-card .exam-metrics b{color:#fff !important}
+.exam-insight-card .exam-strategy{
+  background:rgba(0,0,0,.13) !important;
+  border-left-color:#fff !important;
+}
+.exam-insight-card .exam-strategy strong,.exam-insight-card .exam-strategy small,.exam-insight-card .exam-strategy span{color:#fff !important}
+.exam-insight-card .button.secondary{
+  background:#fff !important;
+  color:#8f1513 !important;
+  border-color:#fff !important;
+}
+.exam-insight-card .button.ghost{
+  background:rgba(255,255,255,.1) !important;
+  color:#fff !important;
+  border-color:rgba(255,255,255,.2) !important;
+}
+@media(max-width:600px){
+  .plan-task{border-radius:18px!important}
+  .exam-insight-card{border-radius:18px!important}
+}
