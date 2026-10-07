@@ -4,7 +4,7 @@ chapter: Study Skills
 platform_name: Havan Academy
 description: Havan Academy learning support for Communicative English Language Skills I.
 button_text: Explore Havan support
-url: https://havanacademy.example/courses/flen1011/study-skills
+url: https://www.havanacademy.com/
 order_index: 1
 status: ACTIVE
 
@@ -14,7 +14,7 @@ topic: Reading for main ideas and supporting details
 platform_name: Havan Academy
 description: Havan Academy study support for this selected topic.
 button_text: Open topic support
-url: https://havanacademy.example/courses/flen1011/study-skills/reading-main-ideas
+url: https://www.havanacademy.com//reading-main-ideas
 order_index: 1
 status: ACTIVE
 
@@ -24,6 +24,6 @@ topic: Identifying fallacies in arguments
 platform_name: Havan Academy
 description: Havan Academy learning support for Critical Thinking.
 button_text: Open topic support
-url: https://havanacademy.example/courses/loct1011/fallacies
+url: https://www.havanacademy.com/
 order_index: 1
 status: ACTIVE
