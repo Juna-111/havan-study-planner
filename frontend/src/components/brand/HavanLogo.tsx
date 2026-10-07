@@ -22,7 +22,7 @@ export function HavanLogo({
         overflow: 'hidden',
         alignItems: 'center',
         borderRadius: Math.max(8, size * 0.16),
-        background: '#fff',
+        background: 'var(--color-surface)',
       }}
     >
       <Image
