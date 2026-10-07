@@ -50,7 +50,7 @@ def _read(db: Session, plan: HavanPlan, tasks: list[HavanPlanTask]) -> HavanPlan
             academy_notes_url=task.academy_notes_url,
             academy_questions_url=task.academy_questions_url,
             freshman_question_count=task.freshman_question_count,
-            promotions=[{"id": p.id, "platform_name": p.platform_name, "description": p.description, "button_text": p.button_text, "url": p.url, "status": p.status} for p in db.scalars(select(HavanPromotion).where(((HavanPromotion.chapter_id == chapter.id) | (HavanPromotion.topic_id == topic.id)), func.upper(HavanPromotion.status) == "ACTIVE")).all()],
+            promotions=[{"id": p.id, "platform_name": p.platform_name, "description": p.description, "button_text": p.button_text, "url": p.url, "status": p.status} for p in db.scalars(select(HavanPromotion).where(((HavanPromotion.chapter_id == chapter.id) | (HavanPromotion.topic_id == topic.id)), func.upper(HavanPromotion.status) == "ACTIVE").order_by(HavanPromotion.order_index, HavanPromotion.id)).all()],
             status=task.status,
         ))
     return HavanPlanRead(
