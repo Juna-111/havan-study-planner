@@ -19,8 +19,8 @@ onClick?:()=>
 void;
 disabled?:boolean}){return <button className={styles.iconButton} aria-label={label} onClick={onClick} disabled={disabled} type="button">
 {children}</button>}
-export function Card({children,as:Tag='div',padding='md',radius='md',className=''}:{children:React.ReactNode;as?:'div'|'section'|'article';padding?:'sm'|'md'|'lg';radius?:'sm'|'md'|'lg';className?:string}){
-  return <Tag className={`${styles.card} ${styles[padding]} ${styles[radius]} ${className}`}>{children}</Tag>
+export function Card({children,as:Tag='div',padding='md',radius='md',className='',style}:{children:React.ReactNode;as?:'div'|'section'|'article';padding?:'sm'|'md'|'lg';radius?:'sm'|'md'|'lg';className?:string;style?:React.CSSProperties}){
+  return <Tag className={`${styles.card} ${styles[padding]} ${styles[radius]} ${className}`} style={style}>{children}</Tag>
 }
 export function Chip({children,tone='neutral'}:{children:React.ReactNode;tone?:'neutral'|'info'|'success'|'warn'|'danger'}){return <span className={`${styles.chip} ${styles[tone]}`}>{children}</span>}
 export function Segmented<T extends string>({options,value,onChange}:{options:readonly T[];value:T;onChange:(v:T)=>void}){
