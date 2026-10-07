@@ -102,23 +102,92 @@ return()=>
 window.clearTimeout(id)},[onDismiss]);
 return <div className={styles.toast} role="status" aria-live="polite">
 {message}</div>}
-export function BottomSheet({open,title,children,onClose}:{open:boolean;
-title:string;
-children:React.ReactNode;
-onClose:()=>
-void}){const ref=useRef<HTMLDivElement>(null);
-useEffect(()=>
-{if(!open)return;const node=ref.current;node?.focus();const previous=document.activeElement as HTMLElement|null;const onKeyDown=(event:KeyboardEvent)=>{if(event.key==='Escape'){event.preventDefault();onClose();return}if(event.key!=='Tab'||!node)return;const focusable=Array.from(node.querySelectorAll<HTMLElement>('button,a,input,select,textarea,[tabindex]:not([tabindex="-1"])')).filter(item=>!item.hasAttribute('disabled')&&item.getAttribute('aria-hidden')!=='true');if(!focusable.length)return;const first=focusable[0],last=focusable[focusable.length-1];if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}};document.addEventListener('keydown',onKeyDown);return()=>{document.removeEventListener('keydown',onKeyDown);previous?.focus()}},[open,onClose]);
-if(!open)return null;
-return <>
-<div className={styles.backdrop} onClick={onClose}/>
-<section className={styles.sheet} ref={ref} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="sheet-title">
-<header>
-<h2 id="sheet-title">{title}</h2>
-<button className={styles.close} type="button" aria-label="Close" onClick={onClose}>×</button>
-</header>{children}</section>
-</>
+export function BottomSheet({
+  open,
+  title,
+  children,
+  onClose,
+}: {
+  open: boolean
+  title: string
+  children: React.ReactNode
+  onClose: () => void
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const node = ref.current
+    node?.focus()
+    const previous = document.activeElement as HTMLElement | null
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        onClose()
+        return
+      }
+      if (event.key !== 'Tab' || !node) return
+
+      const focusable = Array.from(
+        node.querySelectorAll<HTMLElement>(
+          'button,a,input,select,textarea,[tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter(
+        (item) =>
+          !item.hasAttribute('disabled') &&
+          item.getAttribute('aria-hidden') !== 'true',
+      )
+      if (!focusable.length) return
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      previous?.focus()
+    }
+  }, [open, onClose])
+
+  if (!open) return null
+
+  return (
+    <>
+      <div className={styles.backdrop} onClick={onClose} />
+      <section
+        className={styles.sheet}
+        ref={ref}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="sheet-title"
+      >
+        <header>
+          <h2 id="sheet-title">{title}</h2>
+          <button
+            className={styles.close}
+            type="button"
+            aria-label="Close"
+            onClick={onClose}
+          >
+            ×
+          </button>
+        </header>
+        {children}
+      </section>
+    </>
+  )
 }
+
 type Topic = { id: string; name: string; minutes: number }
 type Chapter = { id: string; name: string; topics: Topic[] }
 type Course = { id: string; name: string; chapters: Chapter[] }
