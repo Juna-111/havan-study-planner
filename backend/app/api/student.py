@@ -410,6 +410,14 @@ def complete_onboarding(
         profile.study_days = payload.study_days
 
     try:
+        selected_course_ids = {course.course_id for course in payload.courses}
+        existing_courses = list(db.scalars(
+            select(StudentCourse).where(StudentCourse.student_id == profile.id)
+        ).all())
+        for existing_course in existing_courses:
+            if existing_course.course_id not in selected_course_ids:
+                db.delete(existing_course)
+
         for course in payload.courses:
             _apply_course_selection(db, profile, StudentCourseAdd(
                 course_id=course.course_id,
