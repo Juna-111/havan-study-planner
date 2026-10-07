@@ -360,43 +360,55 @@ def allocate_selected_topics(
             None,
         )
 
-    def available_until(end: date) -> int:
-        if end < today:
-            return 0
-        days = min(horizon, (end - today).days + 1)
-        return sum(
-            request.calendar.capacity(today + timedelta(days=offset))
-            for offset in range(days)
+    all_days = [
+        today + timedelta(days=offset)
+        for offset in range(horizon)
+    ]
+    all_capacities = [
+        request.calendar.capacity(day)
+        for day in all_days
+    ]
+    capacity_prefix = [0]
+    study_day_prefix = [0]
+    for capacity in all_capacities:
+        capacity_prefix.append(capacity_prefix[-1] + capacity)
+        study_day_prefix.append(
+            study_day_prefix[-1] + (1 if capacity > 0 else 0)
         )
 
-    readiness: list[ExamReadiness] = []
-    readiness_warnings: list[PlanWarning] = []
-    for exam in exams:
-        last_day = _last_study_day(exam, today, cfg)
-        window_end = min(today + timedelta(days=horizon - 1), last_day)
-        required = sum(
+    def prefix_at(end: date, values: list[int]) -> int:
+        if end < today:
+            return 0
+        index = min(horizon, (end - today).days + 1)
+        return values[index]
+
+    exam_workload = {
+        (exam.course_id, exam.exam_type, exam.exam_date): sum(
             remaining[topic.topic_id]
             for topic in selected
             if topic.course_id == exam.course_id and exam.covers(topic.topic_id)
         )
-        available = available_until(window_end)
-        study_days_left = sum(
-            1
-            for offset in range(
-                min(horizon, max(0, (window_end - today).days + 1))
-            )
-            if request.calendar.capacity(today + timedelta(days=offset)) > 0
-        )
-        cumulative = sum(
-            sum(
-                remaining[topic.topic_id]
-                for topic in selected
-                if earlier.course_id == topic.course_id
-                and earlier.covers(topic.topic_id)
-            )
-            for earlier in exams
-            if earlier.exam_date <= exam.exam_date
-        )
+        for exam in exams
+    }
+    cumulative_exam_workload: list[int] = []
+    running = 0
+    for exam in exams:
+        running += exam_workload[
+            (exam.course_id, exam.exam_type, exam.exam_date)
+        ]
+        cumulative_exam_workload.append(running)
+
+    readiness: list[ExamReadiness] = []
+    readiness_warnings: list[PlanWarning] = []
+    for exam_index, exam in enumerate(exams):
+        last_day = _last_study_day(exam, today, cfg)
+        window_end = min(today + timedelta(days=horizon - 1), last_day)
+        required = exam_workload[
+            (exam.course_id, exam.exam_type, exam.exam_date)
+        ]
+        available = prefix_at(window_end, capacity_prefix)
+        study_days_left = prefix_at(window_end, study_day_prefix)
+        cumulative = cumulative_exam_workload[exam_index]
         shortfall = max(0, cumulative - available)
         pressure = cumulative / available if available else (math.inf if cumulative else 0)
         if cumulative == 0 or pressure <= cfg.tight_ratio:
@@ -432,12 +444,8 @@ def allocate_selected_topics(
                 )
             )
 
-    study_days = [
-        today + timedelta(days=offset)
-        for offset in range(horizon)
-        if request.calendar.capacity(today + timedelta(days=offset)) > 0
-    ]
-    capacities = {day: request.calendar.capacity(day) for day in study_days}
+    study_days = [day for day, capacity in zip(all_days, all_capacities) if capacity > 0]
+    capacities = {day: capacity for day, capacity in zip(study_days, all_capacities) if capacity > 0}
     if not study_days:
         return PlanResult(
             engine_version=ENGINE_VERSION,
@@ -463,6 +471,8 @@ def allocate_selected_topics(
             ),
         )
     sessions: list[PlannedSession] = []
+    day_course_minutes: dict[date, dict[int, int]] = defaultdict(lambda: defaultdict(int))
+    session_index: dict[tuple[int, date, str], int] = {}
     pinned = dict(request.pinned_topic_dates)
     deferred = set(request.deferred_topic_ids)
     pin_warnings: list[PlanWarning] = []
@@ -503,6 +513,8 @@ def allocate_selected_topics(
             )
         if chunk >= cfg.min_session_minutes or remaining[topic.topic_id] < cfg.min_session_minutes:
             parts: tuple[ReasonPart, ...] = (("pinned", {}),)
+            session_index[(topic.topic_id, target, "STUDY")] = len(sessions)
+            day_course_minutes[target][topic.course_id] += chunk
             sessions.append(
                 PlannedSession(
                     topic_id=topic.topic_id,
@@ -556,10 +568,7 @@ def allocate_selected_topics(
                 cfg.min_session_minutes,
                 math.floor(day_capacity * cfg.max_course_day_share),
             )
-            used_by_course: dict[int, int] = defaultdict(int)
-            for session in sessions:
-                if session.planned_date == day:
-                    used_by_course[session.course_id] += session.minutes
+            used_by_course = day_course_minutes[day]
             current_limit = session_limit_minutes(topic, cfg)
             candidate_chunk = min(
                 remaining[topic.topic_id],
@@ -600,6 +609,7 @@ def allocate_selected_topics(
                     existing,
                     minutes=existing.minutes + chunk,
                 )
+                day_course_minutes[day][topic.course_id] += chunk
                 remaining[topic.topic_id] = 0
                 capacities[day] -= chunk
                 continue
@@ -621,15 +631,8 @@ def allocate_selected_topics(
             if topic.progress_confidence <= 2:
                 parts.append(("conf_low", {}))
 
-            existing_index = next(
-                (
-                    index
-                    for index, session in enumerate(sessions)
-                    if session.topic_id == topic.topic_id
-                    and session.planned_date == day
-                    and session.kind == "STUDY"
-                ),
-                None,
+            existing_index = session_index.get(
+                (topic.topic_id, day, "STUDY")
             )
             if existing_index is not None:
                 existing = sessions[existing_index]
@@ -638,6 +641,7 @@ def allocate_selected_topics(
                     minutes=existing.minutes + chunk,
                 )
             else:
+                session_index[(topic.topic_id, day, "STUDY")] = len(sessions)
                 sessions.append(
                     PlannedSession(
                         topic_id=topic.topic_id,
@@ -651,6 +655,7 @@ def allocate_selected_topics(
                         reason_parts=tuple(parts),
                     )
                 )
+            day_course_minutes[day][topic.course_id] += chunk
             remaining[topic.topic_id] -= chunk
             capacities[day] -= chunk
 
