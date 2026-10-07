@@ -2,13 +2,13 @@
 
 Havan is a Havan-branded study planning platform for Ethiopian university Freshman students.
 
-**The system recommends. The student decides.**
+**Students choose what they want to study. Havan organizes the selected work into a clear study plan.**
 
 ## Active flow
 
-`/auth → /onboarding → /home → /plan → /plan/new → /progress → /settings`
+`/auth → /onboarding → /student/havan → Havan Today / Havan Week / Havan Month`
 
-Students choose the courses/topics and available time. The deterministic Plan engine organizes the selected work around study days, progress, and exams.
+Students choose the course(s), chapter(s), topic(s), and available study time. The deterministic Plan engine allocates only those selected topics across the chosen study days. Progress and exam dates can shape allocation constraints, but Havan does not discover or recommend additional topics.
 
 Admins use `/admin` to manage university course mapping, canonical course/chapter/topic content, imports, and academic quality.
 
