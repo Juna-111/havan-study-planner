@@ -135,8 +135,20 @@ def apply_action(
     student: StudentProfile,
     task_id: int,
     payload: PlanAction,
+    *,
+    plan_id: int | None = None,
 ) -> tuple[Plan, list[str]]:
-    plan = _active_plan(db, student.id)
+    plan = (
+        db.scalar(select(Plan).where(
+            Plan.id == plan_id,
+            Plan.student_id == student.id,
+            Plan.status == "ACTIVE",
+        ))
+        if plan_id is not None
+        else _active_plan(db, student.id)
+    )
+    if not plan:
+        raise ValueError("Study plan not found.")
     task = db.scalar(
         select(PlanTask).where(
             PlanTask.id == task_id,
