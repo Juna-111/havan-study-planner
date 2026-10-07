@@ -53,6 +53,24 @@ export default function HavanPlanView() {
   return (
     <AppShell header={<PageHeader title="Your Havan plan" description="Only the courses, chapters, and topics you selected are here. Havan only allocated the time you gave it." backHref="/student/havan" />}>
       <div className="havan-plan-view">
+        {(plan.warnings.length > 0 || plan.unplaced.length > 0) && (
+          <Card padding="lg" className="havan-plan-feedback">
+            <span className="app-eyebrow">BUILD CHECK</span>
+            <h2>Havan kept your choices intact</h2>
+            {plan.warnings.map((warning) => (
+              <p className="havan-plan-feedback-item" key={warning.code}>{warning.message}</p>
+            ))}
+            {plan.unplaced.length > 0 && (
+              <div className="havan-plan-unplaced">
+                <strong>Still needs time</strong>
+                {plan.unplaced.map((item) => (
+                  <span key={item.topic_id}>{item.topic_name} · {item.minutes} min remaining</span>
+                ))}
+              </div>
+            )}
+          </Card>
+        )}
+
         <Card padding="lg" className="havan-plan-overview">
           <div>
             <span className="app-eyebrow">HAVAN {plan.mode.toUpperCase()}</span>
