@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.academic_quality import router as academic_quality_router
+from app.api.admin_file_import import router as admin_file_import_router
 from app.api.academic_catalog_requests import router as academic_catalog_requests_router
 from app.api.auth import router as auth_router
 from app.api.curriculum import router as curriculum_router
@@ -25,6 +26,7 @@ for child_router in (
     student_router,
     plans_router,
     academic_quality_router,
+    admin_file_import_router,
     academic_catalog_requests_router,
 ):
     router.include_router(child_router)
