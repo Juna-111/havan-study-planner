@@ -208,6 +208,7 @@ class PlanRequest:
     deferred_topic_ids: frozenset[int] = frozenset()
     pinned_topic_dates: Mapping[int, date] = field(default_factory=dict)
     known_topic_ids: frozenset[int] = frozenset()  # "I already know this"
+    frozen_topic_ids: frozenset[int] = frozenset()  # keep existing sessions; do not reallocate
 
 
 @dataclass(frozen=True)
@@ -343,6 +344,7 @@ def allocate_selected_topics(
     selected = [
         topic for topic in request.topics
         if topic.topic_id not in request.known_topic_ids
+        and topic.topic_id not in request.frozen_topic_ids
         and topic.progress_status != "COMPLETED"
     ]
     if not selected:
