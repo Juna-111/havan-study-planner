@@ -15,7 +15,7 @@ class HavanPlanCreate(BaseModel):
 
 
 class HavanPromotionRead(BaseModel):
-    id: int
+    id: int | None
     platform_name: str
     description: str | None = None
     button_text: str
