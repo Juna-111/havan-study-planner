@@ -58,17 +58,16 @@
 @keyframes havan-progress-glow{0%,100%{transform:translateX(-20%);opacity:.65}50%{transform:translateX(180%);opacity:1}}
 @media(max-width:600px){
   .onboarding-hero{padding-top:8px}
-  .course-selection-heading{align-items:center}
-  .course-selection-heading h2{font-size:1.15rem}
-  .course-selection-badge{padding:6px 8px}
-  .onboarding-actions-branded .button{min-height:52px}
+.course-selection-heading{align-items:center}
+.course-selection-heading h2{font-size:1.15rem}
+.course-selection-badge{padding:6px 8px}
+.onboarding-actions-branded .button{min-height:52px}
 }
 @media(prefers-reduced-motion:reduce){
   .auth-reveal,.auth-mark,.auth-brand-panel::after,.auth-button-pulse i,.auth-is-busy .auth-card,.onboarding-step-panel,.onboarding-hero-line span{animation:none!important}
-  .auth-submit,.onboarding-card-motion,.onboarding-day,.onboarding-summary,.onboarding-actions-branded .button,.onboarding-summary strong{transition:none!important}
-  .auth-submit:not(:disabled):hover,.onboarding-card-motion:hover,.onboarding-day:hover,.onboarding-day[aria-pressed="true"],.onboarding-summary:hover,.onboarding-actions-branded .button:not(:disabled):hover{transform:none}
+.auth-submit,.onboarding-card-motion,.onboarding-day,.onboarding-summary,.onboarding-actions-branded .button,.onboarding-summary strong{transition:none!important}
+.auth-submit:not(:disabled):hover,.onboarding-card-motion:hover,.onboarding-day:hover,.onboarding-day[aria-pressed="true"],.onboarding-summary:hover,.onboarding-actions-branded .button:not(:disabled):hover{transform:none}
 }
-
 /* Registration and Havan builder: explicit readable states on every viewport. */
 .onboarding-journey{min-height:100svh;width:min(calc(100% - 20px),900px);padding:20px 0 54px;background:linear-gradient(155deg,var(--color-primary) 0%,var(--color-primary-dark) 72%,var(--color-primary-deep) 100%);color:var(--color-white)}
 .onboarding-journey .onboarding-brand,.onboarding-journey .onboarding-step-count,.onboarding-journey .onboarding-hero h1,.onboarding-journey .onboarding-intro{color:var(--color-white)}
@@ -132,27 +131,24 @@
 .havan-plan-date-control input{min-height:40px;border:1px solid var(--color-line);border-radius:10px;padding:6px 8px;background:var(--color-white);color:var(--color-ink)}
 @media(max-width:600px){
   .onboarding-journey{width:calc(100% - 16px);padding-top:12px}
-  .onboarding-journey .onboarding-progress{gap:5px}
-  .onboarding-journey .onboarding-progress-step{padding:0 7px;font-size:.78rem}
-  .onboarding-days{grid-template-columns:repeat(4,minmax(0,1fr))}
-  .onboarding-exam-grid{grid-template-columns:1fr}
-  .onboarding-exam-scope-heading{align-items:stretch;flex-direction:column}
-  .onboarding-exam-topic{grid-template-columns:auto minmax(0,1fr)}
-  .onboarding-exam-topic small{grid-column:2}
-  .onboarding-exam-summary{align-items:flex-start}
-  .havan-builder-day-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+.onboarding-journey .onboarding-progress{gap:5px}
+.onboarding-journey .onboarding-progress-step{padding:0 7px;font-size:.78rem}
+.onboarding-days{grid-template-columns:repeat(4,minmax(0,1fr))}
+.onboarding-exam-grid{grid-template-columns:1fr}
+.onboarding-exam-scope-heading{align-items:stretch;flex-direction:column}
+.onboarding-exam-topic{grid-template-columns:auto minmax(0,1fr)}
+.onboarding-exam-topic small{grid-column:2}
+.onboarding-exam-summary{align-items:flex-start}
+.havan-builder-day-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
-
 /* Four-stage builder visibility contract. */
 .havan-builder-step-1 .havan-time-step,.havan-builder-step-1 .plan-capacity,.havan-builder-step-1 .havan-topic-time-card,.havan-builder-step-1 .havan-critical-points,.havan-builder-step-1 .plan-review{display:none}.havan-builder-step-2 .plan-course,.havan-builder-step-2 .plan-capacity,.havan-builder-step-2 .havan-topic-time-card,.havan-builder-step-2 .havan-critical-points,.havan-builder-step-2 .plan-review{display:none}.havan-builder-step-3 .plan-course,.havan-builder-step-3 .havan-time-step,.havan-builder-step-3 .plan-capacity,.havan-builder-step-3 .havan-topic-time-card,.havan-builder-step-3 .plan-review{display:none}.havan-builder-step-4 .plan-course,.havan-builder-step-4 .havan-time-step,.havan-builder-step-4 .havan-topic-time-card,.havan-builder-step-4 .havan-critical-points{display:none}
-
 .havan-plan-resource-links {
   display: flex;
   flex-wrap: wrap;
   gap: 0.55rem;
   margin-top: 0.7rem;
 }
-
 .havan-plan-resource-links a {
   display: inline-flex;
   align-items: center;
@@ -163,23 +159,19 @@
   text-decoration: none;
   font-weight: 600;
 }
-
 .havan-plan-resource-links a:hover,
 .havan-plan-resource-links a:focus-visible {
   text-decoration: underline;
 }
-
 @media (max-width: 640px) {
   .havan-plan-resource-links {
     flex-direction: column;
   }
-
-  .havan-plan-resource-links a {
+.havan-plan-resource-links a {
     width: 100%;
     justify-content: center;
   }
 }
-
 /* Havan Academy topic-resource structure: one clear learning block per selected topic. */
 .havan-plan-resources {
   display: grid;
@@ -190,24 +182,20 @@
   border-radius: 1rem;
   background: linear-gradient(145deg, var(--color-canvas-soft), var(--color-white)fff);
 }
-
 .havan-plan-resources-heading {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
 }
-
 .havan-plan-resources-heading > div {
   display: grid;
   gap: 0.18rem;
 }
-
 .havan-plan-resources-heading strong {
   color: var(--color-primary, var(--color-primary));
   font-size: 1rem;
 }
-
 .havan-plan-resource-badge {
   flex: none;
   padding: 0.35rem 0.6rem;
@@ -219,20 +207,17 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
-
 .havan-plan-resources > p {
   margin: 0;
   color: var(--color-muted, var(--color-muted));
   font-size: 0.82rem;
   line-height: 1.5;
 }
-
 .havan-plan-resource-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.7rem;
 }
-
 .havan-plan-resource-card {
   display: grid;
   align-content: start;
@@ -246,32 +231,27 @@
   text-decoration: none;
   transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 }
-
 .havan-plan-resource-card:hover,
 .havan-plan-resource-card:focus-visible {
   transform: translateY(-2px);
   border-color: var(--color-primary, var(--color-primary));
   box-shadow: 0 8px 20px rgba(1, 1, 126, 0.1);
 }
-
 .havan-plan-resource-card-type {
   color: var(--color-accent, var(--color-accent));
   font-size: 0.65rem;
   font-weight: 900;
   letter-spacing: 0.08em;
 }
-
 .havan-plan-resource-card strong {
   color: var(--color-primary, var(--color-primary));
   font-size: 0.95rem;
 }
-
 .havan-plan-resource-card > span:not(.havan-plan-resource-card-type):not(.havan-plan-resource-card-action) {
   color: var(--color-muted, var(--color-muted));
   font-size: 0.76rem;
   line-height: 1.45;
 }
-
 .havan-plan-resource-card-action {
   margin-top: auto;
   color: var(--color-primary, var(--color-primary));
