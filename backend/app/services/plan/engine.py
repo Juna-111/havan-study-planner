@@ -14,9 +14,9 @@ Pipeline
 3. Protect       selected-topic deadlines and explicit student date choices.
 4. Report        sessions, exam readiness, warnings and unplaced selected work.
 
-Backward compatibility
-----------------------
-The active public entry point is ``allocate_selected_topics``. Supporting input,
+Public API
+----------
+The active planning entry point is ``allocate_selected_topics``. Supporting input,
 output and pacing helpers remain deterministic and dependency-free.
 """
 from __future__ import annotations
@@ -165,36 +165,6 @@ class PlannerExam:
 
     def covers(self, topic_id: int) -> bool:
         return self.scope_topic_ids is None or topic_id in self.scope_topic_ids
-
-
-@dataclass(frozen=True)
-class ScoredTopic:
-    topic: PlannerTopic
-    score: float
-    reason: str
-    exam_days: int | None
-    components: Mapping[str, float] = field(default_factory=dict)
-    reason_parts: tuple[ReasonPart, ...] = ()
-
-
-@dataclass(frozen=True)
-class StudyCalendar:
-    """When and how long the student can study. Weekdays use Python numbering
-    (Monday = 0). Use ``parse_weekdays`` to convert stored values."""
-
-    study_weekdays: frozenset[int] = frozenset({0, 1, 2, 3, 4})
-    daily_minutes: int = 120
-    minutes_by_weekday: Mapping[int, int] = field(default_factory=dict)
-    capacity_overrides: Mapping[date, int] = field(default_factory=dict)
-    blackout_dates: frozenset[date] = frozenset()
-    # Minutes already studied (completed or in progress) on a given day.
-    done_minutes: Mapping[date, int] = field(default_factory=dict)
-
-    def capacity(self, day: date) -> int:
-        if day in self.blackout_dates or day.weekday() not in self.study_weekdays:
-            return 0
-        base = int(self.capacity_overrides.get(day, self.minutes_by_weekday.get(day.weekday(), self.daily_minutes)))
-        return max(0, base - int(self.done_minutes.get(day, 0)))
 
 
 @dataclass(frozen=True)
@@ -624,84 +594,6 @@ def allocate_selected_topics(
         unplaced=unplaced,
     )
 
-# --------------------------------------------------------------------------
-# Legacy scheduler (kept so the current service keeps working)
-# --------------------------------------------------------------------------
-def schedule_tasks(
-    scored: list[ScoredTopic],
-    study_dates: list[date],
-    daily_capacity: int,
-    deferred_topic_ids: set[int] | None = None,
-    pinned_topic_dates: dict[int, date] | None = None,
-) -> list[tuple[ScoredTopic, date, int]]:
-    """Pack pre-scored recommendations into days. Prefer ``build_plan``, which
-    adds deadlines, dependencies, interleaving, revision and readiness."""
-    if not study_dates or daily_capacity <= 0:
-        return []
-
-    deferred_topic_ids = deferred_topic_ids or set()
-    pinned_topic_dates = pinned_topic_dates or {}
-    output: list[tuple[ScoredTopic, date, int]] = []
-    day_used = {day: 0 for day in study_dates}
-    by_id = {item.topic.topic_id: item for item in scored}
-    pinned_ids: set[int] = set()
-
-    for topic_id, requested_date in sorted(pinned_topic_dates.items(), key=lambda i: (i[1], i[0])):
-        item = by_id.get(topic_id)
-        if item is None:
-            continue
-        remaining = max(1, item.topic.estimated_minutes)
-        for day in (d for d in study_dates if d >= requested_date):
-            available = daily_capacity - day_used[day]
-            if available <= 0:
-                continue
-            duration = min(remaining, available)
-            output.append((item, day, duration))
-            day_used[day] += duration
-            remaining -= duration
-            if remaining <= 0:
-                pinned_ids.add(topic_id)
-                break
-
-    ordered = sorted(
-        (item for item in scored if item.topic.topic_id not in pinned_ids),
-        key=lambda item: (
-            item.topic.topic_id in deferred_topic_ids,
-            -item.score,
-            item.topic.estimated_minutes,
-            item.topic.chapter_order,
-            item.topic.topic_order,
-            item.topic.topic_id,
-        ),
-    )
-    for item in ordered:
-        remaining = max(1, item.topic.estimated_minutes)
-        for day in study_dates:
-            if item.topic.topic_id in deferred_topic_ids and day == study_dates[0]:
-                continue
-            available = daily_capacity - day_used[day]
-            if available <= 0:
-                continue
-            duration = min(remaining, available)
-            output.append((item, day, duration))
-            day_used[day] += duration
-            remaining -= duration
-            if remaining <= 0:
-                break
-    return output
-
-
 def parse_weekdays(values: Iterable[object] | None, default: frozenset[int] = frozenset({0, 1, 2, 3, 4})) -> frozenset[int]:
     from app.core.time import parse_weekdays as canonical_parse_weekdays
     return canonical_parse_weekdays(values, tuple(default))
-
-def suggest_extras(request: PlanRequest, extra_topics: Sequence[PlannerTopic], k: int = 5, config: PlannerConfig = DEFAULT_CONFIG) -> tuple[ScoredTopic, ...]:
-    """Score optional topics without ever adding them to the plan."""
-    selected = {topic.topic_id for topic in request.topics}
-    candidates = [topic for topic in extra_topics if topic.topic_id not in selected]
-    scored = []
-    for topic in candidates:
-        exam = next((item for item in sorted(request.exams, key=lambda value: value.exam_date)
-                     if item.course_id == topic.course_id and item.exam_date >= request.today and item.covers(topic.topic_id)), None)
-        scored.append(score_topic(topic, exam, request.today, config=config))
-    return tuple(sorted(scored, key=lambda item: (-item.score, item.topic.course_id, item.topic.topic_id))[:max(0, k)])
