@@ -19,11 +19,13 @@ export default function ImportScreen() {
   const [busy, setBusy] = useState<'preview' | 'save' | null>(null)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [lastImportedCount, setLastImportedCount] = useState(0)
 
   function clearResult() {
     setPreview([])
     setMessage('')
     setError('')
+    setLastImportedCount(0)
   }
 
   async function previewImport() {
@@ -61,6 +63,7 @@ export default function ImportScreen() {
         body: JSON.stringify(preview),
       })
       setMessage(result.length + ' course' + (result.length === 1 ? '' : 's') + ' imported successfully.')
+      setLastImportedCount(result.length)
       setPreview([])
       setFile(null)
     } catch (e) {
@@ -83,9 +86,9 @@ export default function ImportScreen() {
       <div className={styles.importStatus}>
         <div>
           <span>IMPORT WORKFLOW</span>
-          <strong>{busy === 'preview' ? 'Parsing file' : busy === 'save' ? 'Saving to Course Registry' : preview.length ? 'Preview ready' : file ? 'File ready' : 'Waiting for a course file'}</strong>
+          <strong>{busy === 'preview' ? 'Parsing file' : busy === 'save' ? 'Saving to Course Registry' : preview.length ? 'Preview ready' : lastImportedCount ? String(lastImportedCount) + ' ' + (lastImportedCount === 1 ? 'course' : 'courses') + ' imported' : file ? 'File ready' : 'Waiting for a course file'}</strong>
         </div>
-        <small>{preview.length ? 'No registry record is written until you confirm the import.' : 'The status reflects the actual import state on this screen.'}</small>
+        <small>{preview.length ? 'No registry record is written until you confirm the import.' : lastImportedCount ? 'The Course Registry confirmed the latest import request.' : 'The status reflects the actual import state on this screen.'}</small>
       </div>
       <div className={styles.importCard}>
         <label>Content version<input value={version} onChange={(e) => setVersion(e.target.value)} /></label>
