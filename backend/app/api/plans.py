@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from app.core.errors import DomainError
+from app.core.errors import DomainError, PlanValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -11,7 +11,7 @@ from app.db.models.student import StudentProfile
 from app.db.session import get_db
 from app.schemas.plan import PlanAction, PlanInput, PlanOut
 from app.services.plan_actions import apply_action
-from app.services.plan_builder import preview_plan, read_plan, save_plan
+from app.services.plan_builder import preview_plan, read_plan, save_plan, warning_payload
 
 router = APIRouter(prefix=f"{API_PREFIX}/plans", tags=["plans"])
 
@@ -24,8 +24,9 @@ def preview(
 ):
     try:
         return preview_plan(db, student, payload)
-    except ValueError as exc:
-        raise DomainError("INVALID_SELECTION", str(exc), 422)
+    except PlanValidationError:
+        raise
+
 
 
 @router.post("", response_model=PlanOut)
@@ -68,10 +69,7 @@ def current_action(
         result, warnings = apply_action(db, student, task_id, payload)
         out = read_plan(db, student, result)
         if warnings:
-            out.warnings.extend([
-                {"code": code, "severity": "info", "message": code, "fix": {}}
-                for code in warnings
-            ])
+            out.warnings.extend([warning_payload(code) for code in warnings])
         return out
     except ValueError as exc:
         raise DomainError("INVALID_SELECTION", str(exc), 422)
@@ -92,7 +90,7 @@ def action(
         result, warnings = apply_action(db, student, task_id, payload)
         out = read_plan(db, student, result)
         for code in warnings:
-            out.warnings.append({"code": code, "severity": "info", "message": code, "fix": {}})
+            out.warnings.append(warning_payload(code))
         return out
     except ValueError as exc:
         raise DomainError("INVALID_SELECTION", str(exc), 422)
