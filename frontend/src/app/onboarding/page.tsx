@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button, Card, ErrorState, Segmented } from '@/components/ui'
+import { Button, Card, ErrorState } from '@/components/ui'
 import { StepAcademic } from '@/features/onboarding'
 import StepHabits from '@/features/onboarding/StepHabits'
 import StepExams from '@/features/onboarding/StepExams'
@@ -117,11 +117,6 @@ export default function Onboarding() {
           </button>
         ))}
       </div>
-      <Segmented
-        options={stepLabels}
-        value={stepLabels[step]}
-        onChange={(value) => setStep(stepLabels.indexOf(value))}
-      />
       {error && <ErrorState message={error} onRetry={() => setError('')} />}
       {step === 0 && (
         <StepAcademic
