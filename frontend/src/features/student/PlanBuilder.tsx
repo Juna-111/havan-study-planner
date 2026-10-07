@@ -95,15 +95,18 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
 
   const input = useMemo(() => {
     const weekdayMap: Record<string, number> = { mon: 0, tue: 1, wed: 2, thu: 3, fri: 4, sat: 5, sun: 6 }
+    const todayWeekday = (new Date().getDay() + 6) % 7
     const selectedDays = mode === 'today'
-      ? []
+      ? [todayWeekday]
       : studyDays.map((day) => weekdayMap[day]).filter((day) => day !== undefined)
     return {
       mode,
       horizon_days: horizon,
       topic_ids: [...selected],
       study_days: selectedDays,
-      hours_per_day: mode === 'today' ? { 0: hours } : Object.fromEntries(selectedDays.map((weekday) => [weekday, hours])),
+      hours_per_day: mode === 'today'
+        ? { [todayWeekday]: hours }
+        : Object.fromEntries(selectedDays.map((weekday) => [weekday, hours])),
     }
   }, [mode, horizon, selected, studyDays, hours])
 
