@@ -123,3 +123,30 @@ def test_no_study_time_is_reported():
     )
     assert not result.sessions
     assert any(w.code == "NO_STUDY_TIME" for w in result.warnings)
+
+
+def test_exam_deadline_calculation_does_not_break_allocation():
+    result = make_plan(
+        [topic(1, minutes=60)],
+        minutes=60,
+        horizon=3,
+        exams=(PlannerExam(1, TODAY + timedelta(days=2), 5, "MIDTERM"),),
+    )
+    assert result.readiness[0].available_minutes == 120
+    assert result.readiness[0].required_minutes == 60
+
+
+def test_exam_day_can_be_used_when_configured():
+    from app.services.plan.engine import PlannerConfig
+
+    result = allocate_selected_topics(
+        PlanRequest(
+            today=TODAY,
+            topics=(topic(1, minutes=60),),
+            exams=(PlannerExam(1, TODAY, 5, "MIDTERM"),),
+            calendar=StudyCalendar(study_weekdays=frozenset(range(7)), daily_minutes=60),
+            horizon_days=1,
+        ),
+        config=PlannerConfig(study_on_exam_day=True),
+    )
+    assert result.readiness[0].available_minutes == 60

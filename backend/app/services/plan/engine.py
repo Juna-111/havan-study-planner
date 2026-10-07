@@ -290,6 +290,18 @@ def update_pace_factor(
     return round(_clamp(blended, config.min_pace_factor, config.max_pace_factor), 4)
 
 
+def _last_study_day(exam: PlannerExam, today: date, config: PlannerConfig = DEFAULT_CONFIG) -> date:
+    """Return the final day on which selected work may count toward an exam.
+
+    By default Havan protects the exam date itself and schedules selected work
+    no later than the previous calendar day. The explicit configuration switch
+    allows exam-day study without changing which topics were selected.
+    """
+    if config.study_on_exam_day:
+        return exam.exam_date
+    return exam.exam_date - timedelta(days=1)
+
+
 def blend_confidence(previous: int, rating: int, weight: float = 0.6) -> int:
     """New 1..5 confidence after a student rates a finished session."""
     rating = int(_clamp(rating, 1, 5))
