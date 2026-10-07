@@ -270,3 +270,31 @@ button { cursor:pointer } :focus-visible { outline:3px solid rgba(1,1,126,.35); 
   .onboarding-summary{grid-template-columns:1fr 1fr}
   .onboarding-summary>div:last-child{grid-column:1/-1}
 }
+
+
+/* Phase F: Havan interaction motion. Motion confirms student actions without taking control away. */
+.havan-motion-enter{animation:havan-rise-in .48s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--motion-delay,0ms)}
+.havan-allocation-row{animation:havan-slide-in .42s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--motion-delay,0ms)}
+.havan-task-card{transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}
+.havan-task-card:hover{transform:translateY(-2px);border-color:#d9dcf4;box-shadow:var(--shadow-brand)}
+.havan-task-celebrate{animation:havan-complete .62s cubic-bezier(.2,.9,.2,1) both}
+.havan-task-added{animation:havan-add .68s cubic-bezier(.2,.9,.2,1) both}
+.havan-is-building{animation:havan-breathe .8s ease-in-out infinite}
+.havan-plan-ready{animation:havan-ready .68s cubic-bezier(.2,.9,.2,1) both}
+.plan-capacity{animation:havan-soft-pop .45s ease-out both}
+.plan-review-row{transition:background .18s ease,transform .18s ease}
+.plan-review-row:hover{background:var(--color-primary-soft);transform:translateX(3px)}
+.havan-chapter-guidance-item,.havan-topic-insight{transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+.havan-chapter-guidance-item:hover,.havan-topic-insight:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(1,1,126,.08);border-color:#d9dcf4}
+@keyframes havan-rise-in{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes havan-slide-in{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+@keyframes havan-soft-pop{from{opacity:0;transform:scale(.985)}to{opacity:1;transform:scale(1)}}
+@keyframes havan-add{0%{opacity:0;transform:translateY(18px) scale(.97);box-shadow:0 0 0 rgba(250,3,2,0)}55%{opacity:1;transform:translateY(-3px) scale(1.01);box-shadow:0 0 0 7px var(--color-accent-soft)}100%{transform:translateY(0) scale(1);box-shadow:none}}
+@keyframes havan-complete{0%{transform:scale(1);border-color:var(--color-line)}35%{transform:scale(1.015);border-color:var(--color-primary);box-shadow:0 0 0 7px var(--color-primary-soft)}70%{transform:scale(.995)}100%{transform:scale(1);border-color:var(--color-line);box-shadow:var(--shadow-card)}}
+@keyframes havan-breathe{0%,100%{box-shadow:var(--shadow-brand);transform:translateY(0)}50%{box-shadow:0 14px 34px rgba(1,1,126,.16);transform:translateY(-1px)}}
+@keyframes havan-ready{0%{transform:scale(.985);border-color:var(--color-primary)}45%{transform:scale(1.012);box-shadow:0 0 0 7px var(--color-primary-soft)}100%{transform:scale(1);box-shadow:var(--shadow-card)}}
+@media(prefers-reduced-motion:reduce){
+  .havan-motion-enter,.havan-allocation-row,.havan-task-celebrate,.havan-task-added,.havan-is-building,.havan-plan-ready,.plan-capacity{animation:none!important}
+  .havan-task-card,.plan-review-row,.havan-chapter-guidance-item,.havan-topic-insight{transition:none!important}
+  .havan-task-card:hover,.plan-review-row:hover,.havan-chapter-guidance-item:hover,.havan-topic-insight:hover{transform:none}
+}
