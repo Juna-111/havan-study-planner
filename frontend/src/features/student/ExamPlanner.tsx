@@ -4,11 +4,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { apiFetch, ApiError } from '@/lib/api'
 import { Button, Card, Chip, DateField, ErrorState, ProgressBar, Select, Skeleton } from '@/components/ui'
 
-type Exam = { id:number; student_id:number; course_id:number; exam_type:string; exam_date:string; importance:number }
+type Exam = { id:number; student_id:number; course_id:number; exam_type:string; exam_date:string; importance:number; selected_topic_ids:number[] }
 type Course = { id:number; code:string; name:string; chapters:Array<{id:number;name:string;topics:Array<{id:number;name:string;estimated_study_minutes:number;status:string}>}> }
 type Profile = { id:number; study_hours_per_day:number; study_days:string[] }
 type Progress = { topic_id:number; status:string; completed_minutes:number }
-type ExamInsight = { exam:Exam; course?:Course; daysLeft:number; topicCount:number; completedTopics:number; remainingMinutes:number; availableMinutes:number; coverage:number; pressure:number; label:'READY'|'ON TRACK'|'TIGHT'|'URGENT'|'PAST' }
+type ExamInsight = { exam:Exam; course?:Course; daysLeft:number; topicCount:number; completedTopics:number; remainingMinutes:number; availableMinutes:number; coverage:number; pressure:number; label:'READY'|'ON TRACK'|'TIGHT'|'URGENT'|'PAST'; scopeExplicit:boolean; strategy:string }
 
 const DAY_KEYS = ['sun','mon','tue','wed','thu','fri','sat']
 
@@ -39,7 +39,7 @@ export default function ExamPlanner(){
   const [exams,setExams]=useState<Exam[]>([])
   const [loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[error,setError]=useState('')
   const [courseId,setCourseId]=useState(''),[examType,setExamType]=useState('Final'),[examDate,setExamDate]=useState(''),[importance,setImportance]=useState('3')
-  const [editingId,setEditingId]=useState<number|null>(null)
+  const [editingId,setEditingId]=useState<number|null>(null)\n  const [selectedTopicIds,setSelectedTopicIds]=useState<number[]>([])
 
   const load=useCallback(async()=>{
     setLoading(true);setError('')
@@ -60,7 +60,7 @@ export default function ExamPlanner(){
     if(!profile)return []
     return exams.map(exam=>{
       const course=courses.find(item=>item.id===exam.course_id)
-      const topics=course?.chapters.flatMap(ch=>ch.topics.filter(topic=>topic.status.toUpperCase()==='ACTIVE'))??[]
+      const allTopics=course?.chapters.flatMap(ch=>ch.topics.filter(topic=>topic.status.toUpperCase()==='ACTIVE'))??[]\n      const scopedIds=new Set(exam.selected_topic_ids??[])\n      const scopeExplicit=scopedIds.size>0\n      const topics=scopeExplicit?allTopics.filter(topic=>scopedIds.has(topic.id)):allTopics
       const completedTopics=topics.filter(topic=>progressMap.get(topic.id)?.status==='COMPLETED').length
       const remainingMinutes=topics.reduce((sum,topic)=>{
         const item=progressMap.get(topic.id)
@@ -70,7 +70,7 @@ export default function ExamPlanner(){
       const coverage=topics.length?(completedTopics/topics.length)*100:0
       const importanceWeight=0.75+(exam.importance*0.1)
       const pressure=availableMinutes?(remainingMinutes/availableMinutes)*importanceWeight:remainingMinutes?9:0
-      return {exam,course,daysLeft,topicCount:topics.length,completedTopics,remainingMinutes,availableMinutes,coverage,pressure,label:examLabel(daysLeft,coverage,pressure)}
+      const strategy=remainingMinutes===0?'Maintain light revision and practice to protect readiness.':pressure>1.2?'Prioritise the highest-difficulty unfinished topics and reserve the final study days for revision and practice.':pressure>.85?'Split the remaining scope across consistent sessions and protect a final revision window.':'Build steady topic coverage first, then use the remaining capacity for practice and recall.\n      return {exam,course,daysLeft,topicCount:topics.length,completedTopics,remainingMinutes,availableMinutes,coverage,pressure,label:examLabel(daysLeft,coverage,pressure),scopeExplicit,strategy}
     }).sort((a,b)=>a.daysLeft-b.daysLeft)
   },[courses,exams,profile,progressMap])
 
@@ -81,11 +81,11 @@ export default function ExamPlanner(){
     if(!profile||!courseId||!examDate||!examType.trim())return
     setSaving(true);setError('')
     try{
-      const payload={course_id:Number(courseId),exam_type:examType.trim(),exam_date:examDate,importance:Number(importance)}
+      const payload={course_id:Number(courseId),exam_type:examType.trim(),exam_date:examDate,importance:Number(importance),selected_topic_ids:selectedTopicIds}
       const path=editingId?'/students/profiles/'+profile.id+'/exams/'+editingId:'/students/profiles/'+profile.id+'/exams'
       const saved=await apiFetch<Exam>(path,{method:editingId?'PATCH':'POST',body:JSON.stringify(payload)})
       setExams(current=>editingId?current.map(item=>item.id===saved.id?saved:item):[...current,saved])
-      setEditingId(null);setExamType('Final');setExamDate('');setImportance('3')
+      setEditingId(null);setExamType('Final');setExamDate('');setImportance('3');setSelectedTopicIds([])
     }catch(err){setError(err instanceof ApiError?err.message:'Could not save this exam.')}
     finally{setSaving(false)}
   }
@@ -99,7 +99,7 @@ export default function ExamPlanner(){
   }
 
   function editExam(item:Exam){
-    setEditingId(item.id);setCourseId(String(item.course_id));setExamType(item.exam_type);setExamDate(item.exam_date);setImportance(String(item.importance))
+    setEditingId(item.id);setCourseId(String(item.course_id));setExamType(item.exam_type);setExamDate(item.exam_date);setImportance(String(item.importance));setSelectedTopicIds(item.selected_topic_ids??[])
     window.scrollTo({top:0,behavior:'smooth'})
   }
 
@@ -123,7 +123,15 @@ export default function ExamPlanner(){
         <DateField label="Exam date" value={examDate} min={todayKey()} onChange={setExamDate}/>
         <Select label="Importance" value={importance} onChange={setImportance} options={[1,2,3,4,5].map(value=>({value:String(value),label:value===5?'5 · Critical':value===1?'1 · Low':String(value)+' · '+(value>=4?'High':'Normal')}))}/>
       </div>
-      <div className="exam-editor-actions"><Button variant="accent" size="lg" disabled={!courseId||!examDate||!examType.trim()} loading={saving} onClick={()=>void saveExam()}>{editingId?'Update exam':'Add exam'}</Button>{editingId&&<Button variant="ghost" onClick={()=>{setEditingId(null);setExamDate('');setExamType('Final');setImportance('3')}}>Cancel</Button>}</div>
+      <div className="exam-scope">
+        <div><span className="exam-kicker">EXAM SCOPE</span><h3>What exactly are you preparing?</h3><p>Select specific topics when this exam covers only part of the course. Leave everything unselected to use the full active course scope.</p></div>
+        <div className="exam-scope-actions"><Button variant="ghost" onClick={()=>setSelectedTopicIds([])}>Use full course</Button><span>{selectedTopicIds.length ? selectedTopicIds.length+' topics selected' : 'Full active course selected'}</span></div>
+        <div className="exam-topic-groups">{(courses.find(course=>String(course.id)===courseId)?.chapters??[]).map(chapter=><div key={chapter.id} className="exam-topic-group">
+          <strong>{chapter.name}</strong>
+          <div>{chapter.topics.filter(topic=>topic.status.toUpperCase()==='ACTIVE').map(topic=><label key={topic.id} className="exam-topic-option"><input type="checkbox" checked={selectedTopicIds.includes(topic.id)} onChange={event=>setSelectedTopicIds(current=>event.target.checked?[...current,topic.id]:current.filter(id=>id!==topic.id))}/><span>{topic.name}</span><small>{topic.estimated_study_minutes} min</small></label>)}</div>
+        </div>)}</div>
+      </div>
+      <div className="exam-editor-actions"><Button variant="accent" size="lg" disabled={!courseId||!examDate||!examType.trim()} loading={saving} onClick={()=>void saveExam()}>{editingId?'Update exam':'Add exam'}</Button>{editingId&&<Button variant="ghost" onClick={()=>{setEditingId(null);setExamDate('');setExamType('Final');setImportance('3');setSelectedTopicIds([])}}>Cancel</Button>}</div>
     </Card>
 
     <section className="exam-section">
@@ -134,8 +142,8 @@ export default function ExamPlanner(){
         <div className="exam-countdown"><strong>{item.daysLeft<0?Math.abs(item.daysLeft):item.daysLeft}</strong><span>{item.daysLeft<0?'days ago':'days left'}</span></div>
         <ProgressBar value={item.coverage} label="Topic coverage"/>
         <div className="exam-metrics"><span><b>{item.completedTopics}/{item.topicCount}</b> topics covered</span><span><b>{Math.ceil(item.remainingMinutes/60)}h</b> estimated work left</span><span><b>{Math.round(item.availableMinutes/60)}h</b> study capacity before exam</span></div>
-        <p className="exam-explanation">{item.label==='READY'?'Your current coverage and available capacity leave a healthy preparation margin.':item.label==='URGENT'?'The remaining work is pressing against the time available. Prioritise revision and practice now.':item.label==='TIGHT'?'The runway is getting narrow. Consistent study sessions will matter more than last-minute cramming.':item.label==='PAST'?'This exam date has passed. Keep the record for history, or update it if the date changed.':'Your current preparation pace has room. Keep studying consistently and monitor coverage.'}</p>
-        <div className="exam-card-actions"><Button variant="secondary" onClick={()=>editExam(item.exam)}>Edit</Button><Button variant="ghost" onClick={()=>void removeExam(item.exam.id)}>Remove</Button></div>
+        <p className="exam-scope-status">{item.scopeExplicit ? `Scope: ${item.topicCount} selected topics` : `Scope: full active course (${item.topicCount} topics)`}</p><p className="exam-explanation">{item.label==='READY'?'Your current coverage and available capacity leave a healthy preparation margin.':item.label==='URGENT'?'The remaining work is pressing against the time available. Prioritise revision and practice now.':item.label==='TIGHT'?'The runway is getting narrow. Consistent study sessions will matter more than last-minute cramming.':item.label==='PAST'?'This exam date has passed. Keep the record for history, or update it if the date changed.':'Your current preparation pace has room. Keep studying consistently and monitor coverage.'}</p>
+        <div className="exam-strategy"><strong>Preparation strategy</strong><span>{item.strategy}</span></div><div className="exam-card-actions"><Button variant="secondary" onClick={()=>editExam(item.exam)}>Edit</Button><Button variant="ghost" onClick={()=>void removeExam(item.exam.id)}>Remove</Button></div>
       </Card>)}</div>}
     </section>
 
