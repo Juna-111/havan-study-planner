@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getAuthToken } from '@/lib/auth'
 import { apiFetch } from '@/lib/api'
+import { HavanLogo } from '@/components/brand/HavanLogo'
 
 export function StudentGate({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -28,5 +29,10 @@ export function StudentGate({ children }: { children: React.ReactNode }) {
       .catch(() => router.replace('/auth'))
   }, [router])
 
-  return ok ? children : null
+  return ok ? children : (
+    <main className="havan-gate-loading" aria-label="Loading Havan">
+      <HavanLogo size={58} variant="light" />
+      <p>Preparing your Havan space…</p>
+    </main>
+  )
 }
