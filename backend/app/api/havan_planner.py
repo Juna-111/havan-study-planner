@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.config import API_PREFIX
 from app.core.deps import current_student
 from app.core.time import today_local
-from app.db.models.curriculum import Chapter, Course, Topic
+from app.db.models.curriculum import Chapter, Course, HavanPromotion, Topic
 from app.db.models.havan_planner import HavanPlan, HavanPlanSelection, HavanPlanTask
 from app.db.models.student import StudentProfile, StudentTopicProgress
 from app.db.session import get_db
@@ -50,6 +50,7 @@ def _read(db: Session, plan: HavanPlan, tasks: list[HavanPlanTask]) -> HavanPlan
             academy_notes_url=task.academy_notes_url,
             academy_questions_url=task.academy_questions_url,
             freshman_question_count=task.freshman_question_count,
+            promotions=[{"id": p.id, "platform_name": p.platform_name, "description": p.description, "button_text": p.button_text, "url": p.url, "status": p.status} for p in db.scalars(select(HavanPromotion).where(((HavanPromotion.chapter_id == chapter.id) | (HavanPromotion.topic_id == topic.id)), func.upper(HavanPromotion.status) == "ACTIVE")).all()],
             status=task.status,
         ))
     return HavanPlanRead(
