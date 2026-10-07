@@ -148,3 +148,26 @@ def test_small_remainders_are_merged_instead_of_stranded():
     assert not any(w.code == "DOES_NOT_FIT" for w in result.warnings)
     assert sum(session.minutes for session in result.sessions) == 140
     assert all(session.minutes >= DEFAULT_CONFIG.min_session_minutes for session in result.sessions)
+
+
+def test_pinned_non_study_date_is_extra_date_only():
+    saturday = TODAY + timedelta(days=5)
+    sunday = saturday + timedelta(days=1)
+    cal = StudyCalendar(
+        study_weekdays=frozenset({0, 1, 2, 3, 4}),
+        daily_minutes=120,
+        extra_study_dates=frozenset({saturday}),
+    )
+    assert cal.capacity(saturday) == 120
+    assert cal.capacity(sunday) == 0
+    result = allocate_selected_topics(
+        PlanRequest(
+            today=TODAY,
+            topics=(topic(1, minutes=60),),
+            calendar=cal,
+            horizon_days=7,
+            pinned_topic_dates={1: saturday},
+        )
+    )
+    assert result.sessions[0].planned_date == saturday
+    assert result.sessions[0].minutes <= 120
