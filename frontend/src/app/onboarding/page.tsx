@@ -95,13 +95,13 @@ export default function Onboarding() {
   }
 
   return (
-    <main className="onboarding-shell">
+    <main className="onboarding-shell onboarding-journey">
       <div className="onboarding-brand-row">
         <span className="onboarding-brand">HAVAN ACADEMY</span>
         <span className="onboarding-step-count">Step {step + 1} of 3</span>
       </div>
-      <h1>Build your Havan study journey</h1>
-      <p className="onboarding-intro">Set your academic context, choose the courses you want to work with, and tell Havan when you normally study.</p>
+      <div className="onboarding-hero havan-motion-enter"><span className="onboarding-hero-kicker">YOUR HAVAN JOURNEY</span><h1>Build your Havan study journey</h1>
+      <p className="onboarding-intro">Set your academic context, choose the courses you want to work with, and tell Havan when you normally study.</p><div className="onboarding-hero-line" aria-hidden="true"><span /></div></div>
       <div className="onboarding-progress" aria-label="Onboarding progress">
         {stepLabels.map((label, index) => (
           <button
@@ -147,14 +147,14 @@ export default function Onboarding() {
           onStart={handleStart}
         />
       )}
-      {step === 1 && <StepHabits days={days} hours={hours} onDays={setDays} onHours={setHours} />}
-      {step === 2 && <StepExams />}
-      <Card className="onboarding-summary">
+      {step === 1 && <div className="onboarding-step-panel havan-motion-enter" key="habits"><StepHabits days={days} hours={hours} onDays={setDays} onHours={setHours} /></div>}
+      {step === 2 && <div className="onboarding-step-panel havan-motion-enter" key="exams"><StepExams /></div>}
+      <Card className="onboarding-summary havan-motion-enter">
         <div><strong>{selectedCount}</strong><span>course{selectedCount === 1 ? '' : 's'} selected</span></div>
         <div><strong>{hours}</strong><span>hours per study day</span></div>
         <div><strong>{days.length}</strong><span>study day{days.length === 1 ? '' : 's'}</span></div>
       </Card>
-      <div className="onboarding-actions">
+      <div className="onboarding-actions onboarding-actions-branded">
         {step > 0 && <Button variant="secondary" onClick={() => setStep(step - 1)}>Back</Button>}
         {step < 2
           ? <Button disabled={!canNext} onClick={() => setStep(step + 1)}>Continue</Button>
