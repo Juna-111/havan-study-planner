@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from datetime import date
-
 from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -9,27 +7,28 @@ from sqlalchemy.orm import Session
 from app.core.config import API_PREFIX
 from app.core.deps import current_student
 from app.core.errors import DomainError
-from app.db.models.curriculum import Chapter, Course, HavanPromotion, Topic
+from app.core.time import today_local
+from app.db.models.curriculum import Chapter, HavanPromotion, Topic
 from app.db.models.plan import Plan
 from app.db.models.student import StudentProfile
 from app.db.session import get_db
-from app.schemas.havan_planner import HavanPlanCreate, HavanPlanRead, HavanPlanTaskAction, HavanPlanTaskRead, HavanPromotionRead
+from app.schemas.havan_planner import (
+    HavanPlanCreate,
+    HavanPlanRead,
+    HavanPlanTaskAction,
+    HavanPlanTaskRead,
+    HavanPromotionRead,
+)
 from app.schemas.plan import PlanAction, PlanInput
 from app.services.plan_actions import apply_action
 from app.services.plan_builder import preview_plan, read_plan, save_plan
 
 router = APIRouter(prefix=f"{API_PREFIX}/havan-planner", tags=["havan-planner"])
-
 _WEEKDAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 
 
 def _to_plan_input(payload: HavanPlanCreate) -> PlanInput:
-    if payload.mode == "today":
-        expected = 1
-    elif payload.mode == "week":
-        expected = 7
-    else:
-        expected = 28
+    expected = {"today": 1, "week": 7, "month": 28}[payload.mode]
     if payload.horizon_days != expected:
         raise DomainError("INVALID_SELECTION", "The selected plan mode and horizon do not match.", 422)
 
@@ -38,12 +37,20 @@ def _to_plan_input(payload: HavanPlanCreate) -> PlanInput:
     for day in payload.study_days:
         if day < 0 or day > 6:
             raise DomainError("INVALID_SELECTION", "Study days must use values from 0 to 6.", 422)
-        study_days.append(_WEEKDAYS[day])
-        minutes_by_weekday[_WEEKDAYS[day]] = max(1, round(float(payload.hours_per_day.get(day, 0)) * 60))
+        weekday = _WEEKDAYS[day]
+        study_days.append(weekday)
+        minutes = round(float(payload.hours_per_day.get(day, 0)) * 60)
+        if minutes <= 0:
+            raise DomainError("INVALID_SELECTION", "Every selected study day needs a valid daily study time.", 422)
+        minutes_by_weekday[weekday] = minutes
 
     if payload.mode == "today":
-        study_days = [_WEEKDAYS[date.today().weekday()]]
-        minutes_by_weekday.setdefault(study_days[0], max(1, round(float(payload.hours_per_day.get(date.today().weekday(), 0)) * 60)))
+        weekday = _WEEKDAYS[today_local().weekday()]
+        minutes = round(float(payload.hours_per_day.get(today_local().weekday(), 0)) * 60)
+        if minutes <= 0:
+            raise DomainError("INVALID_SELECTION", "Today's study time must be greater than zero.", 422)
+        study_days = [weekday]
+        minutes_by_weekday = {weekday: minutes}
 
     return PlanInput(
         mode=payload.mode,
@@ -55,9 +62,15 @@ def _to_plan_input(payload: HavanPlanCreate) -> PlanInput:
     )
 
 
-def _read_havan(db: Session, student: StudentProfile, plan: Plan, *, preview: bool = False) -> HavanPlanRead:
-    out = read_plan(db, student, plan)
-    topic_ids = {task.topic_id for task in out.tasks}
+def _read_havan_from_out(
+    db: Session,
+    student: StudentProfile,
+    out,
+    *,
+    plan_id: int | None,
+    input_snapshot: dict,
+) -> HavanPlanRead:
+    topic_ids = {task["topic_id"] for task in out.tasks}
     topics = list(db.scalars(select(Topic).where(Topic.id.in_(topic_ids))).all()) if topic_ids else []
     topic_map = {topic.id: topic for topic in topics}
     chapter_ids = {topic.chapter_id for topic in topics}
@@ -71,12 +84,10 @@ def _read_havan(db: Session, student: StudentProfile, plan: Plan, *, preview: bo
         if not topic or not chapter:
             continue
         promotions = db.scalars(
-            select(HavanPromotion)
-            .where(
+            select(HavanPromotion).where(
                 ((HavanPromotion.chapter_id == chapter.id) | (HavanPromotion.topic_id == topic.id)),
                 func.upper(HavanPromotion.status) == "ACTIVE",
-            )
-            .order_by(HavanPromotion.order_index, HavanPromotion.id)
+            ).order_by(HavanPromotion.order_index, HavanPromotion.id)
         ).all()
         tasks.append(HavanPlanTaskRead(
             id=task["id"] or 0,
@@ -100,19 +111,30 @@ def _read_havan(db: Session, student: StudentProfile, plan: Plan, *, preview: bo
             status=task["status"],
         ))
 
-    snapshot = PlanInput.model_validate(plan.input_snapshot) if plan.input_snapshot else None
-    study_days = [_WEEKDAYS.index(day) for day in snapshot.study_days] if snapshot else []
-    hours = {i: round(float(snapshot.minutes_by_weekday.get(_WEEKDAYS[i], 0)) / 60, 2) for i in study_days} if snapshot else {}
-
+    snapshot = PlanInput.model_validate(input_snapshot)
+    study_days = [_WEEKDAYS.index(day) for day in snapshot.study_days]
+    hours = {
+        i: round(float(snapshot.minutes_by_weekday.get(_WEEKDAYS[i], 0)) / 60, 2)
+        for i in study_days
+    }
     return HavanPlanRead(
-        id=None if preview else plan.id,
+        id=plan_id,
         student_id=student.id,
-        mode=plan.mode,
-        horizon_days=plan.horizon_days,
+        mode=out.mode,
+        horizon_days=out.horizon_days,
         study_days=study_days,
         hours_per_day=hours,
         total_minutes=out.total_minutes,
         tasks=tasks,
+    )
+
+
+def _read_havan(db: Session, student: StudentProfile, plan: Plan) -> HavanPlanRead:
+    out = read_plan(db, student, plan)
+    return _read_havan_from_out(
+        db, student, out,
+        plan_id=plan.id,
+        input_snapshot=plan.input_snapshot,
     )
 
 
@@ -125,25 +147,12 @@ def preview_current_plan(
     plan_input = _to_plan_input(payload)
     try:
         out = preview_plan(db, student, plan_input)
-        plan = Plan(
-            student_id=student.id,
-            mode=out.mode,
-            horizon_days=out.horizon_days,
-            start_date=out.start_date,
-            engine_version=out.engine_version,
-            total_minutes=out.total_minutes,
-            readiness=[],
-            warnings=[],
-            unplaced=[],
+        return _read_havan_from_out(
+            db, student, out,
+            plan_id=None,
             input_snapshot=plan_input.model_dump(mode="json"),
         )
-        db.add(plan)
-        db.flush()
-        result = _read_havan(db, student, plan, preview=True)
-        db.rollback()
-        return result
     except ValueError as exc:
-        db.rollback()
         raise DomainError("INVALID_SELECTION", str(exc), 422)
 
 
@@ -165,7 +174,12 @@ def latest_current_plan(
     student: StudentProfile = Depends(current_student),
     db: Session = Depends(get_db),
 ):
-    plan = db.scalar(select(Plan).where(Plan.student_id == student.id, Plan.status == "ACTIVE").order_by(Plan.id.desc()))
+    plan = db.scalar(
+        select(Plan).where(
+            Plan.student_id == student.id,
+            Plan.status == "ACTIVE",
+        ).order_by(Plan.id.desc())
+    )
     if plan is None:
         raise DomainError("NO_ACTIVE_PLAN", "No Havan plan found.", 404)
     return _read_havan(db, student, plan)
@@ -179,7 +193,11 @@ def action_current_task(
     student: StudentProfile = Depends(current_student),
     db: Session = Depends(get_db),
 ):
-    plan = db.scalar(select(Plan).where(Plan.id == plan_id, Plan.student_id == student.id, Plan.status == "ACTIVE"))
+    plan = db.scalar(select(Plan).where(
+        Plan.id == plan_id,
+        Plan.student_id == student.id,
+        Plan.status == "ACTIVE",
+    ))
     if plan is None:
         raise DomainError("NO_ACTIVE_PLAN", "Study plan not found.", 404)
     try:
