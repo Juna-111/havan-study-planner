@@ -9,7 +9,7 @@ export type HavanPlanInput = {
   hours_per_day: Record<number, number>
 }
 export type HavanPlanTask = {
-  id: number
+  id: number | null
   course_id: number
   course_code: string
   course_name: string
@@ -35,7 +35,7 @@ export type HavanPlan = {
   hours_per_day: Record<number, number>
   total_minutes: number
   tasks: HavanPlanTask[]
-  warnings: { code: string; severity: string; message: string }[]
+  warnings: { code: string; severity: 'info' | 'warn' | 'danger'; message: string; fix?: Record<string, string> }[]
   unplaced: { topic_id: number; topic_name: string; minutes: number; reason_code: string }[]
 }
 
