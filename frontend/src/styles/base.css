@@ -298,3 +298,20 @@ button { cursor:pointer } :focus-visible { outline:3px solid rgba(1,1,126,.35); 
   .havan-task-card,.plan-review-row,.havan-chapter-guidance-item,.havan-topic-insight{transition:none!important}
   .havan-task-card:hover,.plan-review-row:hover,.havan-chapter-guidance-item:hover,.havan-topic-insight:hover{transform:none}
 }
+
+
+/* Havan Focus: a lightweight, student-controlled session layer. */
+.plan-focus-row{margin-top:14px}
+.plan-focus-panel{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px;border:1px solid var(--color-primary);border-radius:14px;background:linear-gradient(90deg,var(--color-primary-soft),#fff);box-shadow:var(--shadow-brand)}
+.plan-focus-panel>div:first-child{display:grid;gap:3px;min-width:0}
+.plan-focus-panel strong{color:var(--color-primary);font-size:clamp(1.8rem,7vw,2.5rem);font-variant-numeric:tabular-nums;letter-spacing:.03em}
+.plan-focus-panel small{color:var(--color-muted);line-height:1.45}
+.plan-focus-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+@media(max-width:600px){
+  .plan-focus-panel{align-items:stretch;flex-direction:column}
+  .plan-focus-actions{display:grid;grid-template-columns:1fr 1fr}
+  .plan-focus-actions>*{min-height:48px}
+}
+@media(prefers-reduced-motion:reduce){
+  .plan-focus-panel{transition:none}
+}
