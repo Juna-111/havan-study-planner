@@ -111,11 +111,12 @@ export default function PlanView() {
                   try {
                     setAddError('')
                     setPendingTask(0)
-                    const nextPlan = await planAction(0, { action: 'ADD', target_topic_id: Number(addTopicId) })
+                    const selectedTopicId = Number(addTopicId)
+                    const nextPlan = await planAction(0, { action: 'ADD', target_topic_id: selectedTopicId })
                     setP(nextPlan)
-                    const newestTask = nextPlan.tasks[nextPlan.tasks.length - 1]
-                    if (newestTask) {
-                      setAddedTask(newestTask.id)
+                    const added = nextPlan.tasks.find((task) => task.topic_id === selectedTopicId)
+                    if (added) {
+                      setAddedTask(added.id)
                       window.setTimeout(() => setAddedTask(null), 700)
                     }
                     setAddTopicId('')
