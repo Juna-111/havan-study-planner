@@ -4,6 +4,7 @@ import { type FormEvent, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { apiFetch } from '@/lib/api'
 import { getAuthToken, saveAuth, type AuthResponse } from '@/lib/auth'
+import { HavanLogo } from '@/components/brand/HavanLogo'
 
 type Mode = 'login' | 'signup' | 'forgot'
 type ForgotStep = 'email' | 'code' | 'done'
@@ -133,7 +134,7 @@ export default function AuthForm() {
     <main className={`auth-shell ${busy ? 'auth-is-busy' : ''}`}>
       <section className="auth-brand-panel auth-reveal auth-reveal-1">
         <div className="auth-brand-inner">
-          <span className="auth-mark" aria-hidden="true">H</span>
+          <HavanLogo size={54} variant="light" />
           <h1>Plan with clarity.</h1>
           <p>Choose what you want to study, tell Havan how much time you have, and keep control of your plan.</p>
           <div className="auth-points">
@@ -145,7 +146,7 @@ export default function AuthForm() {
       </section>
       <section className="auth-panel auth-reveal auth-reveal-2">
         <div className="auth-card">
-          <span className="eyebrow">HAVAN ACADEMY · STUDY PLANNER</span>
+          <span className="eyebrow">Havan · Study Planner</span>
           <h2>{title}</h2>
           <p className="lead">{lead}</p>
 
