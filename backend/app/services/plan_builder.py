@@ -38,7 +38,21 @@
              "extra_minutes_per_study_day": item.extra_minutes_per_study_day}
             for item in result.readiness
         ],
-        warnings=[{"code": item.code, "message": item.message} for item in result.warnings],
+        warnings=[
+            warning_payload(
+                item.code,
+                shortfall=next(
+                    (
+                        readiness.shortfall_minutes
+                        for readiness in result.readiness
+                        if item.code == "EXAM_OVERLOADED"
+                        and readiness.status == "OVERLOADED"
+                    ),
+                    None,
+                ),
+            )
+            for item in result.warnings
+        ],
         unplaced=[{"topic_id": item.topic_id, "topic_name": item.topic_name, "course_id": item.course_id,
                    "minutes": item.remaining_minutes, "reason_code": item.reason_code}
                   for item in result.unplaced],
