@@ -165,9 +165,9 @@ class PlannerTopic:
     name: str
     difficulty: int
     estimated_minutes: int            # minutes still needed
-    session_minutes: int | None = None
     exam_importance: float
     conceptual_importance: float
+    session_minutes: int | None = None
     progress_status: str = "NOT_STARTED"
     progress_confidence: int = 3
     chapter_order: int = 0
@@ -686,7 +686,7 @@ def build_plan(request: PlanRequest, config: PlannerConfig = DEFAULT_CONFIG) -> 
             if work.kind == "REVIEW":
                 chunk = min(work.remaining, capacity, review_cap - review_used)
             else:
-                chunk = min(work.remaining, capacity, session_limit_minutes(topic))
+                chunk = min(work.remaining, capacity, session_limit_minutes(work.topic))
             chunk = (chunk // 5) * 5
             if chunk <= 0 or (chunk < work.remaining and chunk < cfg.min_session_minutes):
                 skip.add(tid)
@@ -1013,7 +1013,7 @@ def allocate_selected_topics(
             capacities[target] = request.calendar.capacity(target)
             used_course[target] = defaultdict(int)
             placed_today[target] = set()
-        chunk = min(remaining[topic.topic_id], capacities[target], cfg.max_session_minutes)
+        chunk = min(remaining[topic.topic_id], capacities[target], session_limit_minutes(topic))
         chunk = (chunk // 5) * 5
         if chunk >= cfg.min_session_minutes:
             add_session(topic, target, chunk, pinned_session=True)
@@ -1057,7 +1057,7 @@ def allocate_selected_topics(
         if best_pair is None:
             break
         _, topic, day = best_pair
-        chunk = min(remaining[topic.topic_id], capacities[day], cfg.max_session_minutes)
+        chunk = min(remaining[topic.topic_id], capacities[day], session_limit_minutes(topic))
         chunk = (chunk // 5) * 5
         if chunk < cfg.min_session_minutes:
             capacities[day] = 0
