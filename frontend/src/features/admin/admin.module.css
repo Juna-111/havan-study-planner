@@ -1,22 +1,170 @@
-.shell{min-height:100dvh;background:#f5f6fb;color:#151526;display:flex;overflow-x:hidden} .sidebar,.sidebarOpen{box-sizing:border-box;width:240px;flex:none;background:#fff;border-right:1px solid #e7e7ef;padding:24px 16px;position:fixed;left:0;top:0;height:100dvh;overflow-y:auto;overscroll-behavior:contain;z-index:30} .brand{display:flex;gap:10px;align-items:center;margin:0 8px 32px} .brand>b{display:grid;place-items:center;width:40px;height:40px;background:var(--color-primary);color:#fff;border-radius:12px;font-family:Fraunces,serif;font-size:22px} .brand strong{display:block;font-size:20px} .brand small{color:#5d5d73} .group{margin-bottom:24px}
-.group>span,.header>span{font-size:11px;font-weight:700;letter-spacing:.12em;color:#5d5d73} .group button,.homeLink{display:block;width:100%;min-height:44px;border:0;background:none;text-align:left;padding:10px 12px;border-radius:10px;color:#151526;font:inherit;text-decoration:none;cursor:pointer;margin-top:4px} .group button:hover,.group .active{background:var(--color-primary-soft);color:var(--color-primary);font-weight:700} .homeLink{margin-top:40px;color:var(--color-primary)} .main{flex:1;min-width:0;margin-left:240px;padding:32px;max-width:1200px} .menu{display:none} .header{margin-bottom:24px} .header h1{font-family:Fraunces,serif;font-size:34px;margin:6px 0}
-.header p{max-width:760px;color:#5d5d73;margin:0} .selectors{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;background:#fff;padding:16px;border:1px solid #e7e7ef;border-radius:14px;margin-bottom:16px} .selectors label,.scope,.importCard label,.editor label{display:grid;gap:6px;font-weight:600;font-size:14px} .selectors select,.scope select,.importCard input,.editor input,.editor textarea,.catalog input{min-height:44px;border:1px solid #d8d8e4;border-radius:10px;padding:8px 12px;font:inherit;background:#fff;box-sizing:border-box;max-width:100%}
-.catalog,.panel,.crud,.importCard,.preview,.health,.issueList{background:#fff;border:1px solid #e7e7ef;border-radius:14px;padding:18px;margin-bottom:16px;box-sizing:border-box} .catalog{max-height:430px;overflow:auto} .catalog>input{width:100%;margin:10px 0} .semesters{display:grid;grid-template-columns:1fr 1fr;gap:16px} .panel h2,.crudHead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:0} .panel h2 small{font-size:13px;color:#5d5d73;font-weight:400} .row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;border-top:1px solid #eee;padding:12px 0} .row div{min-width:0} .row b,.row span,.row small{display:block}
-.row span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .row small{color:#5d5d73} .row button,.tabs button,.actions button{min-height:44px;border:1px solid #d8d8e4;background:#fff;border-radius:9px;padding:8px 12px;font:inherit;cursor:pointer} .primary{background:var(--color-primary)!important;color:#fff!important;border-color:var(--color-primary)!important} .danger{color:var(--color-danger)!important} .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px} .tabs .active{background:var(--color-primary);color:#fff} .scope{max-width:520px;margin-bottom:16px} .crudGrid{display:grid;grid-template-columns:1.4fr 1fr;gap:16px}
-.list{background:#fff;border:1px solid #e7e7ef;border-radius:14px;padding:16px;min-width:0} .editor{background:#fff;border:1px solid #e7e7ef;border-radius:14px;padding:18px;display:grid;gap:12px;align-content:start;min-width:0} .editor textarea{min-height:110px} .actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap} .importCard{display:grid;gap:14px;max-width:900px} .importCard pre{white-space:pre-wrap;background:#f5f6fb;padding:14px;border-radius:10px;overflow:auto} .preview{max-width:900px} .indent{display:grid;gap:4px;padding:10px 0 10px 18px;border-left:3px solid var(--color-primary-soft)} .indent span{color:#5d5d73}
-.notice,.alert{padding:12px 14px;border-radius:10px;margin-bottom:16px} .notice{background:#e6f5ef;color:#12775a} .alert{background:var(--color-danger-soft);color:var(--color-danger)} .health{display:flex;justify-content:space-between;gap:12px;align-items:center} .health b{font-family:Fraunces,serif;font-size:24px} .health span{color:#5d5d73} .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px} .stats div{background:#fff;border:1px solid #e7e7ef;border-radius:12px;padding:14px;min-width:0} .statButton{display:block;width:100%;border:1px solid #e7e7ef;border-radius:12px;padding:14px;background:#fff;text-align:left;font:inherit;cursor:pointer;min-width:0}
-.statButton:hover{border-color:var(--color-primary);transform:translateY(-1px)} .statButton span,.statButton b,.statButton small{display:block} .statButton b{font-size:24px;margin-top:4px} .statButton small{color:#5d5d73;margin-top:8px} .stats span,.stats b{display:block} .stats b{font-size:24px;margin-top:4px} .issue{display:grid;grid-template-columns:80px minmax(0,1fr) auto;gap:12px;border-top:1px solid #eee;padding:14px 0;align-items:start} .issue p{margin:4px 0;color:#5d5d73} .issue small{color:#5d5d73} .empty{padding:32px;text-align:center;color:#5d5d73} .adminLoading,.adminDenied{min-height:100dvh;display:grid;place-items:center;text-align:center;padding:24px}
-.adminDenied span{color:var(--color-primary);font-weight:800} .adminDenied h1{font-family:Fraunces,serif} .adminDenied a{color:var(--color-primary);font-weight:700} .scrim{display:none} @media(max-width:767px){ .sidebar{display:none} .sidebarOpen{position:fixed;z-index:20;left:0;top:0;width:min(86vw,280px);height:100dvh} .scrim{display:block;position:fixed;inset:0;z-index:10;border:0;background:#15152655} .main{padding:16px 12px;width:100%;max-width:none} .menu{display:block;min-height:44px;margin-bottom:12px;border:1px solid #d8d8e4;border-radius:9px;background:#fff;padding:8px 12px} .selectors,.semesters,.crudGrid,.stats{grid-template-columns:1fr} .row{grid-template-columns:1fr}
-.row button,.actions button{width:100%} .header h1{font-size:28px} .header p{line-height:1.5} .health{display:grid} .issue{grid-template-columns:1fr} .issue .actions{width:100%;justify-content:stretch} .issue .actions button,.issue .actions input{width:100%} .tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))} .tabs button{width:100%} .panel,.catalog,.crud,.importCard,.preview,.health,.issueList{padding:14px} .crudHead{align-items:flex-start} .statButton{min-height:96px} } @media(min-width:768px) and (max-width:1100px){ .main{padding:24px 20px} .stats{grid-template-columns:repeat(3,1fr)} .selectors{grid-template-columns:repeat(2,1fr)} }
-.brand{border-bottom:2px solid var(--color-accent);padding-bottom:14px}.group .active{border-left:3px solid var(--color-accent)}.primary:hover{background:var(--color-primary-hover)!important}.notice{border-left:4px solid var(--color-primary)}.alert{border-left:4px solid var(--color-accent)}   /* Havan admin identity: every admin surface must visibly belong to the same product. */ .shell{   background:     radial-gradient(circle at 92% 8%,rgba(1,1,126,.07),transparent 24%),     linear-gradient(135deg,#f5f6fb 0%,#f8f9ff 52%,#f5f6fb 100%); }
-.sidebar,.sidebarOpen{   background:     radial-gradient(circle at 18% 8%,rgba(250,3,2,.22),transparent 24%),     linear-gradient(165deg,#01017e 0%,#07078f 50%,#02025d 100%);   border-right:1px solid rgba(255,255,255,.14);   color:#fff;   box-shadow:10px 0 34px rgba(1,1,126,.16); } .brand{   position:relative;   padding:0 8px 18px;   margin-bottom:24px;   border-bottom:1px solid rgba(255,255,255,.16); } .brand::after{   content:'';   position:absolute;   right:8px;   bottom:-1px;   left:8px;   height:3px;   border-radius:999px;   background:var(--color-accent); } .brand>b{box-shadow:0 8px 24px rgba(0,0,0,.16)} .brand strong{color:#fff;font-family:Fraunces,Georgia,serif;letter-spacing:.04em}
-.brand small{color:rgba(255,255,255,.68)} .group{margin-bottom:20px} .group>span,.header>span{   color:var(--color-primary);   font-weight:900; } .sidebar .group>span{color:rgba(255,255,255,.55)} .group button,.homeLink{   color:rgba(255,255,255,.76);   border:1px solid transparent; } .group button:hover{   color:#fff;   background:rgba(255,255,255,.08);   border-color:rgba(255,255,255,.1); } .group .active{   color:#fff;   background:rgba(255,255,255,.14);   border-left:3px solid var(--color-accent);   box-shadow:0 8px 22px rgba(0,0,0,.12); } .homeLink{   color:#fff;   border-top:1px solid rgba(255,255,255,.12);   padding-top:16px; } .main{position:relative}
-.header{   position:relative;   padding:8px 0 20px 18px;   border-left:4px solid var(--color-primary); } .header::after{   content:'HAVAN ADMIN';   position:absolute;   right:0;   top:4px;   color:rgba(1,1,126,.12);   font-size:clamp(2rem,5vw,4rem);   font-weight:900;   letter-spacing:.08em;   pointer-events:none; } .header h1,.panel h2,.crudHead h2,.catalog h2,.health b{color:var(--color-primary)} .selectors,.catalog,.panel,.crud,.importCard,.preview,.health,.issueList,.list,.editor{   border-color:#dfe2f2;   box-shadow:0 10px 28px rgba(1,1,126,.055); } .selectors{   border-top:3px solid var(--color-primary);   background:linear-gradient(100deg,var(--color-primary-soft),#fff 55%); }
-.catalog,.panel,.crud,.importCard,.preview,.list,.editor{   position:relative;   overflow:hidden; } .catalog::before,.panel::before,.crud::before,.importCard::before,.preview::before,.list::before,.editor::before{   content:'';   position:absolute;   inset:0 0 auto 0;   height:3px;   background:var(--color-primary); } .panel:nth-child(2n)::before,.crud:nth-child(2n)::before{background:var(--color-accent)} .stats div,.statButton{   border-color:#dfe2f2;   box-shadow:0 8px 24px rgba(1,1,126,.05); } .statButton:hover{box-shadow:0 12px 28px rgba(1,1,126,.12)} .statButton span{color:var(--color-primary);font-weight:800} .statButton b,.stats b{color:var(--color-primary)}
-.tabs{   padding:4px;   border-radius:14px;   background:var(--color-primary-soft); } .tabs button{border-color:transparent} .tabs .active{box-shadow:0 5px 14px rgba(1,1,126,.16)} .health{   border-left:4px solid var(--color-accent);   background:linear-gradient(90deg,var(--color-accent-soft),#fff); } .indent{border-left-color:var(--color-accent)} .menu{   color:#fff;   background:linear-gradient(135deg,#01017e,#07078f);   border-color:#01017e;   box-shadow:0 8px 22px rgba(1,1,126,.16);   font-weight:800; } .menu:active{background:#02025d} @media(max-width:767px){   .sidebarOpen{     box-shadow:16px 0 38px rgba(1,1,126,.28);   }   .main{padding-top:12px}   .header{padding-left:14px}
-.header::after{font-size:2.2rem;top:0}   .selectors,.catalog,.panel,.crud,.importCard,.preview,.health,.issueList{box-shadow:0 8px 24px rgba(1,1,126,.07)} }  /* Havan Course Import workspace: make the upload step unmistakably product-owned. */ .importStatus{   display:flex;   align-items:center;   justify-content:space-between;   gap:18px;   margin-bottom:14px;   padding:14px 16px;   border:1px solid #dfe2f2;   border-left:4px solid var(--color-accent);   border-radius:14px;   background:linear-gradient(100deg,var(--color-accent-soft),#fff);   box-shadow:0 8px 24px rgba(1,1,126,.05); } .importStatus>div{display:grid;gap:3px}
-.importStatus span,.fieldKicker{   color:var(--color-accent);   font-size:.68rem;   font-weight:900;   letter-spacing:.1em; } .importStatus strong{color:var(--color-primary);font-size:1rem} .importStatus small{color:#5d5d73;line-height:1.45} .filePicker{   display:flex;   align-items:center;   justify-content:space-between;   gap:16px;   padding:16px;   border:1px solid #dfe2f2;   border-radius:14px;   background:linear-gradient(135deg,var(--color-primary-soft),#fff 65%); } .filePicker>div{display:grid;gap:4px;min-width:0} .filePicker strong{color:var(--color-primary);overflow:hidden;text-overflow:ellipsis} .filePicker small{color:#5d5d73}
-.fileButton{   position:relative;   flex:none;   display:inline-flex;   align-items:center;   justify-content:center;   min-height:46px;   padding:0 16px;   border-radius:12px;   background:var(--color-primary);   color:#fff;   font-weight:800;   cursor:pointer;   box-shadow:0 7px 18px rgba(1,1,126,.16); } .fileButton:hover{background:var(--color-primary-hover)} .fileButton input{   position:absolute;   inset:0;   width:100%;   height:100%;   opacity:0;   cursor:pointer;   padding:0;   border:0;   min-height:0; }
-.importCard pre{   margin:0;   border:1px solid #dfe2f2;   border-left:3px solid var(--color-accent);   background:#f7f8ff;   color:#2c2c45;   font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace;   line-height:1.65; } .importCard .actions button{   min-height:46px;   border-radius:12px;   border-color:#d5d8ec;   color:var(--color-primary);   background:#fff;   font-weight:800; } .importCard .actions .primary{   background:var(--color-primary)!important;   color:#fff!important; } @media(max-width:767px){   .main{margin-left:0}   .importStatus,.filePicker{align-items:stretch;flex-direction:column}   .fileButton{width:100%}
-.importCard .actions{display:grid;grid-template-columns:1fr} }
-.promotionCard{background:#fff;border:1px solid #dfe2f2;border-top:3px solid var(--color-accent);border-radius:14px;padding:18px;margin-top:16px}.promotionForm{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid #eee}.promotionForm label{display:grid;gap:6px;font-weight:600;font-size:14px}.promotionForm input{min-height:44px;border:1px solid #d8d8e4;border-radius:10px;padding:8px 12px;font:inherit}.promotionRow{display:flex;justify-content:space-between;gap:14px;align-items:center;padding:12px 0;border-top:1px solid #eee}.promotionRow>div{display:grid;gap:3px;min-width:0}.promotionRow span{color:#5d5d73}@media(max-width:767px){.promotionForm{grid-template-columns:1fr}.promotionRow{align-items:flex-start;flex-direction:column}.promotionRow button{width:100%}}
+.shell{min-height:100dvh;background:#f5f6fb;color:#151526;display:flex;overflow-x:hidden}
+.sidebar,.sidebarOpen{box-sizing:border-box;width:240px;flex:none;background:#fff;border-right:1px solid #e7e7ef;padding:24px 16px;position:fixed;left:0;top:0;height:100dvh;overflow-y:auto;overscroll-behavior:contain;z-index:30}
+.brand{display:flex;gap:10px;align-items:center;margin:0 8px 32px}
+.brand>b{display:grid;place-items:center;width:40px;height:40px;background:var(--color-primary);color:#fff;border-radius:12px;font-family:Fraunces,serif;font-size:22px}
+.brand strong{display:block;font-size:20px}
+.brand small{color:#5d5d73}
+.group{margin-bottom:24px}
+.group>span,.header>span{font-size:11px;font-weight:700;letter-spacing:.12em;color:#5d5d73}
+.group button,.homeLink{display:block;width:100%;min-height:44px;border:0;background:none;text-align:left;padding:10px 12px;border-radius:10px;color:#151526;font:inherit;text-decoration:none;cursor:pointer;margin-top:4px}
+.group button:hover,.group .active{background:var(--color-primary-soft);color:var(--color-primary);font-weight:700}
+.homeLink{margin-top:40px;color:var(--color-primary)}
+.main{flex:1;min-width:0;margin-left:240px;padding:32px;max-width:1200px}
+.menu{display:none}
+.header{margin-bottom:24px}
+.header h1{font-family:Fraunces,serif;font-size:34px;margin:6px 0}
+.header p{max-width:760px;color:#5d5d73;margin:0}
+.selectors{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;background:#fff;padding:16px;border:1px solid #e7e7ef;border-radius:14px;margin-bottom:16px}
+.selectors label,.scope,.importCard label,.editor label{display:grid;gap:6px;font-weight:600;font-size:14px}
+.selectors select,.scope select,.importCard input,.editor input,.editor textarea,.catalog input{min-height:44px;border:1px solid #d8d8e4;border-radius:10px;padding:8px 12px;font:inherit;background:#fff;box-sizing:border-box;max-width:100%}
+.catalog,.panel,.crud,.importCard,.preview,.health,.issueList{background:#fff;border:1px solid #e7e7ef;border-radius:14px;padding:18px;margin-bottom:16px;box-sizing:border-box}
+.catalog{max-height:430px;overflow:auto}
+.catalog>input{width:100%;margin:10px 0}
+.semesters{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.panel h2,.crudHead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:0}
+.panel h2 small{font-size:13px;color:#5d5d73;font-weight:400}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;border-top:1px solid #eee;padding:12px 0}
+.row div{min-width:0}
+.row b,.row span,.row small{display:block}
+.row span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row small{color:#5d5d73}
+.row button,.tabs button,.actions button{min-height:44px;border:1px solid #d8d8e4;background:#fff;border-radius:9px;padding:8px 12px;font:inherit;cursor:pointer}
+.primary{background:var(--color-primary)!important;color:#fff!important;border-color:var(--color-primary)!important}
+.danger{color:var(--color-danger)!important}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.tabs .active{background:var(--color-primary);color:#fff}
+.scope{max-width:520px;margin-bottom:16px}
+.crudGrid{display:grid;grid-template-columns:1.4fr 1fr;gap:16px}
+.list{background:#fff;border:1px solid #e7e7ef;border-radius:14px;padding:16px;min-width:0}
+.editor{background:#fff;border:1px solid #e7e7ef;border-radius:14px;padding:18px;display:grid;gap:12px;align-content:start;min-width:0}
+.editor textarea{min-height:110px}
+.actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.importCard{display:grid;gap:14px;max-width:900px}
+.importCard pre{white-space:pre-wrap;background:#f5f6fb;padding:14px;border-radius:10px;overflow:auto}
+.preview{max-width:900px}
+.indent{display:grid;gap:4px;padding:10px 0 10px 18px;border-left:3px solid var(--color-primary-soft)}
+.indent span{color:#5d5d73}
+.notice,.alert{padding:12px 14px;border-radius:10px;margin-bottom:16px}
+.notice{background:#e6f5ef;color:#12775a}
+.alert{background:var(--color-danger-soft);color:var(--color-danger)}
+.health{display:flex;justify-content:space-between;gap:12px;align-items:center}
+.health b{font-family:Fraunces,serif;font-size:24px}
+.health span{color:#5d5d73}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.stats div{background:#fff;border:1px solid #e7e7ef;border-radius:12px;padding:14px;min-width:0}
+.statButton{display:block;width:100%;border:1px solid #e7e7ef;border-radius:12px;padding:14px;background:#fff;text-align:left;font:inherit;cursor:pointer;min-width:0}
+.statButton:hover{border-color:var(--color-primary);transform:translateY(-1px)}
+.statButton span,.statButton b,.statButton small{display:block}
+.statButton b{font-size:24px;margin-top:4px}
+.statButton small{color:#5d5d73;margin-top:8px}
+.stats span,.stats b{display:block}
+.stats b{font-size:24px;margin-top:4px}
+.issue{display:grid;grid-template-columns:80px minmax(0,1fr) auto;gap:12px;border-top:1px solid #eee;padding:14px 0;align-items:start}
+.issue p{margin:4px 0;color:#5d5d73}
+.issue small{color:#5d5d73}
+.empty{padding:32px;text-align:center;color:#5d5d73}
+.adminLoading,.adminDenied{min-height:100dvh;display:grid;place-items:center;text-align:center;padding:24px}
+.adminDenied span{color:var(--color-primary);font-weight:800}
+.adminDenied h1{font-family:Fraunces,serif}
+.adminDenied a{color:var(--color-primary);font-weight:700}
+.scrim{display:none}
+@media(max-width:767px){ .sidebar{display:none}
+.sidebarOpen{position:fixed;z-index:20;left:0;top:0;width:min(86vw,280px);height:100dvh}
+.scrim{display:block;position:fixed;inset:0;z-index:10;border:0;background:#15152655}
+.main{padding:16px 12px;width:100%;max-width:none}
+.menu{display:block;min-height:44px;margin-bottom:12px;border:1px solid #d8d8e4;border-radius:9px;background:#fff;padding:8px 12px}
+.selectors,.semesters,.crudGrid,.stats{grid-template-columns:1fr}
+.row{grid-template-columns:1fr}
+.row button,.actions button{width:100%}
+.header h1{font-size:28px}
+.header p{line-height:1.5}
+.health{display:grid}
+.issue{grid-template-columns:1fr}
+.issue .actions{width:100%;justify-content:stretch}
+.issue .actions button,.issue .actions input{width:100%}
+.tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.tabs button{width:100%}
+.panel,.catalog,.crud,.importCard,.preview,.health,.issueList{padding:14px}
+.crudHead{align-items:flex-start}
+.statButton{min-height:96px}
+}
+@media(min-width:768px) and (max-width:1100px){ .main{padding:24px 20px}
+.stats{grid-template-columns:repeat(3,1fr)}
+.selectors{grid-template-columns:repeat(2,1fr)}
+}
+.brand{border-bottom:2px solid var(--color-accent);padding-bottom:14px}
+.group .active{border-left:3px solid var(--color-accent)}
+.primary:hover{background:var(--color-primary-hover)!important}
+.notice{border-left:4px solid var(--color-primary)}
+.alert{border-left:4px solid var(--color-accent)}
+/* Havan admin identity: every admin surface must visibly belong to the same product. */ .shell{   background:     radial-gradient(circle at 92% 8%,rgba(1,1,126,.07),transparent 24%),     linear-gradient(135deg,#f5f6fb 0%,#f8f9ff 52%,#f5f6fb 100%); }
+.sidebar,.sidebarOpen{   background:     radial-gradient(circle at 18% 8%,rgba(250,3,2,.22),transparent 24%),     linear-gradient(165deg,#01017e 0%,#07078f 50%,#02025d 100%);   border-right:1px solid rgba(255,255,255,.14);   color:#fff;   box-shadow:10px 0 34px rgba(1,1,126,.16); }
+.brand{   position:relative;   padding:0 8px 18px;   margin-bottom:24px;   border-bottom:1px solid rgba(255,255,255,.16); }
+.brand::after{   content:'';   position:absolute;   right:8px;   bottom:-1px;   left:8px;   height:3px;   border-radius:999px;   background:var(--color-accent); }
+.brand>b{box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.brand strong{color:#fff;font-family:Fraunces,Georgia,serif;letter-spacing:.04em}
+.brand small{color:rgba(255,255,255,.68)}
+.group{margin-bottom:20px}
+.group>span,.header>span{   color:var(--color-primary);   font-weight:900; }
+.sidebar .group>span{color:rgba(255,255,255,.55)}
+.group button,.homeLink{   color:rgba(255,255,255,.76);   border:1px solid transparent; }
+.group button:hover{   color:#fff;   background:rgba(255,255,255,.08);   border-color:rgba(255,255,255,.1); }
+.group .active{   color:#fff;   background:rgba(255,255,255,.14);   border-left:3px solid var(--color-accent);   box-shadow:0 8px 22px rgba(0,0,0,.12); }
+.homeLink{   color:#fff;   border-top:1px solid rgba(255,255,255,.12);   padding-top:16px; }
+.main{position:relative}
+.header{   position:relative;   padding:8px 0 20px 18px;   border-left:4px solid var(--color-primary); }
+.header::after{   content:'HAVAN ADMIN';   position:absolute;   right:0;   top:4px;   color:rgba(1,1,126,.12);   font-size:clamp(2rem,5vw,4rem);   font-weight:900;   letter-spacing:.08em;   pointer-events:none; }
+.header h1,.panel h2,.crudHead h2,.catalog h2,.health b{color:var(--color-primary)}
+.selectors,.catalog,.panel,.crud,.importCard,.preview,.health,.issueList,.list,.editor{   border-color:#dfe2f2;   box-shadow:0 10px 28px rgba(1,1,126,.055); }
+.selectors{   border-top:3px solid var(--color-primary);   background:linear-gradient(100deg,var(--color-primary-soft),#fff 55%); }
+.catalog,.panel,.crud,.importCard,.preview,.list,.editor{   position:relative;   overflow:hidden; }
+.catalog::before,.panel::before,.crud::before,.importCard::before,.preview::before,.list::before,.editor::before{   content:'';   position:absolute;   inset:0 0 auto 0;   height:3px;   background:var(--color-primary); }
+.panel:nth-child(2n)::before,.crud:nth-child(2n)::before{background:var(--color-accent)}
+.stats div,.statButton{   border-color:#dfe2f2;   box-shadow:0 8px 24px rgba(1,1,126,.05); }
+.statButton:hover{box-shadow:0 12px 28px rgba(1,1,126,.12)}
+.statButton span{color:var(--color-primary);font-weight:800}
+.statButton b,.stats b{color:var(--color-primary)}
+.tabs{   padding:4px;   border-radius:14px;   background:var(--color-primary-soft); }
+.tabs button{border-color:transparent}
+.tabs .active{box-shadow:0 5px 14px rgba(1,1,126,.16)}
+.health{   border-left:4px solid var(--color-accent);   background:linear-gradient(90deg,var(--color-accent-soft),#fff); }
+.indent{border-left-color:var(--color-accent)}
+.menu{   color:#fff;   background:linear-gradient(135deg,#01017e,#07078f);   border-color:#01017e;   box-shadow:0 8px 22px rgba(1,1,126,.16);   font-weight:800; }
+.menu:active{background:#02025d}
+@media(max-width:767px){   .sidebarOpen{     box-shadow:16px 0 38px rgba(1,1,126,.28);   }
+.main{padding-top:12px}
+.header{padding-left:14px}
+.header::after{font-size:2.2rem;top:0}
+.selectors,.catalog,.panel,.crud,.importCard,.preview,.health,.issueList{box-shadow:0 8px 24px rgba(1,1,126,.07)}
+}
+/* Havan Course Import workspace: make the upload step unmistakably product-owned. */ .importStatus{   display:flex;   align-items:center;   justify-content:space-between;   gap:18px;   margin-bottom:14px;   padding:14px 16px;   border:1px solid #dfe2f2;   border-left:4px solid var(--color-accent);   border-radius:14px;   background:linear-gradient(100deg,var(--color-accent-soft),#fff);   box-shadow:0 8px 24px rgba(1,1,126,.05); }
+.importStatus>div{display:grid;gap:3px}
+.importStatus span,.fieldKicker{   color:var(--color-accent);   font-size:.68rem;   font-weight:900;   letter-spacing:.1em; }
+.importStatus strong{color:var(--color-primary);font-size:1rem}
+.importStatus small{color:#5d5d73;line-height:1.45}
+.filePicker{   display:flex;   align-items:center;   justify-content:space-between;   gap:16px;   padding:16px;   border:1px solid #dfe2f2;   border-radius:14px;   background:linear-gradient(135deg,var(--color-primary-soft),#fff 65%); }
+.filePicker>div{display:grid;gap:4px;min-width:0}
+.filePicker strong{color:var(--color-primary);overflow:hidden;text-overflow:ellipsis}
+.filePicker small{color:#5d5d73}
+.fileButton{   position:relative;   flex:none;   display:inline-flex;   align-items:center;   justify-content:center;   min-height:46px;   padding:0 16px;   border-radius:12px;   background:var(--color-primary);   color:#fff;   font-weight:800;   cursor:pointer;   box-shadow:0 7px 18px rgba(1,1,126,.16); }
+.fileButton:hover{background:var(--color-primary-hover)}
+.fileButton input{   position:absolute;   inset:0;   width:100%;   height:100%;   opacity:0;   cursor:pointer;   padding:0;   border:0;   min-height:0; }
+.importCard pre{   margin:0;   border:1px solid #dfe2f2;   border-left:3px solid var(--color-accent);   background:#f7f8ff;   color:#2c2c45;   font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace;   line-height:1.65; }
+.importCard .actions button{   min-height:46px;   border-radius:12px;   border-color:#d5d8ec;   color:var(--color-primary);   background:#fff;   font-weight:800; }
+.importCard .actions .primary{   background:var(--color-primary)!important;   color:#fff!important; }
+@media(max-width:767px){   .main{margin-left:0}
+.importStatus,.filePicker{align-items:stretch;flex-direction:column}
+.fileButton{width:100%}
+.importCard .actions{display:grid;grid-template-columns:1fr}
+}
+.promotionCard{background:#fff;border:1px solid #dfe2f2;border-top:3px solid var(--color-accent);border-radius:14px;padding:18px;margin-top:16px}
+.promotionForm{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid #eee}
+.promotionForm label{display:grid;gap:6px;font-weight:600;font-size:14px}
+.promotionForm input{min-height:44px;border:1px solid #d8d8e4;border-radius:10px;padding:8px 12px;font:inherit}
+.promotionRow{display:flex;justify-content:space-between;gap:14px;align-items:center;padding:12px 0;border-top:1px solid #eee}
+.promotionRow>div{display:grid;gap:3px;min-width:0}
+.promotionRow span{color:#5d5d73}
+@media(max-width:767px){.promotionForm{grid-template-columns:1fr}
+.promotionRow{align-items:flex-start;flex-direction:column}
+.promotionRow button{width:100%}
+}
