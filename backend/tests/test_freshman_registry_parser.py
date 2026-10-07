@@ -6,7 +6,8 @@ from app.services.freshman_registry_parser import parse_bullet_curriculum
 
 def test_parse_canonical_havan_format_with_difficulty():
     courses = parse_bullet_curriculum(
-        """Course: [PHY101] Physics
+        """TYPE: COURSE_V1
+Course: [PHY101] Physics
 Chapter: Measurement
 - Physical quantities [1]
 - Units and dimensions [2]
@@ -22,7 +23,8 @@ Chapter: Vectors
 
 def test_parse_course_code_with_spaces_and_bullet_symbol():
     courses = parse_bullet_curriculum(
-        """Course: [Math 1011] Applied Mathematics I
+        """TYPE: COURSE_V1
+Course: [Math 1011] Applied Mathematics I
 Chapter: Foundations
 • Sets and notation [3]
 """
@@ -34,7 +36,8 @@ Chapter: Foundations
 def test_reject_course_without_explicit_identity():
     with pytest.raises(HTTPException, match="canonical"):
         parse_bullet_curriculum(
-            """Course: Physics
+            """TYPE: COURSE_V1
+Course: Physics
 Chapter: Mechanics
 - Motion [2]
 """
@@ -44,7 +47,8 @@ Chapter: Mechanics
 def test_reject_invalid_course_code():
     with pytest.raises(HTTPException, match="course code"):
         parse_bullet_curriculum(
-            """Course: [PHY/101] Physics
+            """TYPE: COURSE_V1
+Course: [PHY/101] Physics
 Chapter: Mechanics
 - Motion [2]
 """
@@ -54,7 +58,8 @@ Chapter: Mechanics
 def test_reject_duplicate_course_code():
     with pytest.raises(HTTPException, match="Duplicate course code"):
         parse_bullet_curriculum(
-            """Course: [PHY101] Physics
+            """TYPE: COURSE_V1
+Course: [PHY101] Physics
 Chapter: Mechanics
 - Motion [2]
 Course: [phy101] Physics II
@@ -67,7 +72,8 @@ Chapter: Waves
 def test_reject_duplicate_chapter():
     with pytest.raises(HTTPException, match="duplicate chapter"):
         parse_bullet_curriculum(
-            """Course: [PHY101] Physics
+            """TYPE: COURSE_V1
+Course: [PHY101] Physics
 Chapter: Mechanics
 - Motion [2]
 Chapter: mechanics
@@ -79,7 +85,8 @@ Chapter: mechanics
 def test_reject_duplicate_topic():
     with pytest.raises(HTTPException, match="duplicate topic"):
         parse_bullet_curriculum(
-            """Course: [PHY101] Physics
+            """TYPE: COURSE_V1
+Course: [PHY101] Physics
 Chapter: Mechanics
 - Motion [2]
 - motion [3]
@@ -90,7 +97,8 @@ Chapter: Mechanics
 def test_reject_topic_without_difficulty():
     with pytest.raises(HTTPException):
         parse_bullet_curriculum(
-            """Course: [PHY101] Physics
+            """TYPE: COURSE_V1
+Course: [PHY101] Physics
 Chapter: Mechanics
 - Motion
 """
@@ -100,7 +108,8 @@ Chapter: Mechanics
 def test_reject_invalid_difficulty():
     with pytest.raises(HTTPException):
         parse_bullet_curriculum(
-            """Course: [PHY101] Physics
+            """TYPE: COURSE_V1
+Course: [PHY101] Physics
 Chapter: Mechanics
 - Motion [6]
 """
@@ -110,7 +119,8 @@ Chapter: Mechanics
 def test_reject_legacy_indented_structure():
     with pytest.raises(HTTPException):
         parse_bullet_curriculum(
-            """• [PHY101] Physics
+            """TYPE: COURSE_V1
+• [PHY101] Physics
   • Measurement
     • Physical quantities [3]
 """
