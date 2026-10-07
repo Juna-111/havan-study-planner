@@ -111,7 +111,7 @@ export default function StepAcademic(props: Props) {
     return () => { cancelled = true }
   }, [props.stream])
   return (
-    <div className="stack">
+    <div className="stack academic-step">
       <Card>
         <div className="stack">
           <label className="onboarding-field">
