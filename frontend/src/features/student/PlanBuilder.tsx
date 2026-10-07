@@ -160,13 +160,13 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
     <AppShell>
       <PageHeader title={copy.title} backHref="/student/havan" description={copy.description} />
 
-      <Card padding="lg" className="app-section havan-plan-controls">
+      <Card padding="lg" className="app-section havan-plan-controls havan-time-step">
         <div className="havan-plan-mode">
           <div>
             <span className="app-eyebrow">PLAN HORIZON</span>
             <strong>{copy.horizon}</strong>
           </div>
-          <span className="havan-plan-control-note">Your selections stay under your control.</span>
+          <span className="havan-plan-control-note">{mode === 'today' ? 'Tell Havan exactly how much time you can study today.' : 'Set the time you can study on each available study day.'}</span>
         </div>
         <Segmented
           options={['today', 'week', 'month'] as const}
@@ -177,7 +177,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
           }}
         />
         <NumberStepper
-          label="Hours per study day"
+          label={mode === 'today' ? 'Study time today (hours)' : 'Study time per study day (hours)'}
           value={hours}
           min={1}
           max={12}
@@ -346,12 +346,20 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
       )}
 
       <StickyActionBar>
-        <Button disabled={!selected.size || busy !== null} variant="secondary" onClick={previewIt}>
-          {busy === 'preview' ? 'Previewing...' : 'Preview'}
-        </Button>
-        <Button variant="accent" disabled={!selected.size || busy !== null} onClick={saveIt}>
-          {busy === 'save' ? 'Creating...' : 'Create plan'}
-        </Button>
+        <div className="havan-generate-bar">
+          <div className="havan-generate-summary">
+            <strong>{selected.size ? `${selected.size} ${selected.size === 1 ? 'topic' : 'topics'} · ${hours}h ${mode === 'today' ? 'today' : 'per study day'}` : 'Choose topics and study time'}</strong>
+            <span>{selected.size ? 'Havan is ready to organize your choices.' : 'Your plan is created only after you choose both.'}</span>
+          </div>
+          <div className="havan-generate-actions">
+            <Button disabled={!selected.size || busy !== null} variant="secondary" onClick={previewIt}>
+              {busy === 'preview' ? 'Building preview...' : 'Preview allocation'}
+            </Button>
+            <Button variant="accent" disabled={!selected.size || busy !== null} onClick={saveIt}>
+              {busy === 'save' ? 'Creating your plan...' : 'Create my Havan plan'}
+            </Button>
+          </div>
+        </div>
       </StickyActionBar>
     </AppShell>
   )
