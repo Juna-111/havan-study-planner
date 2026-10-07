@@ -9,20 +9,26 @@ import styles from './layout.module.css'
 const navigation = [
   ['/student/havan', 'Havan'],
   ['/plan', 'Plan'],
+  ['/exam-planning', 'Exam Planning'],
   ['/progress', 'Progress'],
   ['/settings', 'Settings'],
 ] as const
 
+function isActivePath(pathname: string, href: string) {
+  return pathname === href || (href !== '/student/havan' && pathname.startsWith(`${href}/`))
+}
+
 export function BottomNav() {
   const pathname = usePathname()
+  const mobileNavigation = navigation.slice(0, 4)
 
   return (
     <nav className={styles.bottom} aria-label="Main navigation">
-      {navigation.map(([href, label]) => (
+      {mobileNavigation.map(([href, label]) => (
         <Link
           key={href}
           href={href}
-          className={pathname === href ? styles.active : ''}
+          className={isActivePath(pathname, href) ? styles.active : ''}
         >
           {label}
         </Link>
@@ -36,18 +42,26 @@ export function SideNav() {
 
   return (
     <aside className={styles.side}>
-      <strong>Havan</strong>
-      <nav>
+      <div className={styles.brandGlow} aria-hidden="true" />
+      <div className={styles.brandBlock}>
+        <span>HAVAN</span>
+        <small>Student space</small>
+      </div>
+      <nav aria-label="Student navigation">
         {navigation.map(([href, label]) => (
           <Link
             key={href}
             href={href}
-            className={pathname === href ? styles.active : ''}
+            className={isActivePath(pathname, href) ? styles.active : ''}
           >
+            <span className={styles.navDot} aria-hidden="true" />
             {label}
           </Link>
         ))}
       </nav>
+      <div className={styles.sideFooter}>
+        <span>Choose. Study. Progress.</span>
+      </div>
     </aside>
   )
 }
