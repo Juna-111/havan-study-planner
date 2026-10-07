@@ -19,3 +19,10 @@
 
 @keyframes havan-topic-select { 0% { transform:scale(.985); } 55% { transform:scale(1.018); } 100% { transform:scale(1); } }
 @media(prefers-reduced-motion:reduce){.fill{transition:none}.topic:has(input:checked){animation:none}}
+
+
+.treeCourse{display:grid;gap:8px;padding:10px;border:1px solid var(--color-line);border-radius:16px;background:linear-gradient(145deg,#fff,#fafaff)}
+.courseHeading{display:grid;gap:2px;padding:2px 4px 4px}
+.courseHeading span{color:var(--color-accent);font-size:.62rem;font-weight:900;letter-spacing:.12em}
+.courseHeading h3{color:var(--color-primary);font-size:1rem}
+.chapterButton{font:inherit}
