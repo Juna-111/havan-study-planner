@@ -35,6 +35,8 @@ export type HavanPlan = {
   hours_per_day: Record<number, number>
   total_minutes: number
   tasks: HavanPlanTask[]
+  warnings: { code: string; severity: string; message: string }[]
+  unplaced: { topic_id: number; topic_name: string; minutes: number; reason_code: string }[]
 }
 
 export const previewHavanPlan = (input: HavanPlanInput) =>
