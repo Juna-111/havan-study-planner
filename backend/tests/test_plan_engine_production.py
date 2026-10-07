@@ -171,3 +171,22 @@ def test_pinned_non_study_date_is_extra_date_only():
     )
     assert result.sessions[0].planned_date == saturday
     assert result.sessions[0].minutes <= 120
+
+
+def test_large_preview_stays_under_regression_ceiling():
+    import time
+
+    request = PlanRequest(
+        today=TODAY,
+        topics=tuple(topic(i, course_id=(i % 8) + 1, minutes=90) for i in range(1, 101)),
+        exams=tuple(
+            PlannerExam(course_id, TODAY + timedelta(days=5 + course_id), 5, "FINAL")
+            for course_id in range(1, 9)
+        ),
+        calendar=calendar(480),
+        horizon_days=31,
+    )
+    started = time.perf_counter()
+    allocate_selected_topics(request)
+    elapsed = time.perf_counter() - started
+    assert elapsed < 0.5
