@@ -23,6 +23,7 @@ export type HavanPlanTask = {
   academy_notes_url?: string | null
   academy_questions_url?: string | null
   freshman_question_count?: number | null
+  promotions: { id: number; platform_name: string; description?: string | null; button_text: string; url: string; status: string }[]
   status: 'PLANNED' | 'IN_PROGRESS' | 'DONE' | 'SKIPPED'
 }
 export type HavanPlan = {
