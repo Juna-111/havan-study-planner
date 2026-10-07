@@ -540,7 +540,7 @@ def allocate_selected_topics(
             eligible = [
                 topic
                 for topic in selected
-                if remaining[topic.topic_id] >= cfg.min_session_minutes
+                if remaining[topic.topic_id] > 0
                 and day <= deadline(topic)
                 and not (
                     topic.topic_id in pinned
@@ -591,7 +591,26 @@ def allocate_selected_topics(
             else:
                 chunk = (chunk // 5) * 5
             if chunk < cfg.min_session_minutes:
-                break
+                existing_index = next(
+                    (
+                        index
+                        for index, session in enumerate(sessions)
+                        if session.topic_id == topic.topic_id
+                        and session.planned_date == day
+                        and session.kind == "STUDY"
+                    ),
+                    None,
+                )
+                if existing_index is None:
+                    break
+                existing = sessions[existing_index]
+                sessions[existing_index] = replace(
+                    existing,
+                    minutes=existing.minutes + chunk,
+                )
+                remaining[topic.topic_id] = 0
+                capacities[day] -= chunk
+                continue
 
             exam = next_exam(topic, day)
             parts: list[ReasonPart] = []
