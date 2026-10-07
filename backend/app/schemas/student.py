@@ -122,6 +122,7 @@ class ExamCreate(BaseModel):
     exam_type: str = Field(min_length=2, max_length=30)
     exam_date: date
     importance: int = Field(default=3, ge=1, le=5)
+    selected_topic_ids: list[int] = Field(default_factory=list, max_length=500)
 
 
 class ExamUpdate(BaseModel):
@@ -129,6 +130,7 @@ class ExamUpdate(BaseModel):
     exam_type: Optional[str] = Field(default=None, min_length=2, max_length=30)
     exam_date: Optional[date] = None
     importance: Optional[int] = Field(default=None, ge=1, le=5)
+    selected_topic_ids: Optional[list[int]] = Field(default=None, max_length=500)
 
 
 class ExamRead(ExamCreate):
