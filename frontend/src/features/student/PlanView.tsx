@@ -14,6 +14,9 @@ export default function PlanView() {
   const [addError, setAddError] = useState('')
   const [celebratingTask, setCelebratingTask] = useState<number | null>(null)
   const [addedTask, setAddedTask] = useState<number | null>(null)
+  const [focusedTaskId, setFocusedTaskId] = useState<number | null>(null)
+  const [focusSeconds, setFocusSeconds] = useState(0)
+  const [focusRunning, setFocusRunning] = useState(false)
   useEffect(() => {
     getCurrentPlan()
       .then(setP)
@@ -37,6 +40,68 @@ export default function PlanView() {
     return groups
   }, {}) : {}
   const orderedDays = Object.entries(groupedTasks).sort(([a], [b]) => a.localeCompare(b))
+  const focusedTask = p?.tasks.find((task) => task.id === focusedTaskId) ?? null
+
+  useEffect(() => {
+    if (!focusRunning || !focusedTaskId) return
+    const timer = window.setInterval(() => {
+      setFocusSeconds((seconds) => {
+        if (seconds <= 1) {
+          setFocusRunning(false)
+          return 0
+        }
+        return seconds - 1
+      })
+    }, 1000)
+    return () => window.clearInterval(timer)
+  }, [focusRunning, focusedTaskId])
+
+  const startFocus = async (task: Plan['tasks'][number]) => {
+    if (pendingTask !== null) return
+    try {
+      setE('')
+      setPendingTask(task.id)
+      let nextPlan = p
+      if (task.status === 'PLANNED') {
+        nextPlan = await planAction(task.id, { action: 'START' })
+        setP(nextPlan)
+      }
+      setFocusedTaskId(task.id)
+      setFocusSeconds(task.minutes * 60)
+      setFocusRunning(true)
+    } catch (x) {
+      setE(x instanceof Error ? x.message : 'Could not start Focus mode.')
+    } finally {
+      setPendingTask(null)
+    }
+  }
+
+  const finishFocus = async () => {
+    if (!focusedTask || pendingTask !== null) return
+    const elapsedMinutes = Math.max(
+      1,
+      Math.min(focusedTask.minutes, Math.ceil((focusedTask.minutes * 60 - focusSeconds) / 60)),
+    )
+    try {
+      setE('')
+      setPendingTask(focusedTask.id)
+      const nextPlan = await planAction(focusedTask.id, {
+        action: 'COMPLETE',
+        actual_minutes: elapsedMinutes,
+      })
+      setP(nextPlan)
+      setFocusedTaskId(null)
+      setFocusSeconds(0)
+      setFocusRunning(false)
+      setCelebratingTask(focusedTask.id)
+      window.setTimeout(() => setCelebratingTask(null), 650)
+    } catch (x) {
+      setE(x instanceof Error ? x.message : 'Could not save the Focus session.')
+    } finally {
+      setPendingTask(null)
+    }
+  }
+
   const act = async (id: number, action: 'START' | 'COMPLETE' | 'SKIP' | 'MOVE' | 'REPEAT' | 'REMOVE') => {
     if (!p) return
     try {
@@ -165,6 +230,43 @@ export default function PlanView() {
                   <small>
                     {t.minutes} min · {t.course_name}
                   </small>
+                  <div className="plan-focus-row">
+                    {focusedTaskId === t.id ? (
+                      <div className="plan-focus-panel">
+                        <div>
+                          <span className="app-eyebrow">HAVAN FOCUS</span>
+                          <strong>{String(Math.floor(focusSeconds / 60)).padStart(2, '0')}:{String(focusSeconds % 60).padStart(2, '0')}</strong>
+                          <small>{focusRunning ? 'Stay with this topic. Your plan remains yours.' : focusSeconds === 0 ? 'Focus time is complete.' : 'Focus is paused.'}</small>
+                        </div>
+                        <div className="plan-focus-actions">
+                          {focusSeconds > 0 && (
+                            <Button
+                              variant="accent"
+                              disabled={pendingTask === t.id}
+                              onClick={() => setFocusRunning((running) => !running)}
+                            >
+                              {focusRunning ? 'Pause' : 'Resume'}
+                            </Button>
+                          )}
+                          <Button
+                            variant="secondary"
+                            disabled={pendingTask === t.id}
+                            onClick={finishFocus}
+                          >
+                            {pendingTask === t.id ? 'Saving...' : 'Finish focus'}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : t.status !== 'DONE' ? (
+                      <Button
+                        variant="accent"
+                        disabled={pendingTask !== null}
+                        onClick={() => startFocus(t)}
+                      >
+                        Focus
+                      </Button>
+                    ) : null}
+                  </div>
                   <div className="plan-task-actions">
                     {t.status !== 'DONE' && (
                       <Button
