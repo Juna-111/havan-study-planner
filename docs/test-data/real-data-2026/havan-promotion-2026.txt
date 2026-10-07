@@ -1,0 +1,29 @@
+TYPE: HAVAN_PROMOTION_V1
+course_code: FLEn1011
+chapter: Study Skills
+platform_name: Havan Academy
+description: Havan Academy learning support for Communicative English Language Skills I.
+button_text: Explore Havan support
+url: https://havanacademy.example/courses/flen1011/study-skills
+order_index: 1
+status: ACTIVE
+
+course_code: FLEn1011
+chapter: Study Skills
+topic: Reading for main ideas and supporting details
+platform_name: Havan Academy
+description: Havan Academy study support for this selected topic.
+button_text: Open topic support
+url: https://havanacademy.example/courses/flen1011/study-skills/reading-main-ideas
+order_index: 1
+status: ACTIVE
+
+course_code: LoCT1011
+chapter: Logical Reasoning and Fallacies
+topic: Identifying fallacies in arguments
+platform_name: Havan Academy
+description: Havan Academy learning support for Critical Thinking.
+button_text: Open topic support
+url: https://havanacademy.example/courses/loct1011/fallacies
+order_index: 1
+status: ACTIVE
