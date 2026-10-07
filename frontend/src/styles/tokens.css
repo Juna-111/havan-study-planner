@@ -1,4 +1,10 @@
 :root {
+  --font-display: var(--font-havan-display), Georgia, serif;
+  --font-body: var(--font-havan-body), Arial, sans-serif;
+  --color-primary-deep:#02025d;
+  --color-focus-on-dark:rgba(255,255,255,.55);
+  --gradient-brand:linear-gradient(165deg,#01017e 0%,#08088e 52%,#02025d 100%);
+
   --color-primary:#01017e;
   --color-primary-hover:#17179a;
   --color-accent-hover:#c90000;
