@@ -180,3 +180,147 @@
     justify-content: center;
   }
 }
+
+
+/* Havan Academy topic-resource structure: one clear learning block per selected topic. */
+.havan-plan-resources {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 1.1rem;
+  padding: 1rem;
+  border: 1px solid var(--app-border, #d9dee8);
+  border-radius: 1rem;
+  background: linear-gradient(145deg, #f7f8ff, #ffffff);
+}
+
+.havan-plan-resources-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.havan-plan-resources-heading > div {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.havan-plan-resources-heading strong {
+  color: var(--color-primary, #01017e);
+  font-size: 1rem;
+}
+
+.havan-plan-resource-badge {
+  flex: none;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  background: var(--color-primary-soft, #eef0ff);
+  color: var(--color-primary, #01017e);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.havan-plan-resources > p {
+  margin: 0;
+  color: var(--color-muted, #666);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.havan-plan-resource-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.havan-plan-resource-card {
+  display: grid;
+  align-content: start;
+  gap: 0.38rem;
+  min-height: 9.5rem;
+  padding: 0.85rem;
+  border: 1px solid var(--app-border, #d9dee8);
+  border-radius: 0.85rem;
+  background: #fff;
+  color: inherit;
+  text-decoration: none;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.havan-plan-resource-card:hover,
+.havan-plan-resource-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--color-primary, #01017e);
+  box-shadow: 0 8px 20px rgba(1, 1, 126, 0.1);
+}
+
+.havan-plan-resource-card-type {
+  color: var(--color-accent, #fa0302);
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.havan-plan-resource-card strong {
+  color: var(--color-primary, #01017e);
+  font-size: 0.95rem;
+}
+
+.havan-plan-resource-card > span:not(.havan-plan-resource-card-type):not(.havan-plan-resource-card-action) {
+  color: var(--color-muted, #666);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.havan-plan-resource-card-action {
+  margin-top: auto;
+  color: var(--color-primary, #01017e);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.havan-plan-resource-empty {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.85rem;
+  border: 1px dashed #cfd3df;
+  border-radius: 0.8rem;
+  background: #fff;
+}
+
+.havan-plan-resource-empty strong {
+  color: var(--color-primary, #01017e);
+}
+
+.havan-plan-resource-empty span {
+  color: var(--color-muted, #666);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 800px) {
+  .havan-plan-resource-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .havan-plan-resource-card {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 520px) {
+  .havan-plan-resources {
+    padding: 0.85rem;
+  }
+
+  .havan-plan-resources-heading {
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .havan-plan-resource-badge {
+    width: fit-content;
+  }
+}
