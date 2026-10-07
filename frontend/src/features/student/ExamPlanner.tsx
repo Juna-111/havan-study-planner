@@ -12,7 +12,7 @@ type ExamInsight = { exam:Exam; course?:Course; daysLeft:number; topicCount:numb
 
 const DAY_KEYS = ['sun','mon','tue','wed','thu','fri','sat']
 
-function todayKey(){ return new Date().toISOString().slice(0,10) }
+function todayKey(){ const now=new Date(); return now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0') }
 function daysUntil(date:string){
   const target = new Date(date + 'T00:00:00')
   const today = new Date(todayKey() + 'T00:00:00')
@@ -68,7 +68,7 @@ export default function ExamPlanner(){
       },0)
       const daysLeft=daysUntil(exam.exam_date),availableMinutes=availableStudyMinutes(profile,daysLeft)
       const coverage=topics.length?(completedTopics/topics.length)*100:0
-      const pressure=availableMinutes?remainingMinutes/availableMinutes:remainingMinutes?9:0
+      const importanceWeight=0.75+(exam.importance*0.1)\n      const pressure=availableMinutes?(remainingMinutes/availableMinutes)*importanceWeight:remainingMinutes?9:0
       return {exam,course,daysLeft,topicCount:topics.length,completedTopics,remainingMinutes,availableMinutes,coverage,pressure,label:examLabel(daysLeft,coverage,pressure)}
     }).sort((a,b)=>a.daysLeft-b.daysLeft)
   },[courses,exams,profile,progressMap])
