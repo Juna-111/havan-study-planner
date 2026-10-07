@@ -13,7 +13,7 @@ const rawApiBaseUrl = process.env.NEXT_PUBLIC_API_URL?.trim()
 const API_BASE_URL = rawApiBaseUrl
   ? rawApiBaseUrl.replace(/\/+$/, '').replace(/\/api\/v1$/, '')
   : process.env.NODE_ENV === 'production'
-    ? ''
+    ? 'https://havan-study-planner.onrender.com'
     : 'http://localhost:8000'
 const API_V1_PREFIX = '/api/v1'
 const DEFAULT_TIMEOUT_MS = 15_000
@@ -72,7 +72,10 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS)
   try {
-    const response = await fetch(url, { ...init, headers, signal: init.signal ?? controller.signal })
+    const signal = init.signal && typeof AbortSignal.any === 'function'
+      ? AbortSignal.any([init.signal, controller.signal])
+      : controller.signal
+    const response = await fetch(url, { ...init, headers, signal })
     let body: { detail?: unknown; code?: unknown } | undefined
     if (response.status !== 204) {
       try {
