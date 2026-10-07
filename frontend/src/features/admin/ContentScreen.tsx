@@ -72,7 +72,7 @@ export default function ContentScreen() {
           </select>
         </label>
 
-        {entity === 'topics' && (
+        {(entity === 'topics' || entity === 'chapters') && (
           <label>
             Chapter
             <select
@@ -98,7 +98,7 @@ export default function ContentScreen() {
       ) : (
         <>
           <CrudList config={config} parentId={entity === 'chapters' ? courseId : chapterId} />
-          {entity === 'topics' && chapterId && <PromotionManager parentType="topic" parentId={chapterId} />}
+          {chapterId && <PromotionManager parentType={entity === 'chapters' ? 'chapter' : 'topic'} parentId={chapterId} />}
         </>
       )}
     </section>
