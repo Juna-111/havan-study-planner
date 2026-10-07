@@ -129,8 +129,9 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
     try {
       setError('')
       setBusy('preview')
+      const nextPreview = await previewPlan(input)
+      setPreview(nextPreview)
       setPreviewPulse(true)
-      setPreview(await previewPlan(input))
       window.setTimeout(() => setPreviewPulse(false), 700)
     } catch (value) {
       setError(value instanceof Error ? value.message : 'Could not preview your plan.')
