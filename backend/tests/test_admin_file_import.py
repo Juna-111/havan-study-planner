@@ -106,7 +106,7 @@ url: https://www.havanacademy.com//physics
 
 
 def test_promotion_file_rejects_invalid_url():
-    raw = f"""PROMOTION_FILE_MARKER
+    raw = f"""{PROMOTION_FILE_MARKER}
 course_code: PHY101
 chapter: Measurement
 platform_name: Havan Academy
