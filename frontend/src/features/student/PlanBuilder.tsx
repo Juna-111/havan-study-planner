@@ -36,7 +36,6 @@ function criticalPoints(value?: string | null) {
 export function PlanBuilder({ initialMode }: PlanBuilderProps) {
   const router = useRouter()
   const [courses, setCourses] = useState<Course[]>([])
-  const [profile, setProfile] = useState<Profile | null>(null)
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [mode, setMode] = useState<HavanPlanMode>(initialMode ?? 'week')
   const [hours, setHours] = useState(2)
@@ -67,7 +66,6 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
         apiFetch<Profile>('/students/me/profile'),
       ])
       setCourses(catalog)
-      setProfile(student)
       setHours(student.study_hours_per_day)
       setStudyDays(student.study_days ?? [])
     } catch (value) {
