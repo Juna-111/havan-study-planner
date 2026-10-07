@@ -94,7 +94,7 @@ def _read_havan_from_out(
             course_id=task.course_id,
             course_code=task.course_code,
             course_name=task.course_name,
-            chapter_name=task["chapter_name"],
+            chapter_name=task.chapter_name,
             topic_id=task.topic_id,
             topic_name=task.topic_name,
             planned_date=task.planned_date,
@@ -203,7 +203,7 @@ def action_current_task(
     if plan is None:
         raise DomainError("NO_ACTIVE_PLAN", "Study plan not found.", 404)
     try:
-        result, _ = apply_action(db, student, task_id, PlanAction(action=payload.action))
+        result, _ = apply_action(db, student, task_id, PlanAction(action=payload.action), plan_id=plan.id)
         return _read_havan(db, student, result)
     except ValueError as exc:
         raise DomainError("INVALID_SELECTION", str(exc), 422)
