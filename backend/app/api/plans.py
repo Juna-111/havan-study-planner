@@ -37,8 +37,8 @@ def create(
 ):
     try:
         return save_plan(db, student, payload)
-    except ValueError as exc:
-        raise DomainError("INVALID_SELECTION", str(exc), 422)
+    except PlanValidationError:
+        raise
 
 
 @router.get("/current", response_model=PlanOut)
@@ -71,8 +71,8 @@ def current_action(
         if warnings:
             out.warnings.extend([warning_payload(code) for code in warnings])
         return out
-    except ValueError as exc:
-        raise DomainError("INVALID_SELECTION", str(exc), 422)
+    except PlanValidationError:
+        raise
 
 
 @router.post("/{plan_id}/tasks/{task_id}/actions", response_model=PlanOut)
@@ -92,7 +92,7 @@ def action(
         for code in warnings:
             out.warnings.append(warning_payload(code))
         return out
-    except ValueError as exc:
-        raise DomainError("INVALID_SELECTION", str(exc), 422)
+    except PlanValidationError:
+        raise
 
 
