@@ -6,7 +6,7 @@ from typing import Iterable
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.time import parse_weekdays, today_local, to_index
+from app.core.time import ADDIS, parse_weekdays, today_local, to_index
 from app.db.models.curriculum import Chapter, Course, Topic
 from app.db.models.plan import PlanTask
 from app.db.models.student import StudentExam, StudentProfile, StudentTopicProgress
@@ -41,12 +41,12 @@ def _pace_factor(db: Session, student_id: int) -> float:
 
 def _done_minutes_today(db: Session, student_id: int, today: date) -> int:
     return sum(
-        int(row.minutes)
+        int(row.actual_minutes or row.minutes)
         for row in db.scalars(
             select(PlanTask).where(
                 PlanTask.student_id == student_id,
                 PlanTask.planned_date == today,
-                PlanTask.status == "DONE",
+                PlanTask.status.in_(("DONE", "IN_PROGRESS")),
             )
         ).all()
     )
@@ -114,7 +114,7 @@ def build_request(
             chapter_order=chapter_by_id[topic.chapter_id].order_index,
             topic_order=topic.order_index,
             last_studied_on=(
-                progress[topic.id].last_studied_at.astimezone(timezone.utc).date()
+                progress[topic.id].last_studied_at.astimezone(ADDIS).date()
                 if topic.id in progress and progress[topic.id].last_studied_at
                 else None
             ),
@@ -149,26 +149,19 @@ def build_request(
     for pinned_date in pin_dates.values():
         if pinned_date < today or pinned_date > horizon_end:
             raise ValueError("Pinned dates must stay inside the selected planning window.")
-    pin_topic_ids = set(pin_dates)
-    for pinned_date in pin_dates.values():
-        weekdays = frozenset(set(weekdays) | {pinned_date.weekday()})
     minutes_by_weekday = {
         day: minutes_by_weekday.get(day, default_minutes)
         for day in weekdays
     }
-    capacity_overrides = {}
-    for pinned_date in pin_dates.values():
-        extra = sum(
-            max(5, topic.estimated_study_minutes - int(progress[topic.id].completed_minutes if topic.id in progress else 0))
-            for topic in topics
-            if pin_dates.get(topic.id) == pinned_date
-        )
-        capacity_overrides[pinned_date] = default_minutes + extra
     calendar = StudyCalendar(
         study_weekdays=weekdays,
         daily_minutes=default_minutes,
         minutes_by_weekday=minutes_by_weekday,
-        capacity_overrides=capacity_overrides,
+        extra_study_dates=frozenset(
+            pinned_date
+            for pinned_date in pin_dates.values()
+            if pinned_date.weekday() not in weekdays
+        ),
         done_minutes={today: _done_minutes_today(db, student.id, today)},
     )
 
