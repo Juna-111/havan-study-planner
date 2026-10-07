@@ -187,7 +187,7 @@ class Topic(Base):
     description: Mapped[Optional[str]] = mapped_column(Text)
     important_points: Mapped[Optional[str]] = mapped_column(Text)
     difficulty: Mapped[int] = mapped_column(Integer, nullable=False, default=3, server_default="3")
-    estimated_study_minutes: Mapped[int] = mapped_column(Integer, nullable=False, default=60, server_default="60")
+    estimated_study_minutes: Mapped[int] = mapped_column(Integer, nullable=False, default=30, server_default="30")
     exam_importance: Mapped[float] = mapped_column(nullable=False, default=0.5, server_default="0.5")
     conceptual_importance: Mapped[float] = mapped_column(nullable=False, default=0.5, server_default="0.5")
     order_index: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")

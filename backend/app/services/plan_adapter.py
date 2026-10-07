@@ -63,6 +63,9 @@ def build_request(
     today = today or today_local()
     selected_ids = list(dict.fromkeys(plan_input.topic_ids))
     known_ids = set(plan_input.known_topic_ids)
+    invalid_topic_minutes = {topic_id: minutes for topic_id, minutes in plan_input.topic_minutes.items() if topic_id not in selected_ids or minutes < 5 or minutes > 120}
+    if invalid_topic_minutes:
+        raise ValueError('Topic session minutes must be 5-120 minutes and only apply to selected topics.')
     if not known_ids.issubset(selected_ids):
         raise ValueError("Known topics must come from the topics you selected.")
 

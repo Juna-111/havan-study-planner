@@ -155,7 +155,7 @@ class TopicBase(BaseModel):
     description: Optional[str] = None
     important_points: Optional[str] = Field(default=None, max_length=10000)
     difficulty: int = Field(default=3, ge=1, le=5)
-    estimated_study_minutes: int = Field(default=60, gt=0, le=1440)
+    estimated_study_minutes: int = Field(default=30, gt=0, le=1440)
     exam_importance: float = Field(default=0.5, ge=0, le=1)
     conceptual_importance: float = Field(default=0.5, ge=0, le=1)
     order_index: int = Field(default=1, ge=1)

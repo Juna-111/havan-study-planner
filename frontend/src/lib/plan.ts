@@ -10,6 +10,7 @@ export type PlanTask = {
   course_name: string
   topic_id: number
   topic_name: string
+  chapter_name: string
   planned_date: string
   minutes: number
   priority: number
@@ -41,6 +42,7 @@ export type PlanInput = {
   study_days: string[]
   minutes_by_weekday: Record<string, number>
   hours_per_day: number
+  topic_minutes?: Record<number, number>
 }
 export type PlanActionPayload = {
   action: PlanActionName
