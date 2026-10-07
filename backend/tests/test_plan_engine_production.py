@@ -190,3 +190,33 @@ def test_large_preview_stays_under_regression_ceiling():
     allocate_selected_topics(request)
     elapsed = time.perf_counter() - started
     assert elapsed < 0.5
+
+
+def test_empty_after_known_or_frozen_topics_never_raises():
+    request = PlanRequest(
+        today=TODAY,
+        topics=(topic(1, minutes=60),),
+        calendar=calendar(120),
+        horizon_days=3,
+        known_topic_ids=frozenset({1}),
+    )
+    result = allocate_selected_topics(request)
+    assert result.sessions == ()
+    assert any(w.code == "NOTHING_TO_PLAN" for w in result.warnings)
+
+
+def test_allocator_never_repeats_a_topic_on_the_same_day():
+    result = allocate_selected_topics(
+        PlanRequest(
+            today=TODAY,
+            topics=(topic(1, minutes=90),),
+            calendar=calendar(120),
+            horizon_days=3,
+        )
+    )
+    keys = [
+        (session.topic_id, session.planned_date)
+        for session in result.sessions
+        if session.kind == "STUDY"
+    ]
+    assert len(keys) == len(set(keys))
