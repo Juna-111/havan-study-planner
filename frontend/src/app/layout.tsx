@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import '../styles/tokens.css'
 import '../styles/base.css'
+import '../styles/journey.css'
 import '../styles/utilities.css'
 
 export const metadata: Metadata = {
