@@ -55,9 +55,13 @@ def parse_bullet_curriculum(content: str) -> list[ParsedCourse]:
         points = []
 
     lines = content.splitlines()
-    first_content = next((line.strip() for line in lines if line.strip()), "")
-    if first_content.upper() == COURSE_FILE_MARKER:
-        lines = lines[lines.index(next(line for line in lines if line.strip())) + 1:]
+    first_index = next((index for index, line in enumerate(lines) if line.strip()), None)
+    if first_index is None or lines[first_index].strip().upper() != COURSE_FILE_MARKER:
+        raise HTTPException(
+            status_code=422,
+            detail="The course file must start with TYPE: COURSE_V1.",
+        )
+    lines = lines[first_index + 1:]
 
     for line_number, raw_line in enumerate(lines, start=1):
         line = raw_line.strip()
