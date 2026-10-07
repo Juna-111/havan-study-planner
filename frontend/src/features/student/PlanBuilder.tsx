@@ -60,6 +60,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
   const [error, setError] = useState('')
   const [preview, setPreview] = useState<Plan | null>(null)
   const [busy, setBusy] = useState<'preview' | 'save' | null>(null)
+  const [previewPulse, setPreviewPulse] = useState(false)
 
   useEffect(() => {
     if (initialMode) {
@@ -128,7 +129,9 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
     try {
       setError('')
       setBusy('preview')
+      setPreviewPulse(true)
       setPreview(await previewPlan(input))
+      window.setTimeout(() => setPreviewPulse(false), 700)
     } catch (value) {
       setError(value instanceof Error ? value.message : 'Could not preview your plan.')
     } finally {
@@ -204,7 +207,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
         <EmptyState title="No topics available" hint="Your selected courses do not have active topic data yet." />
       ) : (
         <div className="app-section">
-          <Card padding="lg" className="plan-course">
+          <Card padding="lg" className="plan-course havan-motion-enter" style={{ '--motion-delay': '40ms' } as React.CSSProperties}>
             <div>
               <span className="app-eyebrow">STEP 1</span>
               <h2>Choose your topics</h2>
@@ -233,7 +236,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
           </Card>
 
           {selectedTopics.length > 0 && (
-            <Card padding="lg" className="havan-critical-points">
+            <Card padding="lg" className="havan-critical-points havan-motion-enter" style={{ '--motion-delay': '110ms' } as React.CSSProperties}>
               <div>
                 <span className="app-eyebrow">STEP 2 · HAVAN ACADEMY</span>
                 <h2>Chapter guidance</h2>
@@ -267,7 +270,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
           )}
 
           {selectedTopics.length > 0 && (
-            <Card padding="lg" className="havan-critical-points">
+            <Card padding="lg" className="havan-critical-points havan-motion-enter" style={{ '--motion-delay': '170ms' } as React.CSSProperties}>
               <div>
                 <span className="app-eyebrow">STEP 2 · HAVAN ACADEMY</span>
                 <h2>Important points for your selected topics</h2>
@@ -297,7 +300,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
           )}
 
           {selectedTopics.length > 0 && (
-            <Card padding="lg" className="plan-review">
+            <Card padding="lg" className={`plan-review havan-motion-enter ${previewPulse ? 'havan-plan-ready' : ''}`} style={{ '--motion-delay': '230ms' } as React.CSSProperties}>
               <span className="app-eyebrow">STEP 3</span>
               <h2>Review your allocation</h2>
               {!preview ? (
@@ -309,8 +312,8 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
                   </p>
                   {preview.tasks.length > 0 && (
                     <div className="plan-review-list">
-                      {preview.tasks.map((task) => (
-                        <div className="plan-review-row" key={task.id}>
+                      {preview.tasks.map((task, index) => (
+                        <div className="plan-review-row havan-allocation-row" style={{ '--motion-delay': `${index * 55}ms` } as React.CSSProperties} key={task.id}>
                           <div>
                             <strong>{task.topic_name}</strong>
                             <span>{task.course_code} · {task.course_name}</span>
@@ -324,7 +327,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
                     </div>
                   )}
                   {preview.unplaced.length > 0 && (
-                    <div className="plan-review-unplaced">
+                    <div className="plan-review-unplaced havan-motion-enter">
                       <strong>Could not fit</strong>
                       {preview.unplaced.map((item) => (
                         <p key={item.topic_id}>{item.topic_name} · {item.minutes} min</p>
