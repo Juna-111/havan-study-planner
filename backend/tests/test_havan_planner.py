@@ -1,5 +1,7 @@
 from datetime import date
 
+from app.core.time import today_local
+
 import pytest
 
 from app.api.havan_planner import _to_plan_input
@@ -7,7 +9,7 @@ from app.schemas.havan_planner import HavanPlanCreate
 
 
 def test_havan_today_maps_to_current_day_and_selected_time():
-    today = date.today().weekday()
+    today = today_local().weekday()
     payload = HavanPlanCreate(
         mode="today",
         horizon_days=1,
