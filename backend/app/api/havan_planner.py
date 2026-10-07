@@ -2,7 +2,7 @@ from datetime import date, datetime, timedelta, timezone
 import json
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.config import API_PREFIX
@@ -10,8 +10,9 @@ from app.core.deps import current_student
 from app.core.time import today_local
 from app.db.models.curriculum import Chapter, Course, Topic
 from app.db.models.havan_planner import HavanPlan, HavanPlanSelection, HavanPlanTask
-from app.db.models.student import StudentCourse, StudentProfile, StudentTopicProgress
+from app.db.models.student import StudentProfile, StudentTopicProgress
 from app.db.session import get_db
+from app.services.academic_resolver import resolve_student_courses, resolved_course_ids
 from app.schemas.havan_planner import HavanPlanCreate, HavanPlanRead, HavanPlanTaskAction, HavanPlanTaskRead
 
 router = APIRouter(prefix=f"{API_PREFIX}/havan-planner", tags=["havan-planner"])
@@ -27,6 +28,7 @@ def _read(db: Session, plan: HavanPlan, tasks: list[HavanPlanTask]) -> HavanPlan
     course_ids = {chapter.course_id for chapter in chapters}
     courses = list(db.scalars(select(Course).where(Course.id.in_(course_ids))).all()) if course_ids else []
     course_map = {course.id: course for course in courses}
+    resolved = {item.course_id: item for item in resolve_student_courses(db, plan.student_id)}
 
     reads = []
     for task in tasks:
@@ -36,8 +38,8 @@ def _read(db: Session, plan: HavanPlan, tasks: list[HavanPlanTask]) -> HavanPlan
         reads.append(HavanPlanTaskRead(
             id=task.id,
             course_id=course.id,
-            course_code=course.code,
-            course_name=course.name,
+            course_code=resolved.get(course.id).display_code if resolved.get(course.id) else course.code,
+            course_name=resolved.get(course.id).display_name if resolved.get(course.id) else course.name,
             chapter_name=chapter.name,
             topic_id=topic.id,
             topic_name=topic.name,
@@ -103,25 +105,19 @@ def _validate_input(db: Session, student_id: int, payload: HavanPlanCreate) -> t
         .join(Chapter, Topic.chapter_id == Chapter.id)
         .where(
             Topic.id.in_(selected_ids),
-            Topic.status == "ACTIVE",
-            Chapter.status == "ACTIVE",
+            func.upper(Topic.status) == "ACTIVE",
+            func.upper(Chapter.status) == "ACTIVE",
         )
         .order_by(Chapter.course_id, Chapter.order_index, Topic.order_index, Topic.id)
     ).all())
     if len(topics) != len(selected_ids):
         raise HTTPException(status_code=400, detail="Every selected topic must be active and available")
 
-    allowed_course_ids = {
-        row.course_id
-        for row in db.scalars(select(StudentCourse).where(
-            StudentCourse.student_id == student_id,
-            StudentCourse.status == "ACTIVE",
-        )).all()
-    }
+    allowed_course_ids = resolved_course_ids(db, student_id)
     for topic in topics:
         chapter = db.get(Chapter, topic.chapter_id)
         if chapter is None or chapter.course_id not in allowed_course_ids:
-            raise HTTPException(status_code=400, detail="Every selected topic must belong to one of your active courses")
+            raise HTTPException(status_code=400, detail="Every selected topic must belong to one of your active mapped courses")
 
     return topics, study_days
 

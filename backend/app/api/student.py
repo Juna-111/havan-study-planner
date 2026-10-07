@@ -259,6 +259,11 @@ def list_courses(student_id: int, db: DB):
 
 
 def _apply_course_selection(db: Session, profile: StudentProfile, payload: StudentCourseAdd) -> StudentCourse:
+    """Register a course only.
+
+    Course selection is context, not progress. Havan never infers completed
+    topics from a starting chapter or topic during registration.
+    """
     course = db.get(Course, payload.course_id)
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
@@ -274,95 +279,15 @@ def _apply_course_selection(db: Session, profile: StudentProfile, payload: Stude
     if existing:
         existing.status = "ACTIVE"
         existing.confidence = payload.confidence
-        existing_progress = db.scalar(select(StudentTopicProgress.id).where(
-            StudentTopicProgress.student_id == profile.id,
-            StudentTopicProgress.topic_id.in_(
-                select(Topic.id).join(Chapter, Chapter.id == Topic.chapter_id).where(Chapter.course_id == course.id)
-            ),
-        ).limit(1))
-        if existing_progress is not None or (
-            payload.starting_chapter_id is None and payload.starting_topic_id is None
-        ):
-            return existing
-        item = existing
-    else:
-        item = StudentCourse(student_id=profile.id, course_id=payload.course_id, confidence=payload.confidence)
-        db.add(item)
-        db.flush()
+        return existing
 
-    if payload.starting_chapter_id is not None or payload.starting_topic_id is not None:
-        chapters = list(db.scalars(select(Chapter).where(
-            Chapter.course_id == course.id,
-            func.upper(Chapter.status) == "ACTIVE",
-        ).order_by(Chapter.order_index, Chapter.id)).all())
-        chapter_by_id = {chapter.id: chapter for chapter in chapters}
-
-        if payload.starting_chapter_id is not None and payload.starting_chapter_id not in chapter_by_id:
-            raise HTTPException(status_code=400, detail="Starting chapter does not belong to the selected course")
-
-        selected_topic = None
-        if payload.starting_topic_id is not None:
-            selected_topic = db.get(Topic, payload.starting_topic_id)
-            if selected_topic is None or str(selected_topic.status).upper() != "ACTIVE":
-                raise HTTPException(status_code=400, detail="Starting topic is not available")
-            if selected_topic.chapter_id not in chapter_by_id:
-                raise HTTPException(status_code=400, detail="Starting topic does not belong to the selected course")
-            if payload.starting_chapter_id is not None and selected_topic.chapter_id != payload.starting_chapter_id:
-                raise HTTPException(status_code=400, detail="Starting topic must belong to the selected starting chapter")
-
-        target_chapter_id = payload.starting_chapter_id or selected_topic.chapter_id
-        target_chapter = chapter_by_id[target_chapter_id]
-        topic_rows = list(db.scalars(select(Topic).where(
-            Topic.chapter_id.in_([chapter.id for chapter in chapters]),
-            func.upper(Topic.status) == "ACTIVE",
-        ).order_by(Topic.chapter_id, Topic.order_index, Topic.id)).all())
-        chapter_position = {chapter.id: index for index, chapter in enumerate(chapters)}
-        selected_topic_position = None if selected_topic is None else (
-            chapter_position[selected_topic.chapter_id], selected_topic.order_index, selected_topic.id
-        )
-
-        for topic in topic_rows:
-            topic_position = (chapter_position[topic.chapter_id], topic.order_index, topic.id)
-            if topic_position < (chapter_position[target_chapter.id], -1, -1) or (
-                selected_topic_position is not None and topic_position < selected_topic_position
-            ):
-                progress = db.scalar(select(StudentTopicProgress).where(
-                    StudentTopicProgress.student_id == profile.id,
-                    StudentTopicProgress.topic_id == topic.id,
-                ))
-                if progress is None:
-                    db.add(StudentTopicProgress(
-                        student_id=profile.id,
-                        topic_id=topic.id,
-                        status="COMPLETED",
-                        confidence=payload.confidence,
-                        completed_minutes=topic.estimated_study_minutes,
-                        study_sessions=1,
-                    ))
-                elif progress.status != "COMPLETED":
-                    progress.status = "COMPLETED"
-                    progress.confidence = payload.confidence
-                    progress.completed_minutes = max(progress.completed_minutes, topic.estimated_study_minutes)
-                    progress.study_sessions = max(progress.study_sessions, 1)
-
-        if selected_topic is not None:
-            progress = db.scalar(select(StudentTopicProgress).where(
-                StudentTopicProgress.student_id == profile.id,
-                StudentTopicProgress.topic_id == selected_topic.id,
-            ))
-            if progress is None:
-                db.add(StudentTopicProgress(
-                    student_id=profile.id,
-                    topic_id=selected_topic.id,
-                    status="IN_PROGRESS",
-                    confidence=payload.confidence,
-                    completed_minutes=0,
-                    study_sessions=0,
-                ))
-            elif progress.status != "COMPLETED":
-                progress.status = "IN_PROGRESS"
-                progress.confidence = payload.confidence
-
+    item = StudentCourse(
+        student_id=profile.id,
+        course_id=payload.course_id,
+        confidence=payload.confidence,
+    )
+    db.add(item)
+    db.flush()
     return item
 
 
@@ -422,8 +347,6 @@ def complete_onboarding(
             _apply_course_selection(db, profile, StudentCourseAdd(
                 course_id=course.course_id,
                 confidence=course.confidence,
-                starting_chapter_id=course.starting_chapter_id,
-                starting_topic_id=course.starting_topic_id,
             ))
 
         selected_course_ids = {course.course_id for course in payload.courses}

@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import Optional, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class AuthSignup(BaseModel):
@@ -66,8 +66,6 @@ class StudentRead(StudentBase):
 class StudentRegistrationCourse(BaseModel):
     course_id: int = Field(gt=0)
     confidence: int = Field(default=3, ge=1, le=5)
-    starting_chapter_id: Optional[int] = Field(default=None, gt=0)
-    starting_topic_id: Optional[int] = Field(default=None, gt=0)
 
 
 class StudentRegistrationExam(BaseModel):
@@ -76,6 +74,11 @@ class StudentRegistrationExam(BaseModel):
     exam_date: date
     importance: int = Field(default=3, ge=1, le=5)
     selected_topic_ids: list[int] = Field(default_factory=list, max_length=500)
+
+    @field_validator("exam_type")
+    @classmethod
+    def normalize_exam_type(cls, value: str) -> str:
+        return value.strip().upper()
 
 
 class StudentRegistrationCreate(BaseModel):
@@ -96,11 +99,16 @@ class StudentRegistrationCreate(BaseModel):
             raise ValueError("Study days cannot be selected more than once")
         return value
 
+    @model_validator(mode="after")
+    def unique_exam_keys(self):
+        keys = [(exam.course_id, exam.exam_type, exam.exam_date) for exam in self.exams]
+        if len(set(keys)) != len(keys):
+            raise ValueError("The same exam cannot be added more than once")
+        return self
+
 class StudentCourseAdd(BaseModel):
     course_id: int = Field(gt=0)
     confidence: int = Field(default=3, ge=1, le=5)
-    starting_chapter_id: Optional[int] = Field(default=None, gt=0)
-    starting_topic_id: Optional[int] = Field(default=None, gt=0)
 
 
 class StudentCourseRead(BaseModel):

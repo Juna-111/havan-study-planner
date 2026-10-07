@@ -129,7 +129,7 @@ export default function ExamPlanner(){
     <Card className="exam-editor" padding="lg">
       <div className="exam-section-heading"><div><span className="exam-kicker">{editingId?'UPDATE EXAM':'ADD EXAM'}</span><h2>{editingId?'Keep the exam runway accurate.':'Tell Havan what you are preparing for.'}</h2></div><span className="exam-source-note">Your exam date stays under your control.</span></div>
       <div className="exam-form-grid">
-        <Select label="Course" value={courseId} onChange={setCourseId} options={courses.map(course=>({value:String(course.id),label:course.code+' · '+course.name}))}/>
+        <Select label="Course" value={courseId} onChange={(value)=>{setCourseId(value);setSelectedTopicIds([])}} options={courses.map(course=>({value:String(course.id),label:course.code+' · '+course.name}))}/>
         <label className="field">Exam type<input value={examType} onChange={event=>setExamType(event.target.value)} placeholder="Final, Midterm, Quiz..."/></label>
         <DateField label="Exam date" value={examDate} min={todayKey()} onChange={setExamDate}/>
         <Select label="Importance" value={importance} onChange={setImportance} options={[1,2,3,4,5].map(value=>({value:String(value),label:value===5?'5 · Critical':value===1?'1 · Low':String(value)+' · '+(value>=4?'High':'Normal')}))}/>

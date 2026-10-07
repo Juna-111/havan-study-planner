@@ -13,13 +13,11 @@ type Props = {
   curriculum: string
   stream: string
   selected: Set<number>
-  starts: Record<number, { chapter?: number; topic?: number }>
   onName: (value: string) => void
   onUniversity: (value: string) => void
   onCurriculum: (value: string) => void
   onStream: (value: string) => void
   onToggleCourse: (id: number, checked: boolean) => void
-  onStart: (courseId: number, value: { chapter?: number; topic?: number }) => void
 }
 export default function StepAcademic(props: Props) {
   const [unis, setUnis] = useState<Opt[]>([])
@@ -154,7 +152,7 @@ export default function StepAcademic(props: Props) {
       )}
       <AcademicCatalogRequest universityId={props.university} />
       <Card className="onboarding-course-section">
-        <div className="onboarding-section-heading"><span className="app-eyebrow">YOUR COURSES</span><h2>Choose your courses</h2></div>
+        <div className="onboarding-section-heading"><span className="app-eyebrow">YOUR COURSES</span><h2>Choose your courses</h2><p className="app-copy">Pick the courses Havan should work with. Choose the exact chapters and topics later when building Today, Week, or Month.</p></div>
         {!props.stream ? (
           <p className="app-copy">Choose your stream first. Havan will then show the courses mapped to it.</p>
         ) : loading.courses ? (
@@ -164,7 +162,7 @@ export default function StepAcademic(props: Props) {
         ) : (
           <div className="stack">
             {courses.map((course) => (
-              <CourseChoice key={course.id} course={course} checked={props.selected.has(course.id)} start={props.starts[course.id]} onToggle={props.onToggleCourse} onStart={props.onStart} />
+              <CourseChoice key={course.id} course={course} checked={props.selected.has(course.id)} onToggle={props.onToggleCourse} />
             ))}
           </div>
         )}

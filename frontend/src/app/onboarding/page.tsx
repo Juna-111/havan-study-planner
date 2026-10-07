@@ -17,7 +17,6 @@ export default function Onboarding() {
   const [curriculum, setCurriculum] = useState('')
   const [stream, setStream] = useState('')
   const [selected, setSelected] = useState<Set<number>>(new Set())
-  const [starts, setStarts] = useState<Record<number, { chapter?: number; topic?: number }>>({})
   const [days, setDays] = useState<string[]>(['mon', 'tue', 'wed', 'thu', 'fri'])
   type OnboardingExam = { course_id: number; exam_type: string; exam_date: string; importance: number; selected_topic_ids: number[] }
   const [hours, setHours] = useState(2)
@@ -39,25 +38,18 @@ export default function Onboarding() {
     setCurriculum('')
     setStream('')
     setSelected(new Set())
-    setStarts({})
   }
 
   function handleCurriculum(value: string) {
     setCurriculum(value)
     setStream('')
     setSelected(new Set())
-    setStarts({})
   }
 
   function handleStream(value: string) {
     setStream(value)
     setSelected(new Set())
-    setStarts({})
-  }
-
-  function handleStart(courseId: number, value: { chapter?: number; topic?: number }) {
-    setStarts((old) => ({ ...old, [courseId]: value }))
-  }
+      }
 
   async function finish() {
     if (saving) return
@@ -75,13 +67,7 @@ export default function Onboarding() {
           study_days: days,
           exams,
           courses: Array.from(selected).map((courseId) => {
-            const start = starts[courseId]
-            return {
-              course_id: courseId,
-              confidence: 3,
-              starting_chapter_id: start?.chapter,
-              starting_topic_id: start?.topic,
-            }
+            return { course_id: courseId, confidence: 3 }
           }),
         }),
       })
@@ -128,7 +114,6 @@ export default function Onboarding() {
           curriculum={curriculum}
           stream={stream}
           selected={selected}
-          starts={starts}
           onName={setName}
           onUniversity={handleUniversity}
           onCurriculum={handleCurriculum}
@@ -137,17 +122,9 @@ export default function Onboarding() {
             setSelected((old) => {
               const next = new Set(old)
               checked ? next.add(id) : next.delete(id)
-              if (!checked) {
-                setStarts((current) => {
-                  const copy = { ...current }
-                  delete copy[id]
-                  return copy
-                })
-              }
               return next
             })
           }
-          onStart={handleStart}
         />
       )}
       {step === 1 && <div className="onboarding-step-panel havan-motion-enter" key="habits"><StepHabits days={days} hours={hours} onDays={setDays} onHours={setHours} /></div>}

@@ -57,6 +57,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [mode, setMode] = useState<HavanPlanMode>(initialMode ?? 'week')
   const [hours, setHours] = useState(2)
+  const [studyDays, setStudyDays] = useState<string[]>([])
   const [error, setError] = useState('')
   const [preview, setPreview] = useState<HavanPlan | null>(null)
   const [busy, setBusy] = useState<'preview' | 'save' | null>(null)
@@ -84,6 +85,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
       setCourses(catalog)
       setProfile(student)
       setHours(student.study_hours_per_day)
+      setStudyDays(student.study_days ?? [])
     } catch (value) {
       setError(value instanceof Error ? value.message : 'Could not load your study data.')
     }
@@ -106,19 +108,22 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
     [selectedTopics],
   )
 
-  const studyDayCount = profile?.study_days?.length ?? 0
+  const studyDayCount = mode === 'today' ? 1 : studyDays.length
   const dailyMinutes = hours * 60
 
-  const input = useMemo(() => ({
-    mode,
-    horizon_days: horizon,
-    topic_ids: [...selected],
-    study_days: profile?.study_days ?? [],
-    hours_per_day: Object.fromEntries(
-      (mode === 'today' ? [new Date().getDay()] : (profile?.study_days ?? []).map((day) => ({ mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6, sun: 0 }[day] ?? 0)))
-        .map((weekday) => [weekday, hours]),
-    ),
-  }), [mode, horizon, selected, profile?.study_days, hours])
+  const input = useMemo(() => {
+    const weekdayMap: Record<string, number> = { mon: 0, tue: 1, wed: 2, thu: 3, fri: 4, sat: 5, sun: 6 }
+    const selectedDays = mode === 'today'
+      ? [((new Date().getDay() + 6) % 7)]
+      : studyDays.map((day) => weekdayMap[day]).filter((day) => day !== undefined)
+    return {
+      mode,
+      horizon_days: horizon,
+      topic_ids: [...selected],
+      study_days: selectedDays,
+      hours_per_day: Object.fromEntries(selectedDays.map((weekday) => [weekday, hours])),
+    }
+  }, [mode, horizon, selected, studyDays, hours])
 
   async function previewIt() {
     if (busy || !selected.size) return
@@ -173,6 +178,31 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
             setPreview(null)
           }}
         />
+        {mode !== 'today' && (
+          <div className="havan-builder-days">
+            <div className="havan-builder-days-heading">
+              <strong>Available study days</strong>
+              <span>{studyDayCount} selected</span>
+            </div>
+            <div className="havan-builder-day-grid" role="group" aria-label="Available study days">
+              {(['mon','tue','wed','thu','fri','sat','sun'] as const).map((day) => (
+                <button
+                  key={day}
+                  type="button"
+                  aria-pressed={studyDays.includes(day)}
+                  className="havan-builder-day"
+                  onClick={() => {
+                    setStudyDays((current) => current.includes(day) ? current.filter((item) => item !== day) : [...current, day])
+                    setPreview(null)
+                  }}
+                >
+                  {day.slice(0, 1).toUpperCase() + day.slice(1, 3)}
+                </button>
+              ))}
+            </div>
+            {studyDayCount === 0 && <p className="app-meta">Choose at least one day for a week or month plan.</p>}
+          </div>
+        )}
         <NumberStepper
           label={mode === 'today' ? 'Study time today (hours)' : 'Study time per study day (hours)'}
           value={hours}
@@ -189,13 +219,13 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
         <Card padding="md" className="plan-capacity">
           <div>
             <strong>{selected.size} {selected.size === 1 ? 'topic' : 'topics'} selected</strong>
-            <span>{selectedMinutes} min of study content</span>
+            <span>{selectedMinutes} min of estimated study content</span>
           </div>
           <div>
-            <strong>{dailyMinutes} min on each study day</strong>
-            <span>{studyDayCount} {studyDayCount === 1 ? 'study day' : 'study days'} per week</span>
+            <strong>{dailyMinutes} min per study day</strong>
+            <span>{studyDayCount * dailyMinutes} min available in this planning window</span>
           </div>
-          <p>Havan will allocate the selected topics across your available study days. Preview shows exactly what fits.</p>
+          <p>Havan does not discover extra topics. It only divides the time you give it across the topics you selected.</p>
         </Card>
       )}
 
@@ -243,7 +273,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
               </div>
               <div className="plan-capacity">
                 <div><strong>{selectedMinutes} min estimated content</strong><span>Across {selectedTopics.length} selected topics</span></div>
-                <div><strong>{mode === 'today' ? hours * 60 : hours * 60} min per study day</strong><span>{studyDayCount} selected study days per week</span></div>
+                <div><strong>{hours * 60} min per study day</strong><span>{studyDayCount} selected study days in this plan</span></div>
               </div>
             </Card>
           )}
@@ -353,10 +383,10 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
             <span>{selected.size ? 'Havan is ready to organize your choices.' : 'Your plan is created only after you choose both.'}</span>
           </div>
           <div className="havan-generate-actions">
-            <Button disabled={!selected.size || busy !== null} variant="secondary" onClick={previewIt}>
+            <Button disabled={!selected.size || busy !== null || (mode !== 'today' && studyDayCount === 0)} variant="secondary" onClick={previewIt}>
               {busy === 'preview' ? 'Building preview...' : 'Preview allocation'}
             </Button>
-            <Button variant="accent" disabled={!selected.size || busy !== null} onClick={saveIt}>
+            <Button variant="accent" disabled={!selected.size || busy !== null || (mode !== 'today' && studyDayCount === 0)} onClick={saveIt}>
               {busy === 'save' ? 'Creating your plan...' : 'Create my Havan plan'}
             </Button>
           </div>
