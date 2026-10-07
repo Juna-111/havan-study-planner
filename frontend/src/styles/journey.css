@@ -530,3 +530,33 @@
   .havan-destination:hover .havan-destination-card{transform:none}
   .havan-destination:hover .havan-destination-arrow{transform:none}
 }
+
+
+/* Final Havan builder polish: no browser-default form surfaces. */
+.havan-plan-controls select,
+.havan-plan-controls input,
+.havan-builder-days button,
+.havan-generate-actions button {
+  appearance:none;
+  -webkit-appearance:none;
+  border-radius:12px;
+  font:inherit;
+}
+.havan-builder-day{
+  position:relative;
+  box-shadow:0 4px 12px rgba(1,1,126,.04);
+  transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease,background .16s ease;
+}
+.havan-builder-day:hover{transform:translateY(-1px);box-shadow:0 7px 16px rgba(1,1,126,.08)}
+.havan-builder-day[aria-pressed=true]{box-shadow:0 7px 18px rgba(1,1,126,.14)}
+.havan-plan-feedback{
+  display:grid;
+  gap:10px;
+  border-left:4px solid var(--color-accent);
+  background:linear-gradient(100deg,var(--color-accent-soft),#fff 62%);
+}
+.havan-plan-feedback h2{color:var(--color-primary);font-size:1.2rem}
+.havan-plan-feedback-item{color:var(--color-muted);line-height:1.5}
+.havan-plan-unplaced{display:grid;gap:5px;padding:12px;border:1px solid #e4e5ef;border-radius:12px;background:#fff}
+.havan-plan-unplaced strong{color:var(--color-primary)}
+.havan-plan-unplaced span{color:var(--color-muted);font-size:.82rem}
