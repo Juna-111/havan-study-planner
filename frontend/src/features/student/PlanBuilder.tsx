@@ -115,7 +115,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
   const input = useMemo(() => {
     const weekdayMap: Record<string, number> = { mon: 0, tue: 1, wed: 2, thu: 3, fri: 4, sat: 5, sun: 6 }
     const selectedDays = mode === 'today'
-      ? [((new Date().getDay() + 6) % 7)]
+      ? [0]
       : studyDays.map((day) => weekdayMap[day]).filter((day) => day !== undefined)
     return {
       mode,
