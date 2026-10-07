@@ -1,43 +1,55 @@
 from datetime import date
 
-from app.db.models.curriculum import Topic
-from app.api import havan_planner
+import pytest
+
+from app.api.havan_planner import _to_plan_input
+from app.schemas.havan_planner import HavanPlanCreate
 
 
-def make_topic(topic_id: int, minutes: int) -> Topic:
-    return Topic(
-        id=topic_id,
-        chapter_id=1,
-        name=f"Topic {topic_id}",
-        estimated_study_minutes=minutes,
-        status="ACTIVE",
+def test_havan_today_maps_to_current_day_and_selected_time():
+    today = date.today().weekday()
+    payload = HavanPlanCreate(
+        mode="today",
+        horizon_days=1,
+        topic_ids=[101],
+        study_days=[today],
+        hours_per_day={today: 1.5},
     )
 
+    result = _to_plan_input(payload)
 
-def test_havan_allocation_uses_selected_topic_estimates_and_exact_capacity():
-    topics = [make_topic(1, 30), make_topic(2, 60), make_topic(3, 90)]
-    days = [date(2026, 10, 7)]
-    tasks = havan_planner._allocate(topics, days, {2: 3.0})
-
-    assert sum(minutes for _, _, minutes in tasks) == 180
-    totals = {topic.id: 0 for topic in topics}
-    for topic, _, minutes in tasks:
-        totals[topic.id] += minutes
-    assert totals == {1: 30, 2: 60, 3: 90}
+    assert result.mode == "today"
+    assert result.horizon_days == 1
+    assert result.topic_ids == [101]
+    assert result.minutes_by_weekday
+    assert result.minutes_by_weekday[list(result.minutes_by_weekday)[0]] == 90
 
 
-def test_havan_allocation_spreads_large_workload_across_days():
-    topics = [make_topic(1, 60), make_topic(2, 60)]
-    days = [date(2026, 10, 7), date(2026, 10, 8)]
-    tasks = havan_planner._allocate(topics, days, {2: 1.0, 3: 1.0})
+def test_havan_week_preserves_selected_days_and_hours():
+    payload = HavanPlanCreate(
+        mode="week",
+        horizon_days=7,
+        topic_ids=[101, 102],
+        study_days=[0, 2, 4],
+        hours_per_day={0: 1.0, 2: 2.0, 4: 1.5},
+    )
 
-    assert sum(minutes for _, _, minutes in tasks) == 120
-    assert {task_day for _, task_day, _ in tasks} == set(days)
+    result = _to_plan_input(payload)
+
+    assert result.mode == "week"
+    assert result.horizon_days == 7
+    assert result.study_days == ["mon", "wed", "fri"]
+    assert result.minutes_by_weekday == {"mon": 60, "wed": 120, "fri": 90}
 
 
-def test_havan_allocation_does_not_change_topic_scope_from_progress_or_exams():
-    topics = [make_topic(1, 20), make_topic(2, 80)]
-    tasks = havan_planner._allocate(topics, [date(2026, 10, 7)], {2: 1.0})
+def test_havan_rejects_mode_and_horizon_mismatch():
+    payload = HavanPlanCreate(
+        mode="week",
+        horizon_days=1,
+        topic_ids=[101],
+        study_days=[0],
+        hours_per_day={0: 1.0},
+    )
 
-    assert {topic.id for topic, _, _ in tasks} == {1, 2}
-    assert sum(minutes for _, _, minutes in tasks) == 60
+    with pytest.raises(Exception, match="mode and horizon"):
+        _to_plan_input(payload)
