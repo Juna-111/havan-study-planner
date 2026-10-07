@@ -7,11 +7,11 @@ from app.schemas.admin_file_import import PromotionImportPreview,PromotionImport
 from app.services.admin_file_import import MAX_FILE_SIZE,commit_promotion_import,commit_university_import,parse_promotion_file,parse_university_csv,preview_promotion_import,preview_university_import
 router=APIRouter(prefix=f"{API_PREFIX}/admin-file-import",tags=["admin-file-import"],dependencies=[Depends(require_admin)])
 @router.post("/university/preview",response_model=UniversityImportPreview)
-async def preview_university(file:UploadFile=File(...)):
+async def preview_university(file:UploadFile=File(...),db:Session=Depends(get_db)):
  if not file.filename or not file.filename.lower().endswith(".csv"):raise HTTPException(415,"Upload a .csv university file.")
  raw=await file.read()
  if len(raw)>MAX_FILE_SIZE:raise HTTPException(413,"The university CSV must be 5 MB or smaller.")
- return preview_university_import(parse_university_csv(raw))
+ rows=parse_university_csv(raw);return preview_university_import(rows,db)
 @router.post("/university/commit",response_model=UniversityImportResult)
 async def commit_university(file:UploadFile=File(...),db:Session=Depends(get_db)):
  if not file.filename or not file.filename.lower().endswith(".csv"):raise HTTPException(415,"Upload a .csv university file.")
