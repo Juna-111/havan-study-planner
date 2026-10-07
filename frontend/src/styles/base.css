@@ -105,17 +105,35 @@ button { cursor:pointer } :focus-visible { outline:3px solid rgba(1,1,126,.35); 
 
 .settings-card h3 { font-size:1rem; margin-top:4px }
  .settings-account { display:grid; gap:4px }
- .plan-task { display:grid; gap:8px }
+ .plan-task { display:grid; gap:10px; border:1px solid rgba(255,255,255,.13); background:linear-gradient(155deg,#02025f 0%,#01017e 68%,#090993 100%); color:#fff; box-shadow:0 12px 30px rgba(1,1,126,.14); overflow:hidden }
+.plan-task::before { content:''; position:absolute; inset:0 0 auto 0; height:3px; background:var(--color-accent); opacity:.9; pointer-events:none }
+.plan-task { position:relative }
+.plan-task .chip.info { color:#fff; background:rgba(255,255,255,.14) }
+.plan-task .chip.success { color:#fff; background:rgba(18,119,90,.75) }
+.plan-task strong,.plan-task-title { color:#fff }
+.plan-task p { color:rgba(255,255,255,.76); line-height:1.5 }
+.plan-task small { color:rgba(255,255,255,.64) }
+.plan-task-date { color:rgba(255,255,255,.7) }
+.plan-task-date input { border-color:rgba(255,255,255,.22); background:rgba(255,255,255,.96); color:var(--color-ink) }
+.plan-task .button.secondary { color:var(--color-primary); background:#fff; border-color:#fff }
+.plan-task .button.ghost { color:#fff; background:rgba(255,255,255,.08) }
+.plan-task .button.ghost:hover:not(:disabled) { background:rgba(255,255,255,.16) }
 .plan-add-topic { display:grid; gap:10px; border-top:3px solid var(--color-primary); box-shadow:var(--shadow-brand) }
 .plan-add-topic h2 { color:var(--color-primary); font-size:1.25rem }
 .plan-add-topic select { flex:1; min-width:0; min-height:48px; border:1px solid var(--color-line); border-radius:12px; padding:0 12px; background:#fff; color:var(--color-ink); font:inherit }
 .plan-add-topic select:focus { outline:2px solid var(--color-primary-soft); border-color:var(--color-primary) }
-.plan-overview { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:16px; align-items:center; border-color:#dfe2f4; background:#f7f8ff }
-.plan-overview h2 { margin-top:4px; color:#151526; font-size:1.4rem }
-.plan-overview p { margin-top:4px; color:#5d5d73 }
+.plan-add-topic .row { align-items:stretch; }
+.plan-add-topic .row select { min-width:0; }
+.plan-add-topic .row button { flex:0 0 auto; }
+.plan-overview { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:16px; align-items:center; border:1px solid rgba(255,255,255,.14); background:linear-gradient(145deg,#01017e 0%,#08088e 62%,#02025d 100%); color:#fff; box-shadow:0 14px 34px rgba(1,1,126,.16); overflow:hidden; position:relative }
+.plan-overview::after { content:''; position:absolute; width:180px; height:180px; right:-90px; top:-95px; border:1px solid rgba(255,255,255,.12); border-radius:50%; box-shadow:0 0 0 26px rgba(255,255,255,.025),0 0 0 52px rgba(250,3,2,.035); pointer-events:none }
+.plan-overview > * { position:relative; z-index:1 }
+.plan-overview h2 { margin-top:4px; color:#fff; font-size:1.4rem }
+.plan-overview p { margin-top:4px; color:rgba(255,255,255,.72) }
+.plan-overview .app-eyebrow { color:rgba(255,255,255,.72) }
 .plan-overview-stats { display:grid; gap:2px; min-width:120px; text-align:right }
-.plan-overview-stats strong { color:#01017e; font-size:1.2rem }
-.plan-overview-stats span { color:#5d5d73; font-size:.78rem }
+.plan-overview-stats strong { color:#fff; font-size:1.2rem }
+.plan-overview-stats span { color:rgba(255,255,255,.68); font-size:.78rem }
 .plan-day { display:grid; gap:10px }
 .plan-day-heading { display:flex; justify-content:space-between; align-items:center; gap:12px; padding-top:8px }
 .plan-day-heading h2 { color:#151526; font-size:1.15rem }
@@ -302,7 +320,11 @@ button { cursor:pointer } :focus-visible { outline:3px solid rgba(1,1,126,.35); 
 
 /* Havan Focus: a lightweight, student-controlled session layer. */
 .plan-focus-row{margin-top:14px}
-.plan-focus-panel{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px;border:1px solid var(--color-primary);border-radius:14px;background:linear-gradient(90deg,var(--color-primary-soft),#fff);box-shadow:var(--shadow-brand)}
+.plan-focus-panel{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px;border:1px solid rgba(255,255,255,.18);border-radius:14px;background:linear-gradient(90deg,#08088e,#01017e);box-shadow:0 12px 28px rgba(1,1,126,.18);color:#fff}
+.plan-focus-panel .app-eyebrow{color:rgba(255,255,255,.7)}
+.plan-focus-panel strong{color:#fff!important}
+.plan-focus-panel small{color:rgba(255,255,255,.72)!important}
+.plan-focus-panel .button.secondary{color:var(--color-primary);background:#fff;border-color:#fff}
 .plan-focus-panel>div:first-child{display:grid;gap:3px;min-width:0}
 .plan-focus-panel strong{color:var(--color-primary);font-size:clamp(1.8rem,7vw,2.5rem);font-variant-numeric:tabular-nums;letter-spacing:.03em}
 .plan-focus-panel small{color:var(--color-muted);line-height:1.45}
@@ -455,3 +477,29 @@ button { cursor:pointer } :focus-visible { outline:3px solid rgba(1,1,126,.35); 
 @media(prefers-reduced-motion:reduce){
   .exam-topic-option{transition:none}
 }
+
+/* Havan plan cards: the saved study plan is a branded student space, not a generic data table. */
+.plan-overview,.plan-task{transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}
+.plan-overview:hover,.plan-task:hover{transform:translateY(-2px);box-shadow:0 16px 38px rgba(1,1,126,.2)}
+@media(max-width:600px){
+  .plan-add-topic .row{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+  .plan-add-topic .row select,.plan-add-topic .row button{width:100%;min-width:0;min-height:48px}
+  .plan-overview{grid-template-columns:1fr;align-items:start}
+  .plan-overview-stats{text-align:left}
+}
+@media(prefers-reduced-motion:reduce){
+  .plan-overview,.plan-task{transition:none}
+  .plan-overview:hover,.plan-task:hover{transform:none}
+}
+
+/* Exam cards share Havan trust cues while red remains reserved for urgency. */
+.exam-insight-card{background:linear-gradient(155deg,#02025f 0%,#01017e 68%,#090993 100%);border-color:rgba(255,255,255,.13);color:#fff;box-shadow:0 12px 30px rgba(1,1,126,.16);overflow:hidden;position:relative}
+.exam-insight-card::before{content:'';position:absolute;inset:0 0 auto 0;height:3px;background:var(--color-primary)}
+.exam-insight-card:nth-child(2n)::before{background:var(--color-accent)}
+.exam-insight-card .exam-card-top h3,.exam-insight-card .exam-countdown strong{color:#fff}
+.exam-insight-card .exam-card-top span,.exam-insight-card .exam-explanation{color:rgba(255,255,255,.72)}
+.exam-insight-card .exam-metrics span{background:rgba(255,255,255,.1);color:rgba(255,255,255,.7)}
+.exam-insight-card .exam-metrics b{color:#fff}
+.exam-insight-card .exam-strategy{background:rgba(250,3,2,.13);border-left-color:var(--color-accent)}
+.exam-insight-card .exam-strategy strong,.exam-insight-card .exam-strategy small{color:#fff}
+.exam-insight-card .exam-strategy span{color:rgba(255,255,255,.72)}
