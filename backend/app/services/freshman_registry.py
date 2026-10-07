@@ -10,6 +10,10 @@ def freshman_registry_key(code: str, content_version: str) -> str:
     return f"FRESHMAN:{code.strip().upper()}:{content_version.strip()}"
 
 
+def normalize_freshman_code(code: str) -> str:
+    return code.strip().upper()
+
+
 def get_category_map(db: Session, codes: list[str]) -> dict[str, FreshmanCourseCategory]:
     normalized = {code.strip().upper() for code in codes if code.strip()}
     if not normalized:
