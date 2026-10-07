@@ -29,7 +29,6 @@ export default function MappingScreen() {
   const [curriculumId, setCurriculumId] = useState('')
   const [streamId, setStreamId] = useState('')
   const [search, setSearch] = useState('')
-  const [busy, setBusy] = useState<number | null>(null)
   const [error, setError] = useState('')
   const selectedUniversity = universities.find((item) => String(item.id) === universityId)
   const selectedCurriculum = curriculums.find((item) => String(item.id) === curriculumId)
@@ -63,7 +62,6 @@ export default function MappingScreen() {
     () => streams.filter((item) => String(item.curriculum_id) === curriculumId && item.status === 'ACTIVE'),
     [streams, curriculumId],
   )
-  const mapped = new Set(maps.map((item) => item.course_id))
   const filtered = courses.filter((item) => {
     const query = search.toLowerCase().trim()
     return !query || item.code.toLowerCase().includes(query) || item.name.toLowerCase().includes(query)
@@ -89,76 +87,13 @@ export default function MappingScreen() {
     }
   }, [streamId])
 
-  async function add(course: Course, semester: number) {
-    setBusy(course.id)
-    try {
-      const order = Math.max(
-        0,
-        ...maps.filter((item) => item.semester_number === semester).map((item) => item.order_index),
-      ) + 1
-      const result = await apiFetch<M>('/university-course-mappings', {
-        method: 'POST',
-        body: JSON.stringify({
-          stream_id: Number(streamId),
-          course_id: course.id,
-          semester_number: semester,
-          order_index: order,
-          status: 'ACTIVE',
-        }),
-      })
-      setMaps((items) => [...items, result])
-    } catch (value) {
-      setError(value instanceof Error ? value.message : 'Could not add course.')
-    } finally {
-      setBusy(null)
-    }
-  }
-
-  async function move(mapping: M) {
-    setBusy(mapping.course_id)
-    try {
-      const semester = mapping.semester_number === 1 ? 2 : 1
-      const order = Math.max(
-        0,
-        ...maps.filter((item) => item.semester_number === semester).map((item) => item.order_index),
-      ) + 1
-      const result = await apiFetch<M>('/university-course-mappings/' + mapping.id, {
-        method: 'PATCH',
-        body: JSON.stringify({ semester_number: semester, order_index: order }),
-      })
-      setMaps((items) => items.map((item) => (item.id === result.id ? result : item)))
-    } catch (value) {
-      setError(value instanceof Error ? value.message : 'Could not move course.')
-    } finally {
-      setBusy(null)
-    }
-  }
-
-  async function remove(mapping: M) {
-    if (!confirm('Remove this course from this stream? The course content will not be deleted.')) return
-    setBusy(mapping.course_id)
-    try {
-      await apiFetch('/university-course-mappings/' + mapping.id, { method: 'DELETE' })
-      setMaps((items) => items.filter((item) => item.id !== mapping.id))
-    } catch (value) {
-      setError(value instanceof Error ? value.message : 'Could not remove course.')
-    } finally {
-      setBusy(null)
-    }
-  }
-
-  const renderMapping = (mapping: M) => (
+    const renderMapping = (mapping: M) => (
     <div className={styles.row} key={mapping.id}>
       <div>
         <b>{mapping.course_code}</b>
         <span>{mapping.course_name}</span>
       </div>
-      <button disabled={busy === mapping.course_id} onClick={() => move(mapping)}>
-        Move to {mapping.semester_number === 1 ? '2' : '1'}
-      </button>
-      <button className={styles.danger} disabled={busy === mapping.course_id} onClick={() => remove(mapping)}>
-        Remove
-      </button>
+
     </div>
   )
 
@@ -170,7 +105,7 @@ export default function MappingScreen() {
       <header className={styles.header}>
         <span>ACADEMIC SETUP · COURSE MAPPING</span>
         <h1>Course mapping</h1>
-        <p>Choose the academic path, then place Course Registry courses into Semester 1 or 2. Mapping changes usage only, never the canonical course.</p>
+        <p>University CSV imports are now the authoritative source for Semester 1 and Semester 2 mappings. This screen is for verification only.</p>
       </header>
       {error && <div className={styles.alert}>{error}</div>}
       {selectedUniversity && selectedCurriculum && selectedStream && (
@@ -205,19 +140,9 @@ export default function MappingScreen() {
           </select>
         </label>
       </div>
-      <div className={styles.catalog}>
-        <div>
-          <h2>Add a course</h2>
-          <p>Search the catalog and place an unmapped course.</p>
-        </div>
-        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search course code or name…" />
-        {filtered.filter((item) => !mapped.has(item.id)).slice(0, 20).map((item) => (
-          <div className={styles.row} key={item.id}>
-            <div><b>{item.code}</b><span>{item.name}</span></div>
-            <button disabled={!streamId || busy === item.id} onClick={() => add(item, 1)}>+ Semester 1</button>
-            <button disabled={!streamId || busy === item.id} onClick={() => add(item, 2)}>+ Semester 2</button>
-          </div>
-        ))}
+      <div className={styles.notice}>
+        <h2>Automatic mapping</h2>
+        <p>To add, remove, or move courses, update the university CSV and upload it through Import. Havan will validate the complete mapping before applying it.</p>
       </div>
       <div className={styles.semesters}>
         <div className={styles.panel}>
