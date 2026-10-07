@@ -75,14 +75,20 @@ def _result_to_out(
     saved_tasks = list(db.scalars(
         select(PlanTask).where(PlanTask.plan_id == saved_plan.id).order_by(PlanTask.id)
     ).all()) if saved_plan else []
+    saved_task_map = {}
+    for row in saved_tasks:
+        key = (row.topic_id, row.planned_date, row.kind)
+        saved_task_map.setdefault(key, row)
 
     tasks = []
-    for index, session in enumerate(result.sessions):
+    for session in result.sessions:
         topic = topic_map[session.topic_id]
         course_id = chapter_map[topic.chapter_id].course_id
         course = course_map[course_id]
         tasks.append({
-            "id": saved_tasks[index].id if index < len(saved_tasks) else 0,
+            "id": saved_task_map.get((session.topic_id, session.planned_date, session.kind)).id
+            if saved_task_map.get((session.topic_id, session.planned_date, session.kind))
+            else 0,
             "course_id": course.id,
             "course_code": course.code,
             "course_name": course.name,
@@ -94,7 +100,9 @@ def _result_to_out(
             "reason": session.reason,
             "reason_parts": [list(part) for part in session.reason_parts],
             "kind": session.kind,
-            "status": saved_tasks[index].status if index < len(saved_tasks) else "PLANNED",
+            "status": saved_task_map.get((session.topic_id, session.planned_date, session.kind)).status
+            if saved_task_map.get((session.topic_id, session.planned_date, session.kind))
+            else "PLANNED",
             "pinned": topic.id in plan_input.pinned_topic_dates,
         })
 
