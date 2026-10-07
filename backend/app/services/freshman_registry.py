@@ -45,7 +45,7 @@ def create_freshman_course(
 ) -> Course:
     course = Course(
         stream_id=None,
-        code=code.strip(),
+        code=normalize_freshman_code(code),
         name=name.strip(),
         description=description,
         credit_hours=credit_hours,
