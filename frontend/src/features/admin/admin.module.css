@@ -96,3 +96,138 @@
 }
 
 .brand{border-bottom:2px solid var(--color-accent);padding-bottom:14px}.group .active{border-left:3px solid var(--color-accent)}.primary:hover{background:var(--color-primary-hover)!important}.notice{border-left:4px solid var(--color-primary)}.alert{border-left:4px solid var(--color-accent)}
+
+
+/* Havan admin identity: every admin surface must visibly belong to the same product. */
+.shell{
+  background:
+    radial-gradient(circle at 92% 8%,rgba(1,1,126,.07),transparent 24%),
+    linear-gradient(135deg,#f5f6fb 0%,#f8f9ff 52%,#f5f6fb 100%);
+}
+.sidebar,.sidebarOpen{
+  background:
+    radial-gradient(circle at 18% 8%,rgba(250,3,2,.22),transparent 24%),
+    linear-gradient(165deg,#01017e 0%,#07078f 50%,#02025d 100%);
+  border-right:1px solid rgba(255,255,255,.14);
+  color:#fff;
+  box-shadow:10px 0 34px rgba(1,1,126,.16);
+}
+.brand{
+  position:relative;
+  padding:0 8px 18px;
+  margin-bottom:24px;
+  border-bottom:1px solid rgba(255,255,255,.16);
+}
+.brand::after{
+  content:'';
+  position:absolute;
+  right:8px;
+  bottom:-1px;
+  left:8px;
+  height:3px;
+  border-radius:999px;
+  background:var(--color-accent);
+}
+.brand>b{box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.brand strong{color:#fff;font-family:Fraunces,Georgia,serif;letter-spacing:.04em}
+.brand small{color:rgba(255,255,255,.68)}
+.group{margin-bottom:20px}
+.group>span,.header>span{
+  color:var(--color-primary);
+  font-weight:900;
+}
+.sidebar .group>span{color:rgba(255,255,255,.55)}
+.group button,.homeLink{
+  color:rgba(255,255,255,.76);
+  border:1px solid transparent;
+}
+.group button:hover{
+  color:#fff;
+  background:rgba(255,255,255,.08);
+  border-color:rgba(255,255,255,.1);
+}
+.group .active{
+  color:#fff;
+  background:rgba(255,255,255,.14);
+  border-left:3px solid var(--color-accent);
+  box-shadow:0 8px 22px rgba(0,0,0,.12);
+}
+.homeLink{
+  color:#fff;
+  border-top:1px solid rgba(255,255,255,.12);
+  padding-top:16px;
+}
+.main{position:relative}
+.header{
+  position:relative;
+  padding:8px 0 20px 18px;
+  border-left:4px solid var(--color-primary);
+}
+.header::after{
+  content:'HAVAN ADMIN';
+  position:absolute;
+  right:0;
+  top:4px;
+  color:rgba(1,1,126,.12);
+  font-size:clamp(2rem,5vw,4rem);
+  font-weight:900;
+  letter-spacing:.08em;
+  pointer-events:none;
+}
+.header h1,.panel h2,.crudHead h2,.catalog h2,.health b{color:var(--color-primary)}
+.selectors,.catalog,.panel,.crud,.importCard,.preview,.health,.issueList,.list,.editor{
+  border-color:#dfe2f2;
+  box-shadow:0 10px 28px rgba(1,1,126,.055);
+}
+.selectors{
+  border-top:3px solid var(--color-primary);
+  background:linear-gradient(100deg,var(--color-primary-soft),#fff 55%);
+}
+.catalog,.panel,.crud,.importCard,.preview,.list,.editor{
+  position:relative;
+  overflow:hidden;
+}
+.catalog::before,.panel::before,.crud::before,.importCard::before,.preview::before,.list::before,.editor::before{
+  content:'';
+  position:absolute;
+  inset:0 0 auto 0;
+  height:3px;
+  background:var(--color-primary);
+}
+.panel:nth-child(2n)::before,.crud:nth-child(2n)::before{background:var(--color-accent)}
+.stats div,.statButton{
+  border-color:#dfe2f2;
+  box-shadow:0 8px 24px rgba(1,1,126,.05);
+}
+.statButton:hover{box-shadow:0 12px 28px rgba(1,1,126,.12)}
+.statButton span{color:var(--color-primary);font-weight:800}
+.statButton b,.stats b{color:var(--color-primary)}
+.tabs{
+  padding:4px;
+  border-radius:14px;
+  background:var(--color-primary-soft);
+}
+.tabs button{border-color:transparent}
+.tabs .active{box-shadow:0 5px 14px rgba(1,1,126,.16)}
+.health{
+  border-left:4px solid var(--color-accent);
+  background:linear-gradient(90deg,var(--color-accent-soft),#fff);
+}
+.indent{border-left-color:var(--color-accent)}
+.menu{
+  color:#fff;
+  background:linear-gradient(135deg,#01017e,#07078f);
+  border-color:#01017e;
+  box-shadow:0 8px 22px rgba(1,1,126,.16);
+  font-weight:800;
+}
+.menu:active{background:#02025d}
+@media(max-width:767px){
+  .sidebarOpen{
+    box-shadow:16px 0 38px rgba(1,1,126,.28);
+  }
+  .main{padding-top:12px}
+  .header{padding-left:14px}
+  .header::after{font-size:2.2rem;top:0}
+  .selectors,.catalog,.panel,.crud,.importCard,.preview,.health,.issueList{box-shadow:0 8px 24px rgba(1,1,126,.07)}
+}
