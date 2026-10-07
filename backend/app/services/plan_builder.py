@@ -220,6 +220,7 @@ def build_student_choice_result(
     *,
     deferred_topic_ids: set[int] | None = None,
     pinned_topic_dates: dict[int, date] | None = None,
+    frozen_topic_ids: set[int] | None = None,
     today: date | None = None,
 ) -> PlanResult:
     """Build a smart plan without changing the student's topic choices."""
@@ -229,6 +230,7 @@ def build_student_choice_result(
         plan_input,
         deferred_topic_ids=deferred_topic_ids or set(),
         pinned_topic_dates=pinned_topic_dates,
+        frozen_topic_ids=frozen_topic_ids or set(),
         today=today,
     )
     return allocate_selected_topics(request)
