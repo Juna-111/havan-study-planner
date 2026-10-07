@@ -2,8 +2,14 @@ TYPE: COURSE_V1
 Course: [FLEn1011] Communicative English Language Skills I
 Chapter: Study Skills
 - Study skills and learning strategies [3]
+Critical Points:
+- Identify a suitable study strategy for the learning task.
+- Distinguish active learning from passive review.
 - Academic vocabulary and context [3]
 - Reading for main ideas and supporting details [3]
+Critical Points:
+- Identify the main idea before focusing on supporting details.
+- Use surrounding context to interpret unfamiliar information.
 Chapter: Health and Fitness
 - Health and fitness vocabulary [2]
 - Listening and speaking in health contexts [3]
