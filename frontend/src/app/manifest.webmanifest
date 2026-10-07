@@ -1,0 +1,9 @@
+{
+  "name": "Havan",
+  "short_name": "Havan",
+  "description": "Academic planning for Ethiopian university freshman students.",
+  "start_url": "/auth/",
+  "display": "standalone",
+  "theme_color": "#01017e",
+  "background_color": "#f5f6fb"
+}
