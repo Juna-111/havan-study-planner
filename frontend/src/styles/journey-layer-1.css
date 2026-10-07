@@ -50,12 +50,25 @@
 .onboarding-actions-branded .button{min-height:50px}
 .onboarding-actions-branded .button:not(:disabled){transition:transform .2s ease,box-shadow .2s ease}
 .onboarding-actions-branded .button:not(:disabled):hover{transform:translateY(-2px)}
-@keyframes havan-auth-rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-@keyframes havan-mark-in{from{opacity:0;transform:scale(.75) rotate(-8deg)}60%{transform:scale(1.06) rotate(2deg)}to{opacity:1;transform:scale(1) rotate(0)}}
-@keyframes havan-brand-orbit{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(-18px,-10px,0) scale(1.05)}}
-@keyframes havan-dot{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
-@keyframes havan-step-enter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-@keyframes havan-progress-glow{0%,100%{transform:translateX(-20%);opacity:.65}50%{transform:translateX(180%);opacity:1}}
+@keyframes havan-auth-rise{from{opacity:0;transform:translateY(16px)}
+to{opacity:1;transform:translateY(0)}
+}
+@keyframes havan-mark-in{from{opacity:0;transform:scale(.75) rotate(-8deg)}
+60%{transform:scale(1.06) rotate(2deg)}
+to{opacity:1;transform:scale(1) rotate(0)}
+}
+@keyframes havan-brand-orbit{0%,100%{transform:translate3d(0,0,0) scale(1)}
+50%{transform:translate3d(-18px,-10px,0) scale(1.05)}
+}
+@keyframes havan-dot{0%,60%,100%{opacity:.3;transform:translateY(0)}
+30%{opacity:1;transform:translateY(-3px)}
+}
+@keyframes havan-step-enter{from{opacity:0;transform:translateY(10px)}
+to{opacity:1;transform:translateY(0)}
+}
+@keyframes havan-progress-glow{0%,100%{transform:translateX(-20%);opacity:.65}
+50%{transform:translateX(180%);opacity:1}
+}
 @media(max-width:600px){
   .onboarding-hero{padding-top:8px}
 .course-selection-heading{align-items:center}
@@ -142,7 +155,10 @@
 .havan-builder-day-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
 /* Four-stage builder visibility contract. */
-.havan-builder-step-1 .havan-time-step,.havan-builder-step-1 .plan-capacity,.havan-builder-step-1 .havan-topic-time-card,.havan-builder-step-1 .havan-critical-points,.havan-builder-step-1 .plan-review{display:none}.havan-builder-step-2 .plan-course,.havan-builder-step-2 .plan-capacity,.havan-builder-step-2 .havan-topic-time-card,.havan-builder-step-2 .havan-critical-points,.havan-builder-step-2 .plan-review{display:none}.havan-builder-step-3 .plan-course,.havan-builder-step-3 .havan-time-step,.havan-builder-step-3 .plan-capacity,.havan-builder-step-3 .havan-topic-time-card,.havan-builder-step-3 .plan-review{display:none}.havan-builder-step-4 .plan-course,.havan-builder-step-4 .havan-time-step,.havan-builder-step-4 .havan-topic-time-card,.havan-builder-step-4 .havan-critical-points{display:none}
+.havan-builder-step-1 .havan-time-step,.havan-builder-step-1 .plan-capacity,.havan-builder-step-1 .havan-topic-time-card,.havan-builder-step-1 .havan-critical-points,.havan-builder-step-1 .plan-review{display:none}
+.havan-builder-step-2 .plan-course,.havan-builder-step-2 .plan-capacity,.havan-builder-step-2 .havan-topic-time-card,.havan-builder-step-2 .havan-critical-points,.havan-builder-step-2 .plan-review{display:none}
+.havan-builder-step-3 .plan-course,.havan-builder-step-3 .havan-time-step,.havan-builder-step-3 .plan-capacity,.havan-builder-step-3 .havan-topic-time-card,.havan-builder-step-3 .plan-review{display:none}
+.havan-builder-step-4 .plan-course,.havan-builder-step-4 .havan-time-step,.havan-builder-step-4 .havan-topic-time-card,.havan-builder-step-4 .havan-critical-points{display:none}
 .havan-plan-resource-links {
   display: flex;
   flex-wrap: wrap;
