@@ -45,7 +45,7 @@ def test_freshman_registry_import_parser_accepts_canonical_hierarchy() -> None:
     from app.services.freshman_registry_parser import parse_bullet_curriculum
 
     courses = parse_bullet_curriculum(
-        """Course: [PHY101] Physics
+        """TYPE: COURSE_V1\nCourse: [PHY101] Physics
 Chapter: Measurement
   • Physical quantities [3]
   • Units and dimensions [2]
