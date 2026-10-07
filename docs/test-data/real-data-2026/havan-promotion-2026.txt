@@ -14,7 +14,7 @@ topic: Reading for main ideas and supporting details
 platform_name: Havan Academy
 description: Havan Academy study support for this selected topic.
 button_text: Open topic support
-url: https://www.havanacademy.com//reading-main-ideas
+url: https://www.havanacademy.com/reading-main-ideas
 order_index: 1
 status: ACTIVE
 
