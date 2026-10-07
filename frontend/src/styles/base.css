@@ -298,3 +298,75 @@ button { cursor:pointer } :focus-visible { outline:3px solid rgba(1,1,126,.35); 
   .havan-task-card,.plan-review-row,.havan-chapter-guidance-item,.havan-topic-insight{transition:none!important}
   .havan-task-card:hover,.plan-review-row:hover,.havan-chapter-guidance-item:hover,.havan-topic-insight:hover{transform:none}
 }
+
+
+/* Phase G: branded student journey motion and interaction. */
+.auth-shell{position:relative;overflow:hidden}
+.auth-shell::before{content:"";position:fixed;inset:-30% auto auto -12%;width:42vw;height:42vw;border-radius:50%;background:radial-gradient(circle,var(--color-primary-soft),transparent 68%);opacity:.55;pointer-events:none}
+.auth-brand-panel{position:relative;overflow:hidden}
+.auth-brand-panel::after{content:"";position:absolute;width:280px;height:280px;border-radius:50%;right:-120px;bottom:-140px;background:rgba(250,3,2,.18);box-shadow:-180px -130px 0 rgba(255,255,255,.05);animation:havan-brand-orbit 8s ease-in-out infinite}
+.auth-reveal{animation:havan-auth-rise .65s cubic-bezier(.2,.8,.2,1) both}
+.auth-reveal-2{animation-delay:90ms}
+.auth-mark{animation:havan-mark-in .7s cubic-bezier(.2,.9,.2,1) both}
+.auth-submit{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .2s ease,box-shadow .2s ease,background .2s ease}
+.auth-submit:not(:disabled):hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(250,3,2,.18)}
+.auth-submit:not(:disabled):active{transform:translateY(0)}
+.auth-button-pulse{display:inline-flex;gap:3px;align-items:center}
+.auth-button-pulse i{display:block;width:5px;height:5px;border-radius:50%;background:#fff;animation:havan-dot 1s ease-in-out infinite}
+.auth-button-pulse i:nth-child(2){animation-delay:120ms}
+.auth-button-pulse i:nth-child(3){animation-delay:240ms}
+.auth-is-busy .auth-card{animation:havan-soft-pop .35s ease-out both}
+.onboarding-journey{position:relative}
+.onboarding-journey::before{content:"";position:absolute;top:0;left:50%;width:min(720px,90%);height:260px;transform:translateX(-50%);background:radial-gradient(circle,var(--color-primary-soft),transparent 68%);opacity:.5;pointer-events:none;z-index:-1}
+.onboarding-hero{padding:18px 0 4px}
+.onboarding-hero-kicker,.onboarding-section-kicker{display:block;color:var(--color-accent);font-size:.68rem;font-weight:900;letter-spacing:.14em}
+.onboarding-hero h1{margin-top:7px}
+.onboarding-hero-line{height:3px;margin:16px 0 2px;overflow:hidden;border-radius:999px;background:var(--color-primary-soft)}
+.onboarding-hero-line span{display:block;width:38%;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--color-primary),var(--color-accent));animation:havan-progress-glow 2.8s ease-in-out infinite}
+.onboarding-step-panel{animation:havan-step-enter .42s cubic-bezier(.2,.8,.2,1) both}
+.onboarding-card-motion{transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}
+.onboarding-card-motion:hover{transform:translateY(-2px);box-shadow:var(--shadow-brand);border-color:#d9dcf4}
+.academic-step-intro{display:grid;gap:5px;padding:4px 2px 2px}
+.academic-step-intro h2{margin:0;color:var(--color-primary);font-size:1.35rem}
+.academic-step-intro p{margin:0;color:var(--color-muted);line-height:1.6;font-size:.9rem}
+.course-selection-card{border-top:3px solid var(--color-primary)}
+.course-selection-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:4px}
+.course-selection-heading h2{margin:4px 0 0;color:var(--color-primary)}
+.course-selection-badge{flex:none;padding:7px 10px;border-radius:999px;background:var(--color-accent-soft);color:var(--color-accent);font-size:.72rem;font-weight:900;white-space:nowrap}
+.onboarding-course{position:relative;overflow:hidden}
+.onboarding-course::before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:transparent;transition:background .22s ease}
+.onboarding-course.is-selected{border-color:#d5d7ee;background:linear-gradient(135deg,#fff,var(--color-primary-soft))}
+.onboarding-course.is-selected::before{background:var(--color-accent)}
+.onboarding-course.is-selected .check{color:var(--color-primary)}
+.course-start-controls{animation:havan-step-enter .3s ease-out both}
+.habits-card{border-top:3px solid var(--color-accent)}
+.exams-card{border-top:3px solid var(--color-primary)}
+.onboarding-day{transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease,background .18s ease}
+.onboarding-day:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(1,1,126,.08)}
+.onboarding-day[aria-pressed="true"]{box-shadow:0 0 0 4px var(--color-primary-soft);transform:translateY(-1px)}
+.onboarding-summary{position:relative;overflow:hidden;transition:transform .22s ease,box-shadow .22s ease}
+.onboarding-summary:hover{transform:translateY(-2px);box-shadow:var(--shadow-brand)}
+.onboarding-summary strong{transition:transform .22s ease}
+.onboarding-summary:hover strong{transform:scale(1.05)}
+.onboarding-actions-branded{align-items:stretch}
+.onboarding-actions-branded .button{min-height:50px}
+.onboarding-actions-branded .button:not(:disabled){transition:transform .2s ease,box-shadow .2s ease}
+.onboarding-actions-branded .button:not(:disabled):hover{transform:translateY(-2px)}
+@keyframes havan-auth-rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes havan-mark-in{from{opacity:0;transform:scale(.75) rotate(-8deg)}60%{transform:scale(1.06) rotate(2deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes havan-brand-orbit{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(-18px,-10px,0) scale(1.05)}}
+@keyframes havan-dot{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+@keyframes havan-step-enter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes havan-progress-glow{0%,100%{transform:translateX(-20%);opacity:.65}50%{transform:translateX(180%);opacity:1}}
+@media(max-width:600px){
+  .onboarding-hero{padding-top:8px}
+  .course-selection-heading{align-items:center}
+  .course-selection-heading h2{font-size:1.15rem}
+  .course-selection-badge{padding:6px 8px}
+  .onboarding-actions-branded .button{min-height:52px}
+}
+@media(prefers-reduced-motion:reduce){
+  .auth-reveal,.auth-mark,.auth-brand-panel::after,.auth-button-pulse i,.auth-is-busy .auth-card,.onboarding-step-panel,.onboarding-hero-line span{animation:none!important}
+  .auth-submit,.onboarding-card-motion,.onboarding-day,.onboarding-summary,.onboarding-actions-branded .button,.onboarding-summary strong{transition:none!important}
+  .auth-submit:not(:disabled):hover,.onboarding-card-motion:hover,.onboarding-day:hover,.onboarding-day[aria-pressed="true"],.onboarding-summary:hover,.onboarding-actions-branded .button:not(:disabled):hover{transform:none}
+}
