@@ -89,51 +89,19 @@ export default function HavanPlanView() {
                     </div>
                   )}
 
-                  <div className="havan-plan-resources">
-                    <div className="havan-plan-resources-heading">
-                      <div>
-                        <span className="app-eyebrow">HAVAN ACADEMY</span>
-                        <strong>Learn this topic with Havan</strong>
+                  {task.promotions.length > 0 && (
+                    <div className="havan-plan-promotions">
+                      <div className="havan-plan-promotions-heading"><span className="app-eyebrow">HAVAN</span><strong>Learn More With Havan</strong></div>
+                      <div className="havan-plan-promotion-links">
+                        {task.promotions.map((promotion) => (
+                          <a key={promotion.id} href={promotion.url} target="_blank" rel="noreferrer" className="havan-plan-promotion">
+                            <span><strong>{promotion.platform_name}</strong>{promotion.description && <small>{promotion.description}</small>}</span>
+                            <b>{promotion.button_text} ↗</b>
+                          </a>
+                        ))}
                       </div>
-                      <span className="havan-plan-resource-badge">Topic resources</span>
                     </div>
-                    {(task.academy_video_url || task.academy_notes_url || task.academy_questions_url) ? (
-                      <>
-                        <p>Use the published Havan Academy material for this exact topic. No unrelated resources are mixed into your plan.</p>
-                        <div className="havan-plan-resource-grid">
-                          {task.academy_video_url && (
-                            <a className="havan-plan-resource-card" href={task.academy_video_url} target="_blank" rel="noreferrer">
-                              <span className="havan-plan-resource-card-type">COURSE</span>
-                              <strong>Course video</strong>
-                              <span>Watch the Havan Academy lesson for this topic.</span>
-                              <span className="havan-plan-resource-card-action">Open video ↗</span>
-                            </a>
-                          )}
-                          {task.academy_notes_url && (
-                            <a className="havan-plan-resource-card" href={task.academy_notes_url} target="_blank" rel="noreferrer">
-                              <span className="havan-plan-resource-card-type">NOTES</span>
-                              <strong>Study notes</strong>
-                              <span>Review the key material before or after your study session.</span>
-                              <span className="havan-plan-resource-card-action">Open notes ↗</span>
-                            </a>
-                          )}
-                          {task.academy_questions_url && (
-                            <a className="havan-plan-resource-card" href={task.academy_questions_url} target="_blank" rel="noreferrer">
-                              <span className="havan-plan-resource-card-type">PRACTICE</span>
-                              <strong>Freshman Exam Questions</strong>
-                              <span>Practice questions linked to this topic{task.freshman_question_count ? ` · ${task.freshman_question_count} available` : ''}.</span>
-                              <span className="havan-plan-resource-card-action">Open questions ↗</span>
-                            </a>
-                          )}
-                        </div>
-                      </>
-                    ) : (
-                      <div className="havan-plan-resource-empty">
-                        <strong>Not published yet</strong>
-                        <span>Video, notes, and Freshman Exam Questions will appear here when Havan Academy publishes them for this topic.</span>
-                      </div>
-                    )}
-                  </div>
+                  )}
 
                   <div className="havan-plan-task-actions">
                     {task.status === 'PLANNED' && <Button variant="accent" loading={busyTask === task.id} onClick={() => void action(task.id, 'START')}>Start focus</Button>}
