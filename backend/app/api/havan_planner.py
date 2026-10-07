@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import API_PREFIX
 from app.core.deps import current_student
-from app.core.errors import DomainError
+from app.core.errors import DomainError, PlanValidationError
 from app.core.time import today_local
 from app.db.models.curriculum import Chapter, HavanPromotion, Topic
 from app.db.models.plan import Plan
@@ -27,7 +27,8 @@ router = APIRouter(prefix=f"{API_PREFIX}/havan-planner", tags=["havan-planner"])
 _WEEKDAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 
 
-def _to_plan_input(payload: HavanPlanCreate) -> PlanInput:
+def _to_plan_input(payload: HavanPlanCreate, *, today=None) -> PlanInput:
+    today = today or today_local()
     expected = {"today": 1, "week": 7, "month": 28}[payload.mode]
     if payload.horizon_days != expected:
         raise DomainError("INVALID_SELECTION", "The selected plan mode and horizon do not match.", 422)
@@ -45,10 +46,20 @@ def _to_plan_input(payload: HavanPlanCreate) -> PlanInput:
         minutes_by_weekday[weekday] = minutes
 
     if payload.mode == "today":
-        weekday = _WEEKDAYS[today_local().weekday()]
-        minutes = round(float(payload.hours_per_day.get(today_local().weekday(), 0)) * 60)
+        if today.weekday() not in payload.study_days:
+            raise PlanValidationError(
+                "NO_STUDY_DAYS",
+                "For a Today plan, select today as a study day so Havan knows when to place your time.",
+                422,
+            )
+        weekday = _WEEKDAYS[today.weekday()]
+        minutes = round(float(payload.hours_per_day.get(today.weekday(), 0)) * 60)
         if minutes <= 0:
-            raise DomainError("INVALID_SELECTION", "Today's study time must be greater than zero.", 422)
+            raise PlanValidationError(
+                "NO_STUDY_DAYS",
+                "Set a study time for today before building the Today plan.",
+                422,
+            )
         study_days = [weekday]
         minutes_by_weekday = {weekday: minutes}
 
@@ -148,14 +159,14 @@ def preview_current_plan(
 ):
     plan_input = _to_plan_input(payload)
     try:
-        out = preview_plan(db, student, plan_input)
+        out = preview_plan(db, student, plan_input, today=today_local())
         return _read_havan_from_out(
             db, student, out,
             plan_id=None,
             input_snapshot=plan_input.model_dump(mode="json"),
         )
-    except ValueError as exc:
-        raise DomainError("INVALID_SELECTION", str(exc), 422)
+    except PlanValidationError:
+        raise
 
 
 @router.post("/me/plans", response_model=HavanPlanRead)
@@ -165,10 +176,10 @@ def create_current_plan(
     db: Session = Depends(get_db),
 ):
     try:
-        plan = save_plan(db, student, _to_plan_input(payload))
+        plan = save_plan(db, student, _to_plan_input(payload), today=today_local())
         return _read_havan(db, student, plan)
-    except ValueError as exc:
-        raise DomainError("INVALID_SELECTION", str(exc), 422)
+    except PlanValidationError:
+        raise
 
 
 @router.get("/me/latest", response_model=HavanPlanRead)
@@ -205,5 +216,5 @@ def action_current_task(
     try:
         result, _ = apply_action(db, student, task_id, PlanAction(action=payload.action), plan_id=plan.id)
         return _read_havan(db, student, result)
-    except ValueError as exc:
-        raise DomainError("INVALID_SELECTION", str(exc), 422)
+    except PlanValidationError:
+        raise
