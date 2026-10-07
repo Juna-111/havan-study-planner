@@ -471,22 +471,44 @@ def allocate_selected_topics(
     sessions: list[PlannedSession] = []
     pinned = dict(request.pinned_topic_dates)
     deferred = set(request.deferred_topic_ids)
+    pin_warnings: list[PlanWarning] = []
 
     for topic in selected:
         target = pinned.get(topic.topic_id)
         if target is None or target < today or target > today + timedelta(days=horizon - 1):
             continue
-        if capacities.get(target, request.calendar.capacity(target)) < cfg.min_session_minutes:
-            continue
-        capacities.setdefault(target, request.calendar.capacity(target))
+        configured_capacity = capacities.setdefault(
+            target,
+            request.calendar.capacity(target),
+        )
         limit = session_limit_minutes(topic, cfg)
-        chunk = min(remaining[topic.topic_id], capacities[target], limit)
-        chunk = (chunk // 5) * 5
-        if chunk >= cfg.min_session_minutes:
-            exam = next_exam(topic, target)
+        chunk = min(remaining[topic.topic_id], limit)
+        if remaining[topic.topic_id] >= cfg.min_session_minutes:
+            chunk = (chunk // 5) * 5
+        exam = next_exam(topic, target)
+        if exam and target > _last_study_day(exam, today, cfg):
+            pin_warnings.append(
+                PlanWarning(
+                    "PIN_AFTER_EXAM",
+                    "You chose a date after this topic's exam deadline. Havan kept your choice.",
+                )
+            )
+        if target.weekday() not in request.calendar.study_weekdays:
+            pin_warnings.append(
+                PlanWarning(
+                    "PIN_NON_STUDY_DAY",
+                    "You chose a date that is not normally a study day. Havan kept it for this topic.",
+                )
+            )
+        if chunk > configured_capacity:
+            pin_warnings.append(
+                PlanWarning(
+                    "PIN_OVER_CAPACITY",
+                    "This pinned session exceeds the configured capacity for that date, but Havan kept your choice.",
+                )
+            )
+        if chunk >= cfg.min_session_minutes or remaining[topic.topic_id] < cfg.min_session_minutes:
             parts: tuple[ReasonPart, ...] = (("pinned", {}),)
-            if exam and target > _last_study_day(exam, today, cfg):
-                parts += (("exam_in", {"exam_type": exam.exam_type, "days": 0}),)
             sessions.append(
                 PlannedSession(
                     topic_id=topic.topic_id,
@@ -653,6 +675,7 @@ def allocate_selected_topics(
         )
 
     warnings = list(readiness_warnings)
+    warnings.extend(pin_warnings)
     if unplaced:
         warnings.append(
             PlanWarning(
