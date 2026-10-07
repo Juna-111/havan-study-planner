@@ -81,7 +81,7 @@ export default function ExamPlanner(){
       const importanceWeight=0.75+(exam.importance*0.1)
       const pressure=availableMinutes?(weightedRemainingMinutes/availableMinutes)*importanceWeight:weightedRemainingMinutes?9:0
       const strategy=remainingMinutes===0?'Maintain light revision and practice to protect readiness.':pressure>1.2?'Prioritise the highest-pressure topics, especially difficult or low-confidence work, then protect the final study days for revision and practice.':pressure>.85?'Split the remaining scope across consistent sessions, starting with the highest-pressure topics, and protect a final revision window.':'Build steady topic coverage first, then use the remaining capacity for practice and recall.'
-      return {exam,course,daysLeft,topicCount:topics.length,completedTopics,remainingMinutes,availableMinutes,coverage,pressure,label:examLabel(daysLeft,coverage,pressure),scopeExplicit,strategy}
+      return {exam,course,daysLeft,topicCount:topics.length,completedTopics,remainingMinutes,availableMinutes,coverage,pressure,label:examLabel(daysLeft,coverage,pressure),scopeExplicit,strategy,priorityTopics}
     }).sort((a,b)=>a.daysLeft-b.daysLeft)
   },[courses,exams,profile,progressMap])
 
