@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.db.models.curriculum import Chapter, Course, Curriculum, HavanPromotion, Stream, Topic, University, UniversityCourseMapping
 
 MAX_FILE_SIZE=5*1024*1024
+PROMOTION_FILE_MARKER="TYPE: HAVAN_PROMOTION_V1"
 CSV_COLUMNS={"university_code","university_name","curriculum","curriculum_version","academic_year","stream_code","stream_name","semester","course_code","course_name","credit_hours"}
 @dataclass
 class UniversityImportRow:
@@ -51,7 +52,10 @@ def parse_promotion_file(raw:bytes)->list[PromotionImportRow]:
  try:text=raw.decode("utf-8-sig")
  except UnicodeDecodeError as e:raise HTTPException(422,"The Havan promotion file must be UTF-8 text.") from e
  result=[];required=["course_code","chapter","platform_name","button_text","url"]
- blocks=_promotion_blocks(text)
+ lines=[line.strip() for line in text.splitlines() if line.strip()]
+ if not lines or lines[0].upper()!=PROMOTION_FILE_MARKER:
+  raise HTTPException(422,"The Havan promotion file must start with TYPE: HAVAN_PROMOTION_V1.")
+ blocks=_promotion_blocks("\n".join(lines[1:]))
  if not blocks:raise HTTPException(422,"The Havan promotion file contains no promotion blocks.")
  for i,row in enumerate(blocks,1):
   missing=[k for k in required if not _clean(row.get(k))]
