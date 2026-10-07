@@ -1,0 +1,47 @@
+TYPE: COURSE_V1
+Course: [FLEn1011] Communicative English Language Skills I
+Chapter: Study Skills
+- Study skills and learning strategies [3]
+- Academic vocabulary and context [3]
+- Reading for main ideas and supporting details [3]
+Chapter: Health and Fitness
+- Health and fitness vocabulary [2]
+- Listening and speaking in health contexts [3]
+- Writing about health and fitness [3]
+Chapter: Cultural Values
+- Cultural values and communication [3]
+- Reading about culture and society [3]
+- Speaking about cultural experiences [3]
+Chapter: Wildlife
+- Wildlife and environmental vocabulary [2]
+- Reading for information about wildlife [3]
+- Discussing conservation issues [4]
+Chapter: Population
+- Population-related vocabulary and concepts [3]
+- Reading and interpreting population information [3]
+- Writing and discussion about population issues [4]
+
+Course: [LoCT1011] Critical Thinking
+Chapter: The Nature of Philosophy
+- Philosophy and critical inquiry [2]
+- Questions, reasons, and rational inquiry [3]
+Chapter: Basic Concepts of Logic
+- Arguments and their components [3]
+- Premises and conclusions [3]
+- Deductive and inductive reasoning [4]
+Chapter: Language: Meaning and Definition
+- Meaning and ambiguity [3]
+- Definitions and their purposes [3]
+- Clarifying language in arguments [4]
+Chapter: Basic Concepts of Critical Thinking
+- Claims, evidence, and assumptions [3]
+- Evaluating reasons and evidence [4]
+- Critical thinking in decision making [4]
+Chapter: Logical Reasoning and Fallacies
+- Common reasoning errors [4]
+- Identifying fallacies in arguments [4]
+- Evaluating argument strength [4]
+Chapter: Categorical Proposition
+- Categorical statements [4]
+- Standard-form propositions [4]
+- Evaluating categorical arguments [5]
