@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Optional
 
-from sqlalchemy import Date, DateTime, ForeignKey, Integer, JSON, String, Text, Boolean, Float, func
+from sqlalchemy import Date, DateTime, ForeignKey, Integer, JSON, String, Text, Boolean, Float, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.session import Base
@@ -30,6 +30,15 @@ class Plan(Base):
 
 class PlanTask(Base):
     __tablename__ = "plan_tasks"
+    __table_args__ = (
+        UniqueConstraint(
+            "plan_id",
+            "topic_id",
+            "planned_date",
+            "kind",
+            name="uq_plan_tasks_plan_topic_date_kind",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     plan_id: Mapped[int] = mapped_column(ForeignKey("plans.id", ondelete="CASCADE"), nullable=False, index=True)
