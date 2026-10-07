@@ -24,6 +24,11 @@ export const metadata: Metadata = {
     title: 'Havan',
     description: 'Academic planning for Ethiopian university freshman students.',
     type: 'website',
+    images: ['/brand/havan-logo.jpg'],
+  },
+  icons: {
+    icon: '/icon.svg',
+    apple: '/brand/havan-logo.jpg',
   },
 }
 
@@ -31,6 +36,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
+  themeColor: '#01017e',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
