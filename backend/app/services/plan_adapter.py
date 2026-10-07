@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.time import ADDIS, parse_weekdays, today_local, to_index
+from app.core.errors import PlanValidationError
 from app.db.models.curriculum import Chapter, Course, Topic
 from app.db.models.plan import PlanTask
 from app.db.models.student import StudentExam, StudentProfile, StudentTopicProgress
@@ -66,9 +67,9 @@ def build_request(
     known_ids = set(plan_input.known_topic_ids)
     invalid_topic_minutes = {topic_id: minutes for topic_id, minutes in plan_input.topic_minutes.items() if topic_id not in selected_ids or minutes < 5 or minutes > 120}
     if invalid_topic_minutes:
-        raise ValueError('Topic session minutes must be 5-120 minutes and only apply to selected topics.')
+        raise PlanValidationError("INVALID_TOPIC_MINUTES", "Topic session minutes must be between 5 and 120 minutes and only apply to selected topics.", 422)
     if not known_ids.issubset(selected_ids):
-        raise ValueError("Known topics must come from the topics you selected.")
+        raise PlanValidationError("TOPIC_UNAVAILABLE", "Known topics must come from the topics you selected.", 422)
 
     allowed_courses = set(resolved_course_ids(db, student.id))
     topics = list(db.scalars(
@@ -84,13 +85,13 @@ def build_request(
     if len(topics) != len(selected_ids):
         found = {topic.id for topic in topics}
         missing = sorted(set(selected_ids) - found)
-        raise ValueError(f"Some selected topics are unavailable or inactive: {missing}")
+        raise PlanValidationError("TOPIC_UNAVAILABLE", "One or more selected topics are unavailable or inactive.", 422)
 
     chapter_ids = {topic.chapter_id for topic in topics}
     chapters = list(db.scalars(select(Chapter).where(Chapter.id.in_(chapter_ids))).all())
     chapter_by_id = {chapter.id: chapter for chapter in chapters}
     if any(chapter_by_id[topic.chapter_id].course_id not in allowed_courses for topic in topics):
-        raise ValueError("Every selected topic must belong to the student's active curriculum.")
+        raise PlanValidationError("TOPIC_OUT_OF_CURRICULUM", "Every selected topic must belong to your active curriculum.", 422)
 
     progress_rows = list(db.scalars(
         select(StudentTopicProgress).where(
@@ -149,7 +150,7 @@ def build_request(
     horizon_end = today + timedelta(days=plan_input.horizon_days - 1)
     for pinned_date in pin_dates.values():
         if pinned_date < today or pinned_date > horizon_end:
-            raise ValueError("Pinned dates must stay inside the selected planning window.")
+            raise PlanValidationError("PIN_OUTSIDE_WINDOW", "Pinned dates must stay inside the selected planning window.", 422)
     minutes_by_weekday = {
         day: minutes_by_weekday.get(day, default_minutes)
         for day in weekdays
