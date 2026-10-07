@@ -70,6 +70,14 @@ class StudentRegistrationCourse(BaseModel):
     starting_topic_id: Optional[int] = Field(default=None, gt=0)
 
 
+class StudentRegistrationExam(BaseModel):
+    course_id: int = Field(gt=0)
+    exam_type: str = Field(min_length=2, max_length=30)
+    exam_date: date
+    importance: int = Field(default=3, ge=1, le=5)
+    selected_topic_ids: list[int] = Field(default_factory=list, max_length=500)
+
+
 class StudentRegistrationCreate(BaseModel):
     client_key: Optional[str] = Field(default=None, min_length=8, max_length=120)
     name: str = Field(min_length=2, max_length=120)
@@ -79,6 +87,7 @@ class StudentRegistrationCreate(BaseModel):
     study_hours_per_day: float = Field(default=2.0, ge=0.5, le=12)
     study_days: list[Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]] = Field(min_length=1, max_length=7)
     courses: list[StudentRegistrationCourse] = Field(min_length=1, max_length=100)
+    exams: list[StudentRegistrationExam] = Field(default_factory=list, max_length=100)
 
 class StudentCourseAdd(BaseModel):
     course_id: int = Field(gt=0)

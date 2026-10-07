@@ -425,6 +425,45 @@ def complete_onboarding(
                 starting_chapter_id=course.starting_chapter_id,
                 starting_topic_id=course.starting_topic_id,
             ))
+
+        selected_course_ids = {course.course_id for course in payload.courses}
+        existing_exams = list(db.scalars(
+            select(StudentExam).where(StudentExam.student_id == profile.id)
+        ).all())
+        submitted_exam_keys = {
+            (exam.course_id, exam.exam_type.strip(), exam.exam_date)
+            for exam in payload.exams
+        }
+        for existing_exam in existing_exams:
+            if (existing_exam.course_id, existing_exam.exam_type, existing_exam.exam_date) not in submitted_exam_keys:
+                db.delete(existing_exam)
+
+        for exam in payload.exams:
+            if exam.course_id not in selected_course_ids:
+                raise HTTPException(status_code=400, detail="Every onboarding exam must belong to a selected course")
+            _validate_exam_scope(db, profile, exam.course_id, exam.selected_topic_ids)
+            exam_type = exam.exam_type.strip()
+            if not exam_type:
+                raise HTTPException(status_code=400, detail="Exam type cannot be empty")
+            existing_exam = db.scalar(select(StudentExam).where(
+                StudentExam.student_id == profile.id,
+                StudentExam.course_id == exam.course_id,
+                StudentExam.exam_type == exam_type,
+                StudentExam.exam_date == exam.exam_date,
+            ))
+            if existing_exam is None:
+                db.add(StudentExam(
+                    student_id=profile.id,
+                    course_id=exam.course_id,
+                    exam_type=exam_type,
+                    exam_date=exam.exam_date,
+                    importance=exam.importance,
+                    selected_topic_ids=exam.selected_topic_ids,
+                ))
+            else:
+                existing_exam.importance = exam.importance
+                existing_exam.selected_topic_ids = exam.selected_topic_ids
+
         db.commit()
         db.refresh(profile)
         return profile

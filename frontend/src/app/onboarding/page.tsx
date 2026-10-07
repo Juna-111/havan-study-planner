@@ -19,7 +19,9 @@ export default function Onboarding() {
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [starts, setStarts] = useState<Record<number, { chapter?: number; topic?: number }>>({})
   const [days, setDays] = useState<string[]>(['mon', 'tue', 'wed', 'thu', 'fri'])
+  type OnboardingExam = { course_id: number; exam_type: string; exam_date: string; importance: number; selected_topic_ids: number[] }
   const [hours, setHours] = useState(2)
+  const [exams, setExams] = useState<OnboardingExam[]>([])
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -71,6 +73,7 @@ export default function Onboarding() {
           stream_id: Number(stream),
           study_hours_per_day: hours,
           study_days: days,
+          exams,
           courses: Array.from(selected).map((courseId) => {
             const start = starts[courseId]
             return {
@@ -101,7 +104,7 @@ export default function Onboarding() {
         <span className="onboarding-step-count">Step {step + 1} of 3</span>
       </div>
       <div className="onboarding-hero havan-motion-enter"><span className="onboarding-hero-kicker">YOUR HAVAN JOURNEY</span><h1>Build your Havan study journey</h1>
-      <p className="onboarding-intro">Set your academic context, choose the courses you want to work with, and tell Havan when you normally study.</p><div className="onboarding-hero-line" aria-hidden="true"><span /></div></div>
+      <p className="onboarding-intro">Choose your academic context, choose the courses and topics you want to study, and tell Havan how much time you have.</p><div className="onboarding-hero-line" aria-hidden="true"><span /></div></div>
       <div className="onboarding-progress" aria-label="Onboarding progress">
         {stepLabels.map((label, index) => (
           <button
@@ -148,7 +151,7 @@ export default function Onboarding() {
         />
       )}
       {step === 1 && <div className="onboarding-step-panel havan-motion-enter" key="habits"><StepHabits days={days} hours={hours} onDays={setDays} onHours={setHours} /></div>}
-      {step === 2 && <div className="onboarding-step-panel havan-motion-enter" key="exams"><StepExams /></div>}
+      {step === 2 && <div className="onboarding-step-panel havan-motion-enter" key="exams"><StepExams streamId={stream} selectedCourseIds={selected} exams={exams} onExams={setExams} /></div>}
       <Card className="onboarding-summary havan-motion-enter">
         <div><strong>{selectedCount}</strong><span>course{selectedCount === 1 ? '' : 's'} selected</span></div>
         <div><strong>{hours}</strong><span>hours per study day</span></div>
