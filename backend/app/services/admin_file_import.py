@@ -63,40 +63,73 @@ def parse_promotion_file(raw:bytes)->list[PromotionImportRow]:
   result.append(PromotionImportRow(i,row["course_code"],row["chapter"],_clean(row.get("topic")) or None,row["platform_name"],_clean(row.get("description")) or None,row["button_text"],row["url"],order,status))
  return result
 def preview_university_import(rows:list[UniversityImportRow])->dict:
- seen=set()
+ seen=set(); stream_courses={}
  for row in rows:
-  key=(row.university_code.upper(),row.curriculum.casefold(),row.curriculum_version.casefold(),row.stream_code.upper(),row.course_code.upper(),row.semester)
-  if key in seen:raise HTTPException(422,f"University CSV line {row.line}: duplicate mapping in file.")
+  key=(row.university_code.strip().upper(),row.curriculum.strip().casefold(),row.curriculum_version.strip().casefold(),row.stream_code.strip().upper(),row.course_code.strip().upper())
+  if key in seen:
+   raise HTTPException(422,f"University CSV line {row.line}: duplicate course mapping in file.")
   seen.add(key)
- return {"rows":len(rows),"universities":len({r.university_code.upper() for r in rows}),"curriculums":len({(r.university_code.upper(),r.curriculum.casefold(),r.curriculum_version.casefold()) for r in rows}),"streams":len({(r.university_code.upper(),r.curriculum.casefold(),r.curriculum_version.casefold(),r.stream_code.upper()) for r in rows}),"course_mappings":len(rows)}
+  stream_key=key[:4]
+  previous=stream_courses.get(key)
+  if previous is not None and previous!=row.semester:
+   raise HTTPException(422,f"University CSV lines contain course {row.course_code} in both semesters for the same stream.")
+  stream_courses[key]=row.semester
+ return {"rows":len(rows),"universities":len({r.university_code.strip().upper() for r in rows}),"curriculums":len({(r.university_code.strip().upper(),r.curriculum.strip().casefold(),r.curriculum_version.strip().casefold()) for r in rows}),"streams":len({(r.university_code.strip().upper(),r.curriculum.strip().casefold(),r.curriculum_version.strip().casefold(),r.stream_code.strip().upper()) for r in rows}),"course_mappings":len(rows)}
+
 def commit_university_import(db:Session,rows:list[UniversityImportRow])->dict:
  preview_university_import(rows)
  try:
-  universities={};curriculums={};streams={};counts={"universities":0,"curriculums":0,"streams":0,"courses":0,"mappings":0}
+  universities={};curriculums={};streams={};counts={"universities":0,"curriculums":0,"streams":0,"courses":0,"mappings":0,"archived_mappings":0,"reactivated_mappings":0}
+  incoming_by_stream={}
   for row in rows:
-   ukey=row.university_code.upper();u=universities.get(ukey) or db.scalar(select(University).where(University.code==row.university_code))
-   if u is None:u=University(name=row.university_name,code=row.university_code,status="ACTIVE");db.add(u);db.flush();counts["universities"]+=1
-   elif u.name.strip().casefold()!=row.university_name.casefold():raise HTTPException(409,f"University code {row.university_code} already belongs to another university.")
+   ukey=row.university_code.strip().upper()
+   u=universities.get(ukey) or db.scalar(select(University).where(func.upper(University.code)==ukey))
+   if u is None:
+    u=University(name=row.university_name.strip(),code=ukey,status="ACTIVE");db.add(u);db.flush();counts["universities"]+=1
+   elif u.name.strip().casefold()!=row.university_name.strip().casefold():
+    raise HTTPException(409,f"University code {row.university_code} already belongs to another university.")
    universities[ukey]=u
-   ckey=(u.id,row.curriculum.casefold(),row.curriculum_version.casefold());c=curriculums.get(ckey) or db.scalar(select(Curriculum).where(Curriculum.university_id==u.id,Curriculum.name==row.curriculum,Curriculum.version==row.curriculum_version))
-   if c is None:c=Curriculum(university_id=u.id,name=row.curriculum,version=row.curriculum_version,academic_year=row.academic_year,status="ACTIVE");db.add(c);db.flush();counts["curriculums"]+=1
+
+   ckey=(u.id,row.curriculum.strip().casefold(),row.curriculum_version.strip().casefold())
+   c=curriculums.get(ckey) or db.scalar(select(Curriculum).where(Curriculum.university_id==u.id,func.lower(Curriculum.name)==row.curriculum.strip().lower(),Curriculum.version==row.curriculum_version.strip()))
+   if c is None:
+    c=Curriculum(university_id=u.id,name=row.curriculum.strip(),version=row.curriculum_version.strip(),academic_year=row.academic_year,status="ACTIVE");db.add(c);db.flush();counts["curriculums"]+=1
    curriculums[ckey]=c
-   skey=(c.id,row.stream_code.upper());s=streams.get(skey) or db.scalar(select(Stream).where(Stream.curriculum_id==c.id,Stream.code==row.stream_code))
-   if s is None:s=Stream(curriculum_id=c.id,name=row.stream_name,code=row.stream_code,status="ACTIVE");db.add(s);db.flush();counts["streams"]+=1
-   elif s.name.strip().casefold()!=row.stream_name.casefold():raise HTTPException(409,f"Stream code {row.stream_code} already belongs to another stream.")
+
+   skey=(c.id,row.stream_code.strip().upper())
+   s=streams.get(skey) or db.scalar(select(Stream).where(Stream.curriculum_id==c.id,func.upper(Stream.code)==row.stream_code.strip().upper()))
+   if s is None:
+    s=Stream(curriculum_id=c.id,name=row.stream_name.strip(),code=row.stream_code.strip().upper(),status="ACTIVE");db.add(s);db.flush();counts["streams"]+=1
+   elif s.name.strip().casefold()!=row.stream_name.strip().casefold():
+    raise HTTPException(409,f"Stream code {row.stream_code} already belongs to another stream.")
    streams[skey]=s
-   course=db.scalar(select(Course).where(Course.code==row.course_code,Course.academic_scope=="FRESHMAN",Course.status=="ACTIVE"))
+
+   course_code=row.course_code.strip().upper()
+   course=db.scalar(select(Course).where(func.upper(Course.code)==course_code,Course.academic_scope=="FRESHMAN",Course.status=="ACTIVE"))
    if course is None:raise HTTPException(422,f"Course {row.course_code} is not in the Freshman Course Registry. Upload the course content before mapping it to a university.")
-   if course.name.strip().casefold()!=row.course_name.casefold():raise HTTPException(409,f"Course {row.course_code} name conflicts with the Freshman Course Registry.")
+   if course.name.strip().casefold()!=row.course_name.strip().casefold():raise HTTPException(409,f"Course {row.course_code} name conflicts with the Freshman Course Registry.")
    if row.credit_hours is not None and course.credit_hours is not None and course.credit_hours!=row.credit_hours:raise HTTPException(409,f"Course {row.course_code} credit hours conflict with the Freshman Course Registry.")
+
+   incoming_by_stream.setdefault(s.id,set()).add(course.id)
    m=db.scalar(select(UniversityCourseMapping).where(UniversityCourseMapping.stream_id==s.id,UniversityCourseMapping.course_id==course.id))
    if m is None:
-    max_order=db.scalar(select(func.max(UniversityCourseMapping.order_index)).where(UniversityCourseMapping.stream_id==s.id,UniversityCourseMapping.semester_number==row.semester)) or 0;db.add(UniversityCourseMapping(curriculum_id=c.id,stream_id=s.id,course_id=course.id,semester_number=row.semester,order_index=max_order+1,status="ACTIVE"));counts["mappings"]+=1
-   elif m.semester_number!=row.semester:raise HTTPException(409,f"Course {row.course_code} is already mapped to another semester.")
+    order=db.scalar(select(func.max(UniversityCourseMapping.order_index)).where(UniversityCourseMapping.stream_id==s.id,UniversityCourseMapping.semester_number==row.semester,UniversityCourseMapping.status!="ARCHIVED")) or 0
+    db.add(UniversityCourseMapping(curriculum_id=c.id,stream_id=s.id,course_id=course.id,semester_number=row.semester,order_index=order+1,status="ACTIVE"));counts["mappings"]+=1
+   else:
+    if m.semester_number!=row.semester:raise HTTPException(409,f"Course {row.course_code} is already mapped to another semester.")
+    if m.status=="ARCHIVED":m.status="ACTIVE";counts["reactivated_mappings"]+=1
+    m.curriculum_id=c.id
+
+  for stream_id,course_ids in incoming_by_stream.items():
+   stale=db.scalars(select(UniversityCourseMapping).where(UniversityCourseMapping.stream_id==stream_id,UniversityCourseMapping.status!="ARCHIVED",~UniversityCourseMapping.course_id.in_(course_ids))).all()
+   for mapping in stale:
+    mapping.status="ARCHIVED";counts["archived_mappings"]+=1
+
   db.commit();return counts
  except HTTPException:db.rollback();raise
  except IntegrityError as e:db.rollback();raise HTTPException(409,"The university import conflicts with existing records. No records were saved.") from e
  except Exception as e:db.rollback();raise HTTPException(500,"The university import failed. No records were saved.") from e
+
 def preview_promotion_import(db:Session,rows:list[PromotionImportRow])->dict:
  errors=[]
  for row in rows:
