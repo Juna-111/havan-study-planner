@@ -62,6 +62,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
   const [preview, setPreview] = useState<HavanPlan | null>(null)
   const [busy, setBusy] = useState<'preview' | 'save' | null>(null)
   const [previewPulse, setPreviewPulse] = useState(false)
+  const [builderStep, setBuilderStep] = useState<1 | 2 | 3 | 4>(1)
 
   useEffect(() => {
     if (initialMode) {
@@ -133,6 +134,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
       const nextPreview = await previewHavanPlan(input)
       setPreview(nextPreview)
       setPreviewPulse(true)
+      setBuilderStep(4)
       window.setTimeout(() => setPreviewPulse(false), 700)
     } catch (value) {
       setError(value instanceof Error ? value.message : 'Could not preview your plan.')
@@ -158,9 +160,27 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
 
   const copy = modeCopy[mode]
 
+  async function nextStep() {
+    if (builderStep === 1) { if (!selected.size) { setError('Choose at least one topic before continuing.'); return } setError(''); setBuilderStep(2); return }
+    if (builderStep === 2) { if (mode !== 'today' && studyDayCount === 0) { setError('Choose at least one study day before continuing.'); return } setError(''); setBuilderStep(3); return }
+    if (builderStep === 3) await previewIt()
+  }
+
   return (
     <AppShell>
       <PageHeader title={copy.title} backHref="/student/havan" description={copy.description} />
+
+      <div className={`havan-builder-shell havan-builder-step-${builderStep}`}>
+      <nav className="havan-builder-steps" aria-label="Havan plan builder steps">
+        {[['1','Topics'],['2','Time'],['3','Guidance'],['4','Review']].map(([number,label]) => {
+          const target = Number(number) as 1 | 2 | 3 | 4
+          return (
+            <button key={number} type="button" className={builderStep === target ? 'is-current' : builderStep > target ? 'is-complete' : ''} aria-current={builderStep === target ? 'step' : undefined} disabled={target === 4 && !preview} onClick={() => { if (target < builderStep || (target === 4 && preview)) setBuilderStep(target) }}>
+              <span>{number}</span>{label}
+            </button>
+          )
+        })}
+      </nav>
 
       <Card padding="lg" className="app-section havan-plan-controls havan-time-step">
         <div className="havan-plan-mode">
@@ -375,6 +395,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
           )}
         </div>
       )}
+      </div>
 
       <StickyActionBar>
         <div className="havan-generate-bar">
@@ -383,12 +404,8 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
             <span>{selected.size ? 'Havan is ready to organize your choices.' : 'Your plan is created only after you choose both.'}</span>
           </div>
           <div className="havan-generate-actions">
-            <Button disabled={!selected.size || busy !== null || (mode !== 'today' && studyDayCount === 0)} variant="secondary" onClick={previewIt}>
-              {busy === 'preview' ? 'Building preview...' : 'Preview allocation'}
-            </Button>
-            <Button variant="accent" disabled={!selected.size || busy !== null || (mode !== 'today' && studyDayCount === 0)} onClick={saveIt}>
-              {busy === 'save' ? 'Creating your plan...' : 'Create my Havan plan'}
-            </Button>
+            {builderStep > 1 && <Button variant="secondary" disabled={busy !== null} onClick={() => { setError(''); setBuilderStep((builderStep - 1) as 1|2|3|4) }}>Back</Button>}
+            {builderStep < 4 ? <Button variant="accent" disabled={busy !== null} onClick={() => void nextStep()}>{builderStep === 3 ? (busy === 'preview' ? 'Building preview...' : 'Review allocation') : 'Continue'}</Button> : <Button variant="accent" disabled={!selected.size || busy !== null} onClick={saveIt}>{busy === 'save' ? 'Creating your plan...' : 'Create my Havan plan'}</Button>}
           </div>
         </div>
       </StickyActionBar>

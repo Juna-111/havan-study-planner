@@ -5,7 +5,7 @@ export type HavanPlanInput = {
   mode: HavanPlanMode
   horizon_days: number
   topic_ids: number[]
-  study_days: string[]
+  study_days: number[]
   hours_per_day: Record<number, number>
 }
 export type HavanPlanTask = {

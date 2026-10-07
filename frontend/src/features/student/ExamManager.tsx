@@ -25,6 +25,10 @@ export default function ExamManager() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editDate, setEditDate] = useState('')
+  const [editType, setEditType] = useState('MIDTERM')
+  const [editImportance, setEditImportance] = useState('3')
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -72,6 +76,10 @@ export default function ExamManager() {
     }
   }
 
+  function beginEdit(exam: Exam) { setEditingId(exam.id); setEditDate(exam.exam_date); setEditType(exam.exam_type); setEditImportance(String(exam.importance)) }
+
+  async function saveEdit(id: number) { if (!profileId || !editDate || saving) return; setSaving(true); setError(''); try { const updated=await apiFetch<Exam>(`/students/profiles/${profileId}/exams/${id}`,{method:'PATCH',body:JSON.stringify({exam_type:editType,exam_date:editDate,importance:Number(editImportance)})}); setExams(current=>current.map(exam=>exam.id===id?updated:exam).sort((a,b)=>a.exam_date.localeCompare(b.exam_date))); setEditingId(null) } catch(value){setError(value instanceof ApiError?value.message:'Could not update the exam.')} finally{setSaving(false)} }
+
   async function removeExam(id: number) {
     try {
       if (!profileId) return
@@ -117,7 +125,7 @@ export default function ExamManager() {
                   <strong>{courseName.get(exam.course_id) ?? 'Course'}</strong>
                   <p className="app-meta">{exam.exam_type} · {exam.exam_date} · importance {exam.importance}/5</p>
                 </div>
-                <Button variant="ghost" onClick={() => void removeExam(exam.id)}>Remove</Button>
+                {editingId === exam.id ? <div className="exam-edit-actions"><DateField label="Date" value={editDate} onChange={setEditDate}/><Select label="Type" value={editType} onChange={setEditType} options={TYPES}/><Select label="Importance" value={editImportance} onChange={setEditImportance} options={[1,2,3,4,5].map(value=>({value:String(value),label:String(value)}))}/><Button loading={saving} onClick={()=>void saveEdit(exam.id)}>Save</Button><Button variant="ghost" onClick={()=>setEditingId(null)}>Cancel</Button></div> : <div className="exam-row-actions"><Button variant="ghost" onClick={()=>beginEdit(exam)}>Edit</Button><Button variant="ghost" onClick={()=>void removeExam(exam.id)}>Remove</Button></div>}
               </div>
             ))}
           </div>
