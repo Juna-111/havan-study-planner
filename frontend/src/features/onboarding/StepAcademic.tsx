@@ -111,9 +111,9 @@ export default function StepAcademic(props: Props) {
     return () => { cancelled = true }
   }, [props.stream])
   return (
-    <div className="stack academic-step">
-      <Card>
-        <div className="stack">
+    <div className="stack academic-step onboarding-academic-step">
+      <Card className="onboarding-academic-card">
+        <div className="stack onboarding-academic-fields">
           <label className="onboarding-field">
             Your name
             <input value={props.name} onChange={(e) => props.onName(e.target.value)} autoComplete="name" />
@@ -153,8 +153,8 @@ export default function StepAcademic(props: Props) {
         </Card>
       )}
       <AcademicCatalogRequest universityId={props.university} />
-      <Card>
-        <h2>Choose your courses</h2>
+      <Card className="onboarding-course-section">
+        <div className="onboarding-section-heading"><span className="app-eyebrow">YOUR COURSES</span><h2>Choose your courses</h2></div>
         {!props.stream ? (
           <p className="app-copy">Choose your stream first. Havan will then show the courses mapped to it.</p>
         ) : loading.courses ? (

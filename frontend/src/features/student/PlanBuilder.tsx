@@ -55,6 +55,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
   const [courses, setCourses] = useState<Course[]>([])
   const [profile, setProfile] = useState<Profile | null>(null)
   const [selected, setSelected] = useState<Set<number>>(new Set())
+  const [topicMinutes, setTopicMinutes] = useState<Record<number, number>>({})
   const [mode, setMode] = useState<PlanMode>(initialMode ?? 'week')
   const [hours, setHours] = useState(2)
   const [error, setError] = useState('')
@@ -122,7 +123,8 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
     study_days: profile?.study_days ?? [],
     minutes_by_weekday: minutesByDay,
     hours_per_day: hours,
-  }), [mode, horizon, selected, profile?.study_days, minutesByDay, hours])
+    topic_minutes: topicMinutes,
+  }), [mode, horizon, selected, profile?.study_days, minutesByDay, hours, topicMinutes])
 
   async function previewIt() {
     if (busy || !selected.size) return
@@ -233,11 +235,31 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
               }))}
               selected={new Set([...selected].map(String))}
               onChange={(next) => {
-                setSelected(new Set([...next].map(Number)))
+                const ids = new Set([...next].map(Number))
+                setSelected(ids)
+                setTopicMinutes((current) => {
+                  const nextMinutes = { ...current }
+                  for (const id of Object.keys(nextMinutes).map(Number)) if (!ids.has(id)) delete nextMinutes[id]
+                  for (const course of courses) for (const chapter of course.chapters) for (const topic of chapter.topics) {
+                    if (ids.has(topic.id) && !nextMinutes[topic.id]) {
+                      nextMinutes[topic.id] = Math.max(20, Math.min(35, 20 + (topic.difficulty - 1) * 3 + (topic.estimated_study_minutes >= 120 ? 3 : 0)))
+                    }
+                  }
+                  return nextMinutes
+                })
                 setPreview(null)
               }}
             />
           </Card>
+
+          {selectedTopics.length > 0 && (
+            <Card padding="lg" className="havan-topic-time-card havan-motion-enter">
+              <div><span className="app-eyebrow">STEP 2 · SESSION TIME</span><h2>Set time for each topic</h2><p className="app-meta">First-time topics start with a focused 20–35 minute session. Adjust any topic to fit your study pace.</p></div>
+              <div className="havan-topic-time-list">
+                {selectedTopics.map((topic) => <div className="havan-topic-time-row" key={topic.id}><div><strong>{topic.name}</strong><span>{topic.estimated_study_minutes} min total content · difficulty {topic.difficulty}/5</span></div><NumberStepper label="Session minutes" value={topicMinutes[topic.id] ?? 25} min={5} max={120} step={5} onChange={(value) => { setTopicMinutes((current) => ({ ...current, [topic.id]: value })); setPreview(null) }} /></div>)}
+              </div>
+            </Card>
+          )}
 
           {selectedTopics.length > 0 && (
             <Card padding="lg" className="havan-critical-points havan-motion-enter" style={{ '--motion-delay': '110ms' } as React.CSSProperties}>

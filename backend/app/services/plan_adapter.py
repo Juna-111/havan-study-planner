@@ -103,6 +103,7 @@ def build_request(
             name=topic.name,
             difficulty=topic.difficulty,
             estimated_minutes=max(5, topic.estimated_study_minutes - int(progress[topic.id].completed_minutes if topic.id in progress else 0)),
+            session_minutes=plan_input.topic_minutes.get(topic.id),
             exam_importance=float(topic.exam_importance),
             conceptual_importance=float(topic.conceptual_importance),
             progress_status=progress[topic.id].status if topic.id in progress else "NOT_STARTED",

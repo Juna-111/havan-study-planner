@@ -17,6 +17,7 @@ export default function PlanView() {
   const [focusedTaskId, setFocusedTaskId] = useState<number | null>(null)
   const [focusSeconds, setFocusSeconds] = useState(0)
   const [focusRunning, setFocusRunning] = useState(false)
+  const [focusMinutes, setFocusMinutes] = useState(25)
   useEffect(() => {
     getCurrentPlan()
       .then(setP)
@@ -67,7 +68,9 @@ export default function PlanView() {
         setP(nextPlan)
       }
       setFocusedTaskId(task.id)
-      setFocusSeconds(task.minutes * 60)
+      const minutes = Math.max(5, task.minutes)
+      setFocusMinutes(minutes)
+      setFocusSeconds(minutes * 60)
       setFocusRunning(true)
     } catch (x) {
       setE(x instanceof Error ? x.message : 'Could not start Focus mode.')
@@ -80,7 +83,7 @@ export default function PlanView() {
     if (!focusedTask || pendingTask !== null) return
     const elapsedMinutes = Math.max(
       1,
-      Math.min(focusedTask.minutes, Math.ceil((focusedTask.minutes * 60 - focusSeconds) / 60)),
+      Math.min(focusMinutes, Math.ceil((focusMinutes * 60 - focusSeconds) / 60)),
     )
     try {
       setE('')
@@ -220,12 +223,10 @@ export default function PlanView() {
               {tasks.map((t, index) => (
                 <Card key={t.id} as="article" padding="lg" className={`plan-task havan-task-card ${celebratingTask === t.id ? 'havan-task-celebrate' : ''} ${addedTask === t.id ? 'havan-task-added' : ''}`} style={{ '--motion-delay': `${index * 65}ms` } as React.CSSProperties}>
                   <div className="row">
-                    <Chip tone={t.status === 'DONE' ? 'success' : 'info'}>
-                      {t.status}
-                    </Chip>
+                    <Chip tone={t.status === 'DONE' ? 'success' : t.status === 'IN_PROGRESS' ? 'warn' : 'info'}>{t.status === 'DONE' ? 'Completed' : t.status === 'IN_PROGRESS' ? 'In Progress' : 'Planned'}</Chip>
                     <strong>{t.planned_date}</strong>
                   </div>
-                  <h2 className="plan-task-title">{t.topic_name}</h2>
+                  <div className="plan-task-chapter">{t.chapter_name}</div><h2 className="plan-task-title">{t.topic_name}</h2>
                   <p>{t.reason}</p>
                   <small>
                     {t.minutes} min · {t.course_name}
@@ -235,6 +236,7 @@ export default function PlanView() {
                       <div className="plan-focus-panel">
                         <div>
                           <span className="app-eyebrow">HAVAN FOCUS</span>
+                          <div className="plan-focus-time-control"><span>Session</span><button type="button" aria-label="Decrease focus minutes" disabled={focusMinutes <= 5 || pendingTask !== null} onClick={() => { const next = Math.max(5, focusMinutes - 5); setFocusMinutes(next); setFocusSeconds((seconds) => Math.min(seconds, next * 60)) }}>−</button><strong>{focusMinutes} min</strong><button type="button" aria-label="Increase focus minutes" disabled={focusMinutes >= 120 || pendingTask !== null} onClick={() => { const next = Math.min(120, focusMinutes + 5); setFocusMinutes(next); setFocusSeconds((seconds) => seconds + 300) }}>+</button></div>
                           <strong>{String(Math.floor(focusSeconds / 60)).padStart(2, '0')}:{String(focusSeconds % 60).padStart(2, '0')}</strong>
                           <small>{focusRunning ? 'Stay with this topic. Your plan remains yours.' : focusSeconds === 0 ? 'Focus time is complete.' : 'Focus is paused.'}</small>
                         </div>

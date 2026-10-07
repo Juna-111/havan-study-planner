@@ -29,14 +29,14 @@ export default function StepHabits({ days, hours, onDays, onHours }: StepHabitsP
   }
 
   return (
-    <Card>
+    <Card className="onboarding-habits-card">
       <h2>When do you normally study?</h2>
       <p>
         Choose the days Havan may schedule. Sunday is a normal study day, not a
         special case invented by calendars.
       </p>
 
-      <div className="onboarding-days">
+      <div className="onboarding-days" role="group" aria-label="Study days">
         {DAYS.map(([key, label]) => (
           <button
             className="onboarding-day"

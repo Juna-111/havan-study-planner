@@ -47,6 +47,15 @@ ADDIS_ABABA_TZ = "Africa/Addis_Ababa"
 def _clamp(value: float, low: float = 0.0, high: float = 1.0) -> float:
     return max(low, min(high, value))
 
+def session_limit_minutes(topic: PlannerTopic) -> int:
+    if topic.session_minutes is not None:
+        return max(5, min(120, topic.session_minutes))
+    if topic.progress_status != "NOT_STARTED":
+        return 60
+    scope_bonus = 3 if topic.estimated_minutes >= 120 else 0
+    return max(20, min(35, 20 + (max(1, topic.difficulty) - 1) * 3 + scope_bonus))
+
+
 
 # --------------------------------------------------------------------------
 # Configuration
@@ -156,6 +165,7 @@ class PlannerTopic:
     name: str
     difficulty: int
     estimated_minutes: int            # minutes still needed
+    session_minutes: int | None = None
     exam_importance: float
     conceptual_importance: float
     progress_status: str = "NOT_STARTED"
@@ -676,7 +686,7 @@ def build_plan(request: PlanRequest, config: PlannerConfig = DEFAULT_CONFIG) -> 
             if work.kind == "REVIEW":
                 chunk = min(work.remaining, capacity, review_cap - review_used)
             else:
-                chunk = min(work.remaining, capacity, cfg.max_session_minutes)
+                chunk = min(work.remaining, capacity, session_limit_minutes(topic))
             chunk = (chunk // 5) * 5
             if chunk <= 0 or (chunk < work.remaining and chunk < cfg.min_session_minutes):
                 skip.add(tid)

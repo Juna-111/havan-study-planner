@@ -94,6 +94,7 @@ def _result_to_out(
             "course_name": course.name,
             "topic_id": topic.id,
             "topic_name": topic.name,
+            "chapter_name": chapter_map[topic.chapter_id].name,
             "planned_date": session.planned_date,
             "minutes": session.minutes,
             "priority": session.priority,
@@ -176,7 +177,7 @@ def read_plan(db: Session, student: StudentProfile, plan: Plan) -> PlanOut:
         course = course_map[chapter_map[topic.chapter_id].course_id]
         tasks.append({
             "id": row.id, "course_id": course.id, "course_code": course.code, "course_name": course.name,
-            "topic_id": topic.id, "topic_name": topic.name, "planned_date": row.planned_date,
+            "topic_id": topic.id, "topic_name": topic.name, "chapter_name": chapter_map[topic.chapter_id].name, "planned_date": row.planned_date,
             "minutes": row.minutes, "priority": row.priority, "reason": row.reason,
             "reason_parts": row.reason_parts, "kind": row.kind, "status": row.status, "pinned": row.pinned,
         })

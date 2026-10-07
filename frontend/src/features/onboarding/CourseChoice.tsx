@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Card, Checkbox, Select } from '@/components/ui'
+import { Card, Select } from '@/components/ui'
 import { apiFetch } from '@/lib/api'
 
 type Opt = { id: number; name: string; status?: string }
@@ -69,8 +69,11 @@ export default function CourseChoice({
     onStart(course.id, { chapter: start?.chapter, topic: value ? Number(value) : undefined })
   }
   return (
-    <Card>
-      <Checkbox label={course.code + ' · ' + course.name} checked={checked} onChange={(value) => onToggle(course.id, value)} />
+    <Card className={checked ? 'onboarding-course-card selected' : 'onboarding-course-card'}>
+      <button type="button" className="onboarding-course-choice" aria-pressed={checked} onClick={() => onToggle(course.id, !checked)}>
+        <span className="onboarding-course-choice-mark" aria-hidden="true">{checked ? '✓' : '+'}</span>
+        <span><strong>{course.code}</strong><small>{course.name}</small></span>
+      </button>
       {checked && (
         <div className="stack">
           <Select
