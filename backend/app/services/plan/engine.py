@@ -563,11 +563,9 @@ def allocate_selected_topics(
                 math.floor(day_capacity * cfg.max_course_day_share),
             )
             used_by_course: dict[int, int] = defaultdict(int)
-            used_total = 0
             for session in sessions:
                 if session.planned_date == day:
                     used_by_course[session.course_id] += session.minutes
-                    used_total += session.minutes
             current_limit = session_limit_minutes(topic, cfg)
             candidate_chunk = min(
                 remaining[topic.topic_id],
