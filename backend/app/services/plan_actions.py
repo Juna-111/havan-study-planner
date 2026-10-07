@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta, timezone
-from dataclasses import replace
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -69,13 +68,9 @@ def _rebuild_future(
         rebuilt_input,
         deferred_topic_ids=deferred_topic_ids,
         pinned_topic_dates=preserved_pins,
+        frozen_topic_ids=preserved_topic_ids,
         today=planning_start,
     )
-    result = replace(result, sessions=tuple(
-        session for session in result.sessions
-        if session.topic_id not in preserved_topic_ids
-        or session.planned_date == preserved_pins.get(session.topic_id)
-    ))
 
     future_rows = db.scalars(
         select(PlanTask).where(
