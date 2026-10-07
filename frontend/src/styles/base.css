@@ -503,3 +503,17 @@ button { cursor:pointer } :focus-visible { outline:3px solid rgba(1,1,126,.35); 
 .exam-insight-card .exam-strategy{background:rgba(250,3,2,.13);border-left-color:var(--color-accent)}
 .exam-insight-card .exam-strategy strong,.exam-insight-card .exam-strategy small{color:#fff}
 .exam-insight-card .exam-strategy span{color:rgba(255,255,255,.72)}
+
+/* Final Havan plan-card identity: the saved plan itself is branded, not only Focus mode. */
+.plan-task{
+  background:linear-gradient(155deg,#02025f 0%,#01017e 68%,#090993 100%) !important;
+  color:#fff !important;
+  border-color:rgba(255,255,255,.16) !important;
+  box-shadow:0 12px 30px rgba(1,1,126,.16) !important;
+}
+.plan-task .chip.info{color:#fff;background:rgba(255,255,255,.14)}
+.plan-task .chip.success{color:#fff;background:rgba(18,119,90,.78)}
+.plan-task .button.primary{color:#fff}
+.plan-task .button.secondary{color:var(--color-primary);background:#fff;border-color:#fff}
+.plan-task .button.ghost{color:#fff;background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16)}
+.plan-task .button.ghost:hover:not(:disabled){background:rgba(255,255,255,.16)}
