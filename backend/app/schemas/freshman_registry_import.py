@@ -15,6 +15,7 @@ class ImportChapter(BaseModel):
 
 
 class FreshmanRegistryPreview(BaseModel):
+    action: str
     code: str = Field(min_length=1, max_length=40)
     name: str = Field(min_length=2, max_length=150)
     content_version: str = Field(default="1.0", min_length=1, max_length=30)
