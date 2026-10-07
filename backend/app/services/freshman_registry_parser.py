@@ -15,6 +15,8 @@ CRITICAL_RE = re.compile(r"^\s*Critical\s+Points:\s*$", re.IGNORECASE)
 COURSE_ID_RE = re.compile(r"^\[([^\]]+)\]\s*(.+?)\s*$")
 TOPIC_DIFFICULTY_RE = re.compile(r"^(.*?)\s*\[([1-5])\]\s*$")
 COURSE_CODE_RE = re.compile(r"^[A-Za-z0-9_. -]+$")
+COURSE_FILE_MARKER = "TYPE: COURSE_V1"
+
 
 
 @dataclass
@@ -52,7 +54,12 @@ def parse_bullet_curriculum(content: str) -> list[ParsedCourse]:
         collecting_points = False
         points = []
 
-    for line_number, raw_line in enumerate(content.splitlines(), start=1):
+    lines = content.splitlines()
+    first_content = next((line.strip() for line in lines if line.strip()), "")
+    if first_content.upper() == COURSE_FILE_MARKER:
+        lines = lines[lines.index(next(line for line in lines if line.strip())) + 1:]
+
+    for line_number, raw_line in enumerate(lines, start=1):
         line = raw_line.strip()
         if not line:
             continue
