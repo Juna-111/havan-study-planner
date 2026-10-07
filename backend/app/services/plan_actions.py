@@ -5,7 +5,8 @@ from datetime import date, datetime, timedelta, timezone
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.time import today_local, to_index
+from app.core.time import today_local
+from app.core.errors import PlanValidationError, to_index
 from app.db.models.curriculum import Chapter, Course, Topic
 from app.db.models.plan import Plan, PlanTask
 from app.db.models.student import StudentProfile, StudentTopicProgress
@@ -22,7 +23,7 @@ def _active_plan(db: Session, student_id: int) -> Plan:
         .order_by(Plan.id.desc())
     )
     if not plan:
-        raise ValueError("You do not have a plan yet. Choose what to study and Havan will organize it.")
+        raise PlanValidationError("NO_ACTIVE_PLAN", "You do not have a plan yet. Choose what to study and Havan will organize it.", 422)
     return plan
 
 
@@ -140,7 +141,7 @@ def _rebuild_future(
 
 def _validate_target_date(plan: Plan, target: date) -> None:
     if not (plan.start_date <= target <= plan.start_date + timedelta(days=plan.horizon_days - 1)):
-        raise ValueError("Choose a date inside this plan's planning window.")
+        raise PlanValidationError("PIN_OUTSIDE_WINDOW", "Choose a date inside this plan's planning window.", 422)
 
 def apply_action(
     db: Session,
@@ -160,7 +161,7 @@ def apply_action(
         else _active_plan(db, student.id)
     )
     if not plan:
-        raise ValueError("Study plan not found.")
+        raise PlanValidationError("PLAN_NOT_FOUND", "Study plan not found.", 422)
     task = db.scalar(
         select(PlanTask).where(
             PlanTask.id == task_id,
@@ -171,22 +172,22 @@ def apply_action(
 
     if payload.action == "ADD" and task_id == 0:
         if payload.target_topic_id is None:
-            raise ValueError("Choose a topic to add.")
+            raise PlanValidationError("TOPIC_UNAVAILABLE", "Choose a topic to add.", 422)
         topic = db.get(Topic, payload.target_topic_id)
         if not topic or str(topic.status).upper() != "ACTIVE":
-            raise ValueError("The selected topic is not active.")
+            raise PlanValidationError("TOPIC_UNAVAILABLE", "The selected topic is not active.", 422)
         chapter = db.get(Chapter, topic.chapter_id)
         if chapter is None or chapter.course_id not in resolved_course_ids(db, student.id):
-            raise ValueError("The selected topic is outside your active curriculum.")
+            raise PlanValidationError("TOPIC_OUT_OF_CURRICULUM", "The selected topic is outside your active curriculum.", 422)
         snapshot = _input_from_snapshot(plan)
         if topic.id in snapshot.topic_ids:
-            raise ValueError("That topic is already part of this plan.")
+            raise PlanValidationError("TOPIC_UNAVAILABLE", "That topic is already part of this plan.", 422)
         target = payload.target_date or today_local()
         _validate_target_date(plan, target)
         weekday_names = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
         weekday = weekday_names[target.weekday()]
         if weekday not in snapshot.study_days:
-            raise ValueError("Choose one of your study days.")
+            raise PlanValidationError("NO_STUDY_DAYS", "Choose one of your study days.", 422)
         daily_limit = int(snapshot.minutes_by_weekday.get(weekday, snapshot.hours_per_day * 60))
         used_minutes = sum(
             row.minutes
@@ -200,10 +201,10 @@ def apply_action(
         )
         available = max(0, daily_limit - used_minutes)
         if available < 5:
-            raise ValueError("There is no available study time on that date.")
+            raise PlanValidationError("NO_STUDY_TIME", "There is no available study time on that date.", 422)
         minutes = min(20, max(5, topic.estimated_study_minutes), available)
         if minutes < 5:
-            raise ValueError("There is no available study time on that date.")
+            raise PlanValidationError("NO_STUDY_TIME", "There is no available study time on that date.", 422)
         db.add(PlanTask(
             plan_id=plan.id,
             student_id=student.id,
@@ -227,16 +228,16 @@ def apply_action(
         return plan, []
 
     if not task:
-        raise ValueError("Study task not found.")
+        raise PlanValidationError("TASK_NOT_FOUND", "Study task not found.", 422)
 
     if task.status == "DONE" and payload.action == "COMPLETE":
         return plan, []
     if task.status == "DONE" and payload.action != "REPEAT":
-        raise ValueError("A completed task can only be repeated.")
+        raise PlanValidationError("INVALID_ACTION", "A completed task can only be repeated.", 422)
 
     if payload.action == "START":
         if task.status not in {"PLANNED", "IN_PROGRESS"}:
-            raise ValueError("This task cannot be started.")
+            raise PlanValidationError("INVALID_ACTION", "This task cannot be started.", 422)
         task.status = "IN_PROGRESS"
         db.commit()
         return plan, []
@@ -244,7 +245,7 @@ def apply_action(
     if payload.action == "COMPLETE":
         topic = db.get(Topic, task.topic_id)
         if not topic:
-            raise ValueError("Topic not found.")
+            raise PlanValidationError("TOPIC_UNAVAILABLE", "Topic not found.", 422)
         actual = payload.actual_minutes or task.minutes
         progress = db.scalar(select(StudentTopicProgress).where(
             StudentTopicProgress.student_id == student.id,
@@ -287,7 +288,7 @@ def apply_action(
 
     if payload.action == "MOVE":
         if payload.target_date is None:
-            raise ValueError("Choose a date for this task.")
+            raise PlanValidationError("PIN_OUTSIDE_WINDOW", "Choose a date for this task.", 422)
         _validate_target_date(plan, payload.target_date)
         task.planned_date = payload.target_date
         task.pinned = True
@@ -343,7 +344,7 @@ def apply_action(
 
     if payload.action == "REMOVE":
         if task.status != "PLANNED":
-            raise ValueError("Only planned work can be removed.")
+            raise PlanValidationError("INVALID_ACTION", "Only planned work can be removed.", 422)
         topic = db.get(Topic, task.topic_id)
         existing = {item.get("topic_id") for item in plan.unplaced}
         if task.topic_id not in existing:
