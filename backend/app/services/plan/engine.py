@@ -88,13 +88,6 @@ class PlannerConfig:
     max_pace_factor: float = 2.0
 
     def __post_init__(self) -> None:
-        total = (
-            self.w_urgency + self.w_exam_weight + self.w_importance + self.w_difficulty
-            + self.w_time_efficiency + self.w_confidence + self.w_continuation
-            + self.w_sequence
-        )
-        if not math.isclose(total, 1.0, abs_tol=1e-9):
-            raise ValueError(f"Score weights must sum to 1.0, got {total:.4f}")
         if self.min_session_minutes < 1 or self.max_session_minutes < self.min_session_minutes:
             raise ValueError("Session length limits are inconsistent")
 
@@ -112,7 +105,7 @@ MESSAGES: dict[str, dict[str, str]] = {
         "exam_today": "{exam_type} is today",
         "student_selected": "you selected this topic",
         "adaptive_allocation": "Havan allocated time using your available capacity and current study progress",
-        "no_exam": "no upcoming exam is driving this recommendation",
+        "no_exam": "no upcoming exam is driving this allocation",
         "exam_high": "the assessment has high importance",
         "exam_importance": "the assessment importance is {value}/5",
         "topic_exam_high": "the topic has high exam importance",
