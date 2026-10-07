@@ -7,8 +7,8 @@ import styles from './layout.module.css'
 /** Responsive Havan app shell and navigation primitives. */
 
 const navigation = [
-  ['/student/havan', 'Havan'],
-  ['/student/havan/plan', 'Plan'],
+  ['/student/havan', 'Havan Home'],
+  ['/student/havan/plan', 'My Plan'],
   ['/exam-planning', 'Exam Planning'],
   ['/progress', 'Progress'],
   ['/settings', 'Settings'],
@@ -79,7 +79,8 @@ export function PageHeader({
   return (
     <header className={styles.pageHeader}>
       {backHref && <Link href={backHref}>← Back</Link>}
-      <div>
+      <div className={styles.pageHeaderContent}>
+        <span className={styles.pageHeaderEyebrow}>HAVAN ACADEMY</span>
         <h1>{title}</h1>
         {description && <p>{description}</p>}
         {action}
