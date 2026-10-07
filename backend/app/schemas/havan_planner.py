@@ -3,6 +3,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from app.schemas.plan import UnplacedOut, WarningOut
+
 
 class HavanPlanCreate(BaseModel):
     mode: Literal["today", "week", "month"]
@@ -48,8 +50,8 @@ class HavanPlanRead(BaseModel):
     hours_per_day: dict[int, float]
     total_minutes: int
     tasks: list[HavanPlanTaskRead]
-    warnings: list[dict] = Field(default_factory=list)
-    unplaced: list[dict] = Field(default_factory=list)
+    warnings: list[WarningOut] = Field(default_factory=list)
+    unplaced: list[UnplacedOut] = Field(default_factory=list)
 
 
 class HavanPlanTaskAction(BaseModel):
