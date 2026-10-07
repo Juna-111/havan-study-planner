@@ -84,9 +84,10 @@ def commit_university_import(db:Session,rows:list[UniversityImportRow])->dict:
    if s is None:s=Stream(curriculum_id=c.id,name=row.stream_name,code=row.stream_code,status="ACTIVE");db.add(s);db.flush();counts["streams"]+=1
    elif s.name.strip().casefold()!=row.stream_name.casefold():raise HTTPException(409,f"Stream code {row.stream_code} already belongs to another stream.")
    streams[skey]=s
-   rkey=f"UNIVERSITY:{s.id}:{row.course_code.strip()}";course=db.scalar(select(Course).where(Course.registry_key==rkey))
-   if course is None:course=Course(stream_id=s.id,code=row.course_code,name=row.course_name,credit_hours=row.credit_hours,academic_scope="UNIVERSITY",registry_key=rkey,content_version="1.0",status="ACTIVE");db.add(course);db.flush();counts["courses"]+=1
-   elif course.name.strip().casefold()!=row.course_name.casefold() or course.credit_hours!=row.credit_hours:raise HTTPException(409,f"Course {row.course_code} conflicts with the existing Course Registry record.")
+   course=db.scalar(select(Course).where(Course.code==row.course_code,Course.academic_scope=="FRESHMAN",Course.status=="ACTIVE"))
+   if course is None:raise HTTPException(422,f"Course {row.course_code} is not in the Freshman Course Registry. Upload the course content before mapping it to a university.")
+   if course.name.strip().casefold()!=row.course_name.casefold():raise HTTPException(409,f"Course {row.course_code} name conflicts with the Freshman Course Registry.")
+   if row.credit_hours is not None and course.credit_hours is not None and course.credit_hours!=row.credit_hours:raise HTTPException(409,f"Course {row.course_code} credit hours conflict with the Freshman Course Registry.")
    m=db.scalar(select(UniversityCourseMapping).where(UniversityCourseMapping.stream_id==s.id,UniversityCourseMapping.course_id==course.id))
    if m is None:
     max_order=db.scalar(select(func.max(UniversityCourseMapping.order_index)).where(UniversityCourseMapping.stream_id==s.id,UniversityCourseMapping.semester_number==row.semester)) or 0;db.add(UniversityCourseMapping(curriculum_id=c.id,stream_id=s.id,course_id=course.id,semester_number=row.semester,order_index=max_order+1,status="ACTIVE"));counts["mappings"]+=1
