@@ -1,0 +1,280 @@
+/* Phase G: branded student journey motion and interaction. */
+.auth-shell{position:relative;overflow:hidden}
+.auth-shell::before{content:"";position:fixed;inset:-30% auto auto -12%;width:42vw;height:42vw;border-radius:50%;background:radial-gradient(circle,var(--color-primary-soft),transparent 68%);opacity:.55;pointer-events:none}
+.auth-brand-panel{position:relative;overflow:hidden}
+.auth-brand-panel::after{content:"";position:absolute;width:280px;height:280px;border-radius:50%;right:-120px;bottom:-140px;background:rgba(250,3,2,.18);box-shadow:-180px -130px 0 rgba(255,255,255,.05);animation:havan-brand-orbit 8s ease-in-out infinite}
+.auth-reveal{animation:havan-auth-rise .65s cubic-bezier(.2,.8,.2,1) both}
+.auth-reveal-2{animation-delay:90ms}
+.auth-mark{animation:havan-mark-in .7s cubic-bezier(.2,.9,.2,1) both}
+.auth-submit{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .2s ease,box-shadow .2s ease,background .2s ease}
+.auth-submit:not(:disabled):hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(250,3,2,.18)}
+.auth-submit:not(:disabled):active{transform:translateY(0)}
+.auth-button-pulse{display:inline-flex;gap:3px;align-items:center}
+.auth-button-pulse i{display:block;width:5px;height:5px;border-radius:50%;background:#fff;animation:havan-dot 1s ease-in-out infinite}
+.auth-button-pulse i:nth-child(2){animation-delay:120ms}
+.auth-button-pulse i:nth-child(3){animation-delay:240ms}
+.auth-is-busy .auth-card{animation:havan-soft-pop .35s ease-out both}
+.onboarding-journey{position:relative}
+.onboarding-journey::before{content:"";position:absolute;top:0;left:50%;width:min(720px,90%);height:260px;transform:translateX(-50%);background:radial-gradient(circle,var(--color-primary-soft),transparent 68%);opacity:.5;pointer-events:none;z-index:-1}
+.onboarding-hero{padding:18px 0 4px}
+.onboarding-hero-kicker,.onboarding-section-kicker{display:block;color:var(--color-accent);font-size:.68rem;font-weight:900;letter-spacing:.14em}
+.onboarding-hero h1{margin-top:7px}
+.onboarding-hero-line{height:3px;margin:16px 0 2px;overflow:hidden;border-radius:999px;background:var(--color-primary-soft)}
+.onboarding-hero-line span{display:block;width:38%;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--color-primary),var(--color-accent));animation:havan-progress-glow 2.8s ease-in-out infinite}
+.onboarding-step-panel{animation:havan-step-enter .42s cubic-bezier(.2,.8,.2,1) both}
+.onboarding-card-motion{transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}
+.onboarding-card-motion:hover{transform:translateY(-2px);box-shadow:var(--shadow-brand);border-color:#d9dcf4}
+.academic-step-intro{display:grid;gap:5px;padding:4px 2px 2px}
+.academic-step-intro h2{margin:0;color:var(--color-primary);font-size:1.35rem}
+.academic-step-intro p{margin:0;color:var(--color-muted);line-height:1.6;font-size:.9rem}
+.course-selection-card{border-top:3px solid var(--color-primary)}
+.course-selection-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:4px}
+.course-selection-heading h2{margin:4px 0 0;color:var(--color-primary)}
+.course-selection-badge{flex:none;padding:7px 10px;border-radius:999px;background:var(--color-accent-soft);color:var(--color-accent);font-size:.72rem;font-weight:900;white-space:nowrap}
+.onboarding-course{position:relative;overflow:hidden}
+.onboarding-course::before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:transparent;transition:background .22s ease}
+.onboarding-course.is-selected{border-color:#d5d7ee;background:linear-gradient(135deg,#fff,var(--color-primary-soft))}
+.onboarding-course.is-selected::before{background:var(--color-accent)}
+.onboarding-course.is-selected .check{color:var(--color-primary)}
+.course-start-controls{animation:havan-step-enter .3s ease-out both}
+.habits-card{border-top:3px solid var(--color-accent)}
+.exams-card{border-top:3px solid var(--color-primary)}
+.onboarding-day{transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease,background .18s ease}
+.onboarding-day:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(1,1,126,.08)}
+.onboarding-day[aria-pressed="true"]{box-shadow:0 0 0 4px var(--color-primary-soft);transform:translateY(-1px)}
+.onboarding-summary{position:relative;overflow:hidden;transition:transform .22s ease,box-shadow .22s ease}
+.onboarding-summary:hover{transform:translateY(-2px);box-shadow:var(--shadow-brand)}
+.onboarding-summary strong{transition:transform .22s ease}
+.onboarding-summary:hover strong{transform:scale(1.05)}
+.onboarding-actions-branded{align-items:stretch}
+.onboarding-actions-branded .button{min-height:50px}
+.onboarding-actions-branded .button:not(:disabled){transition:transform .2s ease,box-shadow .2s ease}
+.onboarding-actions-branded .button:not(:disabled):hover{transform:translateY(-2px)}
+@keyframes havan-auth-rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes havan-mark-in{from{opacity:0;transform:scale(.75) rotate(-8deg)}60%{transform:scale(1.06) rotate(2deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes havan-brand-orbit{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(-18px,-10px,0) scale(1.05)}}
+@keyframes havan-dot{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+@keyframes havan-step-enter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes havan-progress-glow{0%,100%{transform:translateX(-20%);opacity:.65}50%{transform:translateX(180%);opacity:1}}
+@media(max-width:600px){
+  .onboarding-hero{padding-top:8px}
+  .course-selection-heading{align-items:center}
+  .course-selection-heading h2{font-size:1.15rem}
+  .course-selection-badge{padding:6px 8px}
+  .onboarding-actions-branded .button{min-height:52px}
+}
+@media(prefers-reduced-motion:reduce){
+  .auth-reveal,.auth-mark,.auth-brand-panel::after,.auth-button-pulse i,.auth-is-busy .auth-card,.onboarding-step-panel,.onboarding-hero-line span{animation:none!important}
+  .auth-submit,.onboarding-card-motion,.onboarding-day,.onboarding-summary,.onboarding-actions-branded .button,.onboarding-summary strong{transition:none!important}
+  .auth-submit:not(:disabled):hover,.onboarding-card-motion:hover,.onboarding-day:hover,.onboarding-day[aria-pressed="true"],.onboarding-summary:hover,.onboarding-actions-branded .button:not(:disabled):hover{transform:none}
+}
+
+/* Registration and Havan builder: explicit readable states on every viewport. */
+.onboarding-journey{min-height:100svh;width:min(calc(100% - 20px),900px);padding:20px 0 54px;background:linear-gradient(155deg,#01017e 0%,#02025f 72%,#01013f 100%);color:#fff}
+.onboarding-journey .onboarding-brand,.onboarding-journey .onboarding-step-count,.onboarding-journey .onboarding-hero h1,.onboarding-journey .onboarding-intro{color:#fff}
+.onboarding-journey .onboarding-progress{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0 14px}
+.onboarding-journey .onboarding-progress-step{min-height:48px;display:flex;align-items:center;gap:8px;padding:0 10px;border:1px solid rgba(255,255,255,.18);border-radius:14px;background:rgba(255,255,255,.1);color:#fff}
+.onboarding-journey .onboarding-progress-step span{display:grid;place-items:center;width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.12);font-weight:900}
+.onboarding-journey .onboarding-progress-step.active,.onboarding-journey .onboarding-progress-step.complete{background:#fff;color:#01017e;border-color:#fff}
+.onboarding-journey .onboarding-progress-step.active span,.onboarding-journey .onboarding-progress-step.complete span{background:#01017e;color:#fff}
+.onboarding-journey .card{background:#fff;color:#151526;border-color:rgba(255,255,255,.16);box-shadow:0 16px 38px rgba(0,0,0,.18)}
+.onboarding-journey .card h2,.onboarding-journey .card h3{color:#01017e}
+.onboarding-journey .card p,.onboarding-journey .app-copy,.onboarding-journey .app-meta{color:#5d5d73}
+.onboarding-course-card{padding:0!important;overflow:hidden}
+.onboarding-course-choice{width:100%;min-height:76px;display:grid;grid-template-columns:40px minmax(0,1fr) auto;align-items:center;gap:12px;padding:14px 16px;border:0;background:#fff;color:#151526;text-align:left;cursor:pointer}
+.onboarding-course-choice:hover{background:#f6f7ff}
+.onboarding-course-card.selected .onboarding-course-choice{background:linear-gradient(135deg,#01017e,#090993);color:#fff}
+.onboarding-course-choice-mark{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:#eceef8;color:#01017e;font-weight:900;font-size:1.1rem}
+.onboarding-course-card.selected .onboarding-course-choice-mark{background:#fa0302;color:#fff}
+.onboarding-course-choice-copy{display:grid;gap:2px;min-width:0}
+.onboarding-course-choice-copy strong{font-size:.95rem;letter-spacing:.01em}
+.onboarding-course-choice-copy span{font-size:.84rem;color:#5d5d73;overflow-wrap:anywhere}
+.onboarding-course-card.selected .onboarding-course-choice-copy span{color:rgba(255,255,255,.76)}
+.onboarding-course-choice-state{padding:6px 9px;border-radius:999px;background:#eef0ff;color:#01017e;font-size:.72rem;font-weight:900;white-space:nowrap}
+.onboarding-course-card.selected .onboarding-course-choice-state{background:#fa0302;color:#fff}
+.onboarding-habits-card,.onboarding-exams-card{display:grid;gap:18px}
+.onboarding-habits-block,.onboarding-hours-block{display:grid;gap:10px;padding:14px;border:1px solid #e5e6ef;border-radius:16px;background:#f8f9ff}
+.onboarding-habits-label{display:flex;justify-content:space-between;gap:10px;align-items:center;color:#01017e}
+.onboarding-habits-label span{font-size:.75rem;color:#5d5d73}
+.onboarding-field-hint{color:#5d5d73!important;font-size:.78rem;line-height:1.45}
+.onboarding-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.onboarding-day{min-width:0;min-height:46px;border:1px solid #dfe1ec;border-radius:12px;background:#fff;color:#151526;font-weight:800}
+.onboarding-day[aria-pressed=true]{border-color:#fa0302;background:#fa0302;color:#fff;box-shadow:0 7px 16px rgba(250,3,2,.2)}
+.onboarding-exam-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.onboarding-exam-scope{display:grid;gap:14px;padding:16px;border-radius:16px;background:#f7f8ff;border:1px solid #e2e4ef}
+.onboarding-exam-scope-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.onboarding-exam-scope-heading h3{margin:4px 0}
+.onboarding-exam-topic-groups{display:grid;gap:10px;max-height:420px;overflow:auto}
+.onboarding-exam-topic-group{padding:12px;border:1px solid #e1e3ed;border-radius:14px;background:#fff}
+.onboarding-exam-topic-group>strong{display:block;margin-bottom:7px;color:#151526}
+.onboarding-exam-topic{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:9px 4px;border-top:1px solid #ececf3}
+.onboarding-exam-topic:first-child{border-top:0}
+.onboarding-exam-topic span{min-width:0;color:#303044}
+.onboarding-exam-topic small{color:#77778a;white-space:nowrap}
+.onboarding-exam-topic input{width:18px;height:18px;accent-color:#01017e}
+.onboarding-exam-scope-count{padding:9px 11px;border-radius:10px;background:#e9ebff;color:#01017e;font-size:.78rem;font-weight:900}
+.onboarding-exam-actions{display:flex;gap:10px;flex-wrap:wrap}
+.onboarding-exam-list{display:grid;gap:10px}
+.onboarding-exam-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 14px;border:1px solid #e1e3ed;border-radius:14px;background:#f8f9ff}
+.onboarding-exam-summary>div{display:grid;gap:3px;min-width:0}
+.onboarding-exam-summary strong{color:#01017e}
+.onboarding-exam-summary span,.onboarding-exam-summary small{color:#5d5d73}
+.onboarding-empty-state,.onboarding-loading-state{display:grid;gap:5px;padding:16px;border:1px dashed #cdd0df;border-radius:14px;background:#f8f9ff;color:#151526}
+.onboarding-empty-state p,.onboarding-loading-state span{color:#5d5d73}
+.onboarding-inline-error{padding:10px 12px;border-radius:12px;background:#fdeceb;color:#a32120!important}
+.havan-builder-days{display:grid;gap:10px;padding:14px;border:1px solid var(--color-line);border-radius:16px;background:#f8f9ff}
+.havan-builder-days-heading{display:flex;justify-content:space-between;gap:10px;color:var(--color-primary)}
+.havan-builder-days-heading span{color:var(--color-muted);font-size:.78rem}
+.havan-builder-day-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}
+.havan-builder-day{min-height:44px;border:1px solid var(--color-line);border-radius:11px;background:#fff;color:var(--color-ink);font-weight:800}
+.havan-builder-day[aria-pressed=true]{background:var(--color-primary);color:#fff;border-color:var(--color-primary)}
+.havan-plan-date-control{display:grid;gap:3px;color:var(--color-muted);font-size:.75rem;font-weight:800}
+.havan-plan-date-control input{min-height:40px;border:1px solid var(--color-line);border-radius:10px;padding:6px 8px;background:#fff;color:var(--color-ink)}
+@media(max-width:600px){
+  .onboarding-journey{width:calc(100% - 16px);padding-top:12px}
+  .onboarding-journey .onboarding-progress{gap:5px}
+  .onboarding-journey .onboarding-progress-step{padding:0 7px;font-size:.78rem}
+  .onboarding-days{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .onboarding-exam-grid{grid-template-columns:1fr}
+  .onboarding-exam-scope-heading{align-items:stretch;flex-direction:column}
+  .onboarding-exam-topic{grid-template-columns:auto minmax(0,1fr)}
+  .onboarding-exam-topic small{grid-column:2}
+  .onboarding-exam-summary{align-items:flex-start}
+  .havan-builder-day-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+
+/* Four-stage builder visibility contract. */
+.havan-builder-step-1 .havan-time-step,.havan-builder-step-1 .plan-capacity,.havan-builder-step-1 .havan-topic-time-card,.havan-builder-step-1 .havan-critical-points,.havan-builder-step-1 .plan-review{display:none}.havan-builder-step-2 .plan-course,.havan-builder-step-2 .plan-capacity,.havan-builder-step-2 .havan-topic-time-card,.havan-builder-step-2 .havan-critical-points,.havan-builder-step-2 .plan-review{display:none}.havan-builder-step-3 .plan-course,.havan-builder-step-3 .havan-time-step,.havan-builder-step-3 .plan-capacity,.havan-builder-step-3 .havan-topic-time-card,.havan-builder-step-3 .plan-review{display:none}.havan-builder-step-4 .plan-course,.havan-builder-step-4 .havan-time-step,.havan-builder-step-4 .havan-topic-time-card,.havan-builder-step-4 .havan-critical-points{display:none}
+
+.havan-plan-resource-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 0.7rem;
+}
+
+.havan-plan-resource-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.25rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--app-border, #d9dee8);
+  border-radius: 0.7rem;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.havan-plan-resource-links a:hover,
+.havan-plan-resource-links a:focus-visible {
+  text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .havan-plan-resource-links {
+    flex-direction: column;
+  }
+
+  .havan-plan-resource-links a {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Havan Academy topic-resource structure: one clear learning block per selected topic. */
+.havan-plan-resources {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 1.1rem;
+  padding: 1rem;
+  border: 1px solid var(--app-border, #d9dee8);
+  border-radius: 1rem;
+  background: linear-gradient(145deg, #f7f8ff, #ffffff);
+}
+
+.havan-plan-resources-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.havan-plan-resources-heading > div {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.havan-plan-resources-heading strong {
+  color: var(--color-primary, #01017e);
+  font-size: 1rem;
+}
+
+.havan-plan-resource-badge {
+  flex: none;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  background: var(--color-primary-soft, #eef0ff);
+  color: var(--color-primary, #01017e);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.havan-plan-resources > p {
+  margin: 0;
+  color: var(--color-muted, #666);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.havan-plan-resource-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.havan-plan-resource-card {
+  display: grid;
+  align-content: start;
+  gap: 0.38rem;
+  min-height: 9.5rem;
+  padding: 0.85rem;
+  border: 1px solid var(--app-border, #d9dee8);
+  border-radius: 0.85rem;
+  background: #fff;
+  color: inherit;
+  text-decoration: none;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.havan-plan-resource-card:hover,
+.havan-plan-resource-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--color-primary, #01017e);
+  box-shadow: 0 8px 20px rgba(1, 1, 126, 0.1);
+}
+
+.havan-plan-resource-card-type {
+  color: var(--color-accent, #fa0302);
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.havan-plan-resource-card strong {
+  color: var(--color-primary, #01017e);
+  font-size: 0.95rem;
+}
+
+.havan-plan-resource-card > span:not(.havan-plan-resource-card-type):not(.havan-plan-resource-card-action) {
+  color: var(--color-muted, #666);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.havan-plan-resource-card-action {
+  margin-top: auto;
+  color: var(--color-primary, #01017e);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
