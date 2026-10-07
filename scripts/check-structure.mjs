@@ -31,7 +31,7 @@ for (const file of walk(src)) {
   if (/(from\s+['"]\.\.\/\.\.\/|import\s+['"]\.\.\/\.\.\/)/.test(text)) failures.push(`${rel}: use @/ alias instead of ../../ imports`)
   if (text.includes("localStorage.getItem('havan_student_key')") || text.includes('localStorage.getItem("havan_student_key")')) failures.push(`${rel}: legacy client-key identity access`)
   if (longestLine > 800) failures.push(`${rel}: minified or unformatted line exceeds 300 characters`)
-  if (file.endsWith('.css') && base !== 'tokens.css' && /#[0-9a-fA-F]{3,8}\\b/.test(text)) failures.push(`${rel}: raw hex color outside tokens.css`)
+  if (base !== 'tokens.css' && /#[0-9a-fA-F]{3,8}\\b/.test(text)) failures.push(`${rel}: raw hex color outside tokens.css`)
 }
 
 const packageJson = path.join(root, 'frontend', 'package.json')
