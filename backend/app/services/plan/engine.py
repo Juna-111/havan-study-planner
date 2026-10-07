@@ -327,17 +327,6 @@ def allocate_selected_topics(
     request: PlanRequest,
     config: PlannerConfig = DEFAULT_CONFIG,
 ) -> PlanResult:
-    """Intelligently organise only the topics the student selected.
-
-    Intelligence here means allocation quality, not topic discovery:
-    - never adds an unselected topic;
-    - adapts workload to observed pace;
-    - protects exam deadlines for selected topics;
-    - spreads work across selected courses and days;
-    - keeps chapter/topic order as a soft learning-sequence signal;
-    - avoids tiny fragments and over-capacity days;
-    - explains every allocation with transparent reason parts.
-    """
     cfg = config
     today = request.today
     horizon = max(1, request.horizon_days)
@@ -348,294 +337,337 @@ def allocate_selected_topics(
         and topic.progress_status != "COMPLETED"
     ]
     if not selected:
-        raise ValueError("Select at least one unfinished topic.")
+        return PlanResult(
+            engine_version=ENGINE_VERSION,
+            today=today,
+            sessions=(),
+            readiness=(),
+            warnings=(
+                PlanWarning(
+                    "NOTHING_TO_PLAN",
+                    "There is no unfinished selected work to schedule.",
+                ),
+            ),
+            unplaced=(),
+        )
+
+    pace = _clamp(request.pace_factor, cfg.min_pace_factor, cfg.max_pace_factor)
+    remaining = {
+        topic.topic_id: max(5, math.ceil(topic.estimated_minutes * pace / 5) * 5)
+        for topic in selected
+    }
+
+    exams = sorted(
+        (exam for exam in request.exams if exam.exam_date >= today),
+        key=lambda exam: (
+            exam.exam_date,
+            exam.course_id,
+            exam.importance,
+            exam.exam_type,
+        ),
+    )
+    exams_by_topic: dict[int, list[PlannerExam]] = {}
+    for topic in selected:
+        exams_by_topic[topic.topic_id] = [
+            exam
+            for exam in exams
+            if exam.course_id == topic.course_id and exam.covers(topic.topic_id)
+        ]
+
+    def deadline(topic: PlannerTopic) -> date:
+        applicable = exams_by_topic.get(topic.topic_id, ())
+        if not applicable:
+            return today + timedelta(days=horizon - 1)
+        return _last_study_day(applicable[0], today, cfg)
+
+    def next_exam(topic: PlannerTopic, day: date) -> PlannerExam | None:
+        return next(
+            (
+                exam
+                for exam in exams_by_topic.get(topic.topic_id, ())
+                if exam.exam_date >= day
+            ),
+            None,
+        )
+
+    def available_until(end: date) -> int:
+        if end < today:
+            return 0
+        days = min(horizon, (end - today).days + 1)
+        return sum(
+            request.calendar.capacity(today + timedelta(days=offset))
+            for offset in range(days)
+        )
+
+    readiness: list[ExamReadiness] = []
+    readiness_warnings: list[PlanWarning] = []
+    for exam in exams:
+        last_day = _last_study_day(exam, today, cfg)
+        window_end = min(today + timedelta(days=horizon - 1), last_day)
+        required = sum(
+            remaining[topic.topic_id]
+            for topic in selected
+            if topic.course_id == exam.course_id and exam.covers(topic.topic_id)
+        )
+        available = available_until(window_end)
+        study_days_left = sum(
+            1
+            for offset in range(
+                min(horizon, max(0, (window_end - today).days + 1))
+            )
+            if request.calendar.capacity(today + timedelta(days=offset)) > 0
+        )
+        cumulative = sum(
+            sum(
+                remaining[topic.topic_id]
+                for topic in selected
+                if earlier.course_id == topic.course_id
+                and earlier.covers(topic.topic_id)
+            )
+            for earlier in exams
+            if earlier.exam_date <= exam.exam_date
+        )
+        shortfall = max(0, cumulative - available)
+        pressure = cumulative / available if available else (math.inf if cumulative else 0)
+        if cumulative == 0 or pressure <= cfg.tight_ratio:
+            status = "ON_TRACK"
+        elif pressure <= 1.0:
+            status = "TIGHT"
+        else:
+            status = "OVERLOADED"
+        readiness.append(
+            ExamReadiness(
+                course_id=exam.course_id,
+                exam_type=exam.exam_type,
+                exam_date=exam.exam_date,
+                days_left=(exam.exam_date - today).days,
+                study_days_left=study_days_left,
+                required_minutes=required,
+                cumulative_required_minutes=cumulative,
+                available_minutes=available,
+                shortfall_minutes=shortfall,
+                extra_minutes_per_study_day=(
+                    math.ceil(shortfall / max(1, study_days_left))
+                    if shortfall
+                    else 0
+                ),
+                status=status,
+            )
+        )
+        if status == "OVERLOADED":
+            readiness_warnings.append(
+                PlanWarning(
+                    "EXAM_OVERLOADED",
+                    f"{exam.exam_type} needs about {shortfall} more minutes than your study time allows.",
+                )
+            )
 
     study_days = [
         today + timedelta(days=offset)
         for offset in range(horizon)
         if request.calendar.capacity(today + timedelta(days=offset)) > 0
     ]
-    engine_version = "3.1.0-choice"
-    if not study_days:
-        return PlanResult(
-            engine_version=engine_version,
-            today=today,
-            sessions=(),
-            readiness=(),
-            warnings=(PlanWarning("NO_STUDY_TIME", "There is no free study time inside the planning window."),),
-            unplaced=tuple(
-                UnplacedTopic(topic.topic_id, topic.name, topic.course_id, max(5, topic.estimated_minutes), "no_capacity")
-                for topic in selected
-            ),
-        )
-
-    pace = _clamp(request.pace_factor, cfg.min_pace_factor, cfg.max_pace_factor)
-    remaining = {
-        topic.topic_id: max(
-            cfg.min_session_minutes,
-            math.ceil(topic.estimated_minutes * pace / 5) * 5,
-        )
-        for topic in selected
-    }
-
-    exams_by_course: dict[int, list[PlannerExam]] = defaultdict(list)
-    for exam in request.exams:
-        if exam.exam_date >= today:
-            exams_by_course[exam.course_id].append(exam)
-    for exams in exams_by_course.values():
-        exams.sort(key=lambda exam: (exam.exam_date, exam.importance, exam.exam_type))
-
-    def next_exam(topic: PlannerTopic, day: date) -> PlannerExam | None:
-        return next(
-            (
-                exam for exam in exams_by_course.get(topic.course_id, ())
-                if exam.exam_date >= day and exam.covers(topic.topic_id)
-            ),
-            None,
-        )
-
-    # Readiness is calculated from the same selected-workload definition used
-    # by the allocator. It is a constraint report, never a source of topics.
-    readiness: list[ExamReadiness] = []
-    readiness_warnings: list[PlanWarning] = []
-    for exam in sorted(
-        (exam for exams in exams_by_course.values() for exam in exams),
-        key=lambda item: (item.exam_date, item.course_id, item.exam_type),
-    ):
-        last_day = _last_study_day(exam, today, cfg)
-        required = sum(
-            remaining[topic.topic_id]
-            for topic in selected
-            if topic.course_id == exam.course_id and exam.covers(topic.topic_id)
-        )
-        end = max(today, last_day)
-        available = sum(
-            request.calendar.capacity(today + timedelta(days=offset))
-            for offset in range((end - today).days + 1)
-        )
-        study_days_left = sum(
-            1
-            for offset in range((end - today).days + 1)
-            if request.calendar.capacity(today + timedelta(days=offset)) > 0
-        )
-        cumulative = sum(
-            earlier_required
-            for earlier_exam in sorted(
-                (item for exams in exams_by_course.values() for item in exams),
-                key=lambda item: (item.exam_date, item.course_id, item.exam_type),
-            )
-            if earlier_exam.exam_date <= exam.exam_date
-            for earlier_required in [
-                sum(
-                    remaining[topic.topic_id]
-                    for topic in selected
-                    if topic.course_id == earlier_exam.course_id
-                    and earlier_exam.covers(topic.topic_id)
-                )
-            ]
-        )
-        shortfall = max(0, cumulative - available)
-        pressure = cumulative / available if available > 0 else (math.inf if cumulative else 0.0)
-        if cumulative <= 0:
-            status = "ON_TRACK"
-        elif pressure > 1.0:
-            status = "OVERLOADED"
-        elif pressure > cfg.tight_ratio:
-            status = "TIGHT"
-        else:
-            status = "ON_TRACK"
-        readiness.append(ExamReadiness(
-            course_id=exam.course_id,
-            exam_type=exam.exam_type,
-            exam_date=exam.exam_date,
-            days_left=(exam.exam_date - today).days,
-            study_days_left=study_days_left,
-            required_minutes=required,
-            cumulative_required_minutes=cumulative,
-            available_minutes=available,
-            shortfall_minutes=shortfall,
-            extra_minutes_per_study_day=(
-                math.ceil(shortfall / max(1, study_days_left)) if shortfall else 0
-            ),
-            status=status,
-        ))
-        if status == "OVERLOADED":
-            readiness_warnings.append(PlanWarning(
-                "EXAM_OVERLOADED",
-                f"{exam.exam_type} (course {exam.course_id}) needs about "
-                f"{shortfall} more minutes than your study time allows.",
-            ))
-
-    capacities = {
-        day: request.calendar.capacity(day)
-        for day in study_days
-    }
-    used_course: dict[date, dict[int, int]] = defaultdict(lambda: defaultdict(int))
-    placed_today: dict[date, set[int]] = defaultdict(set)
+    capacities = {day: request.calendar.capacity(day) for day in study_days}
     sessions: list[PlannedSession] = []
     pinned = dict(request.pinned_topic_dates)
     deferred = set(request.deferred_topic_ids)
 
-    def rank(topic: PlannerTopic, day: date) -> tuple[float, float, float, float, float]:
-        exam = next_exam(topic, day)
-        days_left = (exam.exam_date - day).days if exam else None
-        deadline_pressure = (
-            1.0 if days_left is not None and days_left <= 0
-            else (1.0 / (days_left + 1) if days_left is not None else 0.0)
-        )
-        total_remaining = max(1, sum(remaining.values()))
-        workload_pressure = min(1.0, remaining[topic.topic_id] / total_remaining)
-        continuation = 0.08 if topic.progress_status == "IN_PROGRESS" else 0.0
-        confidence_need = max(0.0, (4 - topic.progress_confidence) / 15)
-        sequence = 1.0 / (1 + topic.chapter_order * 0.25 + topic.topic_order * 0.05)
-        course_load = used_course[day].get(topic.course_id, 0)
-        total_day = sum(used_course[day].values())
-        share_penalty = course_load / max(1, total_day)
-        coverage_bonus = 0.18 if total_day > 0 and topic.course_id not in used_course[day] else 0.0
-        repeat_penalty = 0.12 if topic.topic_id in placed_today[day] else 0.0
-        deferred_penalty = 0.10 if topic.topic_id in deferred and day == study_days[0] else 0.0
-        score = (
-            deadline_pressure * 0.42
-            + workload_pressure * 0.16
-            + continuation
-            + confidence_need
-            + sequence * 0.16
-            + coverage_bonus
-            - share_penalty * 0.35
-            - repeat_penalty
-            - deferred_penalty
-        )
-        return (
-            score,
-            -float(remaining[topic.topic_id]),
-            -float(topic.chapter_order),
-            -float(topic.topic_order),
-            -float(topic.topic_id),
-        )
-
-    def add_session(
-        topic: PlannerTopic,
-        day: date,
-        minutes: int,
-        *,
-        pinned_session: bool = False,
-    ) -> None:
-        parts: tuple[ReasonPart, ...] = (
-            ("student_selected", {}),
-            ("adaptive_allocation", {}),
-        )
-        exam = next_exam(topic, day)
-        if exam:
-            parts += ((
-                "exam_in",
-                {"exam_type": exam.exam_type, "days": max(0, (exam.exam_date - day).days)},
-            ),)
-        if topic.progress_status == "IN_PROGRESS":
-            parts += (("started", {}),)
-        if topic.progress_confidence <= 2:
-            parts += (("conf_low", {}),)
-        if pinned_session:
-            parts += (("pinned", {}),)
-        score = rank(topic, day)[0]
-        sessions.append(PlannedSession(
-            topic_id=topic.topic_id,
-            course_id=topic.course_id,
-            planned_date=day,
-            minutes=minutes,
-            priority=score,
-            reason=render_reason(parts),
-            kind="STUDY",
-            components={
-                "allocation_score": score,
-                "pace_factor": pace,
-                "remaining_minutes": float(remaining[topic.topic_id]),
-            },
-            reason_parts=parts,
-        ))
-        remaining[topic.topic_id] -= minutes
-        capacities[day] -= minutes
-        used_course[day][topic.course_id] += minutes
-        placed_today[day].add(topic.topic_id)
-
-    # Explicit student dates are honoured before automatic balancing.
     for topic in selected:
         target = pinned.get(topic.topic_id)
-        if target is None or remaining[topic.topic_id] <= 0:
+        if target is None or target < today or target > today + timedelta(days=horizon - 1):
             continue
-        if target not in capacities:
-            capacities[target] = request.calendar.capacity(target)
-            used_course[target] = defaultdict(int)
-            placed_today[target] = set()
-        chunk = min(remaining[topic.topic_id], capacities[target], session_limit_minutes(topic))
+        if capacities.get(target, request.calendar.capacity(target)) < cfg.min_session_minutes:
+            continue
+        capacities.setdefault(target, request.calendar.capacity(target))
+        limit = session_limit_minutes(topic, cfg)
+        chunk = min(remaining[topic.topic_id], capacities[target], limit)
         chunk = (chunk // 5) * 5
         if chunk >= cfg.min_session_minutes:
-            add_session(topic, target, chunk, pinned_session=True)
+            exam = next_exam(topic, target)
+            parts: tuple[ReasonPart, ...] = (("pinned", {}),)
+            if exam and target > _last_study_day(exam, today, cfg):
+                parts += (("exam_in", {"exam_type": exam.exam_type, "days": 0}),)
+            sessions.append(
+                PlannedSession(
+                    topic_id=topic.topic_id,
+                    course_id=topic.course_id,
+                    planned_date=target,
+                    minutes=chunk,
+                    priority=1.0,
+                    reason=render_reason(parts),
+                    kind="STUDY",
+                    components={"allocation_score": 1.0, "pace_factor": pace},
+                    reason_parts=parts,
+                )
+            )
+            remaining[topic.topic_id] -= chunk
+            capacities[target] -= chunk
 
-    # Allocate one meaningful block at a time. Prefer a new topic/course on a
-    # day, but permit a repeat when it is the only viable work left.
-    while any(value > 0 for value in remaining.values()):
-        candidate_days = [
-            day for day in study_days
-            if capacities.get(day, 0) >= cfg.min_session_minutes
-        ]
-        if not candidate_days:
-            break
+    def sort_key(item: PlannerTopic) -> tuple:
+        return (
+            deadline(item),
+            0 if item.progress_status == "IN_PROGRESS" else 1,
+            item.progress_confidence,
+            item.chapter_order,
+            item.topic_order,
+            item.topic_id,
+        )
 
-        best_pair = None
-        for day in candidate_days:
+    for day in study_days:
+        while capacities.get(day, 0) >= cfg.min_session_minutes:
             eligible = [
-                topic for topic in selected
+                topic
+                for topic in selected
                 if remaining[topic.topic_id] >= cfg.min_session_minutes
+                and day <= deadline(topic)
                 and not (
                     topic.topic_id in pinned
                     and day < pinned[topic.topic_id]
                 )
                 and not (
                     topic.topic_id in deferred
-                    and day == study_days[0]
+                    and day == today
                     and len(study_days) > 1
                 )
             ]
             if not eligible:
-                continue
-            fresh = [topic for topic in eligible if topic.topic_id not in placed_today[day]]
-            pool = fresh or eligible
-            for topic in pool:
-                score = rank(topic, day)
-                # Earlier days win; within a day, rank drives the choice.
-                day_key = (score, -day.toordinal(), capacities[day])
-                if best_pair is None or day_key > best_pair[0]:
-                    best_pair = (day_key, topic, day)
+                break
+            eligible.sort(key=sort_key)
 
-        if best_pair is None:
-            break
-        _, topic, day = best_pair
-        chunk = min(remaining[topic.topic_id], capacities[day], session_limit_minutes(topic))
-        chunk = (chunk // 5) * 5
-        if chunk < cfg.min_session_minutes:
-            capacities[day] = 0
+            topic = eligible[0]
+            day_capacity = request.calendar.capacity(day)
+            share_limit = max(
+                cfg.min_session_minutes,
+                math.floor(day_capacity * cfg.max_course_day_share),
+            )
+            used_by_course: dict[int, int] = defaultdict(int)
+            used_total = 0
+            for session in sessions:
+                if session.planned_date == day:
+                    used_by_course[session.course_id] += session.minutes
+                    used_total += session.minutes
+            current_limit = session_limit_minutes(topic, cfg)
+            candidate_chunk = min(
+                remaining[topic.topic_id],
+                capacities[day],
+                current_limit,
+            )
+            alternatives = [
+                item
+                for item in eligible
+                if item.course_id != topic.course_id
+                and remaining[item.topic_id] >= cfg.min_session_minutes
+            ]
+            if alternatives and used_by_course[topic.course_id] + candidate_chunk > share_limit:
+                alternatives.sort(key=sort_key)
+                topic = alternatives[0]
+
+            limit = session_limit_minutes(topic, cfg)
+            chunk = min(remaining[topic.topic_id], capacities[day], limit)
+            if remaining[topic.topic_id] < cfg.min_session_minutes:
+                chunk = remaining[topic.topic_id]
+            else:
+                chunk = (chunk // 5) * 5
+            if chunk < cfg.min_session_minutes:
+                break
+
+            exam = next_exam(topic, day)
+            parts: list[ReasonPart] = []
+            if exam:
+                parts.append(
+                    (
+                        "exam_in",
+                        {
+                            "exam_type": exam.exam_type,
+                            "days": max(0, (exam.exam_date - day).days),
+                        },
+                    )
+                )
+            if topic.progress_status == "IN_PROGRESS":
+                parts.append(("started", {}))
+            if topic.progress_confidence <= 2:
+                parts.append(("conf_low", {}))
+
+            existing_index = next(
+                (
+                    index
+                    for index, session in enumerate(sessions)
+                    if session.topic_id == topic.topic_id
+                    and session.planned_date == day
+                    and session.kind == "STUDY"
+                ),
+                None,
+            )
+            if existing_index is not None:
+                existing = sessions[existing_index]
+                sessions[existing_index] = replace(
+                    existing,
+                    minutes=existing.minutes + chunk,
+                )
+            else:
+                sessions.append(
+                    PlannedSession(
+                        topic_id=topic.topic_id,
+                        course_id=topic.course_id,
+                        planned_date=day,
+                        minutes=chunk,
+                        priority=1.0,
+                        reason=render_reason(parts),
+                        kind="STUDY",
+                        components={"allocation_score": 1.0, "pace_factor": pace},
+                        reason_parts=tuple(parts),
+                    )
+                )
+            remaining[topic.topic_id] -= chunk
+            capacities[day] -= chunk
+
+    unplaced: list[UnplacedTopic] = []
+    for topic in selected:
+        left = remaining[topic.topic_id]
+        if left <= 0:
             continue
-        add_session(topic, day, chunk)
+        last_day = deadline(topic)
+        usable = [
+            request.calendar.capacity(day)
+            for day in study_days
+            if day <= last_day
+            and not (
+                topic.topic_id in pinned
+                and day < pinned[topic.topic_id]
+            )
+        ]
+        if last_day < today:
+            reason_code = "exam_today_or_passed"
+        elif any(capacity >= cfg.min_session_minutes for capacity in usable):
+            reason_code = "exam_deadline"
+        else:
+            reason_code = "no_capacity"
+        unplaced.append(
+            UnplacedTopic(
+                topic.topic_id,
+                topic.name,
+                topic.course_id,
+                left,
+                reason_code,
+            )
+        )
 
-    unplaced = tuple(
-        UnplacedTopic(topic.topic_id, topic.name, topic.course_id, minutes, "no_capacity")
-        for topic in selected
-        if (minutes := remaining[topic.topic_id]) > 0
-    )
     warnings = list(readiness_warnings)
     if unplaced:
-        warnings.append(PlanWarning(
-            "DOES_NOT_FIT",
-            "Some selected topics need more time than the available study capacity.",
-        ))
+        warnings.append(
+            PlanWarning(
+                "DOES_NOT_FIT",
+                "Some selected topics could not fit before their available deadlines.",
+            )
+        )
 
     return PlanResult(
-        engine_version=engine_version,
+        engine_version=ENGINE_VERSION,
         today=today,
         sessions=tuple(sessions),
         readiness=tuple(readiness),
         warnings=tuple(dict.fromkeys(warnings)),
-        unplaced=unplaced,
+        unplaced=tuple(unplaced),
     )
 
 def parse_weekdays(values: Iterable[object] | None, default: frozenset[int] = frozenset({0, 1, 2, 3, 4})) -> frozenset[int]:
