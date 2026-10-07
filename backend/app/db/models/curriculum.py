@@ -167,6 +167,7 @@ class Chapter(Base):
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="ACTIVE", server_default="ACTIVE")
     course: Mapped[Course] = relationship(back_populates="chapters")
     topics: Mapped[list[Topic]] = relationship(back_populates="chapter", cascade="all, delete-orphan", order_by="Topic.order_index")
+    promotions: Mapped[list[HavanPromotion]] = relationship(back_populates="chapter", cascade="all, delete-orphan", order_by="HavanPromotion.order_index")
 
 
 class Topic(Base):
@@ -193,3 +194,26 @@ class Topic(Base):
     order_index: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="ACTIVE", server_default="ACTIVE")
     chapter: Mapped[Chapter] = relationship(back_populates="topics")
+    promotions: Mapped[list[HavanPromotion]] = relationship(back_populates="topic", cascade="all, delete-orphan", order_by="HavanPromotion.order_index")
+
+
+class HavanPromotion(Base):
+    """Generic Havan ecosystem promotion attached to a chapter or specific topic."""
+    __tablename__ = "havan_promotions"
+    __table_args__ = (
+        CheckConstraint("(chapter_id IS NOT NULL AND topic_id IS NULL) OR (chapter_id IS NULL AND topic_id IS NOT NULL)", name="ck_havan_promotions_one_parent"),
+        CheckConstraint("order_index >= 1", name="ck_havan_promotions_order"),
+        Index("ix_havan_promotions_chapter_id", "chapter_id"),
+        Index("ix_havan_promotions_topic_id", "topic_id"),
+    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    chapter_id: Mapped[Optional[int]] = mapped_column(ForeignKey("chapters.id", ondelete="CASCADE"), nullable=True)
+    topic_id: Mapped[Optional[int]] = mapped_column(ForeignKey("topics.id", ondelete="CASCADE"), nullable=True)
+    platform_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text)
+    button_text: Mapped[str] = mapped_column(String(100), nullable=False)
+    url: Mapped[str] = mapped_column(Text, nullable=False)
+    order_index: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="ACTIVE", server_default="ACTIVE")
+    chapter: Mapped[Optional[Chapter]] = relationship(back_populates="promotions")
+    topic: Mapped[Optional[Topic]] = relationship(back_populates="promotions")
