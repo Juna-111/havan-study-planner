@@ -25,7 +25,7 @@ def _preview_course(course, content_version: str, category_codes: list[str]) -> 
         chapters=[
             {
                 "name": chapter.name,
-                "topics": [{"name": topic.name, "difficulty": topic.difficulty} for topic in chapter.topics],
+                "topics": [{"name": topic.name, "difficulty": topic.difficulty, "important_points": topic.important_points} for topic in chapter.topics],
             }
             for chapter in course.chapters
         ],
@@ -118,6 +118,7 @@ def commit_freshman_registry_import(payload: list[FreshmanRegistryPreview], db: 
                             chapter_id=chapter.id,
                             name=topic_data.name,
                             difficulty=topic_data.difficulty,
+                            important_points=topic_data.important_points,
                             order_index=topic_index,
                         )
                     )

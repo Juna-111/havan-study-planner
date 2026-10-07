@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { apiFetch } from '@/lib/api'
 import CrudList, { entityConfigs, type EntityKey } from './CrudList'
+import PromotionManager from './PromotionManager'
 import styles from './admin.module.css'
 
 type Item = { id: number; name: string; code?: string }
@@ -13,6 +14,8 @@ export default function ContentScreen() {
   const [chapterId, setChapterId] = useState('')
   const [courses, setCourses] = useState<Item[]>([])
   const [chapters, setChapters] = useState<Item[]>([])
+  const [topics, setTopics] = useState<Item[]>([])
+  const [topicId, setTopicId] = useState('')
 
   useEffect(() => {
     apiFetch<{ items: Item[] }>('/courses?page=1&page_size=100')
@@ -22,6 +25,8 @@ export default function ContentScreen() {
 
   useEffect(() => {
     setChapterId('')
+    setTopicId('')
+    setTopics([])
     if (!courseId) {
       setChapters([])
       return
@@ -32,6 +37,12 @@ export default function ContentScreen() {
       .then((value) => setChapters(value.items))
       .catch(() => setChapters([]))
   }, [courseId])
+
+  useEffect(() => {
+    setTopicId('')
+    if (!chapterId || entity !== 'topics') { setTopics([]); return }
+    apiFetch<{ items: Item[] }>('/topics?chapter_id=' + chapterId + '&page=1&page_size=100').then((value) => setTopics(value.items)).catch(() => setTopics([]))
+  }, [chapterId, entity])
 
   const config = entityConfigs.find((item) => item.key === entity)!
 
@@ -51,6 +62,7 @@ export default function ContentScreen() {
             onClick={() => {
               setEntity(item.key)
               setChapterId('')
+              setTopicId('')
             }}
           >
             {item.label}
@@ -71,7 +83,7 @@ export default function ContentScreen() {
           </select>
         </label>
 
-        {entity === 'topics' && (
+        {(entity === 'topics' || entity === 'chapters') && (
           <label>
             Chapter
             <select
@@ -88,6 +100,14 @@ export default function ContentScreen() {
             </select>
           </label>
         )}
+        {entity === 'topics' && chapterId && (
+          <label>Topic
+            <select value={topicId} onChange={(event) => setTopicId(event.target.value)}>
+              <option value="">Choose a topic</option>
+              {topics.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+            </select>
+          </label>
+        )}
       </div>
 
       {!courseId ? (
@@ -95,10 +115,11 @@ export default function ContentScreen() {
       ) : entity === 'topics' && !chapterId ? (
         <div className={styles.empty}>Choose a chapter before editing its topics.</div>
       ) : (
-        <CrudList
-          config={config}
-          parentId={entity === 'chapters' ? courseId : chapterId}
-        />
+        <>
+          <CrudList config={config} parentId={entity === 'chapters' ? courseId : chapterId} />
+          {entity === 'chapters' && chapterId && <PromotionManager parentType="chapter" parentId={chapterId} />}
+          {entity === 'topics' && topicId && <PromotionManager parentType="topic" parentId={topicId} />}
+        </>
       )}
     </section>
   )

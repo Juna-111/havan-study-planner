@@ -9,7 +9,7 @@ type Preview = {
   name: string
   content_version: string
   category_codes: string[]
-  chapters: { name: string; topics: { name: string; difficulty: number }[] }[]
+  chapters: { name: string; topics: { name: string; difficulty: number; important_points?: string | null }[] }[]
 }
 
 export default function ImportScreen() {
@@ -79,8 +79,8 @@ export default function ImportScreen() {
     <section>
       <header className={styles.header}>
         <span>ACADEMIC CONTENT · IMPORT</span>
-        <h1>Import academic content safely</h1>
-        <p>Preview the established Course → Chapter → Topic format before anything is written to the registry.</p>
+        <h1>Import course content</h1>
+        <p>Upload only Course → Chapter → Topic, difficulty and critical points. University, curriculum, stream and semester are managed separately.</p>
       </header>
       {(message || error) && <div className={error ? styles.alert : styles.notice}>{error || message}</div>}
       <div className={styles.importStatus}>
@@ -124,7 +124,7 @@ export default function ImportScreen() {
               {course.chapters.map((chapter) => (
                 <div className={styles.indent} key={chapter.name}>
                   <strong>{chapter.name}</strong>
-                  {chapter.topics.map((topic) => <span key={topic.name}>{topic.name} · difficulty {topic.difficulty}</span>)}
+                  {chapter.topics.map((topic) => <span key={topic.name}>{topic.name} · difficulty {topic.difficulty}{topic.important_points ? ' · critical points added' : ''}</span>)}
                 </div>
               ))}
             </article>

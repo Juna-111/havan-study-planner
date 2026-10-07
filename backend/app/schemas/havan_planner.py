@@ -12,6 +12,14 @@ class HavanPlanCreate(BaseModel):
     hours_per_day: dict[int, float] = Field(default_factory=dict)
 
 
+class HavanPromotionRead(BaseModel):
+    id: int
+    platform_name: str
+    description: str | None = None
+    button_text: str
+    url: str
+    status: str
+
 class HavanPlanTaskRead(BaseModel):
     id: int
     course_id: int
@@ -27,6 +35,7 @@ class HavanPlanTaskRead(BaseModel):
     academy_notes_url: str | None = None
     academy_questions_url: str | None = None
     freshman_question_count: int | None = None
+    promotions: list[HavanPromotionRead] = Field(default_factory=list)
     status: str
 
 
