@@ -48,6 +48,8 @@ class HavanPlanRead(BaseModel):
     hours_per_day: dict[int, float]
     total_minutes: int
     tasks: list[HavanPlanTaskRead]
+    warnings: list[dict] = Field(default_factory=list)
+    unplaced: list[dict] = Field(default_factory=list)
 
 
 class HavanPlanTaskAction(BaseModel):
