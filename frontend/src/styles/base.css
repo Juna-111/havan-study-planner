@@ -315,3 +315,48 @@ button { cursor:pointer } :focus-visible { outline:3px solid rgba(1,1,126,.35); 
 @media(prefers-reduced-motion:reduce){
   .plan-focus-panel{transition:none}
 }
+
+
+.havan-exam-placeholder {
+  display: grid;
+  gap: 16px;
+  border-top: 4px solid var(--color-accent);
+  box-shadow: var(--shadow-brand);
+  animation: havan-rise-in .48s cubic-bezier(.2,.8,.2,1) both;
+}
+.havan-exam-placeholder > span {
+  color: var(--color-accent);
+  font-size: .75rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+}
+.havan-exam-placeholder h2 {
+  max-width: 720px;
+  color: var(--color-primary);
+  font-size: clamp(1.4rem, 4vw, 2rem);
+}
+.havan-exam-placeholder p {
+  max-width: 720px;
+  color: var(--color-muted);
+  line-height: 1.65;
+}
+.havan-exam-placeholder > div {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--color-primary-soft);
+}
+.havan-exam-placeholder > div strong {
+  color: var(--color-primary);
+}
+.havan-exam-placeholder ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 20px;
+  color: var(--color-muted);
+}
+@media (prefers-reduced-motion: reduce) {
+  .havan-exam-placeholder { animation: none; }
+}
