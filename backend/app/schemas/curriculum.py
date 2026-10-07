@@ -202,20 +202,6 @@ class PageMeta(BaseModel):
     pages: int
 
 
-class UniversityCourseMappingCreate(BaseModel):
-    stream_id: int = Field(gt=0)
-    course_id: int = Field(gt=0)
-    semester_number: int = Field(ge=1, le=2)
-    order_index: int = Field(default=1, ge=1)
-    status: str = Field(default="ACTIVE", pattern=r"^(DRAFT|ACTIVE|ARCHIVED)$")
-
-
-class UniversityCourseMappingUpdate(BaseModel):
-    semester_number: Optional[int] = Field(default=None, ge=1, le=2)
-    order_index: Optional[int] = Field(default=None, ge=1)
-    status: Optional[str] = Field(default=None, pattern=r"^(DRAFT|ACTIVE|ARCHIVED)$")
-
-
 class UniversityCourseMappingRead(BaseModel):
     id: int
     curriculum_id: int
