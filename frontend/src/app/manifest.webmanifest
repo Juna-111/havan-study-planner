@@ -4,6 +4,6 @@
   "description": "Academic planning for Ethiopian university freshman students.",
   "start_url": "/auth/",
   "display": "standalone",
-  "theme_color": "#01017e",
-  "background_color": "#f5f6fb"
+  "theme_color": "rgb(1 1 126)",
+  "background_color": "rgb(245 246 251)"
 }
