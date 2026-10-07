@@ -447,6 +447,7 @@ button { cursor:pointer } :focus-visible { outline:3px solid rgba(1,1,126,.35); 
 .exam-strategy{display:grid;gap:4px;padding:12px;border-left:3px solid var(--color-accent);border-radius:10px;background:var(--color-accent-soft)}
 .exam-strategy strong{color:var(--color-primary);font-size:.8rem}
 .exam-strategy span{color:var(--color-muted);font-size:.78rem;line-height:1.5}
+.exam-strategy small{color:var(--color-primary);font-size:.72rem;font-weight:800;line-height:1.45}
 @media(max-width:600px){
   .exam-topic-option{grid-template-columns:22px minmax(0,1fr)}
   .exam-topic-option small{grid-column:2}
