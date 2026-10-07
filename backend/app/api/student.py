@@ -508,6 +508,30 @@ def reset_progress(student_id: int, topic_id: int, db: DB):
 
 
 @router.get("/profiles/{student_id}/exams", response_model=list[ExamRead], dependencies=[Depends(require_student_owner)])
+def _validate_exam_scope(db: Session, profile: StudentProfile, course_id: int, topic_ids: list[int]) -> None:
+    course = db.get(Course, course_id)
+    if not course:
+        raise HTTPException(status_code=404, detail="Exam course not found")
+    if not course_available_to_stream(db, course.id, profile.stream_id):
+        raise HTTPException(status_code=400, detail="Exam course is outside the student's selected stream")
+    if not topic_ids:
+        return
+    unique_ids = set(topic_ids)
+    if len(unique_ids) != len(topic_ids):
+        raise HTTPException(status_code=400, detail="Exam scope contains duplicate topics")
+    valid_count = db.scalar(
+        select(func.count(Topic.id))
+        .join(Chapter, Chapter.id == Topic.chapter_id)
+        .where(
+            Topic.id.in_(unique_ids),
+            Chapter.course_id == course_id,
+            func.upper(Topic.status) == "ACTIVE",
+        )
+    ) or 0
+    if valid_count != len(unique_ids):
+        raise HTTPException(status_code=400, detail="Every exam-scope topic must belong to the selected course and be active")
+
+
 def list_exams(student_id: int, db: DB):
     profile_or_404(db, student_id)
     return list(db.scalars(select(StudentExam).where(StudentExam.student_id == student_id).order_by(StudentExam.exam_date)).all())
@@ -516,11 +540,7 @@ def list_exams(student_id: int, db: DB):
 @router.post("/profiles/{student_id}/exams", response_model=ExamRead, status_code=201, dependencies=[Depends(require_student_owner)])
 def add_exam(student_id: int, payload: ExamCreate, db: DB):
     profile = profile_or_404(db, student_id)
-    course = db.get(Course, payload.course_id)
-    if not course:
-        raise HTTPException(status_code=404, detail="Course not found")
-    if not course_available_to_stream(db, course.id, profile.stream_id):
-        raise HTTPException(status_code=400, detail="Exam course is outside the student's selected stream")
+    _validate_exam_scope(db, profile, payload.course_id, payload.selected_topic_ids)
     item = StudentExam(student_id=student_id, **payload.model_dump())
     db.add(item)
     db.commit()
@@ -542,12 +562,8 @@ def update_exam(student_id: int, exam_id: int, payload: ExamUpdate, db: DB):
 
     data = payload.model_dump(exclude_unset=True)
     course_id = data.get("course_id", item.course_id)
-    course = db.get(Course, course_id)
-    if not course:
-        raise HTTPException(status_code=404, detail="Exam course not found")
-    if not course_available_to_stream(db, course.id, profile.stream_id):
-        raise HTTPException(status_code=400, detail="Exam course is outside the student's selected stream")
-
+    topic_ids = data.get("selected_topic_ids", item.selected_topic_ids)
+    _validate_exam_scope(db, profile, course_id, topic_ids)
     for key, value in data.items():
         setattr(item, key, value)
 
