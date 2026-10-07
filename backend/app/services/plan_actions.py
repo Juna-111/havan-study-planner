@@ -5,8 +5,8 @@ from datetime import date, datetime, timedelta, timezone
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.time import today_local
-from app.core.errors import PlanValidationError, to_index
+from app.core.time import today_local, to_index
+from app.core.errors import PlanValidationError
 from app.db.models.curriculum import Chapter, Course, Topic
 from app.db.models.plan import Plan, PlanTask
 from app.db.models.student import StudentProfile, StudentTopicProgress
