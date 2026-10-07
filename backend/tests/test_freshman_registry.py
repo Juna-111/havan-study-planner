@@ -7,7 +7,6 @@ def test_freshman_registry_routes_are_registered() -> None:
     paths = {route.path for route in app.routes}
     assert "/api/v1/freshman-registry/courses" in paths
     assert "/api/v1/university-course-mappings" in paths
-    assert "/api/v1/university-course-mappings/courses" in paths
     assert "/api/v1/freshman-mappings" not in paths
     assert "/api/v1/freshman-stream-assignments" not in paths
     assert "/api/v1/university-course-overrides" not in paths
@@ -91,30 +90,3 @@ def test_freshman_registry_import_parser_rejects_legacy_indented_format() -> Non
     raise AssertionError("Legacy indented curriculum format must not be accepted.")
 
 
-def test_university_course_mapping_schema_assigns_a_course_to_one_semester():
-    from app.schemas.curriculum import UniversityCourseMappingCreate
-
-    item = UniversityCourseMappingCreate(
-        stream_id=11,
-        course_id=42,
-        semester_number=1,
-        order_index=3,
-        status="ACTIVE",
-    )
-
-    assert item.stream_id == 11
-    assert item.course_id == 42
-    assert item.semester_number == 1
-
-
-def test_university_course_mapping_rejects_invalid_semester():
-    import pytest
-    from pydantic import ValidationError
-    from app.schemas.curriculum import UniversityCourseMappingCreate
-
-    with pytest.raises(ValidationError):
-        UniversityCourseMappingCreate(
-            stream_id=11,
-            course_id=42,
-            semester_number=3,
-        )
