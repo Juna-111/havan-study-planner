@@ -1,0 +1,299 @@
+.havan-gate-loading {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  background: var(--color-canvas);
+  color: var(--color-primary);
+  text-align: center;
+}
+
+.havan-gate-loading p {
+  color: var(--color-muted);
+  font-weight: 700;
+}
+
+.havan-plan-skeleton {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5) 0;
+}
+
+.havan-plan-skeleton .card {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.havan-plan-feedback {
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+  border-left: 4px solid var(--color-accent);
+  background: linear-gradient(100deg, var(--color-accent-soft), var(--color-surface) 62%);
+}
+
+.havan-plan-feedback h2 {
+  color: var(--color-primary);
+  font-size: 1.2rem;
+}
+
+.havan-plan-warning {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+}
+
+.havan-plan-warning p {
+  flex: 1 1 280px;
+  color: var(--color-ink);
+  line-height: 1.5;
+}
+
+.havan-plan-warning-warn {
+  border-color: var(--color-warn);
+}
+
+.havan-plan-warning-danger {
+  border-color: var(--color-danger);
+}
+
+.havan-plan-warning-action {
+  min-height: var(--tap);
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 800;
+}
+
+.havan-plan-warning-action:hover {
+  background: var(--color-primary);
+  color: var(--color-surface);
+}
+
+.havan-plan-unplaced {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px dashed var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.havan-plan-unplaced strong {
+  color: var(--color-primary);
+}
+
+.havan-plan-unplaced div {
+  display: grid;
+  gap: 2px;
+}
+
+.havan-plan-unplaced span {
+  color: var(--color-ink);
+  font-weight: 700;
+}
+
+.havan-plan-unplaced small {
+  color: var(--color-muted);
+}
+
+.havan-plan-overview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+
+.havan-plan-overview > div {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.havan-plan-overview h2 {
+  color: var(--color-primary);
+}
+
+.havan-plan-overview p {
+  color: var(--color-muted);
+}
+
+.havan-plan-overview .bar {
+  max-width: 440px;
+}
+
+.havan-plan-day {
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.havan-plan-day-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.havan-plan-day-heading h2 {
+  color: var(--color-ink);
+}
+
+.havan-plan-day-heading span {
+  color: var(--color-muted);
+  font-weight: 800;
+}
+
+.havan-plan-task {
+  display: grid;
+  gap: var(--space-2);
+  border-top: 3px solid var(--color-primary);
+}
+
+.havan-plan-task-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.havan-plan-course {
+  color: var(--color-primary);
+  font-size: var(--text-sm);
+  font-weight: 900;
+}
+
+.havan-plan-chapter {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+
+.havan-plan-task h3 {
+  color: var(--color-ink);
+  font-size: 1.2rem;
+}
+
+.havan-plan-reason {
+  color: var(--color-muted);
+  line-height: 1.55;
+}
+
+.havan-plan-points,
+.havan-plan-promotions {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-soft);
+}
+
+.havan-plan-points strong,
+.havan-plan-promotions strong {
+  color: var(--color-primary);
+}
+
+.havan-plan-points ul {
+  display: grid;
+  gap: 5px;
+  padding-left: 18px;
+}
+
+.havan-plan-points li {
+  color: var(--color-ink);
+  line-height: 1.5;
+}
+
+.havan-plan-promotion-links {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.havan-plan-promotion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: var(--tap);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.havan-plan-promotion span {
+  display: grid;
+  gap: 2px;
+}
+
+.havan-plan-promotion small {
+  color: var(--color-muted);
+}
+
+.havan-plan-promotion b {
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
+.havan-plan-task-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.havan-plan-complete-note {
+  display: inline-flex;
+  min-height: var(--tap);
+  align-items: center;
+  color: var(--color-success);
+  font-weight: 800;
+}
+
+.havan-plan-error {
+  margin: var(--space-3) 0;
+  color: var(--color-danger);
+  font-weight: 700;
+}
+
+@media (max-width: 700px) {
+  .havan-plan-overview {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .havan-plan-overview a,
+  .havan-plan-overview button {
+    width: 100%;
+  }
+
+  .havan-plan-task-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .havan-plan-task-actions > * {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .havan-plan-task,
+  .havan-plan-warning-action {
+    transition: none;
+  }
+}
