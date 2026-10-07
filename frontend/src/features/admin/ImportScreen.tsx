@@ -24,7 +24,7 @@ export default function ImportScreen() {
     if(!next){setKind('course');return}
     if(next.name.toLowerCase().endsWith('.csv')){setKind('university');return}
     try{
-      const first=(await next.text()).split(/\\r?\\n/).map((line)=>line.trim()).find(Boolean)?.toUpperCase()
+      const first=(await next.text()).split(/\r?\n/).map((line)=>line.trim()).find(Boolean)?.toUpperCase()
       setKind(first==='TYPE: HAVAN_PROMOTION_V1'?'promotion':'course')
     }catch{setKind('course')}
   }
