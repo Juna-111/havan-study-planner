@@ -1,24 +1,42 @@
 .pageHeader {
-  padding: 20px 0;
+  position: relative;
+  padding: 20px 22px;
   display: grid;
   gap: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.14);
+  border-left: 5px solid var(--color-accent);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 92% 18%, rgba(250,3,2,.18), transparent 28%),
+    linear-gradient(145deg, #01017e 0%, #08088e 62%, #02025d 100%);
+  color: #fff;
+  box-shadow: 0 12px 30px rgba(1,1,126,.14);
+}
+.pageHeader > div,
+.pageHeader > a {
+  position: relative;
+  z-index: 1;
 }
 .pageHeader > a {
   min-height: 44px;
   display: flex;
   align-items: center;
   width: max-content;
-  color: #01017e;
+  color: #fff;
   text-decoration: none;
-  font-weight: 700;
+  font-weight: 800;
+}
+.pageHeader > a:hover {
+  color: #fa0302;
 }
 .pageHeader h1 {
-  color: #01017e;
+  color: #fff;
   font-size: clamp(1.75rem, 6vw, 2.25rem);
 }
 .pageHeader p {
   margin-top: 6px;
-  color: #5d5d73;
+  color: rgba(255,255,255,.76);
 }
 .sticky {
   position: fixed;
