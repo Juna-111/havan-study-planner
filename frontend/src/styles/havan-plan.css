@@ -64,13 +64,14 @@
   border-color: var(--color-danger);
 }
 
+
 .havan-plan-warning-action {
   min-height: var(--tap);
   display: inline-flex;
   align-items: center;
   padding: 0 var(--space-3);
   border-radius: var(--radius-pill);
-  background: rgba(255,255,255,.08);
+  background: var(--color-primary-soft);
   color: var(--color-primary);
   text-decoration: none;
   font-weight: 800;
@@ -184,7 +185,7 @@
 }
 
 .plan-task h3 {
-  color: var(--color-ink);
+  color: var(--color-white);
   font-size: 1.2rem;
 }
 
@@ -200,12 +201,13 @@
   margin-top: var(--space-2);
   padding: var(--space-3);
   border-radius: var(--radius-md);
-  background: var(--color-primary-soft);
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.12);
 }
 
 .havan-plan-points strong,
 .havan-plan-promotions strong {
-  color: var(--color-primary);
+  color: var(--color-white);
 }
 
 .havan-plan-points ul {
@@ -215,7 +217,7 @@
 }
 
 .havan-plan-points li {
-  color: var(--color-ink);
+  color: rgba(255,255,255,.86);
   line-height: 1.5;
 }
 
@@ -284,7 +286,7 @@
     width: 100%;
   }
 
-  .havan-plan-task-actions {
+  .plan-task-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
   }
