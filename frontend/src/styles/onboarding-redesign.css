@@ -45,12 +45,38 @@
 }
 
 .onboarding-redesign .onboarding-welcome {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: grid;
   gap: 8px;
-  padding: clamp(24px, 5vw, 42px) 0 22px;
+  margin: 22px 0 18px;
+  padding: clamp(24px, 5vw, 42px);
+  border-radius: 22px;
+  background: linear-gradient(118deg, var(--color-primary) 0%, var(--color-primary-mid) 68%, #2525a6 100%);
+  box-shadow: 0 16px 36px rgba(1, 1, 126, 0.18);
 }
 
-.onboarding-redesign .onboarding-welcome-kicker,
+.onboarding-redesign .onboarding-welcome::after {
+  position: absolute;
+  z-index: -1;
+  top: -116px;
+  right: -54px;
+  width: 250px;
+  height: 250px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  box-shadow: 0 0 0 24px rgba(255, 255, 255, 0.045), 0 0 0 54px rgba(255, 255, 255, 0.035);
+  content: "";
+}
+
+.onboarding-redesign .onboarding-welcome-kicker {
+  color: #c9d4ff;
+  font-size: 0.7rem;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+}
+
 .onboarding-redesign .onboarding-stage-heading > span {
   color: var(--color-accent);
   font-size: 0.7rem;
@@ -59,8 +85,9 @@
 }
 
 .onboarding-redesign .onboarding-welcome h1 {
-  max-width: 680px;
-  color: var(--color-primary);
+  position: relative;
+  max-width: 560px;
+  color: var(--color-white);
   font-family: var(--font-body), Arial, sans-serif;
   font-size: clamp(1.8rem, 5vw, 2.8rem);
   font-weight: 780;
@@ -69,8 +96,9 @@
 }
 
 .onboarding-redesign .onboarding-welcome p {
-  max-width: 620px;
-  color: var(--onboarding-muted);
+  position: relative;
+  max-width: 560px;
+  color: rgba(255, 255, 255, 0.82);
   font-size: 1rem;
   line-height: 1.6;
 }
@@ -99,8 +127,9 @@
 
 .onboarding-redesign .onboarding-progress-step.active {
   border-color: var(--color-primary);
-  background: var(--color-primary-soft);
-  color: var(--color-primary);
+  background: var(--gradient-brand);
+  color: var(--color-white);
+  box-shadow: var(--shadow-brand);
 }
 
 .onboarding-redesign .onboarding-progress-step.complete {
@@ -121,8 +150,8 @@
 }
 
 .onboarding-redesign .onboarding-progress-step.active .onboarding-progress-number {
-  background: var(--color-primary);
-  color: var(--color-white);
+  background: var(--color-white);
+  color: var(--color-primary);
 }
 
 .onboarding-redesign .onboarding-progress-step.complete .onboarding-progress-number {
@@ -148,11 +177,16 @@
   font-size: 0.7rem;
 }
 
+.onboarding-redesign .onboarding-progress-step.active .onboarding-progress-copy small {
+  color: rgba(255, 255, 255, 0.76);
+}
+
 .onboarding-redesign .onboarding-stage {
   display: grid;
   gap: 16px;
   padding: clamp(16px, 4vw, 28px);
   border: 1px solid var(--onboarding-line);
+  border-top: 3px solid var(--color-primary);
   border-radius: 22px;
   background: var(--color-white);
   box-shadow: 0 14px 42px rgba(20, 20, 57, 0.07);
@@ -442,7 +476,13 @@
   }
 
   .onboarding-redesign .onboarding-welcome {
-    padding: 24px 0 18px;
+    margin: 16px 0 14px;
+    padding: 24px 20px;
+  }
+
+  .onboarding-redesign .onboarding-welcome::after {
+    top: -145px;
+    right: -136px;
   }
 
   .onboarding-redesign .onboarding-progress {
