@@ -53,10 +53,11 @@ def parse_promotion_file(raw:bytes)->list[PromotionImportRow]:
  try:text=raw.decode("utf-8-sig")
  except UnicodeDecodeError as e:raise HTTPException(422,"The Havan promotion file must be UTF-8 text.") from e
  result=[];required=["course_code","chapter","platform_name","button_text","url"]
- lines=[line.strip() for line in text.splitlines() if line.strip()]
- if not lines or lines[0].upper()!=PROMOTION_FILE_MARKER:
+ lines=text.replace("\r\n","\n").replace("\r","\n").splitlines()
+ marker_index=next((index for index,line in enumerate(lines) if line.strip()),None)
+ if marker_index is None or lines[marker_index].strip().upper()!=PROMOTION_FILE_MARKER:
   raise HTTPException(422,"The Havan promotion file must start with TYPE: HAVAN_PROMOTION_V1.")
- blocks=_promotion_blocks("\n".join(lines[1:]))
+ blocks=_promotion_blocks("\n".join(lines[marker_index+1:]))
  if not blocks:raise HTTPException(422,"The Havan promotion file contains no promotion blocks.")
  for i,row in enumerate(blocks,1):
   missing=[k for k in required if not _clean(row.get(k))]

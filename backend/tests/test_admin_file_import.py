@@ -33,6 +33,40 @@ url: https://example.com/physics
     assert rows[0].status == "ACTIVE"
 
 
+def test_promotion_file_preserves_multiple_blank_line_separated_blocks():
+    raw = f"""{PROMOTION_FILE_MARKER}
+
+Course_Code: PHY101
+Chapter: Measurement
+Topic: Units
+Platform_Name: Havan Learning Resource
+Description: Review the core measurement concepts.
+Button_Text: Open resource
+URL: https://example.com/measurement
+Order_Index: 1
+Status: ACTIVE
+
+Course_Code: PHY101
+Chapter: Measurement
+Platform_Name: Havan Exam Preparation
+Description: Practice chapter questions.
+Button_Text: Start practice
+URL: https://example.com/practice
+Order_Index: 2
+Status: ACTIVE
+"""
+
+    rows = parse_promotion_file(raw.encode())
+
+    assert len(rows) == 2
+    assert rows[0].topic_name == "Units"
+    assert rows[0].platform_name == "Havan Learning Resource"
+    assert rows[0].order_index == 1
+    assert rows[1].topic_name is None
+    assert rows[1].platform_name == "Havan Exam Preparation"
+    assert rows[1].order_index == 2
+
+
 def test_promotion_file_rejects_missing_required_field():
     raw = f"""{PROMOTION_FILE_MARKER}
 course_code: PHY101
