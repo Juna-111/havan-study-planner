@@ -172,7 +172,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
       <Card padding="lg" className="app-section havan-plan-controls havan-time-step">
         <div className="havan-plan-mode">
           <div>
-            <span className="app-eyebrow">PLAN HORIZON</span>
+            <span className="app-eyebrow">HAVAN · PLAN HORIZON</span>
             <strong>{copy.horizon}</strong>
           </div>
           <span className="havan-plan-control-note">{mode === 'today' ? 'Tell Havan exactly how much time you can study today.' : 'Set the time you can study on each available study day.'}</span>
@@ -240,7 +240,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
 
       {loading ? (
         <Card padding="lg" className="havan-plan-skeleton" aria-busy="true">
-          <span className="app-eyebrow">HAVAN ACADEMY</span>
+          <span className="app-eyebrow">HAVAN · STUDY PLAN</span>
           <h2>Loading your study choices</h2>
           <p className="app-meta">Havan is loading your courses and topics.</p>
         </Card>
@@ -295,9 +295,9 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
           {selectedTopics.length > 0 && (
             <Card padding="lg" className="havan-critical-points havan-motion-enter" style={{ '--motion-delay': '110ms' } as React.CSSProperties}>
               <div>
-                <span className="app-eyebrow">STEP 2 · HAVAN ACADEMY</span>
+                <span className="app-eyebrow">STEP 2 · HAVAN · GUIDANCE</span>
                 <h2>Chapter guidance</h2>
-                <p className="app-meta">Chapter-level critical points entered by the Havan Academy admin for the chapters containing your selected topics.</p>
+                <p className="app-meta">Chapter guidance highlights the most important concepts for each chapter in your selected study set.</p>
               </div>
               <div className="havan-chapter-guidance">
                 {Array.from(new Map(
@@ -320,8 +320,8 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
                 })}
               </div>
               <div className="havan-resource-note">
-                <strong>Havan Academy resources</strong>
-                <p>Course videos, notes, and Freshman Exam Questions will appear here when those resources are published for the selected content.</p>
+                <strong>Havan resource library</strong>
+                <p>Course notes, videos, and exam preparation resources will appear here when those materials are published for your selected topics.</p>
               </div>
             </Card>
           )}
@@ -329,9 +329,9 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
           {selectedTopics.length > 0 && (
             <Card padding="lg" className="havan-critical-points havan-motion-enter" style={{ '--motion-delay': '170ms' } as React.CSSProperties}>
               <div>
-                <span className="app-eyebrow">STEP 2 · HAVAN ACADEMY</span>
+                <span className="app-eyebrow">STEP 2 · TOPIC FOCUS</span>
                 <h2>Important points for your selected topics</h2>
-                <p className="app-meta">These are the critical points entered by the Havan Academy admin for the selected topics.</p>
+                <p className="app-meta">These are the highest-value review points for the topics you selected.</p>
               </div>
               <div className="havan-topic-insights">
                 {selectedTopics.map((topic) => {

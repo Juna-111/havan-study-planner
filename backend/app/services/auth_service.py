@@ -44,9 +44,8 @@ def login(db: Session, email: str, password: str) -> tuple[StudentAccount, str]:
         login_throttle.record_failure(normalized)
         raise DomainError("UNAUTHORIZED", "Email or password is incorrect.", 401)
     login_throttle.clear(normalized)
-    desired_role = "ADMIN" if is_admin_email(account.email) else "STUDENT"
-    if account.role != desired_role:
-        account.role = desired_role
+    if account.role != "ADMIN" and is_admin_email(account.email):
+        account.role = "ADMIN"
         db.commit()
         db.refresh(account)
     return account, make_access_token(account.id)

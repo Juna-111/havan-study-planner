@@ -238,7 +238,7 @@ export default function HavanPlanView() {
                   )}
 
                   {task.promotions.length > 0 && (
-                    <div className="havan-plan-promotions" aria-label="Havan Academy promotion">
+                    <div className="havan-plan-promotions" aria-label="Havan study promotion">
                       <div className="havan-plan-promotions-heading">
                         <span className="app-eyebrow">HAVAN</span>
                         <strong>Learn more with Havan</strong>

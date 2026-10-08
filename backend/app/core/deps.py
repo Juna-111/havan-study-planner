@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import Depends
+from fastapi import Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -17,13 +17,23 @@ DB = Annotated[Session, Depends(get_db)]
 
 
 def current_account(
+    request: Request,
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)],
     db: DB,
-) -> StudentAccount:
-    if credentials is None:
+) -> StudentAccount | None:
+    if request.method.upper() == "POST" and request.url.path.endswith("/auth/session"):
+        return None
+    token: str | None = None
+    cookie_token = request.cookies.get("havan_session")
+    if cookie_token:
+        token = cookie_token
+    elif credentials is not None:
+        token = credentials.credentials
+
+    if not token:
         raise DomainError("UNAUTHORIZED", "Authentication required.", 401)
     try:
-        account_id, _ = decode_access_token(credentials.credentials)
+        account_id, _ = decode_access_token(token)
     except ValueError:
         raise DomainError("UNAUTHORIZED", "Your session is invalid or expired. Please sign in again.", 401) from None
     account = db.get(StudentAccount, account_id)

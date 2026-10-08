@@ -66,5 +66,7 @@
   --color-danger-strong:#b61b18;
   --color-success-dark:#17633a;
   --color-white:#fff;
-  --tap:44px
+  --tap:44px;
+  --shadow-focus:0 0 0 3px rgba(1,1,126,.18);
+  --shadow-focus-ring:0 0 0 3px var(--color-primary-soft)
 }

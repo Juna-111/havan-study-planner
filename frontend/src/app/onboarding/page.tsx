@@ -86,7 +86,7 @@ export default function Onboarding() {
   return (
     <main className="onboarding-shell onboarding-journey">
       <div className="onboarding-brand-row">
-        <span className="onboarding-brand">HAVAN ACADEMY</span>
+        <span className="onboarding-brand">HAVAN · STUDY PLANNER</span>
         <span className="onboarding-step-count">Step {step + 1} of 3</span>
       </div>
       <div className="onboarding-hero havan-motion-enter"><span className="onboarding-hero-kicker">YOUR HAVAN JOURNEY</span><h1>Build your Havan study journey</h1>

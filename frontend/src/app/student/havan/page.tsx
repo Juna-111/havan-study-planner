@@ -32,7 +32,7 @@ export default function HavanHome() {
       <div className="havan-home">
         <header className="havan-home-hero">
           <HavanLogo size={52} variant="dark" className="havan-home-logo" />
-          <span className="app-eyebrow">HAVAN ACADEMY · STUDY PLANNER</span>
+          <span className="app-eyebrow">HAVAN · STUDY PLANNER</span>
           <h1>Your study journey, your choice.</h1>
           <p>Choose what you want to learn and how much time you have. Havan organizes your choices into a clear study plan.</p>
         </header>

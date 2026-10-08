@@ -3,6 +3,7 @@ import logging
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from slowapi.errors import RateLimitExceeded
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,18 @@ def register_exception_handlers(app: FastAPI) -> None:
             status_code=exc.status,
             content={"detail": exc.message, "code": exc.code},
         )
+
+    @app.exception_handler(RateLimitExceeded)
+    async def rate_limit_exceeded(request: Request, exc: RateLimitExceeded) -> JSONResponse:
+        from app.core.limiter import rate_limit_domain_error
+
+        domain_exc, retry_after = rate_limit_domain_error(exc)
+        response = JSONResponse(
+            status_code=domain_exc.status,
+            content={"detail": domain_exc.message, "code": domain_exc.code},
+        )
+        response.headers["Retry-After"] = str(retry_after)
+        return response
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:

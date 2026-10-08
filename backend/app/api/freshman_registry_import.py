@@ -1,6 +1,7 @@
 from app.core.config import API_PREFIX
 from app.core.deps import require_admin
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from app.core.errors import DomainError
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -18,6 +19,27 @@ router = APIRouter(
 )
 DB = Depends(get_db)
 MAX_FILE_SIZE = 5 * 1024 * 1024
+
+
+def _assert_file_within_limit(request: Request, file: UploadFile) -> None:
+    size_known = file.size is not None and file.size > MAX_FILE_SIZE
+    try:
+        cl_hdr = request.headers.get("content-length")
+        cl_known = False
+        if cl_hdr is not None:
+            try:
+                if int(cl_hdr) > MAX_FILE_SIZE:
+                    cl_known = True
+            except ValueError:
+                cl_known = False
+    except Exception:
+        cl_known = False
+    if size_known or cl_known:
+        raise DomainError(
+            "PAYLOAD_TOO_LARGE",
+            "The freshman course file must be 5 MB or smaller.",
+            413,
+        )
 
 
 def _read_courses(raw: bytes, content_version: str):
@@ -87,6 +109,7 @@ def _preview(parsed_course, version: str, action: str) -> FreshmanRegistryPrevie
 
 @router.post("/preview", response_model=list[FreshmanRegistryPreview])
 async def preview_freshman_registry_import(
+    request: Request,
     file: UploadFile = File(...),
     content_version: str = "1.0",
     db: Session = DB,
@@ -94,6 +117,7 @@ async def preview_freshman_registry_import(
     if not file.filename or not file.filename.lower().endswith((".txt", ".md")):
         raise HTTPException(status_code=415, detail="Upload a .txt or .md freshman course file.")
 
+    _assert_file_within_limit(request, file)
     raw = await file.read()
     parsed, version = _read_courses(raw, content_version)
     previews: list[FreshmanRegistryPreview] = []
@@ -116,6 +140,7 @@ async def preview_freshman_registry_import(
 
 @router.post("/commit", response_model=list[FreshmanRegistryResult])
 async def commit_freshman_registry_import(
+    request: Request,
     file: UploadFile = File(...),
     content_version: str = "1.0",
     db: Session = DB,
@@ -123,6 +148,7 @@ async def commit_freshman_registry_import(
     if not file.filename or not file.filename.lower().endswith((".txt", ".md")):
         raise HTTPException(status_code=415, detail="Upload a .txt or .md freshman course file.")
 
+    _assert_file_within_limit(request, file)
     raw = await file.read()
     parsed, version = _read_courses(raw, content_version)
     results: list[FreshmanRegistryResult] = []

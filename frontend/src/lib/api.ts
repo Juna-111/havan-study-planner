@@ -12,9 +12,7 @@ type ApiErrorDetail = string | ApiValidationError[]
 const rawApiBaseUrl = process.env.NEXT_PUBLIC_API_URL?.trim()
 const API_BASE_URL = rawApiBaseUrl
   ? rawApiBaseUrl.replace(/\/+$/, '').replace(/\/api\/v1$/, '')
-  : process.env.NODE_ENV === 'production'
-    ? 'https://havan-study-planner.onrender.com'
-    : 'http://localhost:8000'
+  : 'http://localhost:8000'
 const API_V1_PREFIX = '/api/v1'
 const DEFAULT_TIMEOUT_MS = 15_000
 const PUBLIC_AUTH_PATHS = new Set([

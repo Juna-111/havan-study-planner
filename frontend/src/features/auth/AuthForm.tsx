@@ -4,7 +4,8 @@ import { type FormEvent, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { apiFetch } from '@/lib/api'
 import { getAuthToken, saveAuth, type AuthResponse } from '@/lib/auth'
-import { HavanLogo } from '@/components/brand/HavanLogo'
+import { BrandedHeader } from '@/components/brand/BrandedHeader'
+import { CheckIcon } from '@/components/brand/illustrations'
 
 type Mode = 'login' | 'signup' | 'forgot'
 type ForgotStep = 'email' | 'code' | 'done'
@@ -22,7 +23,7 @@ export default function AuthForm() {
   const [message, setMessage] = useState('')
 
   useEffect(() => {
-    if (getAuthToken()) router.replace('/home')
+    if (getAuthToken()) router.replace('/student/havan')
   }, [router])
 
   function switchMode(next: Mode) {
@@ -48,7 +49,7 @@ export default function AuthForm() {
           setMessage(response.message)
           setForgotStep('code')
         } catch (err) {
-          setError(err instanceof Error ? err.message : 'Could not send the verification code.')
+          setError(err instanceof Error ? err.message : 'We could not send the verification code. Please try again.')
         } finally {
           setBusy(false)
         }
@@ -65,7 +66,7 @@ export default function AuthForm() {
           setForgotStep('done')
           setMessage('Code verified. Choose a new password below.')
         } catch (err) {
-          setError(err instanceof Error ? err.message : 'The verification code is invalid or expired.')
+          setError(err instanceof Error ? err.message : 'That verification code is invalid or expired. Please request a new one.')
         } finally {
           setBusy(false)
         }
@@ -89,7 +90,7 @@ export default function AuthForm() {
         setCode('')
         setMessage('Password reset successfully. Sign in with your new password.')
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Could not reset your password.')
+        setError(err instanceof Error ? err.message : 'We could not reset your password. Please try again.')
       } finally {
         setBusy(false)
       }
@@ -97,7 +98,7 @@ export default function AuthForm() {
     }
 
     if (mode === 'signup' && password !== confirm) {
-      setError('Passwords do not match.')
+      setError('Passwords do not match. Please re-enter them to continue.')
       return
     }
 
@@ -108,9 +109,9 @@ export default function AuthForm() {
         body: JSON.stringify({ email, password }),
       })
       saveAuth(response)
-      window.location.href = response.account.student_profile_id ? '/home' : '/onboarding'
+      router.replace(response.account.student_profile_id ? '/student/havan' : '/onboarding')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Authentication failed.')
+      setError(err instanceof Error ? err.message : 'We could not complete your sign-in. Please try again.')
     } finally {
       setBusy(false)
     }
@@ -130,17 +131,24 @@ export default function AuthForm() {
       ? 'Sign in to access your saved profile, plan, exams, and progress.'
       : 'Create one account so your Havan profile is available every time you return.'
 
+  const busyLabel = isForgot
+    ? forgotStep === 'email' ? 'Sending code…'
+      : forgotStep === 'code' ? 'Verifying…'
+        : 'Resetting password…'
+    : mode === 'login' ? 'Signing you in…' : 'Creating your account…'
+
   return (
     <main className={`auth-shell ${busy ? 'auth-is-busy' : ''}`}>
       <section className="auth-brand-panel auth-reveal auth-reveal-1">
         <div className="auth-brand-inner">
-          <HavanLogo size={54} variant="light" />
-          <h1>Plan with clarity.</h1>
+          <div style={{padding: '0 0 16px'}}>
+            <BrandedHeader eyebrow="HAVAN STUDY PLANNER" title="Plan with clarity." logoSize={54} />
+          </div>
           <p>Choose what you want to study, tell Havan how much time you have, and keep control of your plan.</p>
           <div className="auth-points">
-            <div className="auth-point"><b>✓</b><span>Your profile stays connected to your study progress.</span></div>
-            <div className="auth-point"><b>✓</b><span>Return anytime and continue where you stopped.</span></div>
-            <div className="auth-point"><b>✓</b><span>Edit your academic and study preferences whenever they change.</span></div>
+            <div className="auth-point"><CheckIcon size={18} /><span>Your profile stays connected to your study progress.</span></div>
+            <div className="auth-point"><CheckIcon size={18} /><span>Return anytime and continue where you stopped.</span></div>
+            <div className="auth-point"><CheckIcon size={18} /><span>Edit your academic and study preferences whenever they change.</span></div>
           </div>
         </div>
       </section>
@@ -194,7 +202,7 @@ export default function AuthForm() {
             {message && <div className="auth-message">{message}</div>}
 
             <button className="auth-submit" disabled={busy}>{busy && <span className="auth-button-pulse" aria-hidden="true"><i /><i /><i /></span>}
-              {busy ? 'Working…' : isForgot
+              {busy ? busyLabel : isForgot
                 ? forgotStep === 'email' ? 'Send verification code'
                   : forgotStep === 'code' ? 'Verify code'
                     : 'Reset password'

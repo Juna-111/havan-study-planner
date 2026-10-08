@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { Card, Select } from '@/components/ui'
+import { Button, Card, Select } from '@/components/ui'
 import CourseChoice from './CourseChoice'
 import { apiFetch } from '@/lib/api'
 import AcademicCatalogRequest from './AcademicCatalogRequest'
@@ -18,6 +18,7 @@ type Props = {
   onCurriculum: (value: string) => void
   onStream: (value: string) => void
   onToggleCourse: (id: number, checked: boolean) => void
+  onRetryLoad?: () => void
 }
 export default function StepAcademic(props: Props) {
   const [unis, setUnis] = useState<Opt[]>([])
@@ -29,9 +30,11 @@ export default function StepAcademic(props: Props) {
   const universityRequest = useRef(0)
   const curriculumRequest = useRef(0)
   const streamRequest = useRef(0)
-  useEffect(() => {
+
+  const loadUnis = () => {
     let cancelled = false
     setLoading((old) => ({ ...old, universities: true }))
+    setLoadError('')
     apiFetch<Page<Opt>>('/universities?page=1&page_size=100')
       .then((response) => {
         if (!cancelled) setUnis(response.items.filter((item) => item.status === 'ACTIVE'))
@@ -43,6 +46,10 @@ export default function StepAcademic(props: Props) {
         if (!cancelled) setLoading((old) => ({ ...old, universities: false }))
       })
     return () => { cancelled = true }
+  }
+
+  useEffect(() => {
+    loadUnis()
   }, [])
   useEffect(() => {
     setCurricula([])
@@ -147,7 +154,7 @@ export default function StepAcademic(props: Props) {
       {loadError && (
         <Card>
           <p className="app-copy" role="alert">{loadError}</p>
-          <button type="button" onClick={() => window.location.reload()}>Reload</button>
+          <Button variant="secondary" onClick={() => loadUnis()}>Retry loading</Button>
         </Card>
       )}
       <AcademicCatalogRequest universityId={props.university} />

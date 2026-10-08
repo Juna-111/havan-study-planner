@@ -264,15 +264,20 @@ def preview_plan(
 def _today_carryover_tasks(
     rows: list[PlanTask],
     today: date,
-    selected_topic_ids: set[int],
+    selected_topic_ids: set[int] | None = None,
 ) -> list[PlanTask]:
-    """Keep only today's work that remains selected in the replacement plan."""
+    """Keep only today's work that remains selected in the replacement plan.
+
+    When the topic filter is omitted, carry over all in-progress or completed tasks
+    for the selected day so the helper still works for standalone tests and legacy
+    callers that operate directly on a day's rows.
+    """
     return [
         row
         for row in rows
         if row.planned_date == today
         and row.status in {"DONE", "IN_PROGRESS"}
-        and row.topic_id in selected_topic_ids
+        and (selected_topic_ids is None or row.topic_id in selected_topic_ids)
     ]
 
 

@@ -1,17 +1,27 @@
 from datetime import date, datetime
 from typing import Optional, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
 
 class AuthSignup(BaseModel):
-    email: str = Field(min_length=5, max_length=255)
+    email: EmailStr = Field(max_length=255)
     password: str = Field(min_length=8, max_length=128)
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalize_email(cls, value: str) -> str:
+        return value.strip().lower() if isinstance(value, str) else value
 
 
 class AuthLogin(BaseModel):
-    email: str = Field(min_length=5, max_length=255)
-    password: str = Field(min_length=1, max_length=128)
+    email: EmailStr = Field(max_length=255)
+    password: str = Field(min_length=8, max_length=128)
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalize_email(cls, value: str) -> str:
+        return value.strip().lower() if isinstance(value, str) else value
 
 
 class AuthAccountRead(BaseModel):
@@ -180,15 +190,30 @@ class StudentContext(BaseModel):
 
 
 class ForgotPasswordRequest(BaseModel):
-    email: str = Field(min_length=5, max_length=255)
+    email: EmailStr = Field(max_length=255)
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalize_email(cls, value: str) -> str:
+        return value.strip().lower() if isinstance(value, str) else value
 
 
 class VerifyResetCodeRequest(BaseModel):
-    email: str = Field(min_length=5, max_length=255)
+    email: EmailStr = Field(max_length=255)
     code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalize_email(cls, value: str) -> str:
+        return value.strip().lower() if isinstance(value, str) else value
 
 
 class ResetPasswordRequest(BaseModel):
-    email: str = Field(min_length=5, max_length=255)
+    email: EmailStr = Field(max_length=255)
     code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
     new_password: str = Field(min_length=8, max_length=128)
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalize_email(cls, value: str) -> str:
+        return value.strip().lower() if isinstance(value, str) else value

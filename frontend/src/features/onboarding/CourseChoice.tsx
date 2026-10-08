@@ -1,6 +1,7 @@
 'use client'
 
 import { Card } from '@/components/ui'
+import { CheckIcon } from '@/components/brand/illustrations'
 
 type Course = { id: number; code: string; name: string }
 
@@ -21,7 +22,9 @@ export default function CourseChoice({
         aria-pressed={checked}
         onClick={() => onToggle(course.id, !checked)}
       >
-        <span className="onboarding-course-choice-mark" aria-hidden="true">{checked ? '✓' : '+'}</span>
+        <span className="onboarding-course-choice-mark" aria-hidden="true">
+          {checked ? <CheckIcon size={18} /> : '+'}
+        </span>
         <span className="onboarding-course-choice-copy">
           <strong>{course.code}</strong>
           <span>{course.name}</span>

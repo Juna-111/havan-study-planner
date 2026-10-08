@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import styles from './layout.module.css'
 import { HavanLogo } from '@/components/brand/HavanLogo'
+import { BrandedHeader } from '@/components/brand/BrandedHeader'
+import { BrandedFooter } from '@/components/brand/BrandedFooter'
 
 /** Responsive Havan app shell and navigation primitives. */
 
@@ -71,7 +73,7 @@ export function SideNav() {
         ))}
       </nav>
       <div className={styles.sideFooter}>
-        <span>Choose. Study. Progress.</span>
+        <BrandedFooter />
       </div>
     </aside>
   )
@@ -92,7 +94,7 @@ export function PageHeader({
     <header className={styles.pageHeader}>
       {backHref && <Link href={backHref}>← Back</Link>}
       <div className={styles.pageHeaderContent}>
-        <span className={styles.pageHeaderEyebrow}>HAVAN ACADEMY</span>
+        <span className={styles.pageHeaderEyebrow}>HAVAN · STUDY PLANNER</span>
         <h1>{title}</h1>
         {description && <p>{description}</p>}
         {action}
@@ -113,15 +115,29 @@ export function AppShell({
   children,
   header,
   hideBottomNav = false,
+  brandedAction,
+  brandedRightContent,
+  brandedEyebrow,
+  brandedTitle,
 }: {
   children: React.ReactNode
   header?: React.ReactNode
   hideBottomNav?: boolean
+  brandedAction?: React.ReactNode
+  brandedRightContent?: React.ReactNode
+  brandedEyebrow?: string
+  brandedTitle?: React.ReactNode
 }) {
   return (
     <div className={hideBottomNav ? styles.shell + ' ' + styles.hideBottomNav : styles.shell}>
       <SideNav />
       <main>
+        <BrandedHeader
+          eyebrow={brandedEyebrow}
+          title={brandedTitle}
+          action={brandedAction}
+          rightContent={brandedRightContent}
+        />
         {header}
         <div className={styles.content}>{children}</div>
       </main>

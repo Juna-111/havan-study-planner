@@ -1,10 +1,13 @@
 'use client'
 import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { AppShell, PageHeader } from '@/components/layout'
 import { Button, Card, Chip, EmptyState, ErrorState } from '@/components/ui'
 import { getCurrentPlan, planAction, type Plan } from '@/lib/plan'
 import { apiFetch } from '@/lib/api'
+import { EmptyPlanIllustration } from '@/components/brand/illustrations'
 export default function PlanView() {
+  const router = useRouter()
   const [p, setP] = useState<Plan | null>(null)
   const [e, setE] = useState('')
   const [targetDates, setTargetDates] = useState<Record<number, string>>({})
@@ -18,6 +21,15 @@ export default function PlanView() {
   const [focusSeconds, setFocusSeconds] = useState(0)
   const [focusRunning, setFocusRunning] = useState(false)
   const [focusMinutes, setFocusMinutes] = useState(25)
+
+  const reload = () => {
+    setE('')
+    getCurrentPlan()
+      .then(setP)
+      .then(() => router.refresh())
+      .catch((x) => setE(x instanceof Error ? x.message : ''))
+  }
+
   useEffect(() => {
     getCurrentPlan()
       .then(setP)
@@ -133,19 +145,20 @@ export default function PlanView() {
         title="Your plan"
         description="You chose these topics. Now control how each study task fits your time."
         action={
-          <Button variant="secondary" onClick={() => (location.href = '/student/havan')}>
+          <Button variant="secondary" onClick={() => router.replace('/student/havan')}>
             Change selected topics
           </Button>
         }
       />
       {e ? (
-        <ErrorState onRetry={() => location.reload()} message={e} />
+        <ErrorState onRetry={reload} message={e} />
       ) : !p ? (
         <EmptyState
+          illustration={<EmptyPlanIllustration />}
           title="No plan yet"
           hint="Choose the course, chapter, and topics you want Havan to organize."
           action={
-            <Button variant="accent" onClick={() => (location.href = '/student/havan')}>
+            <Button variant="accent" onClick={() => router.replace('/student/havan')}>
               Build a plan
             </Button>
           }

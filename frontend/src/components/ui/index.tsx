@@ -73,24 +73,31 @@ action?:React.ReactNode}){return <div className={`${styles.banner} ${styles[tone
 {message}</span>
 {action}</div>}
 export function Skeleton({width='100%',height=20}:{width?:string;height?:number}){return <span className={styles.skeleton} style={{width,height}} aria-hidden="true"/>}
-export function EmptyState({icon='○',title,hint,action}:{icon?:string;
+export function EmptyState({illustration,title,hint,action}:{illustration?:React.ReactNode;
 title:string;
 hint:string;
 action?:React.ReactNode}){return <section className={styles.empty}>
-<div aria-hidden="true">
-{icon}</div>
+{illustration ? (
+  <div className="havan-empty-illustration-wrap" aria-hidden="true" style={{width:120,height:120,margin:'0 auto 8px',display:'flex',alignItems:'center',justifyContent:'center'}}>
+    {illustration}
+  </div>
+) : (
+  <div aria-hidden="true" style={{fontSize:64,lineHeight:1,color:'var(--color-primary)',fontFamily:'var(--font-display)',fontWeight:900,marginBottom:4}}>
+    H
+  </div>
+)}
 <h2>
 {title}</h2>
 <p>
 {hint}</p>
 {action}</section>}
-export function ErrorState({onRetry,message='Something went wrong. Reload.'}:{onRetry:()=>
+export function ErrorState({onRetry,message='Please try again in a moment.'}:{onRetry:()=>
 void;
 message?:string}){return <section className={styles.error} role="alert">
 <h2>
-Something went wrong</h2>
+Something interrupted your study flow</h2>
 <p>
-{message}</p>
+{message || 'We hit a temporary issue while loading your Havan dashboard. Please try again in a moment.'}</p>
 <Button variant="secondary" onClick={onRetry}>
 Try again</Button>
 </section>}
