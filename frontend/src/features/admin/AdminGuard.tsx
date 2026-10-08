@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { apiFetch } from '@/lib/api'
+import styles from './admin.module.css'
 
 type Account = { role?: string }
 
@@ -15,17 +16,17 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
   }, [])
 
   if (state === 'loading') {
-    return <main className="adminLoading">Loading Havan admin…</main>
+    return <main className={styles.adminLoading}>Loading Havan admin…</main>
   }
 
   if (state === 'denied') {
     return (
-      <main className="adminDenied">
-        <div>
-          <span>HAVAN</span>
-          <h1>Not allowed</h1>
-          <p>This area is only for Havan administrators.</p>
-          <a href="/home">Go to Havan home</a>
+      <main className={styles.adminDenied}>
+        <div className={styles.adminDeniedCard}>
+          <span className={styles.adminDeniedBadge}>HAVAN</span>
+          <h1 className={styles.adminDeniedTitle}>Not allowed</h1>
+          <p className={styles.adminDeniedText}>This area is only for Havan administrators.</p>
+          <a href="/home" className={styles.adminDeniedLink}>Go to Havan home</a>
         </div>
       </main>
     )

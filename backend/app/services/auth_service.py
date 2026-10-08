@@ -84,6 +84,12 @@ def create_reset_token(db: Session, account: StudentAccount) -> str:
     return code
 
 
+def _normalize_utc_datetime(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
+
+
 def verify_reset_token(db: Session, email: str, code: str) -> PasswordResetToken:
     account = db.scalar(select(StudentAccount).where(StudentAccount.email == email.strip().lower()))
     if account is None:
@@ -93,7 +99,10 @@ def verify_reset_token(db: Session, email: str, code: str) -> PasswordResetToken
         PasswordResetToken.used_at.is_(None),
     ).order_by(PasswordResetToken.created_at.desc()))
     now = datetime.now(timezone.utc)
-    if token is None or token.expires_at < now or token.attempts >= 5:
+    if token is None:
+        raise HTTPException(status_code=400, detail="The verification code is invalid or expired.")
+    expires_at = _normalize_utc_datetime(token.expires_at)
+    if expires_at < now or token.attempts >= 5:
         raise HTTPException(status_code=400, detail="The verification code is invalid or expired.")
     if not __import__("hmac").compare_digest(token.code_hash, reset_code_hash(code)):
         token.attempts += 1
