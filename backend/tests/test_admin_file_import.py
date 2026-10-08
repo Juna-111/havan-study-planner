@@ -1,10 +1,17 @@
 import pytest
 from fastapi import HTTPException
+from sqlalchemy import create_engine, select
+from sqlalchemy.orm import Session
 
+from app.db.models import Chapter, Course, Topic
+from app.db.models.curriculum import HavanPromotion
+from app.db.session import Base
 from app.services.admin_file_import import (
     PROMOTION_FILE_MARKER,
+    commit_promotion_import,
     parse_promotion_file,
     parse_university_csv,
+    preview_promotion_import,
     preview_university_import,
 )
 
@@ -65,6 +72,63 @@ Status: ACTIVE
     assert rows[1].topic_name is None
     assert rows[1].platform_name == "Havan Exam Preparation"
     assert rows[1].order_index == 2
+
+
+def test_promotion_preview_and_commit_process_multiple_blocks():
+    engine = create_engine("sqlite://")
+    Base.metadata.create_all(engine)
+    try:
+        with Session(engine) as db:
+            course = Course(
+                code="PHY101",
+                name="Physics",
+                academic_scope="FRESHMAN",
+                registry_key="FRESHMAN:PHY101",
+            )
+            db.add(course)
+            db.flush()
+            chapter = Chapter(course_id=course.id, name="Measurement", order_index=1)
+            db.add(chapter)
+            db.flush()
+            db.add(Topic(chapter_id=chapter.id, name="Units", order_index=1))
+            db.commit()
+
+            rows = parse_promotion_file(
+                f"""{PROMOTION_FILE_MARKER}
+
+Course_Code: PHY101
+Chapter: Measurement
+Topic: Units
+Platform_Name: Havan Learning Resource
+Description: Review key measurement concepts.
+Button_Text: Open resource
+URL: https://example.com/measurement
+Order_Index: 1
+Status: ACTIVE
+
+Course_Code: PHY101
+Chapter: Measurement
+Platform_Name: Havan Exam Preparation
+Description: Practice chapter questions.
+Button_Text: Start practice
+URL: https://example.com/practice
+Order_Index: 2
+Status: ACTIVE
+""".encode()
+            )
+
+            assert preview_promotion_import(db, rows) == {"promotions": 2}
+            assert commit_promotion_import(db, rows) == {"created": 2, "updated": 0}
+
+            saved = list(db.scalars(select(HavanPromotion).order_by(HavanPromotion.order_index)))
+            assert len(saved) == 2
+            assert [item.platform_name for item in saved] == [
+                "Havan Learning Resource",
+                "Havan Exam Preparation",
+            ]
+    finally:
+        Base.metadata.drop_all(engine)
+        engine.dispose()
 
 
 def test_promotion_file_rejects_missing_required_field():

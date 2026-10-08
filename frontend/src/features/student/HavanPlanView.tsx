@@ -13,6 +13,8 @@ import {
   Skeleton,
 } from '@/components/ui'
 import { getLatestHavanPlan, havanTaskAction, type HavanPlan } from '@/lib/havanPlan'
+import { getSavedAccount } from '@/lib/auth'
+import { recordLocalStudyCompletion } from '@/lib/studyStreak'
 
 type LoadState = 'loading' | 'empty' | 'error' | 'ready'
 
@@ -90,6 +92,10 @@ export default function HavanPlanView() {
     setError('')
     try {
       setPlan(await havanTaskAction(plan.id as number, taskId, actionName))
+      if (actionName === 'COMPLETE') {
+        const studentId = getSavedAccount()?.student_profile_id
+        if (studentId) recordLocalStudyCompletion(studentId)
+      }
     } catch (value) {
       setError(
         value instanceof Error

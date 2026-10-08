@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button, Card, ErrorState } from '@/components/ui'
+import { HavanLogo } from '@/components/brand/HavanLogo'
 import { StepAcademic } from '@/features/onboarding'
 import StepHabits from '@/features/onboarding/StepHabits'
 import StepExams from '@/features/onboarding/StepExams'
@@ -30,7 +31,24 @@ export default function Onboarding() {
 
   const validAcademic = Boolean(name.trim() && university && curriculum && stream && selected.size)
   const canNext = step === 0 ? validAcademic : step === 1 ? days.length > 0 : true
-  const stepLabels = ['Academic', 'Habits', 'Exams'] as const
+  const stepLabels = ['Profile', 'Study routine', 'Exams'] as const
+  const stepContent = [
+    {
+      eyebrow: 'YOUR ACADEMIC PROFILE',
+      title: 'Start with the essentials',
+      description: 'Tell us where you study and choose the courses you want Havan to plan around.',
+    },
+    {
+      eyebrow: 'YOUR STUDY ROUTINE',
+      title: 'Set a comfortable rhythm',
+      description: 'Choose the days and study time that fit your week. You can adjust them later.',
+    },
+    {
+      eyebrow: 'OPTIONAL · EXAMS',
+      title: 'Add exams now or later',
+      description: 'Adding dates helps Havan prioritize your plan. You can skip this and add exams anytime.',
+    },
+  ] as const
   const selectedCount = selected.size
 
   function handleUniversity(value: string) {
@@ -84,13 +102,17 @@ export default function Onboarding() {
   }
 
   return (
-    <main className="onboarding-shell onboarding-journey">
-      <div className="onboarding-brand-row">
-        <span className="onboarding-brand">HAVAN · STUDY PLANNER</span>
+    <main className="onboarding-shell onboarding-journey onboarding-redesign">
+      <header className="onboarding-topbar">
+        <HavanLogo size={42} variant="dark" />
+        <span className="onboarding-topbar-caption">Your study planner</span>
         <span className="onboarding-step-count">Step {step + 1} of 3</span>
+      </header>
+      <div className="onboarding-welcome">
+        <span className="onboarding-welcome-kicker">A BETTER WAY TO PLAN</span>
+        <h1>Make Havan fit your semester.</h1>
+        <p>A few details help us shape a study plan around your courses, time, and goals.</p>
       </div>
-      <div className="onboarding-hero havan-motion-enter"><span className="onboarding-hero-kicker">YOUR HAVAN JOURNEY</span><h1>Build your Havan study journey</h1>
-      <p className="onboarding-intro">Choose your academic context, choose the courses and topics you want to study, and tell Havan how much time you have.</p><div className="onboarding-hero-line" aria-hidden="true"><span /></div></div>
       <div className="onboarding-progress" aria-label="Onboarding progress">
         {stepLabels.map((label, index) => (
           <button
@@ -101,11 +123,20 @@ export default function Onboarding() {
             disabled={index > step}
             aria-current={index === step ? 'step' : undefined}
           >
-            <span>{index + 1}</span>
-            <strong>{label}</strong>
+            <span className="onboarding-progress-number">{index + 1}</span>
+            <span className="onboarding-progress-copy">
+              <strong>{label}</strong>
+              <small>{index < step ? 'Complete' : index === step ? 'In progress' : 'Up next'}</small>
+            </span>
           </button>
         ))}
       </div>
+      <section className="onboarding-stage" aria-labelledby="onboarding-step-title">
+        <header className="onboarding-stage-heading">
+          <span>{stepContent[step].eyebrow}</span>
+          <h2 id="onboarding-step-title">{stepContent[step].title}</h2>
+          <p>{stepContent[step].description}</p>
+        </header>
       {error && <ErrorState message={error} onRetry={() => setError('')} />}
       {step === 0 && (
         <StepAcademic
@@ -121,25 +152,32 @@ export default function Onboarding() {
           onToggleCourse={(id, checked) =>
             setSelected((old) => {
               const next = new Set(old)
-              checked ? next.add(id) : next.delete(id)
+              if (checked) next.add(id)
+              else next.delete(id)
               return next
             })
           }
         />
       )}
-      {step === 1 && <div className="onboarding-step-panel havan-motion-enter" key="habits"><StepHabits days={days} hours={hours} onDays={setDays} onHours={setHours} /></div>}
-      {step === 2 && <div className="onboarding-step-panel havan-motion-enter" key="exams"><StepExams streamId={stream} selectedCourseIds={selected} exams={exams} onExams={setExams} /></div>}
-      <Card className="onboarding-summary havan-motion-enter">
-        <div><strong>{selectedCount}</strong><span>course{selectedCount === 1 ? '' : 's'} selected</span></div>
-        <div><strong>{hours}</strong><span>hours per study day</span></div>
-        <div><strong>{days.length}</strong><span>study day{days.length === 1 ? '' : 's'}</span></div>
+      {step === 1 && <div className="onboarding-step-panel" key="habits"><StepHabits days={days} hours={hours} onDays={setDays} onHours={setHours} /></div>}
+      {step === 2 && <div className="onboarding-step-panel" key="exams"><StepExams streamId={stream} selectedCourseIds={selected} exams={exams} onExams={setExams} /></div>}
+      <Card className="onboarding-summary">
+        <div><strong>{selectedCount}</strong><span>courses</span></div>
+        <div><strong>{hours}h</strong><span>per study day</span></div>
+        <div><strong>{days.length}</strong><span>study days</span></div>
       </Card>
-      <div className="onboarding-actions onboarding-actions-branded">
+      <footer className="onboarding-actions onboarding-actions-branded">
         {step > 0 && <Button variant="secondary" onClick={() => setStep(step - 1)}>Back</Button>}
         {step < 2
           ? <Button disabled={!canNext} onClick={() => setStep(step + 1)}>Continue</Button>
-          : <Button disabled={!canNext || saving} loading={saving} onClick={finish}>{saving ? 'Saving…' : 'Finish setup'}</Button>}
-      </div>
+          : (
+            <>
+              <Button variant="secondary" disabled={saving} onClick={finish}>Skip exams</Button>
+              <Button disabled={!canNext || saving} loading={saving} onClick={finish}>{saving ? 'Saving…' : 'Finish setup'}</Button>
+            </>
+          )}
+      </footer>
+      </section>
     </main>
   )
 }

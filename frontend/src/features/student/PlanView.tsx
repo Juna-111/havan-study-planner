@@ -6,6 +6,8 @@ import { Button, Card, Chip, EmptyState, ErrorState } from '@/components/ui'
 import { getCurrentPlan, planAction, type Plan } from '@/lib/plan'
 import { apiFetch } from '@/lib/api'
 import { EmptyPlanIllustration } from '@/components/brand/illustrations'
+import { getSavedAccount } from '@/lib/auth'
+import { recordLocalStudyCompletion } from '@/lib/studyStreak'
 export default function PlanView() {
   const router = useRouter()
   const [p, setP] = useState<Plan | null>(null)
@@ -105,6 +107,8 @@ export default function PlanView() {
         actual_minutes: elapsedMinutes,
       })
       setP(nextPlan)
+      const studentId = getSavedAccount()?.student_profile_id
+      if (studentId) recordLocalStudyCompletion(studentId)
       setFocusedTaskId(null)
       setFocusSeconds(0)
       setFocusRunning(false)
@@ -129,6 +133,10 @@ export default function PlanView() {
       }
       const nextPlan = await planAction(id, { action, target_date })
       setP(nextPlan)
+      if (action === 'COMPLETE') {
+        const studentId = getSavedAccount()?.student_profile_id
+        if (studentId) recordLocalStudyCompletion(studentId)
+      }
       if (action === 'COMPLETE' || action === 'START') {
         setCelebratingTask(id)
         window.setTimeout(() => setCelebratingTask(null), 650)

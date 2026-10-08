@@ -6,6 +6,7 @@ import styles from './layout.module.css'
 import { HavanLogo } from '@/components/brand/HavanLogo'
 import { BrandedHeader } from '@/components/brand/BrandedHeader'
 import { BrandedFooter } from '@/components/brand/BrandedFooter'
+import { StudyStreakBadge } from './StudyStreakBadge'
 
 /** Responsive Havan app shell and navigation primitives. */
 
@@ -136,7 +137,12 @@ export function AppShell({
           eyebrow={brandedEyebrow}
           title={brandedTitle}
           action={brandedAction}
-          rightContent={brandedRightContent}
+          rightContent={(
+            <>
+              {brandedRightContent}
+              <StudyStreakBadge />
+            </>
+          )}
         />
         {header}
         <div className={styles.content}>{children}</div>

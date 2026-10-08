@@ -1,6 +1,7 @@
 from app.core.config import API_PREFIX
 from app.core.deps import current_account, current_student, require_student_owner
-from datetime import datetime, timezone
+from app.core.time import ADDIS, today_local
+from datetime import date, datetime, timedelta, timezone
 from uuid import uuid4
 from typing import Annotated
 
@@ -9,6 +10,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db.models.curriculum import Chapter, Course, Curriculum, Stream, Topic, University, UniversityCourseMapping
+from app.db.models.plan import PlanTask
 from app.db.models.student import StudentAccount, StudentCourse, StudentExam, StudentProfile, StudentTopicProgress
 from app.db.session import get_db
 from app.services.academic_resolver import resolve_stream_courses, resolve_student_courses, resolved_course_ids
@@ -19,6 +21,16 @@ from app.schemas.student import (
 
 router = APIRouter(prefix=f"{API_PREFIX}/students", tags=["students"], dependencies=[Depends(current_account)])
 DB = Annotated[Session, Depends(get_db)]
+
+
+def calculate_study_streak(completed_dates: set[date], today: date) -> tuple[int, bool]:
+    completed_today = today in completed_dates
+    current_day = today if completed_today else today - timedelta(days=1)
+    streak = 0
+    while current_day in completed_dates:
+        streak += 1
+        current_day -= timedelta(days=1)
+    return streak, completed_today
 
 
 def profile_or_404(db: Session, student_id: int) -> StudentProfile:
@@ -154,6 +166,32 @@ def get_my_progress(student: Annotated[StudentProfile, Depends(current_student)]
 @router.get("/me/exams", response_model=list[ExamRead])
 def get_my_exams(student: Annotated[StudentProfile, Depends(current_student)], db: DB):
     return list_exams(student.id, db)
+
+
+@router.get("/me/study-streak")
+def get_my_study_streak(student: Annotated[StudentProfile, Depends(current_student)], db: DB):
+    completions = db.scalars(
+        select(PlanTask.completed_at).where(
+            PlanTask.student_id == student.id,
+            PlanTask.status == "DONE",
+            PlanTask.completed_at.is_not(None),
+        )
+    ).all()
+    legacy_activity = db.scalars(
+        select(StudentTopicProgress.last_studied_at).where(
+            StudentTopicProgress.student_id == student.id,
+            StudentTopicProgress.last_studied_at.is_not(None),
+        )
+    ).all()
+    completed_dates = {
+        (completed_at.replace(tzinfo=timezone.utc) if completed_at.tzinfo is None else completed_at)
+        .astimezone(ADDIS)
+        .date()
+        for completed_at in [*completions, *legacy_activity]
+        if completed_at is not None
+    }
+    streak, completed_today = calculate_study_streak(completed_dates, today_local())
+    return {"streak": streak, "completed_today": completed_today}
 
 
 @router.post("/profiles", response_model=StudentRead, status_code=status.HTTP_201_CREATED)

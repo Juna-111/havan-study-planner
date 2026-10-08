@@ -1,0 +1,533 @@
+.onboarding-redesign {
+  --onboarding-ink: #20213a;
+  --onboarding-muted: #66697d;
+  --onboarding-line: #e5e7f1;
+  width: min(calc(100% - 32px), 820px);
+  min-height: 100svh;
+  margin-inline: auto;
+  padding: 20px 0 48px;
+  color: var(--onboarding-ink);
+  background: transparent;
+  font-family: var(--font-body), Arial, sans-serif;
+}
+
+.onboarding-redesign h1,
+.onboarding-redesign h2,
+.onboarding-redesign h3 {
+  font-family: var(--font-body), Arial, sans-serif;
+}
+
+.onboarding-redesign .onboarding-topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 56px;
+  padding: 0 0 16px;
+  border-bottom: 1px solid var(--onboarding-line);
+}
+
+.onboarding-redesign .onboarding-topbar-caption {
+  color: var(--onboarding-muted);
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.onboarding-redesign .onboarding-step-count {
+  margin-left: auto;
+  padding: 7px 11px;
+  border: 1px solid var(--onboarding-line);
+  border-radius: 999px;
+  background: var(--color-white);
+  color: var(--color-primary);
+  font-size: 0.78rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.onboarding-redesign .onboarding-welcome {
+  display: grid;
+  gap: 8px;
+  padding: clamp(24px, 5vw, 42px) 0 22px;
+}
+
+.onboarding-redesign .onboarding-welcome-kicker,
+.onboarding-redesign .onboarding-stage-heading > span {
+  color: var(--color-accent);
+  font-size: 0.7rem;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+}
+
+.onboarding-redesign .onboarding-welcome h1 {
+  max-width: 680px;
+  color: var(--color-primary);
+  font-family: var(--font-body), Arial, sans-serif;
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
+  font-weight: 780;
+  letter-spacing: -0.045em;
+  line-height: 1.12;
+}
+
+.onboarding-redesign .onboarding-welcome p {
+  max-width: 620px;
+  color: var(--onboarding-muted);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.onboarding-redesign .onboarding-progress {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 22px;
+}
+
+.onboarding-redesign .onboarding-progress-step {
+  min-width: 0;
+  min-height: 66px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--onboarding-line);
+  border-radius: 14px;
+  background: var(--color-white);
+  color: var(--onboarding-muted);
+  text-align: left;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.onboarding-redesign .onboarding-progress-step.active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.onboarding-redesign .onboarding-progress-step.complete {
+  border-color: var(--color-success);
+  color: var(--color-success-dark);
+}
+
+.onboarding-redesign .onboarding-progress-number {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-canvas);
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.onboarding-redesign .onboarding-progress-step.active .onboarding-progress-number {
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
+.onboarding-redesign .onboarding-progress-step.complete .onboarding-progress-number {
+  background: var(--color-success-soft);
+  color: var(--color-success-dark);
+}
+
+.onboarding-redesign .onboarding-progress-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.onboarding-redesign .onboarding-progress-copy strong {
+  overflow: hidden;
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.onboarding-redesign .onboarding-progress-copy small {
+  color: var(--onboarding-muted);
+  font-size: 0.7rem;
+}
+
+.onboarding-redesign .onboarding-stage {
+  display: grid;
+  gap: 16px;
+  padding: clamp(16px, 4vw, 28px);
+  border: 1px solid var(--onboarding-line);
+  border-radius: 22px;
+  background: var(--color-white);
+  box-shadow: 0 14px 42px rgba(20, 20, 57, 0.07);
+}
+
+.onboarding-redesign .onboarding-stage-heading {
+  display: grid;
+  gap: 5px;
+  padding-bottom: 4px;
+}
+
+.onboarding-redesign .onboarding-stage-heading h2 {
+  color: var(--onboarding-ink);
+  font-family: var(--font-body), Arial, sans-serif;
+  font-size: clamp(1.3rem, 3vw, 1.65rem);
+  font-weight: 740;
+  letter-spacing: -0.025em;
+}
+
+.onboarding-redesign .onboarding-stage-heading p {
+  max-width: 640px;
+  color: var(--onboarding-muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.onboarding-redesign .onboarding-stage .onboarding-section-heading {
+  display: none;
+}
+
+.onboarding-redesign .onboarding-academic-step {
+  gap: 14px;
+}
+
+.onboarding-redesign .onboarding-academic-card,
+.onboarding-redesign .onboarding-course-section,
+.onboarding-redesign .onboarding-habits-card,
+.onboarding-redesign .onboarding-exams-card {
+  padding: clamp(14px, 3vw, 20px);
+  border: 1px solid var(--onboarding-line);
+  border-radius: 16px;
+  background: #fbfbfe;
+  box-shadow: none;
+}
+
+.onboarding-redesign .onboarding-academic-fields {
+  gap: 12px;
+}
+
+.onboarding-redesign .onboarding-academic-fields label,
+.onboarding-redesign .onboarding-exam-grid label {
+  gap: 6px;
+  color: var(--onboarding-ink);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.onboarding-redesign .onboarding-field input,
+.onboarding-redesign .onboarding-academic-fields select,
+.onboarding-redesign .onboarding-exam-grid input,
+.onboarding-redesign .onboarding-exam-grid select {
+  min-height: 48px;
+  border: 1px solid #dfe2ed;
+  border-radius: 11px;
+  background: var(--color-white);
+  color: var(--onboarding-ink);
+  font-family: var(--font-body), Arial, sans-serif;
+  font-size: 0.94rem;
+}
+
+.onboarding-redesign .onboarding-field input:focus,
+.onboarding-redesign .onboarding-academic-fields select:focus,
+.onboarding-redesign .onboarding-exam-grid input:focus,
+.onboarding-redesign .onboarding-exam-grid select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+}
+
+.onboarding-redesign .onboarding-course-section {
+  display: grid;
+  gap: 12px;
+}
+
+.onboarding-redesign .onboarding-course-section > .stack {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.onboarding-redesign .onboarding-course-card {
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid var(--onboarding-line);
+  border-radius: 12px;
+  background: var(--color-white);
+  box-shadow: none;
+}
+
+.onboarding-redesign .onboarding-course-choice {
+  min-height: 66px;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 10px;
+  padding: 10px 12px;
+  background: transparent;
+  color: var(--onboarding-ink);
+  font-family: var(--font-body), Arial, sans-serif;
+}
+
+.onboarding-redesign .onboarding-course-choice-mark {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.onboarding-redesign .onboarding-course-choice-copy strong {
+  color: var(--onboarding-ink);
+  font-size: 0.82rem;
+}
+
+.onboarding-redesign .onboarding-course-choice-copy span {
+  color: var(--onboarding-muted);
+  font-size: 0.76rem;
+}
+
+.onboarding-redesign .onboarding-course-choice-state {
+  display: none;
+}
+
+.onboarding-redesign .onboarding-course-card.selected {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.onboarding-redesign .onboarding-course-card.selected .onboarding-course-choice {
+  background: transparent;
+  color: var(--onboarding-ink);
+}
+
+.onboarding-redesign .onboarding-course-card.selected .onboarding-course-choice-copy strong,
+.onboarding-redesign .onboarding-course-card.selected .onboarding-course-choice-copy span {
+  color: var(--onboarding-ink);
+}
+
+.onboarding-redesign .onboarding-course-card.selected .onboarding-course-choice-mark {
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
+.onboarding-redesign .academic-request {
+  border: 1px solid var(--onboarding-line);
+  border-radius: 14px;
+  background: var(--color-white);
+}
+
+.onboarding-redesign .onboarding-habits-card,
+.onboarding-redesign .onboarding-exams-card {
+  display: grid;
+  gap: 14px;
+}
+
+.onboarding-redesign .onboarding-habits-block,
+.onboarding-redesign .onboarding-hours-block,
+.onboarding-redesign .onboarding-exam-scope {
+  padding: 14px;
+  border: 1px solid var(--onboarding-line);
+  border-radius: 14px;
+  background: #fbfbfe;
+}
+
+.onboarding-redesign .onboarding-days {
+  gap: 7px;
+}
+
+.onboarding-redesign .onboarding-day {
+  min-height: 44px;
+  border: 1px solid var(--onboarding-line);
+  border-radius: 10px;
+  background: var(--color-white);
+  color: var(--onboarding-ink);
+  font-family: var(--font-body), Arial, sans-serif;
+  font-size: 0.84rem;
+}
+
+.onboarding-redesign .onboarding-day[aria-pressed="true"] {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-white);
+  box-shadow: none;
+}
+
+.onboarding-redesign .onboarding-exam-scope-heading h3,
+.onboarding-redesign .onboarding-exam-topic-group > strong {
+  color: var(--onboarding-ink);
+}
+
+.onboarding-redesign .onboarding-exam-topic-groups {
+  max-height: 340px;
+}
+
+.onboarding-redesign .onboarding-exam-topic-group {
+  border-color: var(--onboarding-line);
+  border-radius: 12px;
+}
+
+.onboarding-redesign .onboarding-exam-topic {
+  min-height: 44px;
+}
+
+.onboarding-redesign .onboarding-summary {
+  display: flex;
+  justify-content: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.onboarding-redesign .onboarding-summary > div {
+  min-width: 104px;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 8px 11px;
+  border: 1px solid var(--onboarding-line);
+  border-radius: 999px;
+  background: #fbfbfe;
+}
+
+.onboarding-redesign .onboarding-summary strong {
+  color: var(--color-primary);
+  font-size: 0.9rem;
+}
+
+.onboarding-redesign .onboarding-summary span {
+  color: var(--onboarding-muted);
+  font-size: 0.74rem;
+}
+
+.onboarding-redesign .onboarding-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin: 0;
+  padding-top: 4px;
+  border: 0;
+  background: transparent;
+}
+
+.onboarding-redesign .onboarding-actions .button {
+  min-width: 124px;
+  min-height: 48px;
+  border-radius: 12px;
+  font-family: var(--font-body), Arial, sans-serif;
+}
+
+.onboarding-redesign .onboarding-actions > button {
+  min-width: 124px;
+  min-height: 48px;
+  border-radius: 12px;
+}
+
+.onboarding-redesign .onboarding-stage > [role="alert"] {
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .onboarding-redesign {
+    width: min(calc(100% - 24px), 820px);
+    padding: 12px 0 max(24px, env(safe-area-inset-bottom));
+  }
+
+  .onboarding-redesign .onboarding-topbar {
+    gap: 9px;
+    padding-bottom: 12px;
+  }
+
+  .onboarding-redesign .onboarding-topbar img {
+    object-fit: contain;
+  }
+
+  .onboarding-redesign .onboarding-topbar-caption {
+    font-size: 0.8rem;
+  }
+
+  .onboarding-redesign .onboarding-welcome {
+    padding: 24px 0 18px;
+  }
+
+  .onboarding-redesign .onboarding-progress {
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+
+  .onboarding-redesign .onboarding-progress-step {
+    min-height: 60px;
+    gap: 7px;
+    padding: 8px;
+  }
+
+  .onboarding-redesign .onboarding-progress-number {
+    width: 27px;
+    height: 27px;
+    flex-basis: 27px;
+    font-size: 0.74rem;
+  }
+
+  .onboarding-redesign .onboarding-progress-copy strong {
+    font-size: 0.7rem;
+  }
+
+  .onboarding-redesign .onboarding-progress-copy small {
+    font-size: 0.63rem;
+  }
+
+  .onboarding-redesign .onboarding-stage {
+    gap: 12px;
+    padding: 14px;
+    border-radius: 17px;
+  }
+
+  .onboarding-redesign .onboarding-course-section > .stack {
+    grid-template-columns: 1fr;
+  }
+
+  .onboarding-redesign .onboarding-exam-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .onboarding-redesign .onboarding-days {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .onboarding-redesign .onboarding-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .onboarding-redesign .onboarding-summary > div {
+    min-width: 0;
+    justify-content: center;
+    gap: 4px;
+    padding: 8px 5px;
+    border-radius: 10px;
+  }
+
+  .onboarding-redesign .onboarding-summary span {
+    font-size: 0.67rem;
+  }
+
+  .onboarding-redesign .onboarding-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    justify-content: stretch;
+    margin: 0 -14px -14px;
+    padding: 10px 14px max(10px, env(safe-area-inset-bottom));
+    border-top: 1px solid var(--onboarding-line);
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(12px);
+  }
+
+  .onboarding-redesign .onboarding-actions > button {
+    min-width: 0;
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-redesign .onboarding-progress-step {
+    transition: none;
+  }
+}

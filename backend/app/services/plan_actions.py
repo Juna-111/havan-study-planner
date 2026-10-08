@@ -275,6 +275,7 @@ def apply_action(
         task.actual_minutes = actual
         task.confidence = payload.confidence
         task.status = "DONE"
+        task.completed_at = datetime.now(timezone.utc)
         db.commit()
         return plan, []
 
