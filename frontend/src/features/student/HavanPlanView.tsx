@@ -183,7 +183,7 @@ export default function HavanPlanView() {
           </Card>
         )}
 
-        <Card padding="lg" className="havan-plan-overview">
+        <Card padding="lg" className="plan-overview">
           <div>
             <span className="app-eyebrow">HAVAN {plan.mode.toUpperCase()}</span>
             <h2>{plan.total_minutes} minutes organised</h2>
@@ -198,15 +198,15 @@ export default function HavanPlanView() {
         {error && <p className="havan-plan-error" role="alert">{error}</p>}
 
         {grouped.map(([date, tasks]) => (
-          <section className="havan-plan-day" key={date}>
-            <div className="havan-plan-day-heading">
+          <section className="plan-day" key={date}>
+            <div className="plan-day-heading">
               <h2>{date}</h2>
               <span>{tasks.reduce((sum, task) => sum + task.minutes, 0)} min</span>
             </div>
             {tasks.map((task) => {
               const points = criticalPoints(task.important_points)
               return (
-                <Card padding="lg" className="havan-plan-task" key={task.id}>
+                <Card padding="lg" className="plan-task" key={task.id}>
                   <div className="havan-plan-task-top">
                     <Chip
                       tone={
@@ -229,7 +229,7 @@ export default function HavanPlanView() {
                     {task.course_code} · {task.course_name}
                   </span>
                   <span className="havan-plan-chapter">{task.chapter_name}</span>
-                  <h3>{task.topic_name}</h3>
+                  <h3 className="plan-task-title">{task.topic_name}</h3>
                   {points.length > 0 && (
                     <div className="havan-plan-points">
                       <strong>Critical points</strong>
@@ -238,7 +238,7 @@ export default function HavanPlanView() {
                   )}
 
                   {task.promotions.length > 0 && (
-                    <div className="havan-plan-promotions">
+                    <div className="havan-plan-promotions" aria-label="Havan Academy promotion">
                       <div className="havan-plan-promotions-heading">
                         <span className="app-eyebrow">HAVAN</span>
                         <strong>Learn more with Havan</strong>
@@ -263,7 +263,7 @@ export default function HavanPlanView() {
                     </div>
                   )}
 
-                  <div className="havan-plan-task-actions">
+                  <div className="plan-task-actions">
                     {task.status === 'PLANNED' && (
                       <Button
                         variant="accent"
