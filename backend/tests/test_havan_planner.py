@@ -9,6 +9,7 @@ from app.api import havan_planner
 from app.api.havan_planner import _to_plan_input, create_current_plan
 from app.schemas.havan_planner import HavanPlanCreate
 from app.schemas.plan import PlanOut
+from app.services.plan_builder import _warning_fix, _warning_severity
 
 
 def test_havan_today_maps_to_current_day_and_selected_time():
@@ -99,3 +100,10 @@ def test_havan_build_formats_saved_plan_output_without_reading_snapshot_from_pla
     assert result == "built"
     assert captured["plan_id"] == 42
     assert captured["input_snapshot"]["topic_ids"] == [101]
+
+
+def test_saved_plan_warning_metadata_uses_catalog_helpers():
+    assert _warning_severity("DOES_NOT_FIT") == "warn"
+    assert _warning_fix("DOES_NOT_FIT")["add_time"] == "Add time"
+    assert _warning_severity("UNKNOWN_WARNING") == "info"
+    assert _warning_fix("UNKNOWN_WARNING") == {}
