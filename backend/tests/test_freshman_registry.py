@@ -90,3 +90,31 @@ def test_freshman_registry_import_parser_rejects_legacy_indented_format() -> Non
     raise AssertionError("Legacy indented curriculum format must not be accepted.")
 
 
+
+
+def test_course_source_files_preserve_complete_chapter_topic_hierarchy():
+    from pathlib import Path
+    from app.services.freshman_registry_parser import parse_bullet_curriculum
+
+    root = Path(__file__).resolve().parents[2]
+    expected = {
+        "Natural_courses copy.md": (3, 24, 128),
+        "Natural_courses2.md": (5, 35, 178),
+        "Natural_courses3.md": (1, 6, 27),
+    }
+
+    for filename, counts in expected.items():
+        parsed = parse_bullet_curriculum((root / filename).read_text(encoding="utf-8"))
+        course_count = len(parsed)
+        chapter_count = sum(len(course.chapters) for course in parsed)
+        topic_count = sum(
+            len(chapter.topics)
+            for course in parsed
+            for chapter in course.chapters
+        )
+        assert (course_count, chapter_count, topic_count) == counts
+        assert all(
+            chapter.topics
+            for course in parsed
+            for chapter in course.chapters
+        )
