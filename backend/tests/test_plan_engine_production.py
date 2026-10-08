@@ -220,3 +220,21 @@ def test_allocator_never_repeats_a_topic_on_the_same_day():
         if session.kind == "STUDY"
     ]
     assert len(keys) == len(set(keys))
+
+
+def test_today_carryover_keeps_done_and_in_progress_tasks():
+    from types import SimpleNamespace
+
+    from app.services.plan_builder import _today_carryover_tasks
+
+    today = TODAY
+    rows = [
+        SimpleNamespace(planned_date=today, status="DONE", topic_id=1),
+        SimpleNamespace(planned_date=today, status="IN_PROGRESS", topic_id=2),
+        SimpleNamespace(planned_date=today, status="PLANNED", topic_id=3),
+        SimpleNamespace(planned_date=today - timedelta(days=1), status="DONE", topic_id=4),
+    ]
+
+    carried = _today_carryover_tasks(rows, today)
+
+    assert [row.topic_id for row in carried] == [1, 2]
