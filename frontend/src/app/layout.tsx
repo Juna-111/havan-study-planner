@@ -1,11 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { DM_Sans, Fraunces } from 'next/font/google'
-import '../styles/tokens.css'
-import '../styles/base.css'
-import '../styles/base-extra-1.css'
-import '../styles/journey.css'
-import '../styles/utilities.css'
-import '../styles/havan-plan.css'
+import '../styles/havan.css'
 
 const bodyFont = DM_Sans({ subsets: ['latin'], variable: '--font-havan-body' })
 const displayFont = Fraunces({ subsets: ['latin'], variable: '--font-havan-display' })
