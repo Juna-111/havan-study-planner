@@ -50,7 +50,7 @@ jobs:
         run: alembic upgrade head
       - name: Roll back newest migration and upgrade again
         working-directory: backend
-        run: alembic downgrade 20261006_07 && alembic upgrade head
+        run: alembic downgrade 20261007_09 && alembic upgrade head
       - name: Run backend tests
         working-directory: backend
         run: pytest -q
