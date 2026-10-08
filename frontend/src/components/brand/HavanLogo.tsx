@@ -26,7 +26,7 @@ export function HavanLogo({
       }}
     >
       <Image
-        src="/brand/havan-logo.jpg"
+        src="/brand/havan-logo.png"
         alt="Havan"
         width={size * 2.2}
         height={size}

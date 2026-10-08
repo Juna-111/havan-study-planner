@@ -1,0 +1,20 @@
+TYPE: HAVAN_PROMOTION_V1
+
+Course_Code: REPLACE_WITH_COURSE_CODE
+Chapter: REPLACE_WITH_EXACT_CHAPTER_NAME
+Topic: REPLACE_WITH_EXACT_TOPIC_NAME
+Platform_Name: Havan Learning Resource
+Description: A short, helpful description of this learning resource.
+Button_Text: Open resource
+URL: https://example.org/replace-with-resource
+Order_Index: 1
+Status: ACTIVE
+
+Course_Code: REPLACE_WITH_COURSE_CODE
+Chapter: REPLACE_WITH_EXACT_CHAPTER_NAME
+Platform_Name: Havan Exam Preparation
+Description: Practice questions and review materials for this chapter.
+Button_Text: Start practice
+URL: https://example.org/replace-with-practice
+Order_Index: 2
+Status: ACTIVE
