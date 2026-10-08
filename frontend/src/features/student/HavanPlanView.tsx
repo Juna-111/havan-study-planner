@@ -131,7 +131,7 @@ export default function HavanPlanView() {
   }
 
   function openFocus(taskId: number, plannedMinutes: number) {
-    const minutes = Math.max(5, Math.min(25, plannedMinutes))
+    const minutes = Math.max(5, Math.min(120, plannedMinutes))
     setFocusTaskId(taskId)
     setFocusMinutes(minutes)
     setFocusSeconds(minutes * 60)
