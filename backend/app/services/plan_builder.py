@@ -51,6 +51,14 @@ WARNING_CATALOG: dict[str, tuple[str, str, dict[str, str]]] = {
 }
 
 
+def _warning_severity(code: str) -> str:
+    return str(WARNING_CATALOG.get(code, ("info", "", {}))[0])
+
+
+def _warning_fix(code: str) -> dict[str, str]:
+    return dict(WARNING_CATALOG.get(code, ("info", "", {}))[2])
+
+
 def warning_payload(code: str, *, shortfall: int | None = None) -> dict[str, object]:
     severity, template, fix = WARNING_CATALOG.get(
         code,
