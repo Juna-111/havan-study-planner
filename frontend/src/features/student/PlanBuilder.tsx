@@ -154,7 +154,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
   }
 
   return (
-    <AppShell>
+    <AppShell hideBottomNav>
       <PageHeader title={copy.title} backHref="/student/havan" description={copy.description} />
 
       <div className={`havan-builder-shell havan-builder-step-${builderStep}`}>
