@@ -266,7 +266,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
             <TreeSelect
               courses={courses.map((course) => ({
                 id: String(course.id),
-                name: `${course.code} · ${course.name}`,
+                name: course.name,
                 chapters: course.chapters.map((chapter) => ({
                   id: String(chapter.id),
                   name: chapter.name,
@@ -423,7 +423,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
                         <div className="plan-review-row havan-allocation-row" style={{ '--motion-delay': `${index * 55}ms` } as React.CSSProperties} key={`${task.topic_id}-${task.planned_date}-${index}`}>
                           <div>
                             <strong>{task.topic_name}</strong>
-                            <span>{task.course_code} · {task.chapter_name}</span>
+                            <span>{task.course_name} · {task.chapter_name}</span>
                           </div>
                           <div>
                             <strong>{task.minutes} min</strong>

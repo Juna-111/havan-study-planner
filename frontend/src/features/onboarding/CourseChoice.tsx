@@ -26,8 +26,7 @@ export default function CourseChoice({
           {checked ? <CheckIcon size={18} /> : '+'}
         </span>
         <span className="onboarding-course-choice-copy">
-          <strong>{course.code}</strong>
-          <span>{course.name}</span>
+          <strong>{course.name}</strong>
         </span>
         <span className="onboarding-course-choice-state">{checked ? 'Selected' : 'Choose'}</span>
       </button>

@@ -128,7 +128,7 @@ function HomeView() {
                   return (
                     <article className={`havan-upcoming-exam havan-upcoming-exam-${urgency}`} key={exam.id}>
                       <div>
-                        <strong>{course ? `${course.code} · ${course.name}` : exam.exam_type}</strong>
+                        <strong>{course ? course.name : exam.exam_type}</strong>
                         <span>{exam.exam_type} · {localeDate(exam.exam_date)}</span>
                       </div>
                       <b>{formatDaysLeft(daysLeft)}</b>

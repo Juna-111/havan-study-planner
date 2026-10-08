@@ -136,6 +136,25 @@
 
 .havan-generate-bar {
   width: 100%;
+  padding: 2px 0;
+}
+
+.havan-generate-actions {
+  align-items: center;
+}
+
+.havan-generate-actions button {
+  min-width: 150px;
+}
+
+@media (max-width: 700px) {
+  .havan-generate-actions {
+    width: 100%;
+  }
+
+  .havan-generate-actions button {
+    min-width: 0;
+  }
 }
 
 .plan-task {

@@ -145,7 +145,7 @@ export default function StepExams({
         <>
           <div className="onboarding-exam-editor">
             <div className="onboarding-exam-grid">
-              <Select label="Course" value={String(draft.course_id)} onChange={changeCourse} options={courses.map((course) => ({ value: String(course.id), label: course.code + ' · ' + course.name }))} />
+              <Select label="Course" value={String(draft.course_id)} onChange={changeCourse} options={courses.map((course) => ({ value: String(course.id), label: course.name }))} />
               <Select label="Exam type" value={draft.exam_type} onChange={(value) => updateDraft({ exam_type: value })} options={TYPES} />
               <DateField label="Exam date" value={draft.exam_date} min={todayLocalISO()} onChange={(value) => updateDraft({ exam_date: value })} />
               <Select
@@ -164,7 +164,7 @@ export default function StepExams({
                 <div className="onboarding-exam-scope-heading">
                   <div>
                     <span className="app-eyebrow">EXAM SCOPE</span>
-                    <h3>{activeCourse.code} · {activeCourse.name}</h3>
+                    <h3>{activeCourse.name}</h3>
                     <p className="app-copy">Choose specific topics only when this exam covers part of the course.</p>
                   </div>
                   <Button variant="ghost" onClick={() => updateDraft({ selected_topic_ids: [] })}>Use full course</Button>
@@ -206,7 +206,7 @@ export default function StepExams({
               return (
                 <div className="onboarding-exam-summary" key={exam.course_id + '-' + exam.exam_type + '-' + exam.exam_date + '-' + index}>
                   <div>
-                    <strong>{course?.code ?? 'Course'}</strong>
+                    <strong>{course?.name ?? 'Course'}</strong>
                     <span>{exam.exam_type} · {exam.exam_date} · importance {exam.importance}/5</span>
                     <small>{exam.selected_topic_ids.length ? exam.selected_topic_ids.length + ' selected topics' : 'Full active course scope'}</small>
                   </div>

@@ -280,7 +280,7 @@ export default function HavanPlanView() {
                     <strong>{task.minutes} min</strong>
                   </div>
                   <span className="havan-plan-course">
-                    {task.course_code} · {task.course_name}
+                    {task.course_name}
                   </span>
                   <span className="havan-plan-chapter">{task.chapter_name}</span>
                   <h3 className="plan-task-title">{task.topic_name}</h3>

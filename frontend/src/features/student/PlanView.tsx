@@ -43,7 +43,7 @@ export default function PlanView() {
   const addOptions = useMemo(
     () => catalog.flatMap((course) => course.chapters.flatMap((chapter) => chapter.topics.map((topic) => ({
       id: topic.id,
-      label: course.code + ' · ' + chapter.name + ' · ' + topic.name,
+      label: course.name + ' · ' + chapter.name + ' · ' + topic.name,
     })))),
     [catalog],
   )
