@@ -359,6 +359,16 @@ def apply_action(
         snapshot = _input_from_snapshot(plan)
         snapshot = snapshot.model_copy(update={
             "topic_ids": [topic_id for topic_id in snapshot.topic_ids if topic_id != task.topic_id],
+            "topic_minutes": {
+                topic_id: minutes
+                for topic_id, minutes in snapshot.topic_minutes.items()
+                if topic_id != task.topic_id
+            },
+            "topic_estimates": {
+                topic_id: minutes
+                for topic_id, minutes in snapshot.topic_estimates.items()
+                if topic_id != task.topic_id
+            },
             "pinned_topic_dates": {
                 topic_id: planned_date
                 for topic_id, planned_date in snapshot.pinned_topic_dates.items()

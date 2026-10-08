@@ -4,7 +4,7 @@
 
 .shell main {
   min-width: 0;
-  padding-bottom: 82px;
+  padding-bottom: calc(88px + env(safe-area-inset-bottom));
 }
 
 .content {
@@ -125,11 +125,21 @@
   transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
 }
 
-.side a svg,
-.bottom a svg {
+.side a svg {
   width: 20px;
   height: 20px;
   flex: 0 0 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.bottom a svg {
+  width: 23px;
+  height: 23px;
+  flex: 0 0 23px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.8;
@@ -173,8 +183,8 @@
   left: 0;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 2px;
-  padding: 6px 8px max(6px, env(safe-area-inset-bottom));
+  gap: 4px;
+  padding: 8px 8px max(8px, env(safe-area-inset-bottom));
   border-top: 1px solid var(--color-focus-on-dark);
   background: var(--gradient-brand);
   box-shadow: 0 -10px 30px rgba(1, 1, 126, 0.2);
@@ -182,15 +192,15 @@
 
 .bottom a {
   position: relative;
-  min-height: 52px;
+  min-height: 64px;
   display: grid;
   place-items: center;
-  gap: 2px;
-  padding: 5px 2px;
-  color: rgba(255, 255, 255, 0.72);
+  gap: 4px;
+  padding: 6px 2px;
+  color: rgba(255, 255, 255, 0.86);
   text-decoration: none;
-  font-size: 0.76rem;
-  line-height: 1.1;
+  font-size: 0.78rem;
+  line-height: 1.15;
   font-weight: 800;
   transition: color 0.18s ease, transform 0.18s ease, background 0.18s ease;
 }
@@ -218,6 +228,17 @@
 .bottom .active::after {
   opacity: 1;
   transform: scaleX(1);
+}
+
+@media (max-width: 360px) {
+  .bottom {
+    gap: 1px;
+    padding-inline: 4px;
+  }
+
+  .bottom a {
+    font-size: 0.72rem;
+  }
 }
 
 .sticky {
@@ -281,7 +302,7 @@
 
 @media (max-width: 700px) {
   .sticky {
-    bottom: 60px;
+    bottom: calc(80px + env(safe-area-inset-bottom));
   }
 
   .havan-generate-bar {

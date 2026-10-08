@@ -68,6 +68,9 @@ def build_request(
     invalid_topic_minutes = {topic_id: minutes for topic_id, minutes in plan_input.topic_minutes.items() if topic_id not in selected_ids or minutes < 5 or minutes > 120}
     if invalid_topic_minutes:
         raise PlanValidationError("INVALID_TOPIC_MINUTES", "Topic session minutes must be between 5 and 120 minutes and only apply to selected topics.", 422)
+    invalid_topic_estimates = {topic_id: minutes for topic_id, minutes in plan_input.topic_estimates.items() if topic_id not in selected_ids or minutes < 5 or minutes > 1440}
+    if invalid_topic_estimates:
+        raise PlanValidationError("INVALID_TOPIC_ESTIMATES", "Topic study time must be between 5 and 1,440 minutes and only apply to selected topics.", 422)
     if not known_ids.issubset(selected_ids):
         raise PlanValidationError("TOPIC_UNAVAILABLE", "Known topics must come from the topics you selected.", 422)
 
@@ -107,7 +110,11 @@ def build_request(
             course_id=chapter_by_id[topic.chapter_id].course_id,
             name=topic.name,
             difficulty=topic.difficulty,
-            estimated_minutes=max(5, topic.estimated_study_minutes - int(progress[topic.id].completed_minutes if topic.id in progress else 0)),
+            estimated_minutes=max(
+                5,
+                plan_input.topic_estimates.get(topic.id, topic.estimated_study_minutes)
+                - int(progress[topic.id].completed_minutes if topic.id in progress else 0),
+            ),
             session_minutes=plan_input.topic_minutes.get(topic.id),
             exam_importance=float(topic.exam_importance),
             conceptual_importance=float(topic.conceptual_importance),

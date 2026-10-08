@@ -38,6 +38,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<Set<number>>(new Set())
+  const [topicEstimates, setTopicEstimates] = useState<Record<number, number>>({})
   const [mode, setMode] = useState<HavanPlanMode>(initialMode ?? 'week')
   const [hours, setHours] = useState(2)
   const [studyDays, setStudyDays] = useState<string[]>([])
@@ -89,8 +90,11 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
   )
 
   const selectedMinutes = useMemo(
-    () => selectedTopics.reduce((total, topic) => total + topic.estimated_study_minutes, 0),
-    [selectedTopics],
+    () => selectedTopics.reduce(
+      (total, topic) => total + (topicEstimates[topic.id] ?? topic.estimated_study_minutes),
+      0,
+    ),
+    [selectedTopics, topicEstimates],
   )
 
   const studyDayCount = mode === 'today' ? 1 : studyDays.length
@@ -106,12 +110,17 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
       mode,
       horizon_days: horizon,
       topic_ids: [...selected],
+      topic_estimates: Object.fromEntries(
+        selectedTopics
+          .filter((topic) => topicEstimates[topic.id] !== undefined)
+          .map((topic) => [topic.id, topicEstimates[topic.id]]),
+      ),
       study_days: selectedDays,
       hours_per_day: mode === 'today'
         ? { [todayWeekday]: hours }
         : Object.fromEntries(selectedDays.map((weekday) => [weekday, hours])),
     }
-  }, [mode, horizon, selected, studyDays, hours])
+  }, [mode, horizon, selected, selectedTopics, topicEstimates, studyDays, hours])
 
   async function previewIt() {
     if (busy || !selected.size) return
@@ -272,6 +281,9 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
               onChange={(next) => {
                 const ids = new Set([...next].map(Number))
                 setSelected(ids)
+                setTopicEstimates((current) => Object.fromEntries(
+                  Object.entries(current).filter(([topicId]) => ids.has(Number(topicId))),
+                ))
                 setPreview(null)
               }}
             />
@@ -280,13 +292,51 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
           {selectedTopics.length > 0 && (
             <Card padding="lg" className="havan-topic-time-card havan-motion-enter">
               <div>
-                <span className="app-eyebrow">STEP 2 · AUTOMATIC ALLOCATION</span>
-                <h2>Havan will divide your time</h2>
-                <p className="app-meta">Topic estimated study time determines each selected topic's share. You do not need to enter minutes manually. The preview uses the same Havan engine that creates the saved plan.</p>
+                <span className="app-eyebrow">STEP 2 · TOPIC STUDY TIME</span>
+                <h2>Set time for each topic</h2>
+                <p className="app-meta">Choose a realistic total study time for every selected topic. Havan schedules each topic using its own estimate, so larger or harder topics can get more time.</p>
               </div>
               <div className="plan-capacity">
                 <div><strong>{selectedMinutes} min estimated content</strong><span>Across {selectedTopics.length} selected topics</span></div>
                 <div><strong>{hours * 60} min per study day</strong><span>{studyDayCount} selected study days in this plan</span></div>
+              </div>
+              <div className="havan-topic-time-list" aria-label="Study time by selected topic">
+                {selectedTopics.map((topic) => {
+                  const minutes = topicEstimates[topic.id] ?? topic.estimated_study_minutes
+                  return (
+                    <div className="havan-topic-time-edit" key={topic.id}>
+                      <div>
+                        <strong>{topic.name}</strong>
+                        <span>{courses.find((course) => course.chapters.some((chapter) => chapter.topics.some((item) => item.id === topic.id)))?.name}</span>
+                      </div>
+                      <div className="havan-topic-time-stepper" aria-label={`Study time for ${topic.name}`}>
+                        <button
+                          type="button"
+                          aria-label={`Reduce study time for ${topic.name}`}
+                          disabled={busy !== null || minutes <= 5}
+                          onClick={() => {
+                            setTopicEstimates((current) => ({ ...current, [topic.id]: minutes - 5 }))
+                            setPreview(null)
+                          }}
+                        >
+                          −
+                        </button>
+                        <strong>{minutes} min</strong>
+                        <button
+                          type="button"
+                          aria-label={`Increase study time for ${topic.name}`}
+                          disabled={busy !== null || minutes >= 1440}
+                          onClick={() => {
+                            setTopicEstimates((current) => ({ ...current, [topic.id]: minutes + 5 }))
+                            setPreview(null)
+                          }}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </Card>
           )}

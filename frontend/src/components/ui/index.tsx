@@ -246,7 +246,8 @@ export function TreeSelect({
                   }
                   aria-expanded={isOpen}
                 >
-                  {chapter.name}
+                  <span>{chapter.name}</span>
+                  <small>{chapter.topics.length} {chapter.topics.length === 1 ? 'topic' : 'topics'}</small>
                 </button>
                 {isOpen && (
                   <div
@@ -254,24 +255,43 @@ export function TreeSelect({
                     role="group"
                     aria-label={`Topics in ${chapter.name}`}
                   >
-                    {chapter.topics.map((topic) => (
-                      <label className={styles.topic} key={topic.id}>
-                        <input
-                          type="checkbox"
-                          checked={selected.has(topic.id)}
-                          onChange={() => {
-                            const next = new Set(selected)
-                            if (next.has(topic.id)) next.delete(topic.id)
+                    {chapter.topics.length > 1 && (
+                      <button
+                        className={styles.selectAllTopics}
+                        type="button"
+                        onClick={() => {
+                          const next = new Set(selected)
+                          const allSelected = chapter.topics.every((topic) => selected.has(topic.id))
+                          chapter.topics.forEach((topic) => {
+                            if (allSelected) next.delete(topic.id)
                             else next.add(topic.id)
-                            onChange(next)
-                          }}
-                        />
-                        <span>
-                          {topic.name}
-                          <small>{topic.minutes} min</small>
-                        </span>
-                      </label>
-                    ))}
+                          })
+                          onChange(next)
+                        }}
+                      >
+                        {chapter.topics.every((topic) => selected.has(topic.id)) ? 'Clear chapter' : 'Select all topics'}
+                      </button>
+                    )}
+                    {chapter.topics.length ? chapter.topics.map((topic) => (
+                        <label className={styles.topic} key={topic.id}>
+                          <input
+                            type="checkbox"
+                            checked={selected.has(topic.id)}
+                            onChange={() => {
+                              const next = new Set(selected)
+                              if (next.has(topic.id)) next.delete(topic.id)
+                              else next.add(topic.id)
+                              onChange(next)
+                            }}
+                          />
+                          <span>
+                            {topic.name}
+                            <small>{topic.minutes} min</small>
+                          </span>
+                        </label>
+                      )) : (
+                        <p className={styles.emptyTopics}>No active topics have been added to this chapter yet.</p>
+                      )}
                   </div>
                 )}
               </div>

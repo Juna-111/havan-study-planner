@@ -3,10 +3,10 @@
 .onboarding-step-count{color:var(--color-muted);font-size:.78rem;font-weight:800}
 .onboarding-progress{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:18px 0 12px}
 .onboarding-progress-step{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:8px;min-width:0;padding:10px 12px;border:1px solid var(--color-line);border-radius:13px;background:var(--color-surface);color:var(--color-muted);text-align:left}
-.onboarding-progress-step span{display:grid;place-items:center;width:28px;height:28px;border-radius:9px;background:var(--color-canvas);font-size:.8rem;font-weight:900}
+.onboarding-progress-number{display:grid;place-items:center;width:28px;height:28px;border-radius:9px;background:var(--color-canvas);font-size:.8rem;font-weight:900}
 .onboarding-progress-step strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.8rem}
 .onboarding-progress-step.active{border-color:var(--color-primary);background:var(--color-primary-soft);color:var(--color-primary);box-shadow:var(--shadow-brand)}
-.onboarding-progress-step.active span,.onboarding-progress-step.complete span{background:var(--color-primary);color:var(--color-white)}
+.onboarding-progress-step.active .onboarding-progress-number,.onboarding-progress-step.complete .onboarding-progress-number{background:var(--color-primary);color:var(--color-white)}
 .onboarding-progress-step.complete{border-color:var(--color-border-blue);color:var(--color-primary)}
 .onboarding-progress-step:disabled{cursor:not-allowed;opacity:.72}
 .onboarding-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px;border-top:3px solid var(--color-accent);background:linear-gradient(90deg,var(--color-accent-soft),var(--color-white))}

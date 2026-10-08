@@ -71,6 +71,69 @@
   gap: var(--space-4);
 }
 
+.havan-topic-time-list {
+  display: grid;
+  gap: 8px;
+}
+
+.havan-topic-time-edit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  background: var(--color-surface);
+}
+
+.havan-topic-time-edit > div:first-child {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.havan-topic-time-edit > div:first-child strong {
+  color: var(--color-ink);
+}
+
+.havan-topic-time-edit > div:first-child span {
+  overflow: hidden;
+  color: var(--color-muted);
+  font-size: 0.76rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.havan-topic-time-stepper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+.havan-topic-time-stepper button {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--color-line);
+  border-radius: 11px;
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.havan-topic-time-stepper button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.havan-topic-time-stepper strong {
+  min-width: 62px;
+  color: var(--color-primary);
+  text-align: center;
+}
+
 .havan-generate-bar {
   width: 100%;
 }
@@ -100,6 +163,16 @@
 
   .plan-task {
     padding: 16px !important;
+  }
+
+  .havan-topic-time-edit {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .havan-topic-time-stepper {
+    width: 100%;
+    justify-content: space-between;
   }
 }
 

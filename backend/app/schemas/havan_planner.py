@@ -12,6 +12,7 @@ class HavanPlanCreate(BaseModel):
     topic_ids: list[int] = Field(min_length=1, max_length=500)
     study_days: list[int] = Field(default_factory=list, max_length=7)
     hours_per_day: dict[int, float] = Field(default_factory=dict)
+    topic_estimates: dict[int, int] = Field(default_factory=dict)
 
 
 class HavanPromotionRead(BaseModel):
@@ -56,3 +57,4 @@ class HavanPlanRead(BaseModel):
 
 class HavanPlanTaskAction(BaseModel):
     action: Literal["START", "COMPLETE"]
+    actual_minutes: int | None = Field(default=None, gt=0, le=120)

@@ -118,6 +118,67 @@ def test_adapter_rejects_invalid_topic_session_minutes():
         )
 
 
+@pytest.mark.parametrize(
+    "estimates",
+    [
+        {2: 45},
+        {1: 1441},
+    ],
+)
+def test_adapter_rejects_invalid_topic_study_estimates(estimates):
+    from types import SimpleNamespace
+
+    from app.core.errors import PlanValidationError
+    from app.schemas.plan import PlanInput
+    from app.services.plan_adapter import build_request
+
+    with pytest.raises(PlanValidationError, match="Topic study time"):
+        build_request(
+            SimpleNamespace(),
+            SimpleNamespace(id=1),
+            PlanInput(topic_ids=[1], topic_estimates=estimates),
+        )
+
+
+def test_adapter_uses_topic_specific_total_study_estimate(monkeypatch):
+    from types import SimpleNamespace
+
+    from app.schemas.plan import PlanInput
+    from app.services import plan_adapter
+
+    topic_row = SimpleNamespace(
+        id=1,
+        chapter_id=10,
+        name="Topic 1",
+        difficulty=3,
+        estimated_study_minutes=30,
+        exam_importance=0.5,
+        conceptual_importance=0.5,
+        order_index=1,
+    )
+    chapter_row = SimpleNamespace(id=10, course_id=7, order_index=1)
+    responses = iter(([topic_row], [chapter_row], [], [], [], []))
+
+    class Result:
+        def __init__(self, rows):
+            self.rows = rows
+
+        def all(self):
+            return self.rows
+
+    db = SimpleNamespace(scalars=lambda query: Result(next(responses)))
+    monkeypatch.setattr(plan_adapter, "resolved_course_ids", lambda db, student_id: {7})
+
+    request = plan_adapter.build_request(
+        db,
+        SimpleNamespace(id=9),
+        PlanInput(topic_ids=[1], topic_estimates={1: 90}),
+        today=TODAY,
+    )
+
+    assert request.topics[0].estimated_minutes == 90
+
+
 def test_allocator_scales_with_observed_pace():
     result = make_plan([topic(1)], minutes=180, pace_factor=1.5)
     assert sum(s.minutes for s in result.sessions) == 90

@@ -51,6 +51,10 @@ export default function HavanPlanView() {
   const [state, setState] = useState<LoadState>('loading')
   const [error, setError] = useState('')
   const [busyTask, setBusyTask] = useState<number | null>(null)
+  const [focusTaskId, setFocusTaskId] = useState<number | null>(null)
+  const [focusMinutes, setFocusMinutes] = useState(25)
+  const [focusSeconds, setFocusSeconds] = useState(0)
+  const [focusRunning, setFocusRunning] = useState(false)
 
   const loadPlan = useCallback(async () => {
     setState('loading')
@@ -74,6 +78,19 @@ export default function HavanPlanView() {
     void loadPlan()
   }, [loadPlan])
 
+  useEffect(() => {
+    if (!focusRunning || focusTaskId === null) return
+    const timer = window.setTimeout(() => {
+      if (focusSeconds <= 1) {
+        setFocusSeconds(0)
+        setFocusRunning(false)
+      } else {
+        setFocusSeconds(focusSeconds - 1)
+      }
+    }, 1000)
+    return () => window.clearTimeout(timer)
+  }, [focusRunning, focusTaskId, focusSeconds])
+
   const grouped = useMemo(() => {
     if (!plan) return []
     const groups = new Map<string, HavanPlan['tasks']>()
@@ -86,25 +103,56 @@ export default function HavanPlanView() {
     return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b))
   }, [plan])
 
-  async function action(taskId: number, actionName: 'START' | 'COMPLETE') {
-    if (!plan || busyTask !== null) return
+  async function action(
+    taskId: number,
+    actionName: 'START' | 'COMPLETE',
+    actualMinutes?: number,
+  ): Promise<boolean> {
+    if (!plan || busyTask !== null) return false
     setBusyTask(taskId)
     setError('')
     try {
-      setPlan(await havanTaskAction(plan.id as number, taskId, actionName))
+      setPlan(await havanTaskAction(plan.id as number, taskId, actionName, actualMinutes))
       if (actionName === 'COMPLETE') {
         const studentId = getSavedAccount()?.student_profile_id
         if (studentId) recordLocalStudyCompletion(studentId)
       }
+      return true
     } catch (value) {
       setError(
         value instanceof Error
           ? value.message
           : 'Could not update that study task.',
       )
+      return false
     } finally {
       setBusyTask(null)
     }
+  }
+
+  function openFocus(taskId: number, plannedMinutes: number) {
+    const minutes = Math.max(5, Math.min(25, plannedMinutes))
+    setFocusTaskId(taskId)
+    setFocusMinutes(minutes)
+    setFocusSeconds(minutes * 60)
+    setFocusRunning(false)
+  }
+
+  async function finishFocus() {
+    if (focusTaskId === null || busyTask !== null) return
+    const elapsedMinutes = Math.ceil((focusMinutes * 60 - focusSeconds) / 60)
+    if (elapsedMinutes < 1) return
+    if (await action(focusTaskId, 'COMPLETE', elapsedMinutes)) {
+      setFocusTaskId(null)
+      setFocusSeconds(0)
+      setFocusRunning(false)
+    }
+  }
+
+  function cancelFocus() {
+    setFocusTaskId(null)
+    setFocusSeconds(0)
+    setFocusRunning(false)
   }
 
   if (state === 'loading') {
@@ -269,12 +317,95 @@ export default function HavanPlanView() {
                     </div>
                   )}
 
+                  {focusTaskId === task.id && (
+                    <section className="havan-focus-panel" aria-label={`Focus timer for ${task.topic_name}`}>
+                      <div className="havan-focus-heading">
+                        <div>
+                          <span className="app-eyebrow">FOCUS TIMER</span>
+                          <strong>{task.topic_name}</strong>
+                        </div>
+                        <strong className="havan-focus-clock" role="timer" aria-live="off">
+                          {String(Math.floor(focusSeconds / 60)).padStart(2, '0')}:{String(focusSeconds % 60).padStart(2, '0')}
+                        </strong>
+                      </div>
+                      <div className="havan-focus-duration">
+                        <span>Session length</span>
+                        <div>
+                          <button
+                            type="button"
+                            aria-label="Decrease focus session by five minutes"
+                            disabled={focusMinutes <= 5 || focusRunning}
+                            onClick={() => {
+                              const next = Math.max(5, focusMinutes - 5)
+                              setFocusMinutes(next)
+                              setFocusSeconds((seconds) => Math.min(seconds, next * 60))
+                            }}
+                          >
+                            −
+                          </button>
+                          <strong>{focusMinutes} min</strong>
+                          <button
+                            type="button"
+                            aria-label="Increase focus session by five minutes"
+                            disabled={focusMinutes >= 120 || focusRunning}
+                            onClick={() => {
+                              const next = Math.min(120, focusMinutes + 5)
+                              setFocusMinutes(next)
+                              setFocusSeconds((seconds) => seconds + 300)
+                            }}
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                      <p role="status">
+                        {focusSeconds === 0
+                          ? 'Session time is up. Finish the session to save it.'
+                          : focusRunning
+                            ? 'Stay with this topic. Your time will be saved when you finish.'
+                            : focusSeconds === focusMinutes * 60
+                              ? 'Start the timer when you are ready to study.'
+                              : 'Timer paused. Resume when you are ready.'}
+                      </p>
+                      <div className="havan-focus-actions">
+                        <Button
+                          variant="accent"
+                          disabled={focusSeconds === 0}
+                          onClick={() => setFocusRunning((running) => !running)}
+                        >
+                          {focusRunning ? 'Pause' : focusSeconds === focusMinutes * 60 ? 'Start timer' : 'Resume'}
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          disabled={busyTask !== null || focusSeconds === focusMinutes * 60}
+                          loading={busyTask === task.id}
+                          onClick={() => void finishFocus()}
+                        >
+                          Finish focus
+                        </Button>
+                        <Button variant="ghost" disabled={busyTask !== null} onClick={cancelFocus}>
+                          Cancel
+                        </Button>
+                      </div>
+                    </section>
+                  )}
+
                   <div className="plan-task-actions">
                     {task.status === 'PLANNED' && (
                       <Button
-                        variant="accent"
+                        variant="secondary"
                         loading={busyTask === task.id}
+                        disabled={focusTaskId === task.id}
                         onClick={() => void action(task.id as number, 'START')}
+                      >
+                        Start
+                      </Button>
+                    )}
+                    {task.status !== 'DONE' && focusTaskId !== task.id && (
+                      <Button
+                        variant="accent"
+                        disabled={busyTask !== null}
+                        onClick={() => openFocus(task.id as number, task.minutes)}
                       >
                         Start focus
                       </Button>
@@ -283,6 +414,7 @@ export default function HavanPlanView() {
                       <Button
                         variant="secondary"
                         loading={busyTask === task.id}
+                        disabled={focusTaskId === task.id}
                         onClick={() => void action(task.id as number, 'COMPLETE')}
                       >
                         Complete

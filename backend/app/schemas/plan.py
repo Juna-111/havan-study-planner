@@ -24,6 +24,7 @@ class PlanInput(BaseModel):
     hours_per_day: float = Field(default=2.0, gt=0, le=24)
     pinned_topic_dates: dict[int, date] = Field(default_factory=dict)
     topic_minutes: dict[int, int] = Field(default_factory=dict)
+    topic_estimates: dict[int, int] = Field(default_factory=dict)
 
 
 class TaskOut(BaseModel):

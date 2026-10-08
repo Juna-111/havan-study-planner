@@ -7,6 +7,7 @@ export type HavanPlanInput = {
   topic_ids: number[]
   study_days: number[]
   hours_per_day: Record<number, number>
+  topic_estimates?: Record<number, number>
 }
 export type HavanPlanTask = {
   id: number | null
@@ -57,8 +58,13 @@ export const getLatestHavanPlan = async () => {
   }
 }
 
-export const havanTaskAction = (planId: number, taskId: number, action: 'START' | 'COMPLETE') =>
+export const havanTaskAction = (
+  planId: number,
+  taskId: number,
+  action: 'START' | 'COMPLETE',
+  actualMinutes?: number,
+) =>
   apiFetch<HavanPlan>(`/havan-planner/me/plans/${planId}/tasks/${taskId}/actions`, {
     method: 'POST',
-    body: JSON.stringify({ action }),
+    body: JSON.stringify({ action, ...(actualMinutes === undefined ? {} : { actual_minutes: actualMinutes }) }),
   })

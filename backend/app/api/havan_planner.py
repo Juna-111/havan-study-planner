@@ -67,6 +67,7 @@ def _to_plan_input(payload: HavanPlanCreate, *, today=None) -> PlanInput:
         mode=payload.mode,
         horizon_days=payload.horizon_days,
         topic_ids=payload.topic_ids,
+        topic_estimates=payload.topic_estimates,
         study_days=list(dict.fromkeys(study_days)),
         minutes_by_weekday=minutes_by_weekday,
         hours_per_day=max(payload.hours_per_day.values(), default=0.0),
@@ -219,7 +220,13 @@ def action_current_task(
     if plan is None:
         raise DomainError("NO_ACTIVE_PLAN", "Study plan not found.", 404)
     try:
-        result, _ = apply_action(db, student, task_id, PlanAction(action=payload.action), plan_id=plan.id)
+        result, _ = apply_action(
+            db,
+            student,
+            task_id,
+            PlanAction(action=payload.action, actual_minutes=payload.actual_minutes),
+            plan_id=plan.id,
+        )
         return _read_havan(db, student, result)
     except PlanValidationError:
         raise
