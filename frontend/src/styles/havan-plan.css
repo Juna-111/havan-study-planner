@@ -70,7 +70,7 @@
   align-items: center;
   padding: 0 var(--space-3);
   border-radius: var(--radius-pill);
-  background: var(--color-primary-soft);
+  background: rgba(255,255,255,.08);
   color: var(--color-primary);
   text-decoration: none;
   font-weight: 800;
@@ -108,7 +108,7 @@
   color: var(--color-muted);
 }
 
-.havan-plan-overview {
+.plan-overview {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -116,53 +116,56 @@
   margin-bottom: var(--space-5);
 }
 
-.havan-plan-overview > div {
+.plan-overview > div {
   display: grid;
   gap: var(--space-2);
   min-width: 0;
 }
 
-.havan-plan-overview h2 {
+.plan-overview h2 {
   color: var(--color-primary);
 }
 
-.havan-plan-overview p {
+.plan-overview p {
   color: var(--color-muted);
 }
 
-.havan-plan-overview .bar {
+.plan-overview .bar {
   max-width: 440px;
 }
 
-.havan-plan-day {
+.plan-day {
   display: grid;
   gap: var(--space-3);
   margin-bottom: var(--space-6);
 }
 
-.havan-plan-day-heading {
+.plan-day-heading {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: var(--space-3);
 }
 
-.havan-plan-day-heading h2 {
+.plan-day-heading h2 {
   color: var(--color-ink);
 }
 
-.havan-plan-day-heading span {
+.plan-day-heading span {
   color: var(--color-muted);
   font-weight: 800;
 }
 
-.havan-plan-task {
+.plan-task {
   display: grid;
   gap: var(--space-2);
-  border-top: 3px solid var(--color-primary);
+  border: 1px solid rgba(255,255,255,.10);
+  border-top: 4px solid var(--color-accent);
+  background: var(--color-primary);
+  color: var(--color-white);
 }
 
-.havan-plan-task-top {
+.plan-task-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -170,17 +173,17 @@
 }
 
 .havan-plan-course {
-  color: var(--color-primary);
+  color: rgba(255,255,255,.82);
   font-size: var(--text-sm);
   font-weight: 900;
 }
 
 .havan-plan-chapter {
-  color: var(--color-muted);
+  color: rgba(255,255,255,.62);
   font-size: var(--text-sm);
 }
 
-.havan-plan-task h3 {
+.plan-task h3 {
   color: var(--color-ink);
   font-size: 1.2rem;
 }
@@ -249,7 +252,7 @@
   white-space: nowrap;
 }
 
-.havan-plan-task-actions {
+.plan-task-actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
@@ -286,14 +289,30 @@
     grid-template-columns: 1fr 1fr;
   }
 
-  .havan-plan-task-actions > * {
+  .plan-task-actions > * {
     width: 100%;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .havan-plan-task,
+  .plan-task,
   .havan-plan-warning-action {
     transition: none;
   }
 }
+
+
+.havan-plan-promotions{
+  border:1px solid rgba(255,255,255,.16);
+  border-left:3px solid var(--color-accent);
+}
+.havan-plan-promotions-heading{display:grid;gap:3px}
+.havan-plan-promotions-heading .app-eyebrow{color:rgba(255,255,255,.68)!important}
+.havan-plan-promotions-heading strong{color:var(--color-white)!important}
+.havan-plan-promotion-links{display:grid;gap:8px}
+.havan-plan-promotion{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14);color:var(--color-white);transition:background .18s ease,border-color .18s ease,transform .18s ease}
+.havan-plan-promotion strong{color:var(--color-white)!important}
+.havan-plan-promotion small{color:rgba(255,255,255,.68)!important}
+.havan-plan-promotion b{color:var(--color-accent)!important}
+@media(max-width:600px){.havan-plan-promotion{align-items:flex-start;flex-direction:column}.havan-plan-promotion b{font-size:.8rem}}
+@media(prefers-reduced-motion:reduce){.havan-plan-promotion{transition:none}.havan-plan-promotion:hover{transform:none}}
