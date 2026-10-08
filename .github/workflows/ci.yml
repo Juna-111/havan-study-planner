@@ -77,7 +77,7 @@ jobs:
         run: npm test
       - name: Production build
         env:
-          NEXT_PUBLIC_API_URL: https://YOUR-API-ORIGIN
+          NEXT_PUBLIC_API_URL: https://havan-study-planner.onrender.com
         run: npm run build
       - name: Structure and hygiene
         run: npm run check:structure
