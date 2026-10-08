@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { AppShell } from '@/components/layout'
+import { HavanLogo } from '@/components/brand/HavanLogo'
 import { Card } from '@/components/ui'
 
 const destinations = [
@@ -30,7 +31,8 @@ export default function HavanHome() {
     <AppShell>
       <div className="havan-home">
         <header className="havan-home-hero">
-          <span className="app-eyebrow">HAVAN ACADEMY</span>
+          <HavanLogo size={52} variant="dark" className="havan-home-logo" />
+          <span className="app-eyebrow">HAVAN ACADEMY · STUDY PLANNER</span>
           <h1>Your study journey, your choice.</h1>
           <p>Choose what you want to learn and how much time you have. Havan organizes your choices into a clear study plan.</p>
         </header>
