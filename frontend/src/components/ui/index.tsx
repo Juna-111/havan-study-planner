@@ -209,6 +209,12 @@ export function TreeSelect({
   onChange: (selection: Set<string>) => void
 }) {
   const [open, setOpen] = useState<Set<string>>(new Set())
+  useEffect(() => {
+    setOpen((previous) => {
+      if (previous.size > 0) return previous
+      return new Set(courses.flatMap((course) => course.chapters.map((chapter) => chapter.id)))
+    })
+  }, [courses])
   const total = useMemo(
     () =>
       courses
