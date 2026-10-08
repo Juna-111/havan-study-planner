@@ -267,8 +267,8 @@ export default function HavanPlanView() {
                         task.status === 'DONE'
                           ? 'success'
                           : task.status === 'IN_PROGRESS'
-                            ? 'info'
-                            : 'neutral'
+                            ? 'warn'
+                            : 'danger'
                       }
                     >
                       {task.status === 'DONE'

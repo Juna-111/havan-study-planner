@@ -142,7 +142,7 @@ export default function AuthForm() {
       <section className="auth-brand-panel auth-reveal auth-reveal-1">
         <div className="auth-brand-inner">
           <div style={{padding: '0 0 16px'}}>
-            <BrandedHeader eyebrow="HAVAN STUDY PLANNER" title="Plan with clarity." logoSize={54} />
+            <BrandedHeader eyebrow="HAVAN STUDY PLANNER" title="Plan with clarity." logoSize={84} />
           </div>
           <p>Choose what you want to study, tell Havan how much time you have, and keep control of your plan.</p>
           <div className="auth-points">

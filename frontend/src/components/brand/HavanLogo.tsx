@@ -21,8 +21,8 @@ export function HavanLogo({
         height: size,
         overflow: 'hidden',
         alignItems: 'center',
-        borderRadius: Math.max(8, size * 0.16),
-        background: 'var(--color-surface)',
+        borderRadius: 0,
+        background: 'transparent',
       }}
     >
       <Image

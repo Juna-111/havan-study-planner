@@ -51,3 +51,33 @@
   .plan-task{border-radius:18px!important}
   .exam-insight-card{border-radius:18px!important}
 }
+
+
+/* Status badges: explicit text colours remain readable on Havan's blue plan cards. */
+.plan-task .chip.danger {
+  color: var(--color-accent) !important;
+  background: rgba(255,255,255,.10) !important;
+}
+.plan-task .chip.warn {
+  color: #f5c542 !important;
+  background: rgba(255,255,255,.10) !important;
+}
+.plan-task .chip.success {
+  color: #57d68a !important;
+  background: rgba(255,255,255,.10) !important;
+}
+
+/* Exam status chips intentionally use black text for a calmer, consistent exam-card label. */
+.exam-insight-card .chip {
+  color: #000 !important;
+  background: var(--color-white) !important;
+}
+
+/* Login branding: the logo itself is the mark, without a white container behind it. */
+.auth-brand-panel .brandedHeader {
+  width: 100%;
+  padding-inline: 0;
+}
+.auth-brand-panel .brandedHeader img {
+  display: block;
+}
