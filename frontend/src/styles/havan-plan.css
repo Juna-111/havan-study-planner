@@ -318,3 +318,56 @@
 .havan-plan-promotion b{color:var(--color-accent)!important}
 @media(max-width:600px){.havan-plan-promotion{align-items:flex-start;flex-direction:column}.havan-plan-promotion b{font-size:.8rem}}
 @media(prefers-reduced-motion:reduce){.havan-plan-promotion{transition:none}.havan-plan-promotion:hover{transform:none}}
+/* Status and focus contrast inside the accepted Havan blue plan cards. */
+.plan-task .chip {
+  color: var(--color-white);
+  border: 1px solid rgba(255,255,255,.18);
+  box-shadow: none;
+}
+.plan-task .chip.neutral {
+  color: var(--color-white);
+  background: rgba(255,255,255,.16);
+}
+.plan-task .chip.info {
+  color: var(--color-white);
+  background: rgba(77,144,255,.34);
+}
+.plan-task .chip.success {
+  color: var(--color-white);
+  background: rgba(34,197,94,.28);
+}
+.plan-task .chip.warn {
+  color: var(--color-white);
+  background: rgba(245,158,11,.30);
+}
+.plan-task .chip.danger {
+  color: var(--color-white);
+  background: rgba(239,68,68,.30);
+}
+.havan-plan-task-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.havan-plan-task-top > strong {
+  color: var(--color-white);
+}
+.havan-focus-panel {
+  color: var(--color-ink);
+  background: var(--color-surface);
+  border-color: var(--color-line);
+}
+.havan-focus-panel .app-eyebrow {
+  color: var(--color-primary) !important;
+}
+.havan-focus-panel .havan-focus-heading > div > strong,
+.havan-focus-panel .havan-focus-duration > span,
+.havan-focus-panel .havan-focus-duration > div > strong,
+.havan-focus-panel > p {
+  color: var(--color-ink);
+}
+.havan-focus-panel .havan-focus-clock {
+  color: var(--color-white);
+  background: var(--color-primary);
+}
