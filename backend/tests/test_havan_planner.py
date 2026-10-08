@@ -1,11 +1,14 @@
 from datetime import date
+from types import SimpleNamespace
 
 from app.core.time import today_local
 
 import pytest
 
-from app.api.havan_planner import _to_plan_input
+from app.api import havan_planner
+from app.api.havan_planner import _to_plan_input, create_current_plan
 from app.schemas.havan_planner import HavanPlanCreate
+from app.schemas.plan import PlanOut
 
 
 def test_havan_today_maps_to_current_day_and_selected_time():
@@ -55,3 +58,44 @@ def test_havan_rejects_mode_and_horizon_mismatch():
 
     with pytest.raises(Exception, match="mode and horizon"):
         _to_plan_input(payload)
+
+
+def test_havan_build_formats_saved_plan_output_without_reading_snapshot_from_plan_out(monkeypatch):
+    payload = HavanPlanCreate(
+        mode="week",
+        horizon_days=7,
+        topic_ids=[101],
+        study_days=[0],
+        hours_per_day={0: 1.0},
+    )
+    saved = PlanOut(
+        id=42,
+        student_id=7,
+        mode="week",
+        horizon_days=7,
+        start_date=date(2026, 10, 8),
+        engine_version="test",
+        total_minutes=60,
+        tasks=[],
+        readiness=[],
+        warnings=[],
+        unplaced=[],
+        saved=True,
+    )
+    captured = {}
+
+    monkeypatch.setattr(havan_planner, "save_plan", lambda *args, **kwargs: saved)
+
+    def fake_read(db, student, out, *, plan_id, input_snapshot):
+        captured["plan_id"] = plan_id
+        captured["input_snapshot"] = input_snapshot
+        assert out is saved
+        return "built"
+
+    monkeypatch.setattr(havan_planner, "_read_havan_from_out", fake_read)
+
+    result = create_current_plan(payload, SimpleNamespace(id=7), object())
+
+    assert result == "built"
+    assert captured["plan_id"] == 42
+    assert captured["input_snapshot"]["topic_ids"] == [101]
