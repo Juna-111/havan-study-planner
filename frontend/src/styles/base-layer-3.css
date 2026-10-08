@@ -81,3 +81,20 @@
 .auth-brand-panel .brandedHeader img {
   display: block;
 }
+
+
+/* Exam card status labels are deliberately black, regardless of shared Chip/status rules. */
+.exam-insight-card .exam-status-badge,
+.exam-insight-card .exam-status-badge .chip,
+.exam-insight-card .exam-status-badge .success,
+.exam-insight-card .exam-status-badge .warn,
+.exam-insight-card .exam-status-badge .danger,
+.exam-insight-card .exam-status-badge .info {
+  color: #000 !important;
+  background: #fff !important;
+}
+
+/* Exam course/topic title uses black text as requested. */
+.exam-insight-card .exam-card-top h3 {
+  color: #000 !important;
+}
