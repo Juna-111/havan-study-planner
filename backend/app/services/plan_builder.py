@@ -161,7 +161,7 @@ def _result_to_out(
         horizon_days=plan_input.horizon_days,
         start_date=result.today,
         engine_version=result.engine_version,
-        total_minutes=sum(item.minutes for item in result.sessions),
+        total_minutes=sum(item.minutes for item in sessions_to_save) + sum(row.minutes for row in carry_rows),
         tasks=tasks,
         readiness=readiness,
         warnings=warnings,
@@ -253,6 +253,14 @@ def preview_plan(
     return _result_to_out(db, student, plan_input, result)
 
 
+def _today_carryover_tasks(rows: list[PlanTask], today: date) -> list[PlanTask]:
+    return [
+        row
+        for row in rows
+        if row.planned_date == today and row.status in {"DONE", "IN_PROGRESS"}
+    ]
+
+
 def save_plan(
     db: Session,
     student: StudentProfile,
@@ -272,6 +280,32 @@ def save_plan(
     active = db.scalars(
         select(Plan).where(Plan.student_id == student.id, Plan.status == "ACTIVE")
     ).all()
+    today_date = result.today
+    carry_rows: list[PlanTask] = []
+    for old in active:
+        rows = db.scalars(
+            select(PlanTask).where(
+                PlanTask.plan_id == old.id,
+                PlanTask.planned_date == today_date,
+                PlanTask.status.in_(("DONE", "IN_PROGRESS")),
+            )
+        ).all()
+        carry_rows.extend(_today_carryover_tasks(rows, today_date))
+
+    # A student may have more than one active plan after an interrupted rebuild.
+    # Carry each today's task at most once into the replacement plan.
+    carry_by_key = {
+        (row.topic_id, row.planned_date, row.kind): row
+        for row in carry_rows
+    }
+    carry_rows = list(carry_by_key.values())
+    carry_keys = set(carry_by_key)
+    sessions_to_save = [
+        session
+        for session in result.sessions
+        if (session.topic_id, session.planned_date, session.kind) not in carry_keys
+    ]
+
     for old in active:
         old.status = "ARCHIVED"
 
@@ -298,7 +332,27 @@ def save_plan(
     db.add(plan)
     db.flush()
 
-    for session in result.sessions:
+    for row in carry_rows:
+        db.add(
+            PlanTask(
+                plan_id=plan.id,
+                student_id=student.id,
+                course_id=row.course_id,
+                topic_id=row.topic_id,
+                planned_date=row.planned_date,
+                minutes=row.minutes,
+                priority=row.priority,
+                reason=row.reason,
+                reason_parts=row.reason_parts,
+                kind=row.kind,
+                status=row.status,
+                pinned=row.pinned,
+                actual_minutes=row.actual_minutes,
+                confidence=row.confidence,
+            )
+        )
+
+    for session in sessions_to_save:
         db.add(PlanTask(
             plan_id=plan.id,
             student_id=student.id,
