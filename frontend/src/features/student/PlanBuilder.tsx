@@ -389,7 +389,38 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
           </div>
           <div className="havan-generate-actions">
             {builderStep > 1 && <Button variant="secondary" disabled={busy !== null} onClick={() => { setError(''); setBuilderStep((builderStep - 1) as 1|2|3|4) }}>Back</Button>}
-            {builderStep < 4 ? <Button variant="accent" disabled={busy !== null} onClick={() => void nextStep()}>{builderStep === 3 ? (busy === 'preview' ? 'Building preview...' : 'Review allocation') : 'Continue'}</Button> : <Button variant="accent" disabled={!selected.size || busy !== null} onClick={saveIt}>{busy === 'save' ? 'Creating your plan...' : 'Create my Havan plan'}</Button>}
+            {builderStep < 4 ? (
+              <>
+                {builderStep === 3 && (
+                  <Button
+                    variant="secondary"
+                    disabled={!selected.size || busy !== null}
+                    onClick={saveIt}
+                  >
+                    {busy === 'save' ? 'Building plan...' : 'Build Havan plan'}
+                  </Button>
+                )}
+                <Button
+                  variant="accent"
+                  disabled={busy !== null}
+                  onClick={() => void nextStep()}
+                >
+                  {builderStep === 3
+                    ? busy === 'preview'
+                      ? 'Building preview...'
+                      : 'Review allocation'
+                    : 'Continue'}
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="accent"
+                disabled={!selected.size || busy !== null}
+                onClick={saveIt}
+              >
+                {busy === 'save' ? 'Building plan...' : 'Build my Havan plan'}
+              </Button>
+            )}
           </div>
         </div>
       </StickyActionBar>
