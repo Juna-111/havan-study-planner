@@ -36,6 +36,7 @@ function criticalPoints(value?: string | null) {
 export function PlanBuilder({ initialMode }: PlanBuilderProps) {
   const router = useRouter()
   const [courses, setCourses] = useState<Course[]>([])
+  const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [mode, setMode] = useState<HavanPlanMode>(initialMode ?? 'week')
   const [hours, setHours] = useState(2)
@@ -70,6 +71,8 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
       setStudyDays(student.study_days ?? [])
     } catch (value) {
       setError(value instanceof Error ? value.message : 'Could not load your study data.')
+    } finally {
+      setLoading(false)
     }
   }, [])
 
@@ -235,7 +238,13 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
 
       {error && <ErrorState message={error} onRetry={() => void loadStudyData()} />}
 
-      {!courses.length && !error ? (
+      {loading ? (
+        <Card padding="lg" className="havan-plan-skeleton" aria-busy="true">
+          <span className="app-eyebrow">HAVAN ACADEMY</span>
+          <h2>Loading your study choices</h2>
+          <p className="app-meta">Havan is loading your courses and topics.</p>
+        </Card>
+      ) : !courses.length && !error ? (
         <EmptyState title="No topics available" hint="Your selected courses do not have active topic data yet." />
       ) : (
         <div className="app-section">
