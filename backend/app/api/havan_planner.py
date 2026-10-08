@@ -176,8 +176,13 @@ def create_current_plan(
     db: Session = Depends(get_db),
 ):
     try:
-        plan = save_plan(db, student, _to_plan_input(payload), today=today_local())
-        return _read_havan(db, student, plan)
+        plan_input = _to_plan_input(payload)
+        out = save_plan(db, student, plan_input, today=today_local())
+        return _read_havan_from_out(
+            db, student, out,
+            plan_id=out.id,
+            input_snapshot=plan_input.model_dump(mode="json"),
+        )
     except PlanValidationError:
         raise
 
