@@ -161,7 +161,7 @@ def _result_to_out(
         horizon_days=plan_input.horizon_days,
         start_date=result.today,
         engine_version=result.engine_version,
-        total_minutes=sum(item.minutes for item in sessions_to_save) + sum(row.minutes for row in carry_rows),
+        total_minutes=sum(item.minutes for item in result.sessions),
         tasks=tasks,
         readiness=readiness,
         warnings=warnings,
@@ -315,7 +315,7 @@ def save_plan(
         horizon_days=plan_input.horizon_days,
         start_date=result.today,
         engine_version=result.engine_version,
-        total_minutes=sum(item.minutes for item in result.sessions),
+        total_minutes=sum(item.minutes for item in sessions_to_save) + sum(row.minutes for row in carry_rows),
         readiness=[
             {"course_id": item.course_id, "exam_type": item.exam_type, "exam_date": item.exam_date.isoformat(),
              "days_left": item.days_left, "status": item.status, "required_minutes": item.required_minutes,
