@@ -261,11 +261,18 @@ def preview_plan(
     return _result_to_out(db, student, plan_input, result)
 
 
-def _today_carryover_tasks(rows: list[PlanTask], today: date) -> list[PlanTask]:
+def _today_carryover_tasks(
+    rows: list[PlanTask],
+    today: date,
+    selected_topic_ids: set[int],
+) -> list[PlanTask]:
+    """Keep only today's work that remains selected in the replacement plan."""
     return [
         row
         for row in rows
-        if row.planned_date == today and row.status in {"DONE", "IN_PROGRESS"}
+        if row.planned_date == today
+        and row.status in {"DONE", "IN_PROGRESS"}
+        and row.topic_id in selected_topic_ids
     ]
 
 
@@ -289,6 +296,7 @@ def save_plan(
         select(Plan).where(Plan.student_id == student.id, Plan.status == "ACTIVE")
     ).all()
     today_date = result.today
+    selected_topic_ids = set(plan_input.topic_ids) - set(plan_input.known_topic_ids)
     carry_rows: list[PlanTask] = []
     for old in active:
         rows = db.scalars(
@@ -298,7 +306,7 @@ def save_plan(
                 PlanTask.status.in_(("DONE", "IN_PROGRESS")),
             )
         ).all()
-        carry_rows.extend(_today_carryover_tasks(rows, today_date))
+        carry_rows.extend(_today_carryover_tasks(rows, today_date, selected_topic_ids))
 
     # A student may have more than one active plan after an interrupted rebuild.
     # Carry each today's task at most once into the replacement plan.

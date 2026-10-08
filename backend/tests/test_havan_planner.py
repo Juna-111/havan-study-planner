@@ -9,7 +9,8 @@ from app.api import havan_planner
 from app.api.havan_planner import _to_plan_input, create_current_plan
 from app.schemas.havan_planner import HavanPlanCreate
 from app.schemas.plan import PlanOut
-from app.services.plan_builder import _warning_fix, _warning_severity
+from app.db.models.plan import PlanTask
+from app.services.plan_builder import _today_carryover_tasks, _warning_fix, _warning_severity
 
 
 def test_havan_today_maps_to_current_day_and_selected_time():
@@ -100,6 +101,19 @@ def test_havan_build_formats_saved_plan_output_without_reading_snapshot_from_pla
     assert result == "built"
     assert captured["plan_id"] == 42
     assert captured["input_snapshot"]["topic_ids"] == [101]
+
+
+def test_rebuild_carryover_only_keeps_topics_still_selected():
+    today = date(2026, 10, 8)
+    rows = [
+        PlanTask(topic_id=101, planned_date=today, status="DONE"),
+        PlanTask(topic_id=202, planned_date=today, status="IN_PROGRESS"),
+        PlanTask(topic_id=303, planned_date=today, status="SKIPPED"),
+    ]
+
+    carried = _today_carryover_tasks(rows, today, {101, 303})
+
+    assert [row.topic_id for row in carried] == [101]
 
 
 def test_saved_plan_warning_metadata_uses_catalog_helpers():

@@ -351,3 +351,18 @@
     transition: none;
   }
 }
+
+
+.hideBottomNav .bottom {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .hideBottomNav main {
+    padding-bottom: 150px;
+  }
+
+  .hideBottomNav .sticky {
+    bottom: 0;
+  }
+}

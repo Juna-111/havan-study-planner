@@ -112,18 +112,20 @@ export function StickyActionBar({ children }: { children: React.ReactNode }) {
 export function AppShell({
   children,
   header,
+  hideBottomNav = false,
 }: {
   children: React.ReactNode
   header?: React.ReactNode
+  hideBottomNav?: boolean
 }) {
   return (
-    <div className={styles.shell}>
+    <div className={hideBottomNav ? styles.shell + ' ' + styles.hideBottomNav : styles.shell}>
       <SideNav />
       <main>
         {header}
         <div className={styles.content}>{children}</div>
       </main>
-      <BottomNav />
+      {!hideBottomNav && <BottomNav />}
     </div>
   )
 }
