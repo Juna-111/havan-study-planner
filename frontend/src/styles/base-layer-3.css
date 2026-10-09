@@ -51,10 +51,14 @@
 }
 
 
-/* Exam status chips intentionally use black text for a calmer, consistent exam-card label. */
+/* Keep status labels legible against the saturated plan and exam cards. */
+.plan-task .chip,
 .exam-insight-card .chip {
-  color: #000 !important;
+  color: var(--color-primary) !important;
   background: var(--color-white) !important;
+  border: 1px solid rgba(1, 1, 126, .12);
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 /* Login branding: the logo itself is the mark, without a white container behind it. */
@@ -67,18 +71,8 @@
 }
 
 
-/* Exam card status labels are deliberately black, regardless of shared Chip/status rules. */
-.exam-insight-card .exam-status-badge,
-.exam-insight-card .exam-status-badge .chip,
-.exam-insight-card .exam-status-badge .success,
-.exam-insight-card .exam-status-badge .warn,
-.exam-insight-card .exam-status-badge .danger,
-.exam-insight-card .exam-status-badge .info {
-  color: #000 !important;
-  background: #fff !important;
-}
-
-/* Exam course/topic title uses black text as requested. */
+/* The exam title sits over a dark card and must keep strong text contrast. */
 .exam-insight-card .exam-card-top h3 {
-  color: #000 !important;
+  color: var(--color-white) !important;
+  line-height: 1.3;
 }
