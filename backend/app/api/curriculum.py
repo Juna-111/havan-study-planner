@@ -1,5 +1,5 @@
 from app.core.config import API_PREFIX
-from app.core.deps import current_account
+from app.core.deps import current_account, require_admin
 from typing import Annotated, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
@@ -84,11 +84,23 @@ def chapters(db:DB,course_id:int|None=None,page:int=Query(1,ge=1),page_size:int=
     return collection(db,Chapter,ChapterRead,page,page_size,{"course_id":course_id})
 @router.get("/chapters/{item_id}",response_model=ChapterRead)
 def get_chapter(item_id:int,db:DB): return get_or_404(db,Chapter,item_id)
+@router.patch("/chapters/{item_id}",response_model=ChapterRead,dependencies=[Depends(require_admin)])
+def update_chapter(item_id:int,payload:ChapterUpdate,db:DB):
+    item=get_or_404(db,Chapter,item_id)
+    for key,value in payload.model_dump(exclude_unset=True).items(): setattr(item,key,value)
+    db.commit(); db.refresh(item)
+    return item
 @router.get("/topics")
 def topics(db:DB,chapter_id:int|None=None,page:int=Query(1,ge=1),page_size:int=Query(20,ge=1,le=100)):
     return collection(db,Topic,TopicRead,page,page_size,{"chapter_id":chapter_id})
 @router.get("/topics/{item_id}",response_model=TopicRead)
 def get_topic(item_id:int,db:DB): return get_or_404(db,Topic,item_id)
+@router.patch("/topics/{item_id}",response_model=TopicRead,dependencies=[Depends(require_admin)])
+def update_topic(item_id:int,payload:TopicUpdate,db:DB):
+    item=get_or_404(db,Topic,item_id)
+    for key,value in payload.model_dump(exclude_unset=True).items(): setattr(item,key,value)
+    db.commit(); db.refresh(item)
+    return item
 @router.get("/promotions")
 def promotions(db: DB, chapter_id: int | None = None, topic_id: int | None = None, page: int = Query(1, ge=1), page_size: int = Query(50, ge=1, le=100)):
     if (chapter_id is None) == (topic_id is None): raise HTTPException(status_code=400, detail="Choose a chapter or topic.")

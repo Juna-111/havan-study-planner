@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { DM_Sans, Fraunces } from 'next/font/google'
+import { FocusSessionProvider } from '@/features/student/FocusSessionProvider'
 import '../styles/havan.css'
 
 const bodyFont = DM_Sans({ subsets: ['latin'], variable: '--font-havan-body' })
@@ -37,7 +38,9 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${bodyFont.variable} ${displayFont.variable}`}>{children}</body>
+      <body className={`${bodyFont.variable} ${displayFont.variable}`}>
+        <FocusSessionProvider>{children}</FocusSessionProvider>
+      </body>
     </html>
   )
 }

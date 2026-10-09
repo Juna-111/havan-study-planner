@@ -42,6 +42,10 @@ def test_admin_routes_require_admin():
         if route.path.startswith(admin_prefixes):
             assert "require_admin" in dependency_names(route), route.path
 
+    for path in ("/api/v1/chapters/{item_id}", "/api/v1/topics/{item_id}"):
+        route = next(route for route in app.routes if route.path == path and "PATCH" in route.methods)
+        assert "require_admin" in dependency_names(route), route.path
+
 
 def test_student_routes_have_ownership_guard():
     for route in app.routes:

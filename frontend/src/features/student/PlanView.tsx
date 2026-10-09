@@ -8,6 +8,7 @@ import { apiFetch } from '@/lib/api'
 import { EmptyPlanIllustration } from '@/components/brand/illustrations'
 import { getSavedAccount } from '@/lib/auth'
 import { recordLocalStudyCompletion } from '@/lib/studyStreak'
+import { useFocusSession } from './useFocusSession'
 export default function PlanView() {
   const router = useRouter()
   const [p, setP] = useState<Plan | null>(null)
@@ -19,10 +20,7 @@ export default function PlanView() {
   const [addError, setAddError] = useState('')
   const [celebratingTask, setCelebratingTask] = useState<number | null>(null)
   const [addedTask, setAddedTask] = useState<number | null>(null)
-  const [focusedTaskId, setFocusedTaskId] = useState<number | null>(null)
-  const [focusSeconds, setFocusSeconds] = useState(0)
-  const [focusRunning, setFocusRunning] = useState(false)
-  const [focusMinutes, setFocusMinutes] = useState(25)
+  const focus = useFocusSession()
 
   const reload = () => {
     setE('')
@@ -55,24 +53,10 @@ export default function PlanView() {
     return groups
   }, {}) : {}
   const orderedDays = Object.entries(groupedTasks).sort(([a], [b]) => a.localeCompare(b))
-  const focusedTask = p?.tasks.find((task) => task.id === focusedTaskId) ?? null
-
-  useEffect(() => {
-    if (!focusRunning || !focusedTaskId) return
-    const timer = window.setInterval(() => {
-      setFocusSeconds((seconds) => {
-        if (seconds <= 1) {
-          setFocusRunning(false)
-          return 0
-        }
-        return seconds - 1
-      })
-    }, 1000)
-    return () => window.clearInterval(timer)
-  }, [focusRunning, focusedTaskId])
+  const focusedTask = p?.tasks.find((task) => task.id === focus.session?.taskId) ?? null
 
   const startFocus = async (task: Plan['tasks'][number]) => {
-    if (pendingTask !== null) return
+    if (pendingTask !== null || focus.session) return
     try {
       setE('')
       setPendingTask(task.id)
@@ -81,11 +65,8 @@ export default function PlanView() {
         nextPlan = await planAction(task.id, { action: 'START' })
         setP(nextPlan)
       }
-      setFocusedTaskId(task.id)
       const minutes = Math.max(5, task.minutes)
-      setFocusMinutes(minutes)
-      setFocusSeconds(minutes * 60)
-      setFocusRunning(true)
+      focus.start(task.id, `${task.course_name}: ${task.topic_name}`, minutes)
     } catch (x) {
       setE(x instanceof Error ? x.message : 'Could not start Focus mode.')
     } finally {
@@ -94,10 +75,10 @@ export default function PlanView() {
   }
 
   const finishFocus = async () => {
-    if (!focusedTask || pendingTask !== null) return
+    if (!focusedTask || !focus.session || pendingTask !== null) return
     const elapsedMinutes = Math.max(
       1,
-      Math.min(focusMinutes, Math.ceil((focusMinutes * 60 - focusSeconds) / 60)),
+      Math.min(focus.session.minutes, focus.session.minutes - Math.ceil(focus.remainingSeconds / 60)),
     )
     try {
       setE('')
@@ -109,9 +90,7 @@ export default function PlanView() {
       setP(nextPlan)
       const studentId = getSavedAccount()?.student_profile_id
       if (studentId) recordLocalStudyCompletion(studentId)
-      setFocusedTaskId(null)
-      setFocusSeconds(0)
-      setFocusRunning(false)
+      focus.clear()
       setCelebratingTask(focusedTask.id)
       window.setTimeout(() => setCelebratingTask(null), 650)
     } catch (x) {
@@ -253,22 +232,23 @@ export default function PlanView() {
                     {t.minutes} min · {t.course_name}
                   </small>
                   <div className="plan-focus-row">
-                    {focusedTaskId === t.id ? (
+                    {focus.session?.taskId === t.id ? (
                       <div className="plan-focus-panel">
                         <div>
                           <span className="app-eyebrow">HAVAN FOCUS</span>
-                          <div className="plan-focus-time-control"><span>Session</span><button type="button" aria-label="Decrease focus minutes" disabled={focusMinutes <= 5 || pendingTask !== null} onClick={() => { const next = Math.max(5, focusMinutes - 5); setFocusMinutes(next); setFocusSeconds((seconds) => Math.min(seconds, next * 60)) }}>−</button><strong>{focusMinutes} min</strong><button type="button" aria-label="Increase focus minutes" disabled={focusMinutes >= 120 || pendingTask !== null} onClick={() => { const next = Math.min(120, focusMinutes + 5); setFocusMinutes(next); setFocusSeconds((seconds) => seconds + 300) }}>+</button></div>
-                          <strong>{String(Math.floor(focusSeconds / 60)).padStart(2, '0')}:{String(focusSeconds % 60).padStart(2, '0')}</strong>
-                          <small>{focusRunning ? 'Stay with this topic. Your plan remains yours.' : focusSeconds === 0 ? 'Focus time is complete.' : 'Focus is paused.'}</small>
+                          <div className="plan-focus-time-control"><span>Session</span><button type="button" aria-label="Decrease focus minutes" disabled={focus.session.minutes <= 5 || pendingTask !== null || focus.session.completed} onClick={() => focus.adjust(-5)}>−</button><strong>{focus.session.minutes} min</strong><button type="button" aria-label="Increase focus minutes" disabled={focus.session.minutes >= 120 || pendingTask !== null || focus.session.completed} onClick={() => focus.adjust(5)}>+</button></div>
+                          <strong>{String(Math.floor(focus.remainingSeconds / 60)).padStart(2, '0')}:{String(focus.remainingSeconds % 60).padStart(2, '0')}</strong>
+                          <small>{focus.session.completed ? 'Focus time is complete. Save your progress when ready.' : focus.session.running ? 'This session keeps time while you move around Havan.' : 'Focus is paused.'}</small>
+                          {focus.notificationPermission !== 'granted' && <button className="focus-notification-enable" type="button" disabled={focus.notificationPermission === 'denied' || focus.notificationPermission === 'unsupported'} onClick={() => void focus.enableNotifications()}>{focus.notificationPermission === 'denied' ? 'Allow notifications in browser settings' : focus.notificationPermission === 'unsupported' ? 'Notifications are unavailable in this browser' : 'Enable finish notification'}</button>}
                         </div>
                         <div className="plan-focus-actions">
-                          {focusSeconds > 0 && (
+                          {!focus.session.completed && focus.remainingSeconds > 0 && (
                             <Button
                               variant="accent"
                               disabled={pendingTask === t.id}
-                              onClick={() => setFocusRunning((running) => !running)}
+                              onClick={() => focus.session?.running ? focus.pause() : focus.resume()}
                             >
-                              {focusRunning ? 'Pause' : 'Resume'}
+                              {focus.session.running ? 'Pause' : 'Resume'}
                             </Button>
                           )}
                           <Button
@@ -283,10 +263,10 @@ export default function PlanView() {
                     ) : t.status !== 'DONE' ? (
                       <Button
                         variant="accent"
-                        disabled={pendingTask !== null}
+                        disabled={pendingTask !== null || !!focus.session}
                         onClick={() => startFocus(t)}
                       >
-                        Focus
+                        {focus.session ? 'Another focus is active' : 'Focus'}
                       </Button>
                     ) : null}
                   </div>

@@ -5,8 +5,8 @@ import { apiFetch } from '@/lib/api'
 import styles from './admin.module.css'
 
 type Course = { id: number; code: string; name: string }
-type Chapter = { id: number; name: string; order_index: number; status: string }
-type Topic = { id: number; name: string; difficulty: number; status: string }
+type Chapter = { id: number; name: string; order_index: number; status: string; description?: string | null }
+type Topic = { id: number; chapter_id: number; name: string; difficulty: number; estimated_study_minutes: number; exam_importance: number; conceptual_importance: number; status: string; description?: string | null }
 
 export default function ContentScreen({ onImport }: { onImport?: () => void }) {
   const [courses, setCourses] = useState<Course[]>([])
@@ -15,6 +15,10 @@ export default function ContentScreen({ onImport }: { onImport?: () => void }) {
   const [courseId, setCourseId] = useState('')
   const [chapterId, setChapterId] = useState('')
   const [error, setError] = useState('')
+  const [editingTopic, setEditingTopic] = useState<number | null>(null)
+  const [draft, setDraft] = useState({ estimated_study_minutes: 30, exam_importance: 0.5, conceptual_importance: 0.5, status: 'ACTIVE', description: '' })
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState('')
 
   useEffect(() => {
     apiFetch<{ items: Course[] }>('/courses?page=1&page_size=100').then((r) => setCourses(r.items))
@@ -37,6 +41,33 @@ export default function ContentScreen({ onImport }: { onImport?: () => void }) {
       .catch((e) => setError(e instanceof Error ? e.message : 'Could not load topics.'))
   }, [chapterId])
 
+  function editTopic(topic: Topic) {
+    setEditingTopic(topic.id)
+    setSaved('')
+    setDraft({
+      estimated_study_minutes: topic.estimated_study_minutes,
+      exam_importance: topic.exam_importance,
+      conceptual_importance: topic.conceptual_importance,
+      status: topic.status,
+      description: topic.description || '',
+    })
+  }
+
+  async function saveTopic(topicId: number) {
+    setSaving(true)
+    setError('')
+    try {
+      const updated = await apiFetch<Topic>(`/topics/${topicId}`, { method: 'PATCH', body: JSON.stringify(draft) })
+      setTopics((current) => current.map((topic) => topic.id === topicId ? updated : topic))
+      setEditingTopic(null)
+      setSaved('Study settings saved. Your source-file content stays intact.')
+    } catch (value) {
+      setError(value instanceof Error ? value.message : 'Could not save topic settings.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <section>
       <header className={styles.header}>
@@ -45,6 +76,7 @@ export default function ContentScreen({ onImport }: { onImport?: () => void }) {
         <p>Chapters, topics, difficulty, and critical points are maintained through the course TXT/MD source. This screen verifies the imported hierarchy.</p>
       </header>
       {error && <div className={styles.alert}>{error}</div>}
+      {saved && <div className={styles.notice}>{saved}</div>}
       <div className={styles.notice}>
         <h2>Automatic content ingestion</h2>
         <p>Use Import for course TXT/MD updates. Manual chapter/topic editing is disabled so the uploaded source remains authoritative.</p>
@@ -66,7 +98,18 @@ export default function ContentScreen({ onImport }: { onImport?: () => void }) {
       </div>}
       {chapterId && <div className={styles.list}>
         <div className={styles.crudHead}><div><h2>{topics.length} topics</h2><p>Imported topics and their difficulty.</p></div></div>
-        {topics.map((topic) => <div className={styles.row} key={topic.id}><div><b>{topic.name}</b><small>{topic.status} · Difficulty {topic.difficulty}/5 · Topic ID #{topic.id}</small></div><span>Source-managed</span></div>)}
+        <p className={styles.appHint}>Tune the study estimate and importance to match your local teaching plan. Imported topic names and source notes stay unchanged.</p>
+        {topics.map((topic) => <article className={styles.topicAdminCard} key={topic.id}>
+          <div className={styles.topicAdminSummary}><div><b>{topic.name}</b><small>{topic.status} · Difficulty {topic.difficulty}/5 · {topic.estimated_study_minutes} min</small></div><button className={styles.rowAction} onClick={() => editTopic(topic)}>{editingTopic === topic.id ? 'Editing' : 'Edit study settings'}</button></div>
+          {editingTopic === topic.id && <div className={styles.topicEditor}>
+            <label>Study time (minutes)<input type="number" min="1" max="1440" value={draft.estimated_study_minutes} onChange={(event) => setDraft({ ...draft, estimated_study_minutes: Number(event.target.value) })} /></label>
+            <label>Exam importance (0–1)<input type="number" min="0" max="1" step="0.1" value={draft.exam_importance} onChange={(event) => setDraft({ ...draft, exam_importance: Number(event.target.value) })} /></label>
+            <label>Concept importance (0–1)<input type="number" min="0" max="1" step="0.1" value={draft.conceptual_importance} onChange={(event) => setDraft({ ...draft, conceptual_importance: Number(event.target.value) })} /></label>
+            <label>Status<select value={draft.status} onChange={(event) => setDraft({ ...draft, status: event.target.value })}><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option></select></label>
+            <label className={styles.topicDescription}>Admin note<textarea value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} maxLength={10000} placeholder="Optional local teaching note" /></label>
+            <div className={styles.actions}><button onClick={() => setEditingTopic(null)}>Cancel</button><button className={styles.primary} disabled={saving} onClick={() => void saveTopic(topic.id)}>{saving ? 'Saving…' : 'Save study settings'}</button></div>
+          </div>}
+        </article>)}
       </div>}
     </section>
   )
