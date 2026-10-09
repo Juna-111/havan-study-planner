@@ -3,7 +3,7 @@ from __future__ import annotations
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db.models.curriculum import Course, FreshmanCourseCategory
+from app.db.models.academic_catalog import Course, FreshmanCourseCategory
 
 
 def freshman_registry_key(code: str, content_version: str) -> str:

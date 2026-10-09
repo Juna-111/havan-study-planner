@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.config import API_PREFIX
 from app.core.deps import current_account, require_admin
 from app.db.models.academic_catalog_request import AcademicCatalogRequest
-from app.db.models.curriculum import Curriculum, University
+from app.db.models.academic_catalog import Stream, University
 from app.db.session import get_db
 from app.schemas.academic_catalog_request import (
     AcademicCatalogRequestCreate,
@@ -33,6 +33,7 @@ def list_my_requests(db: DB, account: Account):
     rows = db.scalars(
         select(AcademicCatalogRequest)
         .where(AcademicCatalogRequest.account_id == account.id)
+        .where(AcademicCatalogRequest.request_type.in_(("UNIVERSITY", "STREAM")))
         .order_by(AcademicCatalogRequest.created_at.desc())
     ).all()
     return [_read(row) for row in rows]
@@ -40,13 +41,13 @@ def list_my_requests(db: DB, account: Account):
 
 @router.post("", response_model=AcademicCatalogRequestRead, status_code=status.HTTP_201_CREATED)
 def create_request(payload: AcademicCatalogRequestCreate, db: DB, account: Account):
-    if payload.request_type == "CURRICULUM":
+    if payload.request_type == "STREAM":
         if payload.university_id is None:
-            raise HTTPException(status_code=400, detail="Select a university before requesting a curriculum.")
+            raise HTTPException(status_code=400, detail="Select a university before requesting a stream.")
         if db.get(University, payload.university_id) is None:
             raise HTTPException(status_code=404, detail="University not found.")
-        if not payload.version:
-            raise HTTPException(status_code=400, detail="Curriculum version is required.")
+        if not payload.code:
+            raise HTTPException(status_code=400, detail="A stream code is required.")
 
     pending = db.scalar(
         select(AcademicCatalogRequest).where(
@@ -69,7 +70,9 @@ def create_request(payload: AcademicCatalogRequestCreate, db: DB, account: Accou
 @router.get("", response_model=list[AcademicCatalogRequestRead], dependencies=[Depends(require_admin)])
 def list_requests(db: DB):
     rows = db.scalars(
-        select(AcademicCatalogRequest).order_by(AcademicCatalogRequest.created_at.desc())
+        select(AcademicCatalogRequest)
+        .where(AcademicCatalogRequest.request_type.in_(("UNIVERSITY", "STREAM")))
+        .order_by(AcademicCatalogRequest.created_at.desc())
     ).all()
     return [_read(row) for row in rows]
 
@@ -106,25 +109,24 @@ def review_request(
         else:
             db.add(University(name=item.name.strip(), code=code, status="ACTIVE"))
             item.status = "APPROVED"
-    else:
+    elif item.request_type == "STREAM":
         if item.university_id is None:
-            raise HTTPException(status_code=400, detail="Curriculum request has no university.")
+            raise HTTPException(status_code=400, detail="Stream request has no university.")
         if db.get(University, item.university_id) is None:
-            raise HTTPException(status_code=400, detail="The requested curriculum university no longer exists.")
+            raise HTTPException(status_code=400, detail="The requested stream university no longer exists.")
         existing = db.scalar(
-            select(Curriculum).where(
-                Curriculum.university_id == item.university_id,
-                Curriculum.name == item.name,
-                Curriculum.version == item.version,
+            select(Stream).where(
+                Stream.university_id == item.university_id,
+                Stream.name == item.name,
+                Stream.code == item.code,
             )
         )
         if existing is None:
             db.add(
-                Curriculum(
+                Stream(
                     university_id=item.university_id,
                     name=item.name.strip(),
-                    version=(item.version or "1.0").strip(),
-                    academic_year=item.academic_year,
+                    code=(item.code or _safe_code(item.name)).strip().upper(),
                     status="ACTIVE",
                 )
             )

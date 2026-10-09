@@ -1,7 +1,7 @@
 """Resolve the effective university course structure consumed by students and the planner.
 
 The admin-facing source of truth is intentionally simple:
-University curriculum + stream -> course -> semester 1 or semester 2.
+University + stream -> course -> semester 1 or semester 2.
 """
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db.models.curriculum import Course, Curriculum, Stream, UniversityCourseMapping, UniversityCourseOffering
+from app.db.models.academic_catalog import Course, Stream, UniversityCourseMapping, UniversityCourseOffering
 from app.db.models.student import StudentProfile
 
 
@@ -26,14 +26,13 @@ class ResolvedCourse:
     credit_hours: int | None
 
 
-def _active_offering_rows(db: Session, stream_id: int, curriculum_id: int):
+def _active_offering_rows(db: Session, stream_id: int):
     rows = list(
         db.execute(
             select(UniversityCourseOffering, Course)
             .join(Course, Course.id == UniversityCourseOffering.course_id)
             .where(
                 UniversityCourseOffering.stream_id == stream_id,
-                UniversityCourseOffering.curriculum_id == curriculum_id,
                 UniversityCourseOffering.status == "ACTIVE",
                 Course.status == "ACTIVE",
             )
@@ -56,7 +55,6 @@ def _active_offering_rows(db: Session, stream_id: int, curriculum_id: int):
             .join(Course, Course.id == UniversityCourseMapping.course_id)
             .where(
                 UniversityCourseMapping.stream_id == stream_id,
-                UniversityCourseMapping.curriculum_id == curriculum_id,
                 UniversityCourseMapping.status == "ACTIVE",
                 Course.status == "ACTIVE",
             )
@@ -77,11 +75,7 @@ def resolve_stream_courses(db: Session, stream_id: int) -> list[ResolvedCourse]:
     if stream is None or str(stream.status).upper() != "ACTIVE":
         return []
 
-    curriculum = db.get(Curriculum, stream.curriculum_id)
-    if curriculum is None or str(curriculum.status).upper() != "ACTIVE":
-        return []
-
-    rows = _active_offering_rows(db, stream_id, curriculum.id)
+    rows = _active_offering_rows(db, stream_id)
     rows.sort(key=lambda pair: (pair[0].semester_number, pair[0].order_index, pair[1].code, pair[1].id))
 
     return [

@@ -1,11 +1,11 @@
 from app.main import app
-from app.schemas.curriculum import TopicCreate, UniversityCreate
+from app.schemas.academic_catalog import TopicCreate, UniversityCreate
 
 
-def test_curriculum_routes_are_registered() -> None:
+def test_academic_catalog_routes_are_registered_without_curriculum_layer() -> None:
     paths = {route.path for route in app.routes}
     assert "/api/v1/universities" in paths
-    assert "/api/v1/curriculums" in paths
+    assert "/api/v1/curriculums" not in paths
     assert "/api/v1/streams" in paths
     assert "/api/v1/courses" in paths
     assert "/api/v1/chapters" in paths
@@ -35,7 +35,6 @@ def test_student_registration_schema_requires_courses() -> None:
         StudentRegistrationCreate(
             name="Student",
             university_id=1,
-            curriculum_id=1,
             stream_id=1,
             study_days=["mon"],
             courses=[],
@@ -48,7 +47,6 @@ def test_student_registration_schema_accepts_stream_and_selected_course() -> Non
     payload = StudentRegistrationCreate(
         name="Student",
         university_id=1,
-        curriculum_id=1,
         stream_id=1,
         study_days=["mon", "wed"],
         courses=[{"course_id": 10}],

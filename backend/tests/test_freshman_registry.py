@@ -1,5 +1,5 @@
 from app.main import app
-from app.schemas.curriculum import FreshmanCourseCreate, FreshmanCourseCategoryCreate
+from app.schemas.academic_catalog import FreshmanCourseCreate, FreshmanCourseCategoryCreate
 from app.services.freshman_registry import freshman_registry_key
 
 

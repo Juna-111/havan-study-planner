@@ -12,7 +12,6 @@ export interface StudentProfile {
   client_key: string
   name: string
   university_id: number
-  curriculum_id: number
   stream_id: number
   study_hours_per_day: number
   study_days: Weekday[]

@@ -25,26 +25,8 @@ class UniversityRead(ORMModel):
     id: int; name: str; code: str; description: Optional[str]; status: str; created_at: datetime; updated_at: datetime
 
 
-class CurriculumBase(BaseModel):
-    university_id: int = Field(gt=0)
-    name: str = Field(min_length=2, max_length=150)
-    version: str = Field(min_length=1, max_length=50)
-    academic_year: Optional[str] = Field(default=None, max_length=30)
-    description: Optional[str] = None
-    status: str = Field(default="ACTIVE", pattern=r"^(DRAFT|ACTIVE|ARCHIVED)$")
-class CurriculumCreate(CurriculumBase): pass
-class CurriculumUpdate(BaseModel):
-    name: Optional[str] = Field(default=None, min_length=2, max_length=150)
-    version: Optional[str] = Field(default=None, min_length=1, max_length=50)
-    academic_year: Optional[str] = Field(default=None, max_length=30)
-    description: Optional[str] = None
-    status: Optional[str] = Field(default=None, pattern=r"^(DRAFT|ACTIVE|ARCHIVED)$")
-class CurriculumRead(ORMModel):
-    id: int; university_id: int; name: str; version: str; academic_year: Optional[str]; description: Optional[str]; status: str; created_at: datetime; updated_at: datetime
-
-
 class StreamBase(BaseModel):
-    curriculum_id: int = Field(gt=0)
+    university_id: int = Field(gt=0)
     name: str = Field(min_length=2, max_length=100)
     code: str = Field(min_length=1, max_length=30, pattern=r"^[A-Za-z0-9_-]+$")
     description: Optional[str] = None
@@ -56,7 +38,7 @@ class StreamUpdate(BaseModel):
     description: Optional[str] = None
     status: Optional[str] = Field(default=None, pattern=r"^(ACTIVE|INACTIVE)$")
 class StreamRead(ORMModel):
-    id: int; curriculum_id: int; name: str; code: str; description: Optional[str]; status: str
+    id: int; university_id: int; name: str; code: str; description: Optional[str]; status: str
 
 
 class FreshmanCourseCategoryBase(BaseModel):
@@ -204,9 +186,6 @@ class PageMeta(BaseModel):
 
 class UniversityCourseMappingRead(BaseModel):
     id: int
-    curriculum_id: int
-    curriculum_name: str
-    curriculum_version: str
     university_id: int
     university_name: str
     stream_id: int
@@ -225,9 +204,6 @@ class UniversityCourseMappingRead(BaseModel):
 
 class UniversityCourseOfferingRead(BaseModel):
     id: int
-    curriculum_id: int
-    curriculum_name: str
-    curriculum_version: str
     university_id: int
     university_name: str
     stream_id: int

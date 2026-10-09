@@ -7,7 +7,7 @@ from sqlalchemy import select, text
 
 from app.core.config import get_settings
 from app.core.time import today_local
-from app.db.models.curriculum import Course, Topic, Chapter
+from app.db.models.academic_catalog import Course, Topic, Chapter
 from app.db.models.notification import NotificationDelivery, PushSubscription, ScheduledPush
 from app.db.models.plan import PlanTask
 from app.db.models.student import StudentExam, StudentProfile

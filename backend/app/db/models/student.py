@@ -30,7 +30,6 @@ class StudentProfile(Base):
     client_key: Mapped[str] = mapped_column(String(120), nullable=False)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     university_id: Mapped[int] = mapped_column(ForeignKey("universities.id"), nullable=False)
-    curriculum_id: Mapped[int] = mapped_column(ForeignKey("curriculums.id"), nullable=False)
     stream_id: Mapped[int] = mapped_column(ForeignKey("streams.id"), nullable=False)
     study_hours_per_day: Mapped[float] = mapped_column(nullable=False, default=2.0, server_default="2")
     study_days: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list, server_default="[]")

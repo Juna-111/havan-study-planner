@@ -4,10 +4,10 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 
-from app.db.models.curriculum import Chapter, Course, Curriculum, Stream, Topic, University
+from app.db.models.academic_catalog import Chapter, Course, Stream, Topic, University
 
 MODEL_MAP: dict[str, Type[Any]] = {
-    "universities": University, "curriculums": Curriculum, "streams": Stream,
+    "universities": University, "streams": Stream,
     "courses": Course, "chapters": Chapter, "topics": Topic,
 }
 

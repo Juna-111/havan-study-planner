@@ -14,15 +14,12 @@ class FakeResult:
 class FakeDB:
     def __init__(self, stream, rows):
         self.stream = stream
-        self.curriculum = SimpleNamespace(id=stream.curriculum_id, status="ACTIVE")
         self.rows = rows
 
     def get(self, model, item_id):
-        from app.db.models.curriculum import Curriculum, Stream
+        from app.db.models.academic_catalog import Stream
         if model is Stream and item_id == self.stream.id:
             return self.stream
-        if model is Curriculum and item_id == self.curriculum.id:
-            return self.curriculum
         return None
 
     def execute(self, query):
@@ -34,7 +31,6 @@ def mapping(course_id: int, semester: int, order: int = 1):
         id=course_id,
         course_id=course_id,
         stream_id=10,
-        curriculum_id=20,
         semester_number=semester,
         order_index=order,
         status="ACTIVE",
@@ -52,7 +48,7 @@ def course(course_id: int, code: str, name: str, credits: int):
 
 
 def test_resolver_uses_direct_university_semester_mappings():
-    stream = SimpleNamespace(id=10, curriculum_id=20, status="ACTIVE")
+    stream = SimpleNamespace(id=10, university_id=2, status="ACTIVE")
     rows = [
         (mapping(101, 2, 2), course(101, "PHY101", "Physics", 4)),
         (mapping(202, 1, 1), course(202, "CHE101", "Chemistry", 5)),
@@ -66,7 +62,7 @@ def test_resolver_uses_direct_university_semester_mappings():
 
 
 def test_resolver_preserves_course_catalog_metadata():
-    stream = SimpleNamespace(id=10, curriculum_id=20, status="ACTIVE")
+    stream = SimpleNamespace(id=10, university_id=2, status="ACTIVE")
     rows = [
         (mapping(101, 1), course(101, "PHY101", "Physics", 4)),
     ]
@@ -79,7 +75,7 @@ def test_resolver_preserves_course_catalog_metadata():
 
 
 def test_resolver_returns_no_courses_for_inactive_stream():
-    stream = SimpleNamespace(id=10, curriculum_id=20, status="ARCHIVED")
+    stream = SimpleNamespace(id=10, university_id=2, status="ARCHIVED")
     rows = [
         (mapping(101, 1), course(101, "PHY101", "Physics", 4)),
     ]

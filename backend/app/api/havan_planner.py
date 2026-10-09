@@ -8,7 +8,7 @@ from app.core.config import API_PREFIX
 from app.core.deps import current_student
 from app.core.errors import DomainError, PlanValidationError
 from app.core.time import today_local
-from app.db.models.curriculum import Chapter, HavanPromotion, Topic
+from app.db.models.academic_catalog import Chapter, HavanPromotion, Topic
 from app.db.models.plan import Plan
 from app.db.models.student import StudentProfile
 from app.db.session import get_db

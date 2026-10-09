@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.db.models.curriculum import Chapter, Course, Topic
+from app.db.models.academic_catalog import Chapter, Course, Topic
 from app.db.session import get_db
 from app.schemas.freshman_registry_import import FreshmanRegistryPreview, FreshmanRegistryResult
 from app.services.freshman_registry import create_freshman_course, freshman_registry_key

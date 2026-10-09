@@ -47,7 +47,6 @@ class StudentBase(BaseModel):
     account_id: Optional[int] = Field(default=None, gt=0)
     name: str = Field(min_length=2, max_length=120)
     university_id: int = Field(gt=0)
-    curriculum_id: int = Field(gt=0)
     stream_id: int = Field(gt=0)
     study_hours_per_day: float = Field(default=2.0, ge=0.5, le=12)
     study_days: list[Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]] = Field(default_factory=list, max_length=7)
@@ -60,7 +59,6 @@ class StudentCreate(StudentBase):
 class StudentUpdate(BaseModel):
     name: Optional[str] = Field(default=None, min_length=2, max_length=120)
     university_id: Optional[int] = Field(default=None, gt=0)
-    curriculum_id: Optional[int] = Field(default=None, gt=0)
     stream_id: Optional[int] = Field(default=None, gt=0)
     study_hours_per_day: Optional[float] = Field(default=None, ge=0.5, le=12)
     study_days: Optional[list[Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]]] = Field(default=None, min_length=1, max_length=7)
@@ -95,7 +93,6 @@ class StudentRegistrationCreate(BaseModel):
     client_key: Optional[str] = Field(default=None, min_length=8, max_length=120)
     name: str = Field(min_length=2, max_length=120)
     university_id: int = Field(gt=0)
-    curriculum_id: int = Field(gt=0)
     stream_id: int = Field(gt=0)
     study_hours_per_day: float = Field(default=2.0, ge=0.5, le=12)
     study_days: list[Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]] = Field(min_length=1, max_length=7)

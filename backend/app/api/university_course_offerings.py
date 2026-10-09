@@ -4,9 +4,9 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.core.config import API_PREFIX
 from app.core.deps import require_admin
-from app.db.models.curriculum import Curriculum, University, UniversityCourseOffering
+from app.db.models.academic_catalog import Stream, UniversityCourseOffering
 from app.db.session import get_db
-from app.schemas.curriculum import UniversityCourseOfferingRead
+from app.schemas.academic_catalog import UniversityCourseOfferingRead
 
 router = APIRouter(
     prefix=f"{API_PREFIX}/university-course-offerings",
@@ -20,8 +20,7 @@ def _query():
     return (
         select(UniversityCourseOffering)
         .options(
-            joinedload(UniversityCourseOffering.curriculum).joinedload(Curriculum.university),
-            joinedload(UniversityCourseOffering.stream),
+            joinedload(UniversityCourseOffering.stream).joinedload(Stream.university),
             joinedload(UniversityCourseOffering.course),
         )
         .order_by(
@@ -36,11 +35,8 @@ def _query():
 def _read(item: UniversityCourseOffering) -> UniversityCourseOfferingRead:
     return UniversityCourseOfferingRead(
         id=item.id,
-        curriculum_id=item.curriculum_id,
-        curriculum_name=item.curriculum.name,
-        curriculum_version=item.curriculum.version,
-        university_id=item.curriculum.university_id,
-        university_name=item.curriculum.university.name,
+        university_id=item.stream.university_id,
+        university_name=item.stream.university.name,
         stream_id=item.stream_id,
         stream_name=item.stream.name,
         stream_code=item.stream.code,
@@ -60,16 +56,13 @@ def _read(item: UniversityCourseOffering) -> UniversityCourseOfferingRead:
 def list_offerings(
     db: Session = DB,
     university_id: int | None = None,
-    curriculum_id: int | None = None,
     stream_id: int | None = None,
     semester_number: int | None = None,
     status_filter: str | None = None,
 ):
     query = _query()
     if university_id is not None:
-        query = query.join(UniversityCourseOffering.curriculum).where(Curriculum.university_id == university_id)
-    if curriculum_id is not None:
-        query = query.where(UniversityCourseOffering.curriculum_id == curriculum_id)
+        query = query.join(UniversityCourseOffering.stream).where(Stream.university_id == university_id)
     if stream_id is not None:
         query = query.where(UniversityCourseOffering.stream_id == stream_id)
     if semester_number is not None:

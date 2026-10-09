@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import smtplib
+import logging
 from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 
@@ -13,6 +14,8 @@ from app.core.errors import DomainError
 from app.core.security import hash_password, login_throttle, make_access_token, reset_code_hash, verify_password
 from app.db.models.student import PasswordResetToken, StudentAccount, StudentProfile
 from app.schemas.student import AuthAccountRead
+
+logger = logging.getLogger(__name__)
 
 
 def is_admin_email(email: str) -> bool:
@@ -54,6 +57,7 @@ def login(db: Session, email: str, password: str) -> tuple[StudentAccount, str]:
 def send_reset_email(email: str, code: str) -> None:
     settings = get_settings()
     if not settings.smtp_user or not settings.smtp_password:
+        logger.error("Password reset email is not configured (SMTP credentials are missing).")
         raise HTTPException(status_code=503, detail="Password recovery email is not configured yet.")
     message = EmailMessage()
     message["Subject"] = "Havan Study Planner password reset code"
@@ -68,7 +72,13 @@ def send_reset_email(email: str, code: str) -> None:
             smtp.starttls()
             smtp.login(settings.smtp_user, settings.smtp_password)
             smtp.send_message(message)
-    except (OSError, smtplib.SMTPException) as exc:
+    except Exception as exc:
+        logger.exception(
+            "Password reset email delivery failed via %s:%s for recipient domain %s",
+            settings.smtp_host,
+            settings.smtp_port,
+            email.rpartition("@")[2] or "unknown",
+        )
         raise HTTPException(status_code=503, detail="We could not send the verification email. Please try again later.") from exc
 
 

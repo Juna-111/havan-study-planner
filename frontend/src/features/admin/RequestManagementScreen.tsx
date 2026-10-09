@@ -6,12 +6,10 @@ import styles from './admin.module.css'
 
 type Request = {
   id: number
-  request_type: 'UNIVERSITY' | 'CURRICULUM'
+  request_type: 'UNIVERSITY' | 'STREAM'
   university_id?: number | null
   name: string
   code?: string | null
-  version?: string | null
-  academic_year?: string | null
   status: 'PENDING' | 'APPROVED' | 'REJECTED'
   admin_note?: string | null
   created_at: string
@@ -58,7 +56,7 @@ export default function RequestManagementScreen() {
       <header className={styles.header}>
         <span>CONTROL · STUDENT REQUESTS</span>
         <h1>Student requests</h1>
-        <p>Review missing university and curriculum requests before they become shared academic catalog records.</p>
+        <p>Review missing university and stream requests before they become shared academic catalog records.</p>
       </header>
       {error && <div className={styles.alert}>{error}</div>}
       <div className={styles.stats}>
@@ -80,7 +78,7 @@ export default function RequestManagementScreen() {
             <div>
               <b>{item.request_type}</b>
               <strong>{item.name}</strong>
-              <p>{item.code || item.version || 'No additional identifier supplied'}{item.academic_year ? ' · ' + item.academic_year : ''}</p>
+              <p>{item.code || 'No additional identifier supplied'}</p>
               <small>{item.status} · {new Date(item.created_at).toLocaleDateString()}</small>
             </div>
             {item.status === 'PENDING' && (

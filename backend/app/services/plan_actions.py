@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.time import today_local, to_index
 from app.core.errors import PlanValidationError
-from app.db.models.curriculum import Chapter, Course, Topic
+from app.db.models.academic_catalog import Chapter, Course, Topic
 from app.db.models.plan import Plan, PlanTask
 from app.db.models.student import StudentProfile, StudentTopicProgress
 from app.schemas.plan import PlanAction, PlanInput
@@ -178,7 +178,7 @@ def apply_action(
             raise PlanValidationError("TOPIC_UNAVAILABLE", "The selected topic is not active.", 422)
         chapter = db.get(Chapter, topic.chapter_id)
         if chapter is None or chapter.course_id not in resolved_course_ids(db, student.id):
-            raise PlanValidationError("TOPIC_OUT_OF_CURRICULUM", "The selected topic is outside your active curriculum.", 422)
+            raise PlanValidationError("TOPIC_OUT_OF_STREAM", "The selected topic is outside a course offered in your active stream.", 422)
         snapshot = _input_from_snapshot(plan)
         if topic.id in snapshot.topic_ids:
             raise PlanValidationError("TOPIC_UNAVAILABLE", "That topic is already part of this plan.", 422)

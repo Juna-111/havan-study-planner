@@ -6,9 +6,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.db.models.curriculum import Course, FreshmanCourseCategory
+from app.db.models.academic_catalog import Course, FreshmanCourseCategory
 from app.db.session import get_db
-from app.schemas.curriculum import (
+from app.schemas.academic_catalog import (
     FreshmanCourseCategoryCreate,
     FreshmanCourseCategoryRead,
     FreshmanCourseCategoryUpdate,

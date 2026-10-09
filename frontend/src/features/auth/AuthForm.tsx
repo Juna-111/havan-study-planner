@@ -123,7 +123,7 @@ export default function AuthForm() {
     : mode === 'login' ? 'Welcome back.' : 'Create your account.'
   const lead = isForgot
     ? forgotStep === 'email'
-      ? 'Enter your Gmail address and Havan will send you a verification code.'
+      ? 'Enter your email address and Havan will send you a verification code.'
       : forgotStep === 'code'
         ? 'Enter the 6-digit verification code sent to your email.'
         : 'Your code is verified. Set a new password for your account.'

@@ -6,16 +6,14 @@ import { apiFetch } from '@/lib/api'
 import AcademicCatalogRequest from '@/features/onboarding/AcademicCatalogRequest'
 
 const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const
-type Profile = { id: number; name: string; university_id: number; curriculum_id: number; stream_id: number; study_hours_per_day: number; study_days: string[] }
+type Profile = { id: number; name: string; university_id: number; stream_id: number; study_hours_per_day: number; study_days: string[] }
 type Opt = { id: number; name: string; code?: string }
 
 export default function SettingsProfile({ profile, onUpdate }: { profile: Profile; onUpdate: (value: Profile) => void }) {
   const [name, setName] = useState(profile.name)
   const [universities, setUniversities] = useState<Opt[]>([])
-  const [curriculums, setCurriculums] = useState<Opt[]>([])
   const [streams, setStreams] = useState<Opt[]>([])
   const [universityId, setUniversityId] = useState(String(profile.university_id))
-  const [curriculumId, setCurriculumId] = useState(String(profile.curriculum_id))
   const [streamId, setStreamId] = useState(String(profile.stream_id))
   const [hours, setHours] = useState(profile.study_hours_per_day)
   const [days, setDays] = useState<string[]>(profile.study_days)
@@ -27,25 +25,18 @@ export default function SettingsProfile({ profile, onUpdate }: { profile: Profil
       .catch(() => setUniversities([]))
   }, [])
   useEffect(() => {
-    setCurriculums([])
-    if (!universityId) return
-    apiFetch<{ items: Opt[] }>(`/curriculums?university_id=${universityId}&page=1&page_size=100`)
-      .then((value) => setCurriculums(value.items))
-      .catch(() => setCurriculums([]))
-  }, [universityId])
-  useEffect(() => {
     setStreams([])
-    if (!curriculumId) return
-    apiFetch<{ items: Opt[] }>(`/streams?curriculum_id=${curriculumId}&page=1&page_size=100`)
+    if (!universityId) return
+    apiFetch<{ items: Opt[] }>(`/streams?university_id=${universityId}&page=1&page_size=100`)
       .then((value) => setStreams(value.items))
       .catch(() => setStreams([]))
-  }, [curriculumId])
+  }, [universityId])
 
   async function save() {
     try {
       const updated = await apiFetch<Profile>(`/students/profiles/${profile.id}`, {
         method: 'PATCH',
-        body: JSON.stringify({ name, university_id: Number(universityId), curriculum_id: Number(curriculumId), stream_id: Number(streamId), study_hours_per_day: hours, study_days: days }),
+        body: JSON.stringify({ name, university_id: Number(universityId), stream_id: Number(streamId), study_hours_per_day: hours, study_days: days }),
       })
       onUpdate(updated)
       setMessage('Your profile was updated.')
@@ -59,16 +50,9 @@ export default function SettingsProfile({ profile, onUpdate }: { profile: Profil
       <h2>Profile</h2>
       <label className="app-field">
         University
-        <select value={universityId} onChange={(event) => { setUniversityId(event.target.value); setCurriculumId(''); setStreamId('') }}>
+        <select value={universityId} onChange={(event) => { setUniversityId(event.target.value); setStreamId('') }}>
           <option value="">Choose university</option>
           {universities.map((item) => <option key={item.id} value={item.id}>{item.code ? item.code + ' · ' : ''}{item.name}</option>)}
-        </select>
-      </label>
-      <label className="app-field">
-        Curriculum
-        <select value={curriculumId} onChange={(event) => { setCurriculumId(event.target.value); setStreamId('') }}>
-          <option value="">Choose curriculum</option>
-          {curriculums.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
         </select>
       </label>
       <AcademicCatalogRequest universityId={universityId} />
@@ -89,7 +73,7 @@ export default function SettingsProfile({ profile, onUpdate }: { profile: Profil
           ))}
         </div>
       </div>
-      <Button disabled={!universityId || !curriculumId || !streamId} onClick={save}>Save changes</Button>
+      <Button disabled={!universityId || !streamId} onClick={save}>Save changes</Button>
       {message && <p className="app-meta">{message}</p>}
     </Card>
   )

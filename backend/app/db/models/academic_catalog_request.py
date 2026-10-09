@@ -25,8 +25,6 @@ class AcademicCatalogRequest(Base):
     )
     name: Mapped[str] = mapped_column(String(150), nullable=False)
     code: Mapped[Optional[str]] = mapped_column(String(50))
-    version: Mapped[Optional[str]] = mapped_column(String(50))
-    academic_year: Mapped[Optional[str]] = mapped_column(String(30))
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="PENDING", server_default="PENDING")
     admin_note: Mapped[Optional[str]] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)

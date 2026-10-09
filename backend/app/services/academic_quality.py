@@ -6,10 +6,9 @@ from dataclasses import dataclass
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db.models.curriculum import (
+from app.db.models.academic_catalog import (
     Chapter,
     Course,
-    Curriculum,
     Stream,
     Topic,
     University,
@@ -33,7 +32,6 @@ def _issue(severity: str, entity_type: str, entity_id: int, title: str, message:
 
 def run_academic_quality_checks(db: Session) -> dict:
     universities = list(db.scalars(select(University)).all())
-    curriculums = list(db.scalars(select(Curriculum)).all())
     streams = list(db.scalars(select(Stream)).all())
     courses = list(db.scalars(select(Course)).all())
     chapters = list(db.scalars(select(Chapter)).all())
@@ -59,15 +57,11 @@ def run_academic_quality_checks(db: Session) -> dict:
             )
         )
 
-    active_curriculums = {item.id for item in curriculums if item.status == "ACTIVE"}
     active_streams = {item.id for item in streams if item.status == "ACTIVE"}
     active_courses = {item.id for item in courses if item.status == "ACTIVE"}
     active_chapters = {item.id for item in chapters if item.status == "ACTIVE"}
     active_topics = {item.id for item in topics if item.status == "ACTIVE"}
 
-    active_streams_by_curriculum = Counter(
-        item.curriculum_id for item in streams if item.status == "ACTIVE"
-    )
     active_mappings_by_stream = Counter(
         item.stream_id for item in all_mappings if item.status == "ACTIVE"
     )
@@ -84,14 +78,10 @@ def run_academic_quality_checks(db: Session) -> dict:
             university.status == "ACTIVE"
             and not any(
                 item.university_id == university.id and item.status == "ACTIVE"
-                for item in curriculums
+                for item in streams
             )
         ):
-            add_parent_child_issue("university", university.id, "curriculum", university.name)
-
-    for curriculum in curriculums:
-        if curriculum.status == "ACTIVE" and active_streams_by_curriculum[curriculum.id] == 0:
-            add_parent_child_issue("curriculum", curriculum.id, "stream", curriculum.name)
+            add_parent_child_issue("university", university.id, "stream", university.name)
 
     for stream in streams:
         if stream.status == "ACTIVE" and active_mappings_by_stream[stream.id] == 0:
@@ -132,30 +122,15 @@ def run_academic_quality_checks(db: Session) -> dict:
 
     # Active records whose parent is inactive. These records exist, but cannot
     # safely participate in the active planner dataset.
-    for curriculum in curriculums:
-        if (
-            curriculum.status == "ACTIVE"
-            and curriculum.university_id not in {item.id for item in universities if item.status == "ACTIVE"}
-        ):
-            issues.append(
-                _issue(
-                    "error",
-                    "curriculum",
-                    curriculum.id,
-                    "Inactive or missing university",
-                    f"{curriculum.name} is active but its university is not active.",
-                )
-            )
-
     for stream in streams:
-        if stream.status == "ACTIVE" and stream.curriculum_id not in active_curriculums:
+        if stream.status == "ACTIVE" and stream.university_id not in {item.id for item in universities if item.status == "ACTIVE"}:
             issues.append(
                 _issue(
                     "error",
                     "stream",
                     stream.id,
-                    "Inactive or missing curriculum",
-                    f"{stream.name} is active but its curriculum is not active.",
+                    "Inactive or missing university",
+                    f"{stream.name} is active but its university is not active.",
                 )
             )
 
@@ -206,16 +181,6 @@ def run_academic_quality_checks(db: Session) -> dict:
                     mapping.id,
                     "Inactive or missing stream",
                     f"{'Offering' if isinstance(mapping, UniversityCourseOffering) else 'Mapping'} #{mapping.id} points to a stream that is not active.",
-                )
-            )
-        if mapping.curriculum_id not in active_curriculums:
-            issues.append(
-                _issue(
-                    "error",
-                    "course_offering" if isinstance(mapping, UniversityCourseOffering) else "course_mapping",
-                    mapping.id,
-                    "Inactive or missing curriculum",
-                    f"{'Offering' if isinstance(mapping, UniversityCourseOffering) else 'Mapping'} #{mapping.id} points to a curriculum that is not active.",
                 )
             )
         course = course_by_id.get(mapping.course_id)
@@ -367,7 +332,6 @@ def run_academic_quality_checks(db: Session) -> dict:
 
     counts = {
         "universities": len(universities),
-        "curriculums": len(curriculums),
         "streams": len(streams),
         "courses": len(courses),
         "chapters": len(chapters),
@@ -385,7 +349,6 @@ def run_academic_quality_checks(db: Session) -> dict:
             "errors": severity_counts.get("error", 0),
             "warnings": severity_counts.get("warning", 0),
             "info": severity_counts.get("info", 0),
-            "active_curriculums": len(active_curriculums),
         },
         "counts": counts,
         "readiness": readiness,

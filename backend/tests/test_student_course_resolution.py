@@ -93,7 +93,7 @@ def test_student_course_read_rejects_missing_resolved_metadata():
 
     with pytest.raises(
         Exception,
-        match="Student course is no longer available in the active university curriculum",
+            match="Student course is no longer offered in the selected university stream",
     ):
         student_api.student_course_read_data(
             FakeDB([]),

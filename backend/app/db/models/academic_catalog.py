@@ -20,43 +20,20 @@ class University(Base):
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="ACTIVE", server_default="ACTIVE")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-    curriculums: Mapped[list[Curriculum]] = relationship(back_populates="university", cascade="all, delete-orphan")
-
-
-class Curriculum(Base):
-    __tablename__ = "curriculums"
+class Stream(Base):
+    __tablename__ = "streams"
     __table_args__ = (
-        UniqueConstraint("university_id", "name", "version", name="uq_curriculums_university_name_version"),
-        Index("ix_curriculums_university_id", "university_id"),
+        UniqueConstraint("university_id", "code", name="uq_streams_university_code"),
+        Index("ix_streams_university_id", "university_id"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     university_id: Mapped[int] = mapped_column(ForeignKey("universities.id", ondelete="CASCADE"), nullable=False)
-    name: Mapped[str] = mapped_column(String(150), nullable=False)
-    version: Mapped[str] = mapped_column(String(50), nullable=False)
-    academic_year: Mapped[Optional[str]] = mapped_column(String(30))
-    description: Mapped[Optional[str]] = mapped_column(Text)
-    status: Mapped[str] = mapped_column(String(20), nullable=False, default="DRAFT", server_default="DRAFT")
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-    university: Mapped[University] = relationship(back_populates="curriculums")
-    streams: Mapped[list[Stream]] = relationship(back_populates="curriculum", cascade="all, delete-orphan")
-
-
-class Stream(Base):
-    __tablename__ = "streams"
-    __table_args__ = (
-        UniqueConstraint("curriculum_id", "code", name="uq_streams_curriculum_code"),
-        Index("ix_streams_curriculum_id", "curriculum_id"),
-    )
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    curriculum_id: Mapped[int] = mapped_column(ForeignKey("curriculums.id", ondelete="CASCADE"), nullable=False)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     code: Mapped[str] = mapped_column(String(30), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="ACTIVE", server_default="ACTIVE")
-    curriculum: Mapped[Curriculum] = relationship(back_populates="streams")
+    university: Mapped[University] = relationship()
     courses: Mapped[list[Course]] = relationship(back_populates="stream", cascade="all, delete-orphan")
 
 
@@ -121,7 +98,6 @@ class UniversityCourseMapping(Base):
     __tablename__ = "university_course_mappings"
     __table_args__ = (
         UniqueConstraint("stream_id", "course_id", name="uq_university_course_mapping_stream_course"),
-        Index("ix_university_course_mapping_curriculum", "curriculum_id"),
         Index("ix_university_course_mapping_stream", "stream_id"),
         Index("ix_university_course_mapping_course", "course_id"),
         CheckConstraint("semester_number IN (1, 2)", name="ck_university_course_mapping_semester"),
@@ -130,9 +106,6 @@ class UniversityCourseMapping(Base):
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    curriculum_id: Mapped[int] = mapped_column(
-        ForeignKey("curriculums.id", ondelete="CASCADE"), nullable=False
-    )
     stream_id: Mapped[int] = mapped_column(
         ForeignKey("streams.id", ondelete="CASCADE"), nullable=False
     )
@@ -145,7 +118,6 @@ class UniversityCourseMapping(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
-    curriculum: Mapped[Curriculum] = relationship()
     stream: Mapped[Stream] = relationship()
     course: Mapped[Course] = relationship()
 
@@ -160,7 +132,6 @@ class UniversityCourseOffering(Base):
     __tablename__ = "university_course_offerings"
     __table_args__ = (
         UniqueConstraint("stream_id", "course_id", name="uq_university_course_offering_stream_course"),
-        Index("ix_university_course_offering_curriculum", "curriculum_id"),
         Index("ix_university_course_offering_stream", "stream_id"),
         Index("ix_university_course_offering_course", "course_id"),
         CheckConstraint("semester_number IN (1, 2)", name="ck_university_course_offering_semester"),
@@ -169,9 +140,6 @@ class UniversityCourseOffering(Base):
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    curriculum_id: Mapped[int] = mapped_column(
-        ForeignKey("curriculums.id", ondelete="CASCADE"), nullable=False
-    )
     stream_id: Mapped[int] = mapped_column(
         ForeignKey("streams.id", ondelete="CASCADE"), nullable=False
     )
@@ -184,7 +152,6 @@ class UniversityCourseOffering(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
-    curriculum: Mapped[Curriculum] = relationship()
     stream: Mapped[Stream] = relationship()
     course: Mapped[Course] = relationship()
 

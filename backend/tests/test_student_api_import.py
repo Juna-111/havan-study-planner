@@ -18,7 +18,6 @@ def test_registration_rejects_duplicate_exam_keys() -> None:
         StudentRegistrationCreate(
             name="Student",
             university_id=1,
-            curriculum_id=1,
             stream_id=1,
             study_days=["mon"],
             courses=[{"course_id": 1}],

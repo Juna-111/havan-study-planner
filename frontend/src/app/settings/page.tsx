@@ -12,7 +12,7 @@ import ExamManager from '@/features/student/ExamManager'
 import SettingsProfile from '@/features/student/SettingsProfile'
 import NotificationSettings from '@/features/student/NotificationSettings'
 
-type Profile = { id: number; name: string; university_id: number; curriculum_id: number; stream_id: number; study_hours_per_day: number; study_days: string[] }
+type Profile = { id: number; name: string; university_id: number; stream_id: number; study_hours_per_day: number; study_days: string[] }
 
 function PasswordCard() {
   const [currentPassword,setCurrentPassword]=useState(''); const [newPassword,setNewPassword]=useState(''); const [confirmPassword,setConfirmPassword]=useState(''); const [message,setMessage]=useState(''); const [saving,setSaving]=useState(false)

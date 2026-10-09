@@ -4,9 +4,9 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.core.config import API_PREFIX
 from app.core.deps import require_admin
-from app.db.models.curriculum import Curriculum, University, UniversityCourseMapping
+from app.db.models.academic_catalog import Stream, UniversityCourseMapping
 from app.db.session import get_db
-from app.schemas.curriculum import UniversityCourseMappingRead
+from app.schemas.academic_catalog import UniversityCourseMappingRead
 
 router = APIRouter(
     prefix=f"{API_PREFIX}/university-course-mappings",
@@ -19,8 +19,7 @@ def _query():
     return (
         select(UniversityCourseMapping)
         .options(
-            joinedload(UniversityCourseMapping.curriculum).joinedload(Curriculum.university),
-            joinedload(UniversityCourseMapping.stream),
+            joinedload(UniversityCourseMapping.stream).joinedload(Stream.university),
             joinedload(UniversityCourseMapping.course),
         )
         .order_by(
@@ -34,11 +33,8 @@ def _query():
 def _read(item: UniversityCourseMapping) -> UniversityCourseMappingRead:
     return UniversityCourseMappingRead(
         id=item.id,
-        curriculum_id=item.curriculum_id,
-        curriculum_name=item.curriculum.name,
-        curriculum_version=item.curriculum.version,
-        university_id=item.curriculum.university_id,
-        university_name=item.curriculum.university.name,
+        university_id=item.stream.university_id,
+        university_name=item.stream.university.name,
         stream_id=item.stream_id,
         stream_name=item.stream.name,
         stream_code=item.stream.code,
@@ -57,16 +53,13 @@ def _read(item: UniversityCourseMapping) -> UniversityCourseMappingRead:
 def list_mappings(
     db: Session = DB,
     university_id: int | None = None,
-    curriculum_id: int | None = None,
     stream_id: int | None = None,
     semester_number: int | None = None,
     status_filter: str | None = None,
 ):
     query = _query()
     if university_id is not None:
-        query = query.join(UniversityCourseMapping.curriculum).where(Curriculum.university_id == university_id)
-    if curriculum_id is not None:
-        query = query.where(UniversityCourseMapping.curriculum_id == curriculum_id)
+        query = query.join(UniversityCourseMapping.stream).where(Stream.university_id == university_id)
     if stream_id is not None:
         query = query.where(UniversityCourseMapping.stream_id == stream_id)
     if semester_number is not None:

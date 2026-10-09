@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.db.models.curriculum import Chapter, Course, Curriculum, Stream, Topic, University, UniversityCourseMapping
+from app.db.models.academic_catalog import Chapter, Course, Stream, Topic, University, UniversityCourseMapping
 from app.db.models.plan import PlanTask
 from app.db.models.student import StudentAccount, StudentCourse, StudentExam, StudentProfile, StudentTopicProgress
 from app.db.models.notification import PushSubscription
@@ -142,7 +142,7 @@ def student_course_read_data(db: Session, student_course: StudentCourse, metadat
     effective_metadata = resolved_course_metadata(db, student_course.student_id) if metadata is None else metadata
     effective = effective_metadata.get(student_course.course_id)
     if effective is None:
-        raise HTTPException(status_code=400, detail="Student course is no longer available in the active university curriculum")
+        raise HTTPException(status_code=400, detail="Student course is no longer offered in the selected university stream")
     return {
         "id": student_course.id,
         "student_id": student_course.student_id,
@@ -155,22 +155,17 @@ def student_course_read_data(db: Session, student_course: StudentCourse, metadat
     }
 
 
-def validate_curriculum_context(db: Session, university_id: int, curriculum_id: int, stream_id: int) -> None:
-    curriculum = db.get(Curriculum, curriculum_id)
+def validate_academic_context(db: Session, university_id: int, stream_id: int) -> None:
     stream = db.get(Stream, stream_id)
     university = db.get(University, university_id)
-    if not university or not curriculum or not stream:
-        raise HTTPException(status_code=400, detail="University, curriculum, or stream not found")
+    if not university or not stream:
+        raise HTTPException(status_code=400, detail="University or stream not found")
     if str(university.status).upper() != "ACTIVE":
         raise HTTPException(status_code=400, detail="The selected university is not available for student registration")
-    if str(curriculum.status).upper() != "ACTIVE":
-        raise HTTPException(status_code=400, detail="The selected curriculum is not available for student registration")
     if str(stream.status).upper() != "ACTIVE":
         raise HTTPException(status_code=400, detail="The selected stream is not available for student registration")
-    if curriculum.university_id != university_id:
-        raise HTTPException(status_code=400, detail="Curriculum does not belong to the selected university")
-    if stream.curriculum_id != curriculum_id:
-        raise HTTPException(status_code=400, detail="Stream does not belong to the selected curriculum")
+    if stream.university_id != university_id:
+        raise HTTPException(status_code=400, detail="Stream does not belong to the selected university")
 
 
 @router.get("/me/profile", response_model=StudentRead)
@@ -272,7 +267,7 @@ def get_my_study_streak(student: Annotated[StudentProfile, Depends(current_stude
 
 @router.post("/profiles", response_model=StudentRead, status_code=status.HTTP_201_CREATED)
 def create_profile(payload: StudentCreate, db: DB, account: Annotated[StudentAccount, Depends(current_account)]):
-    validate_curriculum_context(db, payload.university_id, payload.curriculum_id, payload.stream_id)
+    validate_academic_context(db, payload.university_id, payload.stream_id)
     existing = db.scalar(select(StudentProfile).where(StudentProfile.account_id == account.id))
     if existing:
         return existing
@@ -309,11 +304,10 @@ def get_profile(student_id: int, db: DB):
 def update_profile(student_id: int, payload: StudentUpdate, db: DB):
     profile = profile_or_404(db, student_id)
     data = payload.model_dump(exclude_unset=True)
-    if {"university_id", "curriculum_id", "stream_id"} & data.keys():
+    if {"university_id", "stream_id"} & data.keys():
         university_id = data.get("university_id", profile.university_id)
-        curriculum_id = data.get("curriculum_id", profile.curriculum_id)
         stream_id = data.get("stream_id", profile.stream_id)
-        validate_curriculum_context(db, university_id, curriculum_id, stream_id)
+        validate_academic_context(db, university_id, stream_id)
     for key, value in data.items():
         setattr(profile, key, value)
     db.commit()
@@ -423,7 +417,7 @@ def complete_onboarding(
     if len({item.course_id for item in payload.courses}) != len(payload.courses):
         raise HTTPException(status_code=400, detail="Each course can only be selected once")
 
-    validate_curriculum_context(db, payload.university_id, payload.curriculum_id, payload.stream_id)
+    validate_academic_context(db, payload.university_id, payload.stream_id)
 
     existing = db.scalar(select(StudentProfile).where(StudentProfile.account_id == account.id))
     if existing is None:
@@ -432,7 +426,6 @@ def complete_onboarding(
             client_key=payload.client_key or f"legacy-{uuid4().hex}",
             name=payload.name,
             university_id=payload.university_id,
-            curriculum_id=payload.curriculum_id,
             stream_id=payload.stream_id,
             study_hours_per_day=payload.study_hours_per_day,
             study_days=payload.study_days,
@@ -443,7 +436,6 @@ def complete_onboarding(
         profile = existing
         profile.name = payload.name
         profile.university_id = payload.university_id
-        profile.curriculum_id = payload.curriculum_id
         profile.stream_id = payload.stream_id
         profile.study_hours_per_day = payload.study_hours_per_day
         profile.study_days = payload.study_days
@@ -588,7 +580,7 @@ def _validate_exam_scope(db: Session, profile: StudentProfile, course_id: int, t
     if not course:
         raise HTTPException(status_code=404, detail="Exam course not found")
     if course.id not in resolved_course_ids(db, profile.id):
-        raise HTTPException(status_code=400, detail="Exam course is not part of the student's active university curriculum")
+        raise HTTPException(status_code=400, detail="Exam course is not offered in the student's active university stream")
     if not topic_ids:
         return
     unique_ids = set(topic_ids)

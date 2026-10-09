@@ -17,7 +17,7 @@ class FakeDB:
 
     def scalars(self, statement):
         model = statement.column_descriptions[0]["type"].__name__
-        names = {"University": "universities", "Curriculum": "curriculums", "Stream": "streams", "Course": "courses", "Chapter": "chapters", "Topic": "topics", "UniversityCourseMapping": "mappings", "UniversityCourseOffering": "offerings"}
+        names = {"University": "universities", "Stream": "streams", "Course": "courses", "Chapter": "chapters", "Topic": "topics", "UniversityCourseMapping": "mappings", "UniversityCourseOffering": "offerings"}
         return FakeResult(self.data[names[model]])
 
 
@@ -25,12 +25,8 @@ def university(id=1, status="ACTIVE"):
     return SimpleNamespace(id=id, name=f"University {id}", status=status)
 
 
-def curriculum(id=1, university_id=1, status="ACTIVE"):
-    return SimpleNamespace(id=id, university_id=university_id, name=f"Curriculum {id}", status=status)
-
-
-def stream(id=1, curriculum_id=1, status="ACTIVE"):
-    return SimpleNamespace(id=id, curriculum_id=curriculum_id, name=f"Stream {id}", status=status)
+def stream(id=1, university_id=1, status="ACTIVE"):
+    return SimpleNamespace(id=id, university_id=university_id, name=f"Stream {id}", status=status)
 
 
 def course(id=1, stream_id=1, status="ACTIVE", credit_hours=3):
@@ -69,7 +65,6 @@ def topic(
 def make_db(topics=(), **overrides):
     return FakeDB(
         universities=overrides.pop("universities", [university()]),
-        curriculums=overrides.pop("curriculums", [curriculum()]),
         streams=overrides.pop("streams", [stream()]),
         courses=overrides.pop("courses", [course()]),
         chapters=overrides.pop("chapters", [chapter()]),

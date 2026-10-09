@@ -75,13 +75,12 @@ def test_approving_university_request_creates_catalog_record():
     assert db.added[0].status == "ACTIVE"
 
 
-def test_approving_curriculum_request_creates_catalog_record():
+def test_approving_stream_request_creates_catalog_record():
     item = request(
-        request_type="CURRICULUM",
-        name="Harmonized Freshman",
-        code=None,
+        request_type="STREAM",
+        name="Engineering",
+        code="ENG",
         university_id=3,
-        version="2026.1",
     )
     db = FakeDB(item, university=SimpleNamespace(id=3))
 
@@ -94,8 +93,8 @@ def test_approving_curriculum_request_creates_catalog_record():
     assert result.status == "APPROVED"
     assert len(db.added) == 1
     assert db.added[0].university_id == 3
-    assert db.added[0].name == "Harmonized Freshman"
-    assert db.added[0].version == "2026.1"
+    assert db.added[0].name == "Engineering"
+    assert db.added[0].code == "ENG"
     assert db.added[0].status == "ACTIVE"
 
 

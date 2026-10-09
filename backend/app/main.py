@@ -45,7 +45,7 @@ async def lifespan(_: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     version="1.2.0",
-    description="Backend for Havan Study Planner: curriculum intelligence and student planning context.",
+    description="Backend for Havan Study Planner: university and stream catalogs with student planning context.",
     lifespan=lifespan,
 )
 app.state.limiter = limiter

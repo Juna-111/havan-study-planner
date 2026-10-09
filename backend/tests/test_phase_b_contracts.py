@@ -3,16 +3,12 @@ from fastapi.testclient import TestClient
 from pydantic import BaseModel, Field
 
 from app.core.errors import register_exception_handlers
-from app.schemas.curriculum import CurriculumCreate
+from app.schemas.academic_catalog import StreamCreate
 
 
-def test_curriculum_and_mapping_create_default_to_active():
-    curriculum = CurriculumCreate(
-        university_id=1,
-        name="Freshman",
-        version="1.0",
-    )
-    assert curriculum.status == "ACTIVE"
+def test_stream_create_defaults_to_active():
+    stream = StreamCreate(university_id=1, name="Engineering", code="ENG")
+    assert stream.status == "ACTIVE"
 
 
 def test_validation_errors_are_field_level():

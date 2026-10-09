@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.core.time import ADDIS, parse_weekdays, today_local, to_index
 from app.core.errors import PlanValidationError
-from app.db.models.curriculum import Chapter, Course, Topic
+from app.db.models.academic_catalog import Chapter, Course, Topic
 from app.db.models.plan import PlanTask
 from app.db.models.student import StudentExam, StudentProfile, StudentTopicProgress
 from app.schemas.plan import PlanInput
@@ -94,7 +94,7 @@ def build_request(
     chapters = list(db.scalars(select(Chapter).where(Chapter.id.in_(chapter_ids))).all())
     chapter_by_id = {chapter.id: chapter for chapter in chapters}
     if any(chapter_by_id[topic.chapter_id].course_id not in allowed_courses for topic in topics):
-        raise PlanValidationError("TOPIC_OUT_OF_CURRICULUM", "Every selected topic must belong to your active curriculum.", 422)
+        raise PlanValidationError("TOPIC_OUT_OF_STREAM", "Every selected topic must belong to a course offered in your active stream.", 422)
 
     progress_rows = list(db.scalars(
         select(StudentTopicProgress).where(

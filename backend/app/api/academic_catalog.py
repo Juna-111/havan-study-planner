@@ -5,10 +5,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from app.db.session import get_db
-from app.db.models.curriculum import (
+from app.db.models.academic_catalog import (
     Chapter,
     Course,
-    Curriculum,
     HavanPromotion,
     Stream,
     Topic,
@@ -16,11 +15,11 @@ from app.db.models.curriculum import (
     UniversityCourseMapping,
     UniversityCourseOffering,
 )
-from app.schemas.curriculum import *
+from app.schemas.academic_catalog import *
 from app.services.academic_resolver import resolve_stream_courses
-from app.services.curriculum import get_or_404, list_items
+from app.services.academic_catalog import get_or_404, list_items
 
-router = APIRouter(prefix=API_PREFIX, tags=["curriculum"], dependencies=[Depends(current_account)])
+router = APIRouter(prefix=API_PREFIX, tags=["academic catalog"], dependencies=[Depends(current_account)])
 DB = Annotated[Session, Depends(get_db)]
 
 
@@ -34,14 +33,9 @@ def collection(db, model, schema, page, page_size, filters=None):
 @router.get("/universities")
 def universities(db: DB, page: int=Query(1,ge=1), page_size: int=Query(20,ge=1,le=100)):
     return collection(db,University,UniversityRead,page,page_size)
-@router.get("/curriculums")
-def curriculums(db:DB, university_id:int|None=None,page:int=Query(1,ge=1),page_size:int=Query(20,ge=1,le=100)):
-    return collection(db,Curriculum,CurriculumRead,page,page_size,{"university_id":university_id})
-@router.get("/curriculums/{item_id}",response_model=CurriculumRead)
-def get_curriculum(item_id:int,db:DB): return get_or_404(db,Curriculum,item_id)
 @router.get("/streams")
-def streams(db:DB,curriculum_id:int|None=None,page:int=Query(1,ge=1),page_size:int=Query(20,ge=1,le=100)):
-    return collection(db,Stream,StreamRead,page,page_size,{"curriculum_id":curriculum_id})
+def streams(db:DB,university_id:int|None=None,page:int=Query(1,ge=1),page_size:int=Query(20,ge=1,le=100)):
+    return collection(db,Stream,StreamRead,page,page_size,{"university_id":university_id})
 @router.get("/streams/{item_id}",response_model=StreamRead)
 def get_stream(item_id:int,db:DB): return get_or_404(db,Stream,item_id)
 @router.get("/courses")

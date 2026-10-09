@@ -146,7 +146,7 @@ export default function ExamPlanner(){
     </Card>
 
     <section className="exam-section">
-      <div className="exam-section-heading"><div><span className="exam-kicker">EXAM RUNWAY</span><h2>What needs attention?</h2></div><span className="exam-source-note">Calculated from curriculum + progress + study capacity</span></div>
+      <div className="exam-section-heading"><div><span className="exam-kicker">EXAM RUNWAY</span><h2>What needs attention?</h2></div><span className="exam-source-note">Calculated from course topics, progress + study capacity</span></div>
       {insights.length===0?<Card className="exam-empty" padding="lg"><strong>No exam is on the runway yet.</strong><p>Add an exam above. Havan will then calculate time pressure and topic coverage from your actual course data.</p></Card>:
       <div className="exam-insight-grid">{insights.map(item=><Card key={item.exam.id} className="exam-insight-card" padding="lg">
         <div className="exam-card-top"><div><span className="exam-kicker">{item.exam.exam_type.toUpperCase()}</span><h3>{item.course?.code??'Course'} · {item.course?.name??'Unavailable course'}</h3></div><StatusBadge status={item.label} /></div>
@@ -160,7 +160,7 @@ export default function ExamPlanner(){
 
     <Card className="exam-intelligence" padding="lg">
       <div><span className="exam-kicker">HAVAN INTELLIGENCE</span><h2>Exam Planning stays separate for a reason.</h2><p>Havan Study Planning answers “what do I want to study and when?” Exam Planning answers “how ready am I for this specific exam, and where is the pressure?”</p></div>
-      <div className="exam-intelligence-list"><div><strong>1</strong><span>Exam date creates the runway.</span></div><div><strong>2</strong><span>Curriculum topics define the workload.</span></div><div><strong>3</strong><span>Your progress defines actual coverage.</span></div><div><strong>4</strong><span>Your study capacity reveals time pressure.</span></div></div>
+      <div className="exam-intelligence-list"><div><strong>1</strong><span>Exam date creates the runway.</span></div><div><strong>2</strong><span>Course topics define the workload.</span></div><div><strong>3</strong><span>Your progress defines actual coverage.</span></div><div><strong>4</strong><span>Your study capacity reveals time pressure.</span></div></div>
     </Card>
   </div>
 }

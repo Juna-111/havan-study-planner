@@ -19,6 +19,15 @@ export default function ImportScreen({ scope }: { scope?: 'catalog' | 'content' 
   const [error,setError]=useState('')
 
   function clear(){setCoursePreview([]);setSummary(null);setMessage('');setError('')}
+  function downloadCatalogTemplate(){
+    const blob = new Blob(['university_code,university_name,stream_code,stream_name,semester,course_code,course_name,credit_hours\n'], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'university-stream-courses-template.csv'
+    link.click()
+    URL.revokeObjectURL(url)
+  }
   async function selectFile(next: File|null){
     setFile(next); clear()
     if(!next){setKind('course');return}
@@ -55,7 +64,7 @@ export default function ImportScreen({ scope }: { scope?: 'catalog' | 'content' 
       const fd=new FormData();fd.append('file',file)
       if(kind==='university'){
         const data=await apiFetch<Record<string,number>>('/admin-file-import/university/commit',{method:'POST',body:fd})
-        setMessage('University import applied: '+data.universities+' universities, '+data.curriculums+' curricula, '+data.streams+' streams, '+data.courses+' courses, '+data.mappings+' mappings.')
+        setMessage('University import applied: '+data.universities+' universities, '+data.streams+' streams, '+data.courses+' courses, '+data.mappings+' mappings.')
       }else if(kind==='promotion'){
         const data=await apiFetch<Record<string,number>>('/admin-file-import/promotion/commit',{method:'POST',body:fd})
         setMessage('Havan promotion import applied: '+data.created+' created, '+data.updated+' updated.')
@@ -78,7 +87,7 @@ export default function ImportScreen({ scope }: { scope?: 'catalog' | 'content' 
     <header className={styles.header}>
       <span>{scope === 'catalog' ? 'ACADEMIC CATALOG · IMPORT' : scope === 'content' ? 'COURSE CONTENT · IMPORT' : 'ADMIN · IMPORT'}</span>
       <h1>{scope === 'catalog' ? 'Update the academic catalog' : scope === 'content' ? 'Update course content' : 'Upload administration data'}</h1>
-      <p>{scope === 'catalog' ? 'Validate a university CSV before Havan reconciles its universities, curricula, streams and course offerings.' : scope === 'content' ? 'Preview course content or promotion links, then apply the file after review.' : 'Upload a source file and preview its changes before applying them.'}</p>
+      <p>{scope === 'catalog' ? 'Validate a university CSV before Havan reconciles universities, streams and course offerings.' : scope === 'content' ? 'Preview course content or promotion links, then apply the file after review.' : 'Upload a source file and preview its changes before applying them.'}</p>
     </header>
     {(message||error)&&<div className={error?styles.alert:styles.notice}>{error||message}</div>}
     {file&&!scopeAllows&&<div className={styles.alert}>This workspace does not accept {kind} files. Choose a {scope === 'catalog' ? 'university CSV' : 'course or promotion TXT/MD'} file.</div>}
@@ -89,12 +98,13 @@ export default function ImportScreen({ scope }: { scope?: 'catalog' | 'content' 
         <div><span className={styles.fieldKicker}>SOURCE FILE</span><strong>{file?file.name:'No file selected'}</strong><small>{scope === 'catalog' ? '.csv · UTF-8 · maximum 5 MB' : scope === 'content' ? '.txt or .md · UTF-8 · maximum 5 MB' : '.csv, .txt or .md · UTF-8 · maximum 5 MB'}</small></div>
         <label className={styles.fileButton}><span>{file?'Change file':'Choose file'}</span><input type="file" accept={scope === 'catalog' ? '.csv,text/csv' : scope === 'content' ? '.txt,.md,text/plain,text/markdown' : '.csv,.txt,.md,text/csv,text/plain,text/markdown'} onChange={e=>{void selectFile(e.target.files?.[0]||null)}} /></label>
       </div>
+      {scope === 'catalog' && <button type="button" onClick={downloadCatalogTemplate}>Download CSV template</button>}
       <div className={styles.actions}>
         <button disabled={busy!==null||!file||!scopeAllows} onClick={()=>void preview()}>{busy==='preview'?'Validating…':'Validate & preview'}</button>
         <button className={styles.primary} disabled={busy!==null||!ready} onClick={()=>void save()}>{busy==='save'?'Applying…':'Apply import'}</button>
       </div>
     </div>
-    {summary&&<div className={styles.preview}><h2>Import review</h2><p>{summary.kind==='university'?summary.data.rows+' CSV rows → '+summary.data.universities+' universities · '+summary.data.curriculums+' curricula · '+summary.data.streams+' streams · '+(summary.data.course_offerings??summary.data.course_mappings)+' course offerings.':'Promotion blocks: '+summary.data.promotions+'.'}</p><small>No database changes are made until Apply import.</small></div>}
+    {summary&&<div className={styles.preview}><h2>Import review</h2><p>{summary.kind==='university'?summary.data.rows+' CSV rows → '+summary.data.universities+' universities · '+summary.data.streams+' streams · '+(summary.data.course_offerings??summary.data.course_mappings)+' course offerings.':'Promotion blocks: '+summary.data.promotions+'.'}</p><small>No database changes are made until Apply import.</small></div>}
     {coursePreview.length>0&&<div className={styles.preview}><h2>Course content review</h2><p>{coursePreview.length} courses · {courseTopics} topics.</p>{coursePreview.map(c=><article key={c.code+'-'+c.content_version}><b>{c.code} · {c.name}</b><small>Version {c.content_version} · {c.action}</small>{c.chapters.map(ch=><div className={styles.indent} key={ch.name}><strong>{ch.name}</strong>{ch.topics.map(t=><span key={t.name}>{t.name} · difficulty {t.difficulty}{t.important_points?' · critical points added':''}</span>)}</div>)}</article>)}</div>}
   </section>
 }

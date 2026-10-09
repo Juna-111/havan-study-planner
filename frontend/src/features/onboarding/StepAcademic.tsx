@@ -10,25 +10,21 @@ type Page<T> = { items: T[]; page: number; page_size: number; total: number; pag
 type Props = {
   name: string
   university: string
-  curriculum: string
   stream: string
   selected: Set<number>
   onName: (value: string) => void
   onUniversity: (value: string) => void
-  onCurriculum: (value: string) => void
   onStream: (value: string) => void
   onToggleCourse: (id: number, checked: boolean) => void
   onRetryLoad?: () => void
 }
 export default function StepAcademic(props: Props) {
   const [unis, setUnis] = useState<Opt[]>([])
-  const [curricula, setCurricula] = useState<Opt[]>([])
   const [streams, setStreams] = useState<Opt[]>([])
   const [courses, setCourses] = useState<Course[]>([])
-  const [loading, setLoading] = useState({ universities: true, curricula: false, streams: false, courses: false })
+  const [loading, setLoading] = useState({ universities: true, streams: false, courses: false })
   const [loadError, setLoadError] = useState('')
   const universityRequest = useRef(0)
-  const curriculumRequest = useRef(0)
   const streamRequest = useRef(0)
 
   const loadUnis = () => {
@@ -52,50 +48,25 @@ export default function StepAcademic(props: Props) {
     loadUnis()
   }, [])
   useEffect(() => {
-    setCurricula([])
     setStreams([])
     setCourses([])
     setLoadError('')
     if (!props.university) return
     const request = ++universityRequest.current
     let cancelled = false
-    setLoading((old) => ({ ...old, curricula: true }))
-    apiFetch<Page<Opt>>('/curriculums?university_id=' + props.university + '&page=1&page_size=100')
+    setLoading((old) => ({ ...old, streams: true }))
+    apiFetch<Page<Opt>>('/streams?university_id=' + props.university + '&page=1&page_size=100')
       .then((response) => {
-        if (!cancelled && request === universityRequest.current) {
-          setCurricula(response.items.filter((item) => item.status === 'ACTIVE'))
-        }
+        if (!cancelled && request === universityRequest.current) setStreams(response.items.filter((item) => item.status === 'ACTIVE'))
       })
       .catch((value) => {
-        if (!cancelled && request === universityRequest.current) setLoadError(value instanceof Error ? value.message : 'Could not load curricula.')
+        if (!cancelled && request === universityRequest.current) setLoadError(value instanceof Error ? value.message : 'Could not load streams.')
       })
       .finally(() => {
-        if (!cancelled && request === universityRequest.current) setLoading((old) => ({ ...old, curricula: false }))
+        if (!cancelled && request === universityRequest.current) setLoading((old) => ({ ...old, streams: false }))
       })
     return () => { cancelled = true }
   }, [props.university])
-  useEffect(() => {
-    setStreams([])
-    setCourses([])
-    setLoadError('')
-    if (!props.curriculum) return
-    const request = ++curriculumRequest.current
-    let cancelled = false
-    setLoading((old) => ({ ...old, streams: true }))
-    apiFetch<Page<Opt>>('/streams?curriculum_id=' + props.curriculum + '&page=1&page_size=100')
-      .then((response) => {
-        if (!cancelled && request === curriculumRequest.current) {
-          setStreams(response.items.filter((item) => item.status === 'ACTIVE'))
-        }
-      })
-      .catch((value) => {
-        if (!cancelled && request === curriculumRequest.current) setLoadError(value instanceof Error ? value.message : 'Could not load streams.')
-      })
-      .finally(() => {
-        if (!cancelled && request === curriculumRequest.current) setLoading((old) => ({ ...old, streams: false }))
-      })
-    return () => { cancelled = true }
-  }, [props.curriculum])
   useEffect(() => {
     setCourses([])
     setLoadError('')
@@ -130,23 +101,16 @@ export default function StepAcademic(props: Props) {
             onChange={props.onUniversity}
             options={[{ value: '', label: loading.universities ? 'Loading universities…' : 'Choose your university' }, ...unis.map((x) => ({ value: String(x.id), label: x.name }))]}
           />
-          <Select
-            label="Curriculum"
-            value={props.curriculum}
-            disabled={!props.university || loading.curricula}
-            onChange={props.onCurriculum}
-            options={[{ value: '', label: loading.curricula ? 'Loading curricula…' : 'Choose your curriculum' }, ...curricula.map((x) => ({ value: String(x.id), label: x.name }))]}
-          />
           <div>
             <Select
               label="Stream (required)"
               value={props.stream}
-              disabled={!props.curriculum || loading.streams}
+              disabled={!props.university || loading.streams}
               onChange={props.onStream}
               options={[{ value: '', label: loading.streams ? 'Loading streams…' : 'Choose your stream' }, ...streams.map((x) => ({ value: String(x.id), label: x.name }))]}
             />
-            {props.curriculum && !loading.streams && streams.length === 0 && (
-              <p className="app-copy">No active stream has been added for this curriculum yet. Ask the Havan admin to add it.</p>
+            {props.university && !loading.streams && streams.length === 0 && (
+              <p className="app-copy">No active stream has been added for this university yet. Ask the Havan admin to add it.</p>
             )}
           </div>
         </div>

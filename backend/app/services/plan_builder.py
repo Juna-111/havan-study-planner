@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from dataclasses import replace
 
 from app.core.time import to_index
-from app.db.models.curriculum import Chapter, Course, Topic
+from app.db.models.academic_catalog import Chapter, Course, Topic
 from app.db.models.plan import Plan, PlanTask
 from app.db.models.student import StudentProfile
 from app.schemas.plan import PlanInput, PlanOut

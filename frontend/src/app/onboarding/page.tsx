@@ -15,7 +15,6 @@ export default function Onboarding() {
   const [step, setStep] = useState(0)
   const [name, setName] = useState('')
   const [university, setUniversity] = useState('')
-  const [curriculum, setCurriculum] = useState('')
   const [stream, setStream] = useState('')
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [days, setDays] = useState<string[]>(['mon', 'tue', 'wed', 'thu', 'fri'])
@@ -29,7 +28,7 @@ export default function Onboarding() {
     if (!getAuthToken()) router.replace('/auth')
   }, [router])
 
-  const validAcademic = Boolean(name.trim() && university && curriculum && stream && selected.size)
+  const validAcademic = Boolean(name.trim() && university && stream && selected.size)
   const canNext = step === 0 ? validAcademic : step === 1 ? days.length > 0 : true
   const stepLabels = ['Profile', 'Study routine', 'Exams'] as const
   const stepContent = [
@@ -53,13 +52,6 @@ export default function Onboarding() {
 
   function handleUniversity(value: string) {
     setUniversity(value)
-    setCurriculum('')
-    setStream('')
-    setSelected(new Set())
-  }
-
-  function handleCurriculum(value: string) {
-    setCurriculum(value)
     setStream('')
     setSelected(new Set())
   }
@@ -79,7 +71,6 @@ export default function Onboarding() {
         body: JSON.stringify({
           name: name.trim(),
           university_id: Number(university),
-          curriculum_id: Number(curriculum),
           stream_id: Number(stream),
           study_hours_per_day: hours,
           study_days: days,
@@ -142,12 +133,10 @@ export default function Onboarding() {
         <StepAcademic
           name={name}
           university={university}
-          curriculum={curriculum}
           stream={stream}
           selected={selected}
           onName={setName}
           onUniversity={handleUniversity}
-          onCurriculum={handleCurriculum}
           onStream={handleStream}
           onToggleCourse={(id, checked) =>
             setSelected((old) => {
