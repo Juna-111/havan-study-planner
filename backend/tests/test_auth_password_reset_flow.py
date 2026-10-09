@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
+import time
 
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, select
@@ -11,6 +12,20 @@ from app.db.models.student import PasswordResetToken
 from app.db.session import Base, get_db
 from app.main import app
 from app.services import auth_service
+
+
+class ResponseSendRecorder:
+    def __init__(self, application):
+        self.application = application
+        self.response_sent_at = None
+
+    async def __call__(self, scope, receive, send):
+        async def record_send(message):
+            if scope["type"] == "http" and message["type"] == "http.response.body" and not message.get("more_body", False):
+                self.response_sent_at = time.perf_counter()
+            await send(message)
+
+        await self.application(scope, receive, record_send)
 
 
 def test_password_reset_dispatches_email_and_resets_password(monkeypatch):
@@ -27,6 +42,7 @@ def test_password_reset_dispatches_email_and_resets_password(monkeypatch):
             yield db
 
     app.dependency_overrides[get_db] = get_test_db
+    response_recorder = ResponseSendRecorder(app)
     monkeypatch.setattr(
         auth_service,
         "get_settings",
@@ -44,7 +60,7 @@ def test_password_reset_dispatches_email_and_resets_password(monkeypatch):
 
     class FakeSMTP:
         def __init__(self, host, port, timeout):
-            assert (host, port, timeout) == ("localhost", 1025, 20)
+            assert (host, port, timeout) == ("localhost", 1025, 10)
 
         def __enter__(self):
             return self
@@ -59,24 +75,31 @@ def test_password_reset_dispatches_email_and_resets_password(monkeypatch):
             assert (user, password) == ("mailer@example.com", "test-password")
 
         def send_message(self, message):
+            assert response_recorder.response_sent_at is not None
             sent["to"] = message["To"]
             sent["body"] = message.get_content()
+            time.sleep(0.65)
 
     monkeypatch.setattr(auth_service.smtplib, "SMTP", FakeSMTP)
 
     try:
-        with TestClient(app) as client:
+        with TestClient(response_recorder) as client:
             signup = client.post(
                 "/api/v1/auth/signup",
                     json={"email": "student@example.com", "password": "InitialPass123"},
             )
             assert signup.status_code == 201
 
+            response_recorder.response_sent_at = None
+            forgot_started_at = time.perf_counter()
             forgot = client.post(
                 "/api/v1/auth/forgot-password",
                 json={"email": "student@example.com"},
             )
             assert forgot.status_code == 200
+            assert response_recorder.response_sent_at is not None
+            assert response_recorder.response_sent_at - forgot_started_at < 0.5
+            assert time.perf_counter() - forgot_started_at >= 0.6
             assert sent["to"] == "student@example.com"
             code = next(part for part in sent["body"].split() if len(part) == 6 and part.isdigit())
 

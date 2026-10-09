@@ -57,8 +57,11 @@ def login(db: Session, email: str, password: str) -> tuple[StudentAccount, str]:
 def send_reset_email(email: str, code: str) -> None:
     settings = get_settings()
     if not settings.smtp_user or not settings.smtp_password:
-        logger.error("Password reset email is not configured (SMTP credentials are missing).")
-        raise HTTPException(status_code=503, detail="Password recovery email is not configured yet.")
+        logger.error(
+            "Password reset email delivery skipped: SMTP credentials are missing.",
+            extra={"smtp_host": settings.smtp_host, "smtp_port": settings.smtp_port, "error_type": "SMTPConfigurationError"},
+        )
+        return
     message = EmailMessage()
     message["Subject"] = "Havan Study Planner password reset code"
     message["From"] = settings.smtp_from or settings.smtp_user
@@ -68,18 +71,22 @@ def send_reset_email(email: str, code: str) -> None:
         + "This code expires in " + str(settings.password_reset_ttl_minutes) + " minutes."
     )
     try:
-        with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=20) as smtp:
+        with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=10) as smtp:
             smtp.starttls()
             smtp.login(settings.smtp_user, settings.smtp_password)
             smtp.send_message(message)
     except Exception as exc:
-        logger.exception(
-            "Password reset email delivery failed via %s:%s for recipient domain %s",
-            settings.smtp_host,
-            settings.smtp_port,
-            email.rpartition("@")[2] or "unknown",
+        logger.error(
+            "Password reset email delivery failed: %s",
+            exc,
+            extra={
+                "smtp_host": settings.smtp_host,
+                "smtp_port": settings.smtp_port,
+                "recipient_domain": email.rpartition("@")[2] or "unknown",
+                "error_type": type(exc).__name__,
+            },
+            exc_info=True,
         )
-        raise HTTPException(status_code=503, detail="We could not send the verification email. Please try again later.") from exc
 
 
 def create_reset_token(db: Session, account: StudentAccount) -> str:

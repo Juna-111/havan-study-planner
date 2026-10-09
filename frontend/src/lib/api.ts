@@ -27,13 +27,15 @@ export class ApiError extends Error {
   status: number
   detail?: ApiErrorDetail
   code?: string
+  retryAfterSeconds?: number
 
-  constructor(status: number, message: string, detail?: ApiErrorDetail, code?: string) {
+  constructor(status: number, message: string, detail?: ApiErrorDetail, code?: string, retryAfterSeconds?: number) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.detail = detail
     this.code = code
+    this.retryAfterSeconds = retryAfterSeconds
   }
 
   get fieldErrors(): ApiValidationError[] {
@@ -103,11 +105,27 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
     if (!response.ok) {
       const detail = body?.detail
       const code = typeof body?.code === 'string' ? body.code : undefined
+      const retryAfterHeader = response.headers.get('Retry-After')
+      const retryAfterSeconds = retryAfterHeader ? Number(retryAfterHeader) : undefined
+      const hasRetryDelay = retryAfterSeconds !== undefined
+        && Number.isFinite(retryAfterSeconds)
+        && retryAfterSeconds > 0
+      const retryDelay = hasRetryDelay
+        ? retryAfterSeconds! < 60
+          ? `${retryAfterSeconds} seconds`
+          : `${Math.ceil(retryAfterSeconds! / 60)} minutes`
+        : undefined
+      const message = response.status === 429
+        ? retryDelay
+          ? `Too many requests. Please try again in ${retryDelay}.`
+          : 'Too many requests. Please wait a few minutes before trying again.'
+        : formatDetail(detail)
       throw new ApiError(
         response.status,
-        formatDetail(detail),
+        message,
         typeof detail === 'string' || Array.isArray(detail) ? detail as ApiErrorDetail : undefined,
         code,
+        hasRetryDelay ? retryAfterSeconds : undefined,
       )
     }
 

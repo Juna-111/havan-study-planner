@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, Request, Response, status
 from fastapi.security import HTTPAuthorizationCredentials
 from slowapi import Limiter
 from sqlalchemy import select
@@ -16,7 +16,7 @@ from app.core.limiter import (
     limiter,
 )
 from app.core.security import hash_password
-from app.db.models.student import PasswordResetToken, StudentAccount
+from app.db.models.student import StudentAccount
 from app.db.session import get_db
 from app.schemas.student import (
     AuthAccountRead, AuthLogin, AuthResponse, AuthSignup, ForgotPasswordRequest,
@@ -110,24 +110,19 @@ def change_password(
 
 
 @router.post("/forgot-password")
-@limiter.limit("3/15minute", key_func=auth_forgot_key)
-def forgot_password(request: Request, payload: ForgotPasswordRequest = Body(...), db: Session = Depends(get_db)):
+@limiter.limit("5/10minute", key_func=auth_forgot_key)
+def forgot_password(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    payload: ForgotPasswordRequest = Body(...),
+    db: Session = Depends(get_db),
+):
     email = payload.email.strip().lower()
     account = db.scalar(select(StudentAccount).where(StudentAccount.email == email))
     if account is None:
         return {"message": "If an account exists for this email, a verification code has been sent."}
     code = create_reset_token(db, account)
-    try:
-        send_reset_email(email, code)
-    except HTTPException:
-        token = db.scalar(select(PasswordResetToken).where(
-            PasswordResetToken.account_id == account.id,
-            PasswordResetToken.used_at.is_(None),
-        ).order_by(PasswordResetToken.created_at.desc()))
-        if token:
-            db.delete(token)
-            db.commit()
-        raise
+    background_tasks.add_task(send_reset_email, email, code)
     return {"message": "If an account exists for this email, a verification code has been sent."}
 
 
