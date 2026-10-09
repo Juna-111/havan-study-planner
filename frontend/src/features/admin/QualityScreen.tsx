@@ -19,7 +19,7 @@ type Quality = {
   issues: Issue[]
 }
 
-type Props = { onMode: (mode: 'academic' | 'mapping' | 'registry' | 'content') => void }
+type Props = { onMode: (mode: 'catalog' | 'content', section?: 'offerings' | 'registry' | 'topics' | 'path') => void }
 
 export default function QualityScreen({ onMode }: Props) {
   const [data, setData] = useState<Quality | null>(null)
@@ -44,10 +44,10 @@ export default function QualityScreen({ onMode }: Props) {
   )
 
   function fix(issue: Issue) {
-    if (issue.entity_type === 'course_mapping') onMode('mapping')
-    else if (issue.entity_type === 'course') onMode('registry')
-    else if (issue.entity_type === 'chapter' || issue.entity_type === 'topic') onMode('content')
-    else onMode('academic')
+    if (issue.entity_type === 'course_mapping' || issue.entity_type === 'course_offering') onMode('catalog', 'offerings')
+    else if (issue.entity_type === 'course') onMode('content', 'registry')
+    else if (issue.entity_type === 'chapter' || issue.entity_type === 'topic') onMode('content', 'topics')
+    else onMode('catalog', 'path')
   }
 
   return (

@@ -8,7 +8,7 @@ type University = { id:number; name:string; code:string; status:string }
 type Curriculum = { id:number; university_id:number; name:string; version:string; academic_year?:string|null; status:string }
 type Stream = { id:number; curriculum_id:number; name:string; code:string; status:string }
 
-export default function AcademicSetupScreen() {
+export default function AcademicSetupScreen({ onImport }: { onImport?: () => void }) {
   const [universities,setUniversities]=useState<University[]>([])
   const [curriculums,setCurriculums]=useState<Curriculum[]>([])
   const [streams,setStreams]=useState<Stream[]>([])
@@ -41,12 +41,13 @@ export default function AcademicSetupScreen() {
       <header className={styles.header}>
         <span>SETUP · ACADEMIC CATALOG</span>
         <h1>Academic catalog</h1>
-        <p>University, curriculum, and stream records are imported automatically from the university CSV. This workspace is verification only.</p>
+        <p>Check that each university has an active curriculum and streams before reviewing its course offerings.</p>
       </header>
       {error&&<div className={styles.alert}>{error}</div>}
       <div className={styles.notice}>
-        <h2>One authoritative university file</h2>
-        <p>Upload the CSV through Import. Havan creates or reconciles the university, curriculum, stream, and Semester 1/2 course mappings from that source.</p>
+        <h2>Keep the catalog in sync</h2>
+        <p>University, curriculum and stream records come from the authoritative CSV. Open Update catalog to validate and apply a complete file.</p>
+        {onImport && <button className={styles.primary} onClick={onImport}>Update university CSV</button>}
       </div>
       <div className={styles.selectors}>
         <label>University<select value={universityId} onChange={(e)=>setUniversityId(e.target.value)}>

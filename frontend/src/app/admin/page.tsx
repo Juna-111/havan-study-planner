@@ -4,30 +4,26 @@ import { useState } from 'react'
 import AdminGuard from '@/features/admin/AdminGuard'
 import AdminOverview from '@/features/admin/AdminOverview'
 import AdminShell, { type AdminMode } from '@/features/admin/AdminShell'
-import AcademicSetupScreen from '@/features/admin/AcademicSetupScreen'
-import CurriculumManagementScreen from '@/features/admin/CurriculumManagementScreen'
-import StreamManagementScreen from '@/features/admin/StreamManagementScreen'
-import MappingScreen from '@/features/admin/MappingScreen'
-import ContentScreen from '@/features/admin/ContentScreen'
-import CourseRegistryScreen from '@/features/admin/CourseRegistryScreen'
-import ImportScreen from '@/features/admin/ImportScreen'
-import QualityScreen from '@/features/admin/QualityScreen'
-import RequestManagementScreen from '@/features/admin/RequestManagementScreen'
+import CatalogWorkspace, { type CatalogSection } from '@/features/admin/CatalogWorkspace'
+import ContentWorkspace, { type ContentSection } from '@/features/admin/ContentWorkspace'
+import ReviewWorkspace from '@/features/admin/ReviewWorkspace'
 
 export default function AdminScreen() {
   const [mode, setMode] = useState<AdminMode>('overview')
+  const [catalogSection, setCatalogSection] = useState<CatalogSection>('path')
+  const [contentSection, setContentSection] = useState<ContentSection>('registry')
+
+  function openReviewedArea(nextMode: 'catalog' | 'content', section?: CatalogSection | ContentSection) {
+    if (nextMode === 'catalog') setCatalogSection((section as CatalogSection | undefined) ?? 'path')
+    else setContentSection((section as ContentSection | undefined) ?? 'registry')
+    setMode(nextMode)
+  }
 
   const screen = {
     overview: <AdminOverview onMode={setMode} />,
-    academic: <AcademicSetupScreen />,
-    curriculum: <CurriculumManagementScreen />,
-    streams: <StreamManagementScreen />,
-    mapping: <MappingScreen />,
-    registry: <CourseRegistryScreen />,
-    content: <ContentScreen />,
-    import: <ImportScreen />,
-    quality: <QualityScreen onMode={setMode} />,
-    requests: <RequestManagementScreen />,
+    catalog: <CatalogWorkspace initialSection={catalogSection} />,
+    content: <ContentWorkspace initialSection={contentSection} />,
+    review: <ReviewWorkspace onMode={openReviewedArea} />,
   }[mode]
 
   return (

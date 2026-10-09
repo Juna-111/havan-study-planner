@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { apiFetch } from '@/lib/api'
+import type { AdminMode } from './AdminShell'
 import styles from './admin.module.css'
 
-type Props = { onMode: (mode: 'academic' | 'curriculum' | 'streams' | 'mapping' | 'content' | 'import' | 'quality' | 'requests' | 'registry') => void }
+type Props = { onMode: (mode: AdminMode) => void }
 type Page<T> = { items: T[] }
 type Item = { id: number; status: string }
 
@@ -17,7 +18,7 @@ export default function AdminOverview({ onMode }: Props) {
       apiFetch<Page<Item>>('/universities?page=1&page_size=100'),
       apiFetch<Page<Item>>('/curriculums?page=1&page_size=100'),
       apiFetch<Page<Item>>('/streams?page=1&page_size=100'),
-      apiFetch<Item[]>('/university-course-mappings/courses'),
+      apiFetch<Page<Item>>('/courses?page=1&page_size=100'),
       apiFetch<Item[]>('/university-course-offerings'),
       apiFetch<Array<{ status: string }>>('/academic-catalog-requests'),
     ]).then(([universities, curricula, streams, courses, mappings, requests]) => {
@@ -25,7 +26,7 @@ export default function AdminOverview({ onMode }: Props) {
         universities: universities.items.filter((item) => item.status === 'ACTIVE').length,
         curricula: curricula.items.filter((item) => item.status === 'ACTIVE').length,
         streams: streams.items.filter((item) => item.status === 'ACTIVE').length,
-        courses: courses.filter((item) => item.status === 'ACTIVE').length,
+        courses: courses.items.filter((item) => item.status === 'ACTIVE').length,
         mappings: mappings.filter((item) => item.status === 'ACTIVE').length,
         requests: requests.filter((item) => item.status === 'PENDING').length,
       })
@@ -33,12 +34,12 @@ export default function AdminOverview({ onMode }: Props) {
   }, [])
 
   const cards = [
-    ['Active universities', stats.universities, 'academic'],
-    ['Active curricula', stats.curricula, 'academic'],
-    ['Active streams', stats.streams, 'streams'],
-    ['Course Registry', stats.courses, 'registry'],
-    ['Active course mappings', stats.mappings, 'mapping'],
-    ['Pending requests', stats.requests, 'requests'],
+    ['Active universities', stats.universities, 'catalog'],
+    ['Active curricula', stats.curricula, 'catalog'],
+    ['Active streams', stats.streams, 'catalog'],
+    ['Course Registry', stats.courses, 'content'],
+    ['Active course offerings', stats.mappings, 'catalog'],
+    ['Pending requests', stats.requests, 'review'],
   ] as const
 
   return (
@@ -58,7 +59,7 @@ export default function AdminOverview({ onMode }: Props) {
       </div>
       <div className={styles.health}>
         <div><b>Catalog control</b><span>Keep universities, curricula, streams and mappings active only when their dependencies are ready.</span></div>
-        <button className={styles.primary} onClick={() => onMode('quality')}>Review data quality →</button>
+        <button className={styles.primary} onClick={() => onMode('review')}>Review requests and data quality →</button>
       </div>
     </section>
   )

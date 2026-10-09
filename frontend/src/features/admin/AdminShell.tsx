@@ -3,37 +3,13 @@
 import { useState } from 'react'
 import styles from './admin.module.css'
 
-export type AdminMode = 'overview' | 'academic' | 'curriculum' | 'streams' | 'mapping' | 'registry' | 'content' | 'import' | 'quality' | 'requests'
+export type AdminMode = 'overview' | 'catalog' | 'content' | 'review'
 
-const groups = [
-  {
-    label: 'SYSTEM',
-    items: [['overview', 'Admin overview']],
-  },
-  {
-    label: 'ACADEMIC SETUP',
-    items: [
-      ['academic', 'Academic catalog'],
-      ['curriculum', 'Curriculum hierarchy'],
-      ['streams', 'Stream management'],
-      ['mapping', 'Course mapping'],
-    ],
-  },
-  {
-    label: 'ACADEMIC CONTENT',
-    items: [
-      ['registry', 'Course Registry'],
-      ['content', 'Chapters & topics'],
-      ['import', 'Import courses'],
-    ],
-  },
-  {
-    label: 'CONTROL',
-    items: [
-      ['quality', 'Academic quality'],
-      ['requests', 'Student requests'],
-    ],
-  },
+const items = [
+  ['overview', 'Overview', 'Your workspace at a glance'],
+  ['catalog', 'Academic catalog', 'Universities, streams and courses'],
+  ['content', 'Course content', 'Registry, chapters and topics'],
+  ['review', 'Review', 'Requests and data quality'],
 ] as const
 
 export default function AdminShell({
@@ -67,24 +43,25 @@ export default function AdminShell({
         </div>
 
         <nav aria-label="Admin navigation">
-          {groups.map((group) => (
-            <div className={styles.group} key={group.label}>
-              <span>{group.label}</span>
-              {group.items.map(([id, label]) => (
-                <button
-                  key={id}
-                  className={mode === id ? styles.active : ''}
-                  aria-current={mode === id ? 'page' : undefined}
-                  onClick={() => {
-                    onMode(id)
-                    setOpen(false)
-                  }}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          ))}
+          <div className={styles.group}>
+            <span>WORKSPACES</span>
+            {items.map(([id, label, hint], index) => (
+              <button
+                key={id}
+                className={mode === id ? styles.active : ''}
+                aria-current={mode === id ? 'page' : undefined}
+                onClick={() => {
+                  onMode(id)
+                  setOpen(false)
+                }}
+              >
+                <span className={styles.navItem}>
+                  <span className={styles.navNumber}>0{index + 1}</span>
+                  <span><strong>{label}</strong><small>{hint}</small></span>
+                </span>
+              </button>
+            ))}
+          </div>
         </nav>
 
         <a href="/home" className={styles.homeLink}>

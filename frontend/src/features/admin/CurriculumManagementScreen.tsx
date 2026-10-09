@@ -95,8 +95,8 @@ export default function CurriculumManagementScreen() {
     <section>
       <header className={styles.header}>
         <span>SETUP · CURRICULUM MANAGEMENT</span>
-        <h1>Navigate the academic hierarchy</h1>
-        <p>Follow one stable path from university to curriculum to stream, then inspect the courses belonging to that stream.</p>
+        <h1>Explore the academic hierarchy</h1>
+        <p>Choose a university, curriculum and stream to see what students can select. Use Course offerings for semester-by-semester review.</p>
       </header>
 
       {error && <div className={styles.alert}>{error}</div>}
@@ -113,7 +113,7 @@ export default function CurriculumManagementScreen() {
         <div><span>University curricula</span><b>{selectedUniversityCurriculums.length}</b></div>
         <div><span>Curriculum streams</span><b>{selectedCurriculumStreams.length}</b></div>
         <div><span>Registered courses</span><b>{courses.length}</b></div>
-        <div><span>Active mappings</span><b>{activeMappings.length}</b></div>
+        <div><span>Active course offerings</span><b>{activeMappings.length}</b></div>
       </div>
 
       <div className={styles.selectors}>

@@ -5,7 +5,7 @@ import { apiFetch } from '@/lib/api'
 import styles from './admin.module.css'
 
 type Course = { id: number; code: string; name: string; description?: string | null; credit_hours?: number | null; status: string }
-export default function CourseRegistryScreen() {
+export default function CourseRegistryScreen({ onImport }: { onImport?: () => void }) {
   const [courses, setCourses] = useState<Course[]>([])
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('ALL')
@@ -36,6 +36,7 @@ export default function CourseRegistryScreen() {
       <div className={styles.notice}>
         <h2>Automatic course ingestion</h2>
         <p>Upload a course TXT or MD file through Import. Manual course creation is intentionally disabled so university mappings can never create duplicate course records.</p>
+        {onImport && <button className={styles.primary} onClick={onImport}>Import course content</button>}
       </div>
       <div className={styles.stats}>
         <div><span>Total registry courses</span><b>{courses.length}</b></div>

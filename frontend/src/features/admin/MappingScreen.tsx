@@ -95,7 +95,7 @@ export default function MappingScreen() {
       <header className={styles.header}>
         <span>ACADEMIC SETUP · COURSE MAPPING</span>
         <h1>Course mapping</h1>
-        <p>University CSV imports are now the authoritative source for Semester 1 and Semester 2 mappings. This screen is for verification only.</p>
+        <p>Review the active courses in each semester. The university CSV is the source of truth for adding, moving or archiving offerings.</p>
       </header>
       {error && <div className={styles.alert}>{error}</div>}
       {selectedUniversity && selectedCurriculum && selectedStream && (
@@ -131,8 +131,8 @@ export default function MappingScreen() {
         </label>
       </div>
       <div className={styles.notice}>
-        <h2>Automatic mapping</h2>
-        <p>To add, remove, or move courses, update the university CSV and upload it through Import. Havan will validate the complete mapping before applying it.</p>
+        <h2>Update this stream from its source file</h2>
+        <p>Choose Update catalog to preview a university CSV. Havan validates the complete semester list before applying any changes.</p>
       </div>
       <div className={styles.semesters}>
         <div className={styles.panel}>

@@ -8,7 +8,7 @@ type Course = { id: number; code: string; name: string }
 type Chapter = { id: number; name: string; order_index: number; status: string }
 type Topic = { id: number; name: string; difficulty: number; status: string }
 
-export default function ContentScreen() {
+export default function ContentScreen({ onImport }: { onImport?: () => void }) {
   const [courses, setCourses] = useState<Course[]>([])
   const [chapters, setChapters] = useState<Chapter[]>([])
   const [topics, setTopics] = useState<Topic[]>([])
@@ -48,6 +48,7 @@ export default function ContentScreen() {
       <div className={styles.notice}>
         <h2>Automatic content ingestion</h2>
         <p>Use Import for course TXT/MD updates. Manual chapter/topic editing is disabled so the uploaded source remains authoritative.</p>
+        {onImport && <button className={styles.primary} onClick={onImport}>Import updated content</button>}
       </div>
       <div className={styles.selectors}>
         <label>Course<select value={courseId} onChange={(e) => setCourseId(e.target.value)}>
