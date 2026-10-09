@@ -60,6 +60,7 @@ The GitHub workflow performs the automated subset. A phase is not considered GRE
 
 Vercel builds the static export from the repository root:
 - `NEXT_PUBLIC_API_URL=https://<api-origin>`
+- `NEXT_PUBLIC_SITE_URL=https://<frontend-origin>`
 - Build output: `frontend/out`
 
 Backend production requires:
@@ -71,5 +72,8 @@ Backend production requires:
 - `AUTH_TOKEN_TTL_DAYS`
 - `DEFAULT_TIMEZONE=Africa/Addis_Ababa`
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` for password recovery
+- `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT` for browser push reminders. Generate a key pair once with `python scripts/generate_vapid_keys.py` from `backend/`; keep the private key in the backend secret store and use the same pair across deployments.
+
+The API reminder loop runs once per minute. PostgreSQL advisory locking ensures only one API process dispatches reminders when the service has multiple workers or instances. Push delivery requires an HTTPS frontend origin and students must grant browser notification permission; browser vendors and device settings can still suppress delivery.
 
 The frontend build requires network access because `next/font/google` downloads fonts during build.

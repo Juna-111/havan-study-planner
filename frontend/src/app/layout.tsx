@@ -7,6 +7,9 @@ const bodyFont = DM_Sans({ subsets: ['latin'], variable: '--font-havan-body' })
 const displayFont = Fraunces({ subsets: ['latin'], variable: '--font-havan-display' })
 
 export const metadata: Metadata = {
+  metadataBase: process.env.NEXT_PUBLIC_SITE_URL
+    ? new URL(process.env.NEXT_PUBLIC_SITE_URL)
+    : undefined,
   title: {
     default: 'Havan',
     template: '%s · Havan',

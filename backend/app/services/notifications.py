@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from datetime import date, datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 from app.core.config import get_settings
 from app.core.time import today_local
@@ -41,6 +41,25 @@ def _send(subscription: PushSubscription, title: str, body: str, url: str, tag: 
 
 
 def dispatch_due_notifications(today: date | None = None) -> int:
+    """Run reminders once across all API processes sharing the production database."""
+    with SessionLocal() as lock_db:
+        if lock_db.get_bind().dialect.name != "postgresql":
+            return _dispatch_due_notifications(today)
+
+        lock_id = 7_204_219_061
+        acquired = lock_db.scalar(text("SELECT pg_try_advisory_lock(:lock_id)"), {"lock_id": lock_id})
+        if not acquired:
+            return 0
+        try:
+            return _dispatch_due_notifications(today)
+        finally:
+            # Advisory locks are connection-scoped, so unlock on this same pooled connection.
+            lock_db.rollback()
+            lock_db.execute(text("SELECT pg_advisory_unlock(:lock_id)"), {"lock_id": lock_id})
+            lock_db.commit()
+
+
+def _dispatch_due_notifications(today: date | None = None) -> int:
     """Send once-per-device reminders for exams and planned tasks that are due."""
     today = today or today_local()
     sent = 0
