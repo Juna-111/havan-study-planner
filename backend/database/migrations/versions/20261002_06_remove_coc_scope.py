@@ -25,28 +25,21 @@ def upgrade() -> None:
         )
     )
 
-    # Replace the old scope constraint if it exists. The IF EXISTS form keeps
-    # this migration compatible with databases created before the constraint
-    # was introduced at the ORM level.
-    op.execute(
-        "ALTER TABLE courses "
-        "DROP CONSTRAINT IF EXISTS ck_courses_academic_scope"
-    )
-    op.create_check_constraint(
-        "ck_courses_academic_scope",
-        "courses",
-        "academic_scope IN ('UNIVERSITY', 'FRESHMAN')",
-    )
+    bind = op.get_bind()
+    check_names = {item["name"] for item in sa.inspect(bind).get_check_constraints("courses")}
+    with op.batch_alter_table("courses") as batch_op:
+        if "ck_courses_academic_scope" in check_names:
+            batch_op.drop_constraint("ck_courses_academic_scope", type_="check")
+        batch_op.create_check_constraint(
+            "ck_courses_academic_scope",
+            "academic_scope IN ('UNIVERSITY', 'FRESHMAN')",
+        )
 
 
 def downgrade() -> None:
-    op.drop_constraint(
-        "ck_courses_academic_scope",
-        "courses",
-        type_="check",
-    )
-    op.create_check_constraint(
-        "ck_courses_academic_scope",
-        "courses",
-        "academic_scope IN ('UNIVERSITY', 'FRESHMAN', 'COC')",
-    )
+    with op.batch_alter_table("courses") as batch_op:
+        batch_op.drop_constraint("ck_courses_academic_scope", type_="check")
+        batch_op.create_check_constraint(
+            "ck_courses_academic_scope",
+            "academic_scope IN ('UNIVERSITY', 'FRESHMAN', 'COC')",
+        )

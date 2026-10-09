@@ -35,6 +35,8 @@ alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
+Students can enable background reminders in **Settings → Study reminders**. For phone notifications, deploy the backend over HTTPS and set `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT` in the backend environment. Generate the key pair once with `python scripts/generate_vapid_keys.py` from `backend/`; keep the private key secret. The backend reminder loop sends exam reminders 7 days before, one day before, and on exam day, plus the day's planned study task and scheduled focus-session completions.
+
 ## Verify
 
 ```bash

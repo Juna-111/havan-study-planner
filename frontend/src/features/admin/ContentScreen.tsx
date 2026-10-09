@@ -5,7 +5,7 @@ import { apiFetch } from '@/lib/api'
 import styles from './admin.module.css'
 
 type Course = { id: number; code: string; name: string }
-type Chapter = { id: number; name: string; order_index: number; status: string; description?: string | null }
+type Chapter = { id: number; name: string; order_index: number; status: string; description?: string | null; important_points?: string | null }
 type Topic = { id: number; chapter_id: number; name: string; difficulty: number; estimated_study_minutes: number; exam_importance: number; conceptual_importance: number; status: string; description?: string | null }
 
 export default function ContentScreen({ onImport }: { onImport?: () => void }) {
@@ -16,6 +16,8 @@ export default function ContentScreen({ onImport }: { onImport?: () => void }) {
   const [chapterId, setChapterId] = useState('')
   const [error, setError] = useState('')
   const [editingTopic, setEditingTopic] = useState<number | null>(null)
+  const [editingChapter, setEditingChapter] = useState<number | null>(null)
+  const [chapterDraft, setChapterDraft] = useState({ description: '', important_points: '', status: 'ACTIVE' })
   const [draft, setDraft] = useState({ estimated_study_minutes: 30, exam_importance: 0.5, conceptual_importance: 0.5, status: 'ACTIVE', description: '' })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState('')
@@ -68,18 +70,33 @@ export default function ContentScreen({ onImport }: { onImport?: () => void }) {
     }
   }
 
+  async function saveChapter(chapterId: number) {
+    setSaving(true)
+    setError('')
+    try {
+      const updated = await apiFetch<Chapter>(`/chapters/${chapterId}`, { method: 'PATCH', body: JSON.stringify(chapterDraft) })
+      setChapters((current) => current.map((chapter) => chapter.id === chapterId ? updated : chapter))
+      setEditingChapter(null)
+      setSaved('Chapter notes and status saved.')
+    } catch (value) {
+      setError(value instanceof Error ? value.message : 'Could not save chapter settings.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <section>
       <header className={styles.header}>
         <span>ACADEMIC CONTENT</span>
         <h1>Course content registry</h1>
-        <p>Chapters, topics, difficulty, and critical points are maintained through the course TXT/MD source. This screen verifies the imported hierarchy.</p>
+        <p>Uploaded files create the course structure. After import, admins can edit course details, chapter notes and availability, and topic study settings.</p>
       </header>
       {error && <div className={styles.alert}>{error}</div>}
       {saved && <div className={styles.notice}>{saved}</div>}
       <div className={styles.notice}>
         <h2>Automatic content ingestion</h2>
-        <p>Use Import for course TXT/MD updates. Manual chapter/topic editing is disabled so the uploaded source remains authoritative.</p>
+        <p>Uploaded names and source content stay intact. Local notes, study estimates, importance, and availability can be edited below.</p>
         {onImport && <button className={styles.primary} onClick={onImport}>Import updated content</button>}
       </div>
       <div className={styles.selectors}>
@@ -94,7 +111,15 @@ export default function ContentScreen({ onImport }: { onImport?: () => void }) {
       </div>
       {courseId && <div className={styles.list}>
         <div className={styles.crudHead}><div><h2>{chapters.length} chapters</h2><p>Imported chapters for the selected canonical course.</p></div></div>
-        {chapters.map((chapter) => <div className={styles.row} key={chapter.id}><div><b>{chapter.order_index}. {chapter.name}</b><small>{chapter.status} · Chapter ID #{chapter.id}</small></div><span>Source-managed</span></div>)}
+        {chapters.map((chapter) => <article className={styles.topicAdminCard} key={chapter.id}>
+          <div className={styles.topicAdminSummary}><div><b>{chapter.order_index}. {chapter.name}</b><small>{chapter.status} · Chapter ID #{chapter.id}</small></div><button className={styles.rowAction} onClick={() => { setEditingChapter(chapter.id); setChapterDraft({ description: chapter.description || '', important_points: chapter.important_points || '', status: chapter.status }) }}>{editingChapter === chapter.id ? 'Editing' : 'Edit chapter notes'}</button></div>
+          {editingChapter === chapter.id && <div className={styles.topicEditor}>
+            <label>Description<textarea value={chapterDraft.description} onChange={(event) => setChapterDraft({ ...chapterDraft, description: event.target.value })} maxLength={10000} /></label>
+            <label>Important points<textarea value={chapterDraft.important_points} onChange={(event) => setChapterDraft({ ...chapterDraft, important_points: event.target.value })} maxLength={10000} /></label>
+            <label>Status<select value={chapterDraft.status} onChange={(event) => setChapterDraft({ ...chapterDraft, status: event.target.value })}><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option></select></label>
+            <div className={styles.actions}><button onClick={() => setEditingChapter(null)}>Cancel</button><button className={styles.primary} disabled={saving} onClick={() => void saveChapter(chapter.id)}>{saving ? 'Saving…' : 'Save chapter settings'}</button></div>
+          </div>}
+        </article>)}
       </div>}
       {chapterId && <div className={styles.list}>
         <div className={styles.crudHead}><div><h2>{topics.length} topics</h2><p>Imported topics and their difficulty.</p></div></div>

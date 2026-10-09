@@ -32,13 +32,13 @@ def upgrade() -> None:
         )
     )
 
-    op.drop_constraint("uq_courses_stream_code", "courses", type_="unique")
-    op.alter_column("courses", "stream_id", existing_type=sa.Integer(), nullable=True)
-    op.alter_column("courses", "academic_scope", existing_type=sa.String(length=20), nullable=False, server_default="UNIVERSITY")
-    op.alter_column("courses", "registry_key", existing_type=sa.String(length=120), nullable=False)
-    op.alter_column("courses", "content_version", existing_type=sa.String(length=30), nullable=False, server_default="1.0")
-
-    op.create_unique_constraint("uq_courses_registry_key", "courses", ["registry_key"])
+    with op.batch_alter_table("courses") as batch_op:
+        batch_op.drop_constraint("uq_courses_stream_code", type_="unique")
+        batch_op.alter_column("stream_id", existing_type=sa.Integer(), nullable=True)
+        batch_op.alter_column("academic_scope", existing_type=sa.String(length=20), nullable=False, server_default="UNIVERSITY")
+        batch_op.alter_column("registry_key", existing_type=sa.String(length=120), nullable=False)
+        batch_op.alter_column("content_version", existing_type=sa.String(length=30), nullable=False, server_default="1.0")
+        batch_op.create_unique_constraint("uq_courses_registry_key", ["registry_key"])
     op.create_index("ix_courses_academic_scope", "courses", ["academic_scope"])
 
     op.create_table(
@@ -81,12 +81,13 @@ def downgrade() -> None:
     op.drop_table("freshman_course_category_links")
     op.drop_table("freshman_course_categories")
     op.drop_index("ix_courses_academic_scope", table_name="courses")
-    op.drop_constraint("uq_courses_registry_key", "courses", type_="unique")
-    op.alter_column("courses", "content_version", existing_type=sa.String(length=30), nullable=True, server_default=None)
-    op.alter_column("courses", "registry_key", existing_type=sa.String(length=120), nullable=True)
-    op.alter_column("courses", "academic_scope", existing_type=sa.String(length=20), nullable=True, server_default=None)
-    op.alter_column("courses", "stream_id", existing_type=sa.Integer(), nullable=False)
-    op.create_unique_constraint("uq_courses_stream_code", "courses", ["stream_id", "code"])
+    with op.batch_alter_table("courses") as batch_op:
+        batch_op.drop_constraint("uq_courses_registry_key", type_="unique")
+        batch_op.alter_column("content_version", existing_type=sa.String(length=30), nullable=True, server_default=None)
+        batch_op.alter_column("registry_key", existing_type=sa.String(length=120), nullable=True)
+        batch_op.alter_column("academic_scope", existing_type=sa.String(length=20), nullable=True, server_default=None)
+        batch_op.alter_column("stream_id", existing_type=sa.Integer(), nullable=False)
+        batch_op.create_unique_constraint("uq_courses_stream_code", ["stream_id", "code"])
     op.drop_column("courses", "content_version")
     op.drop_column("courses", "registry_key")
     op.drop_column("courses", "academic_scope")

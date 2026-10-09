@@ -39,11 +39,11 @@ def upgrade() -> None:
         for item in inspector.get_unique_constraints("plan_tasks")
     }
     if "uq_plan_tasks_plan_topic_date_kind" not in constraints:
-        op.create_unique_constraint(
-            "uq_plan_tasks_plan_topic_date_kind",
-            "plan_tasks",
-            ["plan_id", "topic_id", "planned_date", "kind"],
-        )
+        with op.batch_alter_table("plan_tasks") as batch_op:
+            batch_op.create_unique_constraint(
+                "uq_plan_tasks_plan_topic_date_kind",
+                ["plan_id", "topic_id", "planned_date", "kind"],
+            )
 
 
 def downgrade() -> None:
@@ -54,8 +54,5 @@ def downgrade() -> None:
         for item in inspector.get_unique_constraints("plan_tasks")
     }
     if "uq_plan_tasks_plan_topic_date_kind" in constraints:
-        op.drop_constraint(
-            "uq_plan_tasks_plan_topic_date_kind",
-            "plan_tasks",
-            type_="unique",
-        )
+        with op.batch_alter_table("plan_tasks") as batch_op:
+            batch_op.drop_constraint("uq_plan_tasks_plan_topic_date_kind", type_="unique")

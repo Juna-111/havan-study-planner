@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { FocusSessionContext, type FocusSessionContextValue, type StoredFocusSession } from './focusSessionContext'
+import { apiFetch } from '@/lib/api'
 
 const STORAGE_KEY = 'havan-focus-session-v1'
 
@@ -45,6 +46,25 @@ export function FocusSessionProvider({ children }: { children: React.ReactNode }
   }, [session, hydrated])
 
   useEffect(() => {
+    if (!hydrated) return
+    if (!session) return
+    if (session?.completed) return
+    if (!session?.running || !session.endsAt) {
+      void apiFetch<void>('/students/me/notifications/focus-session', { method: 'DELETE' }).catch(() => undefined)
+      return
+    }
+    void apiFetch<void>('/students/me/notifications/focus-session', {
+      method: 'POST',
+      body: JSON.stringify({
+        session_id: session.sessionId,
+        task_id: session.taskId,
+        task_label: session.taskLabel,
+        due_at: new Date(session.endsAt).toISOString(),
+      }),
+    }).catch(() => undefined)
+  }, [session?.sessionId, session?.taskId, session?.taskLabel, session?.endsAt, session?.running, session?.completed, hydrated])
+
+  useEffect(() => {
     if (!session?.running || session.endsAt === null) return
     const updateRemaining = () => {
       const remainingSeconds = Math.max(0, Math.ceil((session.endsAt! - Date.now()) / 1000))
@@ -65,7 +85,7 @@ export function FocusSessionProvider({ children }: { children: React.ReactNode }
     if (localStorage.getItem(sentKey)) return
     const options = {
         body: `${session.taskLabel} is ready for a quick progress check-in.`,
-        tag: 'havan-focus-complete',
+        tag: `focus:${session.sessionId}`,
     }
     const markSent = () => localStorage.setItem(sentKey, '1')
     if ('serviceWorker' in navigator) {
@@ -130,7 +150,10 @@ export function FocusSessionProvider({ children }: { children: React.ReactNode }
     }
   }), [])
 
-  const clear = useCallback(() => setSession(null), [])
+  const clear = useCallback(() => {
+    void apiFetch<void>('/students/me/notifications/focus-session', { method: 'DELETE' }).catch(() => undefined)
+    setSession(null)
+  }, [])
   const enableNotifications = useCallback(async () => {
     if (!('Notification' in window)) {
       setNotificationPermission('unsupported')

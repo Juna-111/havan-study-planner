@@ -10,6 +10,7 @@ import { apiFetch } from '@/lib/api'
 import { getMyStudentProfile } from '@/lib/session'
 import ExamManager from '@/features/student/ExamManager'
 import SettingsProfile from '@/features/student/SettingsProfile'
+import NotificationSettings from '@/features/student/NotificationSettings'
 
 type Profile = { id: number; name: string; university_id: number; curriculum_id: number; stream_id: number; study_hours_per_day: number; study_days: string[] }
 
@@ -117,6 +118,7 @@ function View() {
           </div>
         </Card>
         {profile && <SettingsProfile profile={profile} onUpdate={setProfile} />}
+        {profile && <NotificationSettings />}
         {profile && <ExamManager />}
         <PasswordCard />
         <Button variant="danger" onClick={() => { clearAuth(); router.replace('/auth') }}>Sign out</Button>

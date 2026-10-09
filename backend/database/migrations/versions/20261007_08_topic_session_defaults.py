@@ -15,11 +15,13 @@ def upgrade() -> None:
     inspector = sa.inspect(bind)
     if "topics" not in inspector.get_table_names():
         return
-    op.alter_column("topics", "estimated_study_minutes", existing_type=sa.Integer(), existing_nullable=False, server_default=sa.text("30"))
+    with op.batch_alter_table("topics") as batch_op:
+        batch_op.alter_column("estimated_study_minutes", existing_type=sa.Integer(), existing_nullable=False, server_default=sa.text("30"))
 
 def downgrade() -> None:
     bind = op.get_bind()
     inspector = sa.inspect(bind)
     if "topics" not in inspector.get_table_names():
         return
-    op.alter_column("topics", "estimated_study_minutes", existing_type=sa.Integer(), existing_nullable=False, server_default=sa.text("60"))
+    with op.batch_alter_table("topics") as batch_op:
+        batch_op.alter_column("estimated_study_minutes", existing_type=sa.Integer(), existing_nullable=False, server_default=sa.text("60"))

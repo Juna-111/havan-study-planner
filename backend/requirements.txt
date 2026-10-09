@@ -13,4 +13,5 @@ sentry-sdk[fastapi]==2.16.0
 pytest==8.4.2
 httpx==0.28.1
 python-multipart==0.0.20
+pywebpush==2.3.0
 tzdata==2025.2

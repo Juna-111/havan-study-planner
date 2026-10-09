@@ -6,12 +6,16 @@ from uuid import uuid4
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db.models.curriculum import Chapter, Course, Curriculum, Stream, Topic, University, UniversityCourseMapping
 from app.db.models.plan import PlanTask
 from app.db.models.student import StudentAccount, StudentCourse, StudentExam, StudentProfile, StudentTopicProgress
+from app.db.models.notification import PushSubscription
+from app.db.models.notification import ScheduledPush
+from app.core.config import get_settings
 from app.db.session import get_db
 from app.services.academic_resolver import resolve_stream_courses, resolve_student_courses, resolved_course_ids
 from app.schemas.student import (
@@ -21,6 +25,78 @@ from app.schemas.student import (
 
 router = APIRouter(prefix=f"{API_PREFIX}/students", tags=["students"], dependencies=[Depends(current_account)])
 DB = Annotated[Session, Depends(get_db)]
+
+
+class PushSubscriptionPayload(BaseModel):
+    endpoint: str = Field(min_length=1, max_length=2048)
+    keys: dict[str, str]
+
+    @field_validator("endpoint")
+    @classmethod
+    def require_https_endpoint(cls, value: str) -> str:
+        if not value.startswith("https://"):
+            raise ValueError("Push endpoints must use HTTPS")
+        return value
+
+
+class FocusReminderPayload(BaseModel):
+    session_id: str = Field(min_length=1, max_length=120)
+    task_id: int
+    task_label: str = Field(min_length=1, max_length=200)
+    due_at: datetime
+
+
+@router.get("/me/notifications")
+def get_notification_settings(student: Annotated[StudentProfile, Depends(current_student)], db: DB):
+    settings = get_settings()
+    return {
+        "supported": bool(settings.vapid_public_key and settings.vapid_private_key),
+        "public_key": settings.vapid_public_key,
+        "enabled": db.scalar(select(func.count()).select_from(PushSubscription).where(PushSubscription.student_id == student.id)) > 0,
+    }
+
+
+@router.post("/me/notifications/subscription", status_code=status.HTTP_204_NO_CONTENT)
+def save_notification_subscription(payload: PushSubscriptionPayload, student: Annotated[StudentProfile, Depends(current_student)], db: DB):
+    p256dh, auth = payload.keys.get("p256dh"), payload.keys.get("auth")
+    if not p256dh or not auth:
+        raise HTTPException(status_code=422, detail="A valid browser push subscription is required")
+    existing = db.scalar(select(PushSubscription).where(PushSubscription.endpoint == payload.endpoint))
+    if existing is None:
+        existing = PushSubscription(student_id=student.id, endpoint=payload.endpoint, p256dh=p256dh, auth=auth)
+        db.add(existing)
+    else:
+        existing.student_id = student.id
+        existing.p256dh, existing.auth = p256dh, auth
+    db.commit()
+
+
+@router.delete("/me/notifications/subscription", status_code=status.HTTP_204_NO_CONTENT)
+def delete_notification_subscription(student: Annotated[StudentProfile, Depends(current_student)], db: DB):
+    db.query(PushSubscription).filter(PushSubscription.student_id == student.id).delete(synchronize_session=False)
+    db.commit()
+
+
+@router.post("/me/notifications/focus-session", status_code=status.HTTP_204_NO_CONTENT)
+def schedule_focus_reminder(payload: FocusReminderPayload, student: Annotated[StudentProfile, Depends(current_student)], db: DB):
+    task = db.scalar(select(PlanTask).where(PlanTask.id == payload.task_id, PlanTask.student_id == student.id))
+    if task is None:
+        raise HTTPException(status_code=404, detail="Study task not found")
+    due_at = payload.due_at
+    if due_at.tzinfo is None:
+        raise HTTPException(status_code=422, detail="Reminder time must include a timezone")
+    if due_at <= datetime.now(timezone.utc) or due_at > datetime.now(timezone.utc) + timedelta(hours=3):
+        raise HTTPException(status_code=422, detail="Focus reminders must be scheduled within the next three hours")
+    key = f"focus:{payload.session_id}"
+    db.query(ScheduledPush).filter(ScheduledPush.student_id == student.id, ScheduledPush.reminder_key.like("focus:%")).delete(synchronize_session=False)
+    db.add(ScheduledPush(student_id=student.id, reminder_key=key, due_at=due_at, title="Focus session complete", body=f"{payload.task_label} is ready for a quick progress check-in.", url="/plan"))
+    db.commit()
+
+
+@router.delete("/me/notifications/focus-session", status_code=status.HTTP_204_NO_CONTENT)
+def cancel_focus_reminder(student: Annotated[StudentProfile, Depends(current_student)], db: DB):
+    db.query(ScheduledPush).filter(ScheduledPush.student_id == student.id, ScheduledPush.reminder_key.like("focus:%")).delete(synchronize_session=False)
+    db.commit()
 
 
 def calculate_study_streak(completed_dates: set[date], today: date) -> tuple[int, bool]:

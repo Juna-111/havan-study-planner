@@ -11,7 +11,7 @@ export default function CourseRegistryScreen({ onImport }: { onImport?: () => vo
   const [status, setStatus] = useState('ALL')
   const [error, setError] = useState('')
   const [editingId, setEditingId] = useState<number | null>(null)
-  const [draft, setDraft] = useState({ description: '' })
+  const [draft, setDraft] = useState({ description: '', credit_hours: '', status: 'ACTIVE' })
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -31,7 +31,7 @@ export default function CourseRegistryScreen({ onImport }: { onImport?: () => vo
   function editCourse(course: Course) {
     setError('')
     setEditingId(course.id)
-    setDraft({ description: course.description || '' })
+    setDraft({ description: course.description || '', credit_hours: course.credit_hours == null ? '' : String(course.credit_hours), status: course.status })
   }
 
   async function saveCourse(course: Course) {
@@ -40,7 +40,7 @@ export default function CourseRegistryScreen({ onImport }: { onImport?: () => vo
     try {
       const updated = await apiFetch<{ description?: string | null }>(`/freshman-registry/courses/${course.id}`, {
         method: 'PATCH',
-        body: JSON.stringify({ description: draft.description || null }),
+        body: JSON.stringify({ description: draft.description || null, credit_hours: draft.credit_hours === '' ? null : Number(draft.credit_hours), status: draft.status }),
       })
       setCourses((current) => current.map((item) => item.id === course.id ? { ...item, ...updated } : item))
       setEditingId(null)
@@ -61,7 +61,7 @@ export default function CourseRegistryScreen({ onImport }: { onImport?: () => vo
       {error && <div className={styles.alert}>{error}</div>}
       <div className={styles.notice}>
         <h2>Automatic course ingestion</h2>
-        <p>Course identity and learning content come from the uploaded source. You can edit local study details and availability without changing the imported course identity.</p>
+        <p>Course identity and learning content come from the uploaded source. You can edit its admin note, credit hours, and availability without changing that identity.</p>
         {onImport && <button className={styles.primary} onClick={onImport}>Import course content</button>}
       </div>
       <div className={styles.stats}>
@@ -77,13 +77,15 @@ export default function CourseRegistryScreen({ onImport }: { onImport?: () => vo
         <label>Search<input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="FLEn 1011, Psychology…" /></label>
       </div>
       <div className={styles.list}>
-        <div className={styles.crudHead}><div><h2>Registered courses</h2><p>Read-only verification of the canonical registry.</p></div><b>{visibleCourses.length}</b></div>
+        <div className={styles.crudHead}><div><h2>Registered courses</h2><p>Edit local details for the canonical registry.</p></div><b>{visibleCourses.length}</b></div>
         {!visibleCourses.length && <div className={styles.empty}>No courses match the current filters.</div>}
         {visibleCourses.map((course) => (
           <article className={styles.topicAdminCard} key={course.id}>
             <div className={styles.topicAdminSummary}><div><b>{course.code} · {course.name}</b><small>{course.status} · Version {course.content_version || '1.0'} · {course.credit_hours == null ? 'Credits not set' : `${course.credit_hours} credits`}</small></div><button className={styles.rowAction} onClick={() => editCourse(course)}>{editingId === course.id ? 'Editing' : 'Edit course settings'}</button></div>
             {editingId === course.id && <div className={styles.topicEditor}>
-              <label className={styles.topicDescription}>Admin note<textarea value={draft.description} onChange={(event) => setDraft({ description: event.target.value })} maxLength={10000} placeholder="Optional local course note" /></label>
+              <label className={styles.topicDescription}>Admin note<textarea value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} maxLength={10000} placeholder="Optional local course note" /></label>
+              <label>Credit hours<input type="number" min="0" max="30" value={draft.credit_hours} onChange={(event) => setDraft({ ...draft, credit_hours: event.target.value })} /></label>
+              <label>Status<select value={draft.status} onChange={(event) => setDraft({ ...draft, status: event.target.value })}><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option></select></label>
               <div className={styles.actions}><button onClick={() => setEditingId(null)}>Cancel</button><button className={styles.primary} disabled={saving} onClick={() => void saveCourse(course)}>{saving ? 'Saving…' : 'Save course settings'}</button></div>
             </div>}
           </article>

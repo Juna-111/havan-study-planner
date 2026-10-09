@@ -21,13 +21,21 @@ def upgrade() -> None:
         sa.UniqueConstraint("email", name="uq_student_accounts_email"),
     )
     op.create_index("ix_student_accounts_email", "student_accounts", ["email"], unique=True)
-    op.add_column("student_profiles", sa.Column("account_id", sa.Integer(), nullable=True))
-    op.create_unique_constraint("uq_student_profiles_account_id", "student_profiles", ["account_id"])
-    op.create_foreign_key("fk_student_profiles_account_id", "student_profiles", "student_accounts", ["account_id"], ["id"], ondelete="SET NULL")
+    with op.batch_alter_table("student_profiles") as batch_op:
+        batch_op.add_column(sa.Column("account_id", sa.Integer(), nullable=True))
+        batch_op.create_unique_constraint("uq_student_profiles_account_id", ["account_id"])
+        batch_op.create_foreign_key(
+            "fk_student_profiles_account_id",
+            "student_accounts",
+            ["account_id"],
+            ["id"],
+            ondelete="SET NULL",
+        )
 
 def downgrade() -> None:
-    op.drop_constraint("fk_student_profiles_account_id", "student_profiles", type_="foreignkey")
-    op.drop_constraint("uq_student_profiles_account_id", "student_profiles", type_="unique")
-    op.drop_column("student_profiles", "account_id")
+    with op.batch_alter_table("student_profiles") as batch_op:
+        batch_op.drop_constraint("fk_student_profiles_account_id", type_="foreignkey")
+        batch_op.drop_constraint("uq_student_profiles_account_id", type_="unique")
+        batch_op.drop_column("account_id")
     op.drop_index("ix_student_accounts_email", table_name="student_accounts")
     op.drop_table("student_accounts")

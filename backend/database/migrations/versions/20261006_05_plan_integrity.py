@@ -17,11 +17,8 @@ def upgrade() -> None:
     bind = op.get_bind()
     inspector = sa.inspect(bind)
     if inspector.has_table("student_accounts"):
-        op.alter_column(
-            "student_accounts",
-            "role",
-            server_default="STUDENT",
-        )
+        with op.batch_alter_table("student_accounts") as batch_op:
+            batch_op.alter_column("role", existing_type=sa.String(length=10), server_default="STUDENT")
 
     if inspector.has_table("plans"):
         indexes = {item["name"] for item in inspector.get_indexes("plans")}
