@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db.models.curriculum import Course, Curriculum, Stream, UniversityCourseMapping
+from app.db.models.curriculum import Course, Curriculum, Stream, UniversityCourseMapping, UniversityCourseOffering
 from app.db.models.student import StudentProfile
 
 
@@ -26,24 +26,37 @@ class ResolvedCourse:
     credit_hours: int | None
 
 
-def resolve_stream_courses(db: Session, stream_id: int) -> list[ResolvedCourse]:
-    """Return the active courses explicitly mapped to a university stream."""
-
-    stream = db.get(Stream, stream_id)
-    if stream is None or str(stream.status).upper() != "ACTIVE":
-        return []
-
-    curriculum = db.get(Curriculum, stream.curriculum_id)
-    if curriculum is None or str(curriculum.status).upper() != "ACTIVE":
-        return []
-
+def _active_offering_rows(db: Session, stream_id: int, curriculum_id: int):
     rows = list(
+        db.execute(
+            select(UniversityCourseOffering, Course)
+            .join(Course, Course.id == UniversityCourseOffering.course_id)
+            .where(
+                UniversityCourseOffering.stream_id == stream_id,
+                UniversityCourseOffering.curriculum_id == curriculum_id,
+                UniversityCourseOffering.status == "ACTIVE",
+                Course.status == "ACTIVE",
+            )
+            .order_by(
+                UniversityCourseOffering.semester_number,
+                UniversityCourseOffering.order_index,
+                Course.code,
+                Course.id,
+            )
+        ).all()
+    )
+    if rows:
+        return rows
+
+    # Compatibility bridge: older data imported before the offering table existed
+    # still needs to remain readable while the offering model becomes canonical.
+    return list(
         db.execute(
             select(UniversityCourseMapping, Course)
             .join(Course, Course.id == UniversityCourseMapping.course_id)
             .where(
                 UniversityCourseMapping.stream_id == stream_id,
-                UniversityCourseMapping.curriculum_id == curriculum.id,
+                UniversityCourseMapping.curriculum_id == curriculum_id,
                 UniversityCourseMapping.status == "ACTIVE",
                 Course.status == "ACTIVE",
             )
@@ -56,6 +69,19 @@ def resolve_stream_courses(db: Session, stream_id: int) -> list[ResolvedCourse]:
         ).all()
     )
 
+
+def resolve_stream_courses(db: Session, stream_id: int) -> list[ResolvedCourse]:
+    """Return the active courses explicitly mapped to a university stream."""
+
+    stream = db.get(Stream, stream_id)
+    if stream is None or str(stream.status).upper() != "ACTIVE":
+        return []
+
+    curriculum = db.get(Curriculum, stream.curriculum_id)
+    if curriculum is None or str(curriculum.status).upper() != "ACTIVE":
+        return []
+
+    rows = _active_offering_rows(db, stream_id, curriculum.id)
     rows.sort(key=lambda pair: (pair[0].semester_number, pair[0].order_index, pair[1].code, pair[1].id))
 
     return [

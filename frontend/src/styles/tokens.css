@@ -17,6 +17,15 @@
   --color-warn-soft:#fff4df;
   --color-danger:#c4120f;
   --color-danger-soft:#fdeceb;
+  --status-planned:#c4120f;
+  --status-planned-soft:#fdeceb;
+  --status-planned-ink:#8e2422;
+  --status-progress:#a15c00;
+  --status-progress-soft:#fff4df;
+  --status-progress-ink:#7a4e00;
+  --status-done:#12775a;
+  --status-done-soft:#e6f5ef;
+  --status-done-ink:#17633a;
   --color-ink:#151526;
   --color-muted:#5d5d73;
   --color-line:#e7e7ef;

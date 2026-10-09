@@ -6,11 +6,11 @@ import { AppShell, PageHeader } from '@/components/layout'
 import {
   Button,
   Card,
-  Chip,
   EmptyState,
   ErrorState,
   ProgressBar,
   Skeleton,
+  StatusBadge,
 } from '@/components/ui'
 import { getLatestHavanPlan, havanTaskAction, type HavanPlan } from '@/lib/havanPlan'
 import { getSavedAccount } from '@/lib/auth'
@@ -262,21 +262,7 @@ export default function HavanPlanView() {
               return (
                 <Card padding="lg" className="plan-task" key={task.id}>
                   <div className="havan-plan-task-top">
-                    <Chip
-                      tone={
-                        task.status === 'DONE'
-                          ? 'success'
-                          : task.status === 'IN_PROGRESS'
-                            ? 'warn'
-                            : 'danger'
-                      }
-                    >
-                      {task.status === 'DONE'
-                        ? 'Completed'
-                        : task.status === 'IN_PROGRESS'
-                          ? 'In progress'
-                          : 'Planned'}
-                    </Chip>
+                    <StatusBadge status={task.status} />
                     <strong>{task.minutes} min</strong>
                   </div>
                   <span className="havan-plan-course">

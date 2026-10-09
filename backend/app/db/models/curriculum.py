@@ -150,6 +150,45 @@ class UniversityCourseMapping(Base):
     course: Mapped[Course] = relationship()
 
 
+class UniversityCourseOffering(Base):
+    """Canonical university course offering record used by the simplified academic catalog.
+
+    This keeps the older mapping flow operational while providing a clearer offering-oriented
+    model for the newer admin and planner work.
+    """
+
+    __tablename__ = "university_course_offerings"
+    __table_args__ = (
+        UniqueConstraint("stream_id", "course_id", name="uq_university_course_offering_stream_course"),
+        Index("ix_university_course_offering_curriculum", "curriculum_id"),
+        Index("ix_university_course_offering_stream", "stream_id"),
+        Index("ix_university_course_offering_course", "course_id"),
+        CheckConstraint("semester_number IN (1, 2)", name="ck_university_course_offering_semester"),
+        CheckConstraint("order_index >= 1", name="ck_university_course_offering_order"),
+        CheckConstraint("status IN ('DRAFT', 'ACTIVE', 'ARCHIVED')", name="ck_university_course_offering_status"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    curriculum_id: Mapped[int] = mapped_column(
+        ForeignKey("curriculums.id", ondelete="CASCADE"), nullable=False
+    )
+    stream_id: Mapped[int] = mapped_column(
+        ForeignKey("streams.id", ondelete="CASCADE"), nullable=False
+    )
+    course_id: Mapped[int] = mapped_column(
+        ForeignKey("courses.id", ondelete="CASCADE"), nullable=False
+    )
+    semester_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    order_index: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="DRAFT", server_default="DRAFT")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    curriculum: Mapped[Curriculum] = relationship()
+    stream: Mapped[Stream] = relationship()
+    course: Mapped[Course] = relationship()
+
+
 class Chapter(Base):
 
     __tablename__ = "chapters"

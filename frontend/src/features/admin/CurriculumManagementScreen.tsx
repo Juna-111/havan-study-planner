@@ -49,7 +49,7 @@ export default function CurriculumManagementScreen() {
     try {
       const [courseResult, mappingResult] = await Promise.all([
         apiFetch<{ items: Course[] }>(`/courses?stream_id=${id}&page=1&page_size=100`),
-        apiFetch<Mapping[]>(`/university-course-mappings?stream_id=${id}`),
+        apiFetch<Mapping[]>(`/university-course-offerings?stream_id=${id}`),
       ])
       setCourses(courseResult.items)
       setMappings(mappingResult)

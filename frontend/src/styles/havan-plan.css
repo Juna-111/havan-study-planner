@@ -318,26 +318,11 @@
 .havan-plan-promotion b{color:var(--color-accent)!important}
 @media(max-width:600px){.havan-plan-promotion{align-items:flex-start;flex-direction:column}.havan-plan-promotion b{font-size:.8rem}}
 @media(prefers-reduced-motion:reduce){.havan-plan-promotion{transition:none}.havan-plan-promotion:hover{transform:none}}
-/* Havan plan status badges: keep the meaning visible on the blue plan cards. */
+/* Havan plan status badges keep the meaning visible on the blue plan cards. */
 .plan-task .chip {
-  border: 1px solid currentColor;
+  border: 1px solid rgba(255,255,255,.24);
   box-shadow: none;
   font-weight: 900;
-}
-
-.plan-task .chip.neutral {
-  color: var(--color-danger);
-  background: rgba(239, 68, 68, .16);
-}
-
-.plan-task .chip.info {
-  color: var(--color-warn);
-  background: rgba(245, 158, 11, .16);
-}
-
-.plan-task .chip.success {
-  color: var(--color-success);
-  background: rgba(34, 197, 94, .16);
 }
 
 .havan-plan-task-top {

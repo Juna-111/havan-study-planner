@@ -12,6 +12,7 @@ from app.api.havan_planner import router as havan_planner_router
 from app.api.plans import router as plans_router
 from app.api.student import router as student_router
 from app.api.university_course_mappings import router as university_course_mappings_router
+from app.api.university_course_offerings import router as university_course_offerings_router
 
 router = APIRouter()
 
@@ -23,6 +24,7 @@ for child_router in (
     freshman_registry_router,
     freshman_registry_import_router,
     university_course_mappings_router,
+    university_course_offerings_router,
     student_router,
     plans_router,
     academic_quality_router,

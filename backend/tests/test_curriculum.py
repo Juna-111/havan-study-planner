@@ -10,6 +10,7 @@ def test_curriculum_routes_are_registered() -> None:
     assert "/api/v1/courses" in paths
     assert "/api/v1/chapters" in paths
     assert "/api/v1/topics" in paths
+    assert "/api/v1/university-course-offerings" in paths
     assert "/api/v1/students/onboarding" in paths
 
 

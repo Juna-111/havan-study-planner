@@ -7,7 +7,17 @@ from fastapi import HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from app.db.models.curriculum import Chapter, Course, Curriculum, HavanPromotion, Stream, Topic, University, UniversityCourseMapping
+from app.db.models.curriculum import (
+    Chapter,
+    Course,
+    Curriculum,
+    HavanPromotion,
+    Stream,
+    Topic,
+    University,
+    UniversityCourseMapping,
+    UniversityCourseOffering,
+)
 
 MAX_FILE_SIZE=5*1024*1024
 PROMOTION_FILE_MARKER="TYPE: HAVAN_PROMOTION_V1"
@@ -85,8 +95,10 @@ def _validate_university_references(db:Session,rows:list[UniversityImportRow])->
   stream=db.scalar(select(Stream).where(Stream.curriculum_id==curriculum.id,func.upper(Stream.code)==row.stream_code.strip().upper()))
   if stream is not None and stream.name.strip().casefold()!=row.stream_name.strip().casefold(): raise HTTPException(409,f"University CSV line {row.line}: stream code {row.stream_code} already belongs to another stream.")
   if stream is None: continue
-  mapping=db.scalar(select(UniversityCourseMapping).where(UniversityCourseMapping.stream_id==stream.id,UniversityCourseMapping.course_id==course.id))
-  if mapping is not None and mapping.status!="ARCHIVED" and mapping.semester_number!=row.semester: raise HTTPException(409,f"University CSV line {row.line}: course {row.course_code} is already mapped to semester {mapping.semester_number}.")
+  offering=db.scalar(select(UniversityCourseOffering).where(UniversityCourseOffering.stream_id==stream.id,UniversityCourseOffering.course_id==course.id))
+  legacy_mapping=db.scalar(select(UniversityCourseMapping).where(UniversityCourseMapping.stream_id==stream.id,UniversityCourseMapping.course_id==course.id))
+  if offering is not None and offering.status!="ARCHIVED" and offering.semester_number!=row.semester: raise HTTPException(409,f"University CSV line {row.line}: course {row.course_code} is already offered in semester {offering.semester_number}.")
+  if offering is None and legacy_mapping is not None and legacy_mapping.status!="ARCHIVED" and legacy_mapping.semester_number!=row.semester: raise HTTPException(409,f"University CSV line {row.line}: course {row.course_code} is already mapped to semester {legacy_mapping.semester_number}.")
 
 def preview_university_import(rows:list[UniversityImportRow],db:Session|None=None)->dict:
  seen=set(); course_semesters={}
@@ -101,12 +113,12 @@ def preview_university_import(rows:list[UniversityImportRow],db:Session|None=Non
    raise HTTPException(422,f"University CSV lines contain course {row.course_code} in both semesters for the same stream.")
   course_semesters[course_key]=row.semester
  if db is not None: _validate_university_references(db,rows)
- return {"rows":len(rows),"universities":len({r.university_code.strip().upper() for r in rows}),"curriculums":len({(r.university_code.strip().upper(),r.curriculum.strip().casefold(),r.curriculum_version.strip().casefold()) for r in rows}),"streams":len({(r.university_code.strip().upper(),r.curriculum.strip().casefold(),r.curriculum_version.strip().casefold(),r.stream_code.strip().upper()) for r in rows}),"course_mappings":len(rows)}
+ return {"rows":len(rows),"universities":len({r.university_code.strip().upper() for r in rows}),"curriculums":len({(r.university_code.strip().upper(),r.curriculum.strip().casefold(),r.curriculum_version.strip().casefold()) for r in rows}),"streams":len({(r.university_code.strip().upper(),r.curriculum.strip().casefold(),r.curriculum_version.strip().casefold(),r.stream_code.strip().upper()) for r in rows}),"course_mappings":len(rows),"course_offerings":len(rows)}
 
 def commit_university_import(db:Session,rows:list[UniversityImportRow])->dict:
  preview_university_import(rows)
  try:
-  universities={};curriculums={};streams={};counts={"universities":0,"curriculums":0,"streams":0,"courses":0,"mappings":0,"archived_mappings":0,"reactivated_mappings":0}
+  universities={};curriculums={};streams={};counts={"universities":0,"curriculums":0,"streams":0,"courses":0,"offerings":0,"archived_offerings":0,"reactivated_offerings":0}
   incoming_by_stream={}
   for row in rows:
    ukey=row.university_code.strip().upper()
@@ -138,20 +150,25 @@ def commit_university_import(db:Session,rows:list[UniversityImportRow])->dict:
    if row.credit_hours is not None and course.credit_hours is not None and course.credit_hours!=row.credit_hours:raise HTTPException(409,f"Course {row.course_code} credit hours conflict with the Freshman Course Registry.")
 
    incoming_by_stream.setdefault(s.id,set()).add(course.id)
-   m=db.scalar(select(UniversityCourseMapping).where(UniversityCourseMapping.stream_id==s.id,UniversityCourseMapping.course_id==course.id))
-   if m is None:
-    order=db.scalar(select(func.max(UniversityCourseMapping.order_index)).where(UniversityCourseMapping.stream_id==s.id,UniversityCourseMapping.semester_number==row.semester,UniversityCourseMapping.status!="ARCHIVED")) or 0
-    db.add(UniversityCourseMapping(curriculum_id=c.id,stream_id=s.id,course_id=course.id,semester_number=row.semester,order_index=order+1,status="ACTIVE"));counts["mappings"]+=1
+   offering=db.scalar(select(UniversityCourseOffering).where(UniversityCourseOffering.stream_id==s.id,UniversityCourseOffering.course_id==course.id))
+   if offering is None:
+    order=db.scalar(select(func.max(UniversityCourseOffering.order_index)).where(UniversityCourseOffering.stream_id==s.id,UniversityCourseOffering.semester_number==row.semester,UniversityCourseOffering.status!="ARCHIVED")) or 0
+    db.add(UniversityCourseOffering(curriculum_id=c.id,stream_id=s.id,course_id=course.id,semester_number=row.semester,order_index=order+1,status="ACTIVE"));counts["offerings"]+=1
    else:
-    if m.semester_number!=row.semester:raise HTTPException(409,f"Course {row.course_code} is already mapped to another semester.")
-    if m.status=="ARCHIVED":m.status="ACTIVE";counts["reactivated_mappings"]+=1
-    m.curriculum_id=c.id
+    if offering.semester_number!=row.semester:raise HTTPException(409,f"Course {row.course_code} is already offered in another semester.")
+    if offering.status=="ARCHIVED":offering.status="ACTIVE";counts["reactivated_offerings"]+=1
+    offering.curriculum_id=c.id
 
   for stream_id,course_ids in incoming_by_stream.items():
-   stale=db.scalars(select(UniversityCourseMapping).where(UniversityCourseMapping.stream_id==stream_id,UniversityCourseMapping.status!="ARCHIVED",~UniversityCourseMapping.course_id.in_(course_ids))).all()
-   for mapping in stale:
-    mapping.status="ARCHIVED";counts["archived_mappings"]+=1
+   stale=db.scalars(select(UniversityCourseOffering).where(UniversityCourseOffering.stream_id==stream_id,UniversityCourseOffering.status!="ARCHIVED",~UniversityCourseOffering.course_id.in_(course_ids))).all()
+   for offering in stale:
+    offering.status="ARCHIVED";counts["archived_offerings"]+=1
 
+  # Keep the existing import response fields for clients that still call these
+  # rows mappings, while exposing the canonical offering counts as well.
+  counts["mappings"] = counts["offerings"]
+  counts["archived_mappings"] = counts["archived_offerings"]
+  counts["reactivated_mappings"] = counts["reactivated_offerings"]
   db.commit();return counts
  except HTTPException:db.rollback();raise
  except IntegrityError as e:db.rollback();raise HTTPException(409,"The university import conflicts with existing records. No records were saved.") from e

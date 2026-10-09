@@ -18,7 +18,7 @@ export default function AdminOverview({ onMode }: Props) {
       apiFetch<Page<Item>>('/curriculums?page=1&page_size=100'),
       apiFetch<Page<Item>>('/streams?page=1&page_size=100'),
       apiFetch<Item[]>('/university-course-mappings/courses'),
-      apiFetch<Item[]>('/university-course-mappings'),
+      apiFetch<Item[]>('/university-course-offerings'),
       apiFetch<Array<{ status: string }>>('/academic-catalog-requests'),
     ]).then(([universities, curricula, streams, courses, mappings, requests]) => {
       setStats({

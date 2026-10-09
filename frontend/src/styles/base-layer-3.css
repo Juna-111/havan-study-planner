@@ -8,8 +8,6 @@
 .plan-task h2,.plan-task h3,.plan-task strong,.plan-task p,.plan-task small,.plan-task label,.plan-task span{
   color:var(--color-white) !important;
 }
-.plan-task .chip.info{background:rgba(255,255,255,.14) !important;color:var(--color-white) !important}
-.plan-task .chip.success{background:rgba(18,119,90,.82) !important;color:var(--color-white) !important}
 .plan-task .button.primary{background:var(--color-accent) !important;color:var(--color-white) !important;border-color:var(--color-accent) !important}
 .plan-task .button.secondary{background:var(--color-white) !important;color:var(--color-primary) !important;border-color:var(--color-white) !important}
 .plan-task .button.ghost{background:rgba(255,255,255,.08) !important;color:var(--color-white) !important;border-color:rgba(255,255,255,.2) !important}
@@ -52,20 +50,6 @@
   .exam-insight-card{border-radius:18px!important}
 }
 
-
-/* Status badges: explicit text colours remain readable on Havan's blue plan cards. */
-.plan-task .chip.danger {
-  color: var(--color-accent) !important;
-  background: rgba(255,255,255,.10) !important;
-}
-.plan-task .chip.warn {
-  color: #f5c542 !important;
-  background: rgba(255,255,255,.10) !important;
-}
-.plan-task .chip.success {
-  color: #57d68a !important;
-  background: rgba(255,255,255,.10) !important;
-}
 
 /* Exam status chips intentionally use black text for a calmer, consistent exam-card label. */
 .exam-insight-card .chip {

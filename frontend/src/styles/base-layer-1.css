@@ -122,10 +122,7 @@ p { margin:0 }
 .plan-task { display:grid; gap:10px; border:1px solid rgba(255,255,255,.13); background:linear-gradient(155deg,var(--color-primary-dark) 0%,var(--color-primary) 68%,var(--color-primary-mid) 100%); color:var(--color-white); box-shadow:0 12px 30px rgba(1,1,126,.14); overflow:hidden }
 .plan-task::before { content:''; position:absolute; inset:0 0 auto 0; height:3px; background:var(--color-accent); opacity:.9; pointer-events:none }
 .plan-task { position:relative }
-.plan-task .chip.info { color:var(--color-white); background:rgba(255,255,255,.14) }
-.plan-task .chip.success { color:var(--color-white); background:rgba(18,119,90,.75) }
-.plan-task strong,.plan-task-title { color:var(--color-white) }
-.plan-task p { color:rgba(255,255,255,.76); line-height:1.5 }
+.plan-task strong,.plan-task-title { color:var(--color-white) }.plan-task p { color:rgba(255,255,255,.76); line-height:1.5 }
 .plan-task small { color:rgba(255,255,255,.64) }
 .plan-task-date { color:rgba(255,255,255,.7) }
 .plan-task-date input { border-color:rgba(255,255,255,.22); background:rgba(255,255,255,.96); color:var(--color-ink) }

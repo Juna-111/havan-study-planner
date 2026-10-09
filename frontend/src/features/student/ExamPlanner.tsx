@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { apiFetch, ApiError } from '@/lib/api'
-import { Button, Card, Chip, DateField, ErrorState, ProgressBar, Select, Skeleton } from '@/components/ui'
+import { Button, Card, DateField, ErrorState, ProgressBar, Select, Skeleton, StatusBadge } from '@/components/ui'
 
 type Exam = { id:number; student_id:number; course_id:number; exam_type:string; exam_date:string; importance:number; selected_topic_ids:number[] }
 type Course = { id:number; code:string; name:string; chapters:Array<{id:number;name:string;topics:Array<{id:number;name:string;estimated_study_minutes:number;difficulty:number;status:string}>}> }
@@ -149,7 +149,7 @@ export default function ExamPlanner(){
       <div className="exam-section-heading"><div><span className="exam-kicker">EXAM RUNWAY</span><h2>What needs attention?</h2></div><span className="exam-source-note">Calculated from curriculum + progress + study capacity</span></div>
       {insights.length===0?<Card className="exam-empty" padding="lg"><strong>No exam is on the runway yet.</strong><p>Add an exam above. Havan will then calculate time pressure and topic coverage from your actual course data.</p></Card>:
       <div className="exam-insight-grid">{insights.map(item=><Card key={item.exam.id} className="exam-insight-card" padding="lg">
-        <div className="exam-card-top"><div><span className="exam-kicker">{item.exam.exam_type.toUpperCase()}</span><h3>{item.course?.code??'Course'} · {item.course?.name??'Unavailable course'}</h3></div><span className="exam-status-badge"><Chip tone={item.label==='READY'?'success':item.label==='URGENT'||item.label==='PAST'?'danger':item.label==='TIGHT'?'warn':'info'}>{item.label}</Chip></span></div>
+        <div className="exam-card-top"><div><span className="exam-kicker">{item.exam.exam_type.toUpperCase()}</span><h3>{item.course?.code??'Course'} · {item.course?.name??'Unavailable course'}</h3></div><StatusBadge status={item.label} /></div>
         <div className="exam-countdown"><strong>{item.daysLeft<0?Math.abs(item.daysLeft):item.daysLeft}</strong><span>{item.daysLeft<0?'days ago':'days left'}</span></div>
         <ProgressBar value={item.coverage} label="Topic coverage"/>
         <div className="exam-metrics"><span><b>{item.completedTopics}/{item.topicCount}</b> topics covered</span><span><b>{Math.ceil(item.remainingMinutes/60)}h</b> estimated work left</span><span><b>{Math.round(item.availableMinutes/60)}h</b> study capacity before exam</span></div>

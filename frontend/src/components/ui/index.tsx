@@ -1,5 +1,6 @@
 'use client'
 import{useEffect,useMemo,useRef,useState}from'react';import styles from'./ui.module.css'
+import { getStatusMeta } from '@/lib/status'
 /** Shared Havan UI primitives. These components contain no business knowledge. */
 export function Button({children,variant='primary',size='md',loading=false,fullWidth=false,disabled=false,type='button',onClick}:{children:React.ReactNode;
 variant?:'primary'|'secondary'|'ghost'|'danger'|'accent';
@@ -23,6 +24,10 @@ export function Card({children,as:Tag='div',padding='md',radius='md',className='
   return <Tag className={`${styles.card} ${styles[padding]} ${styles[radius]} ${className}`} style={style}>{children}</Tag>
 }
 export function Chip({children,tone='neutral'}:{children:React.ReactNode;tone?:'neutral'|'info'|'success'|'warn'|'danger'}){return <span className={`${styles.chip} ${styles[tone]}`}>{children}</span>}
+export function StatusBadge({status}:{status:unknown}){
+  const { label, tone, ariaLabel } = getStatusMeta(status)
+  return <span className={`${styles.chip} ${styles[tone]}`} aria-label={ariaLabel}>{label}</span>
+}
 export function Segmented<T extends string>({options,value,onChange}:{options:readonly T[];value:T;onChange:(v:T)=>void}){
   return <div className={styles.group} role="group">{options.map(o=><button key={o} className={o===value?styles.active:styles.seg} aria-pressed={o===value} type="button" onClick={()=>onChange(o)}>{o}</button>)}</div>
 }

@@ -71,9 +71,13 @@ def parse_bullet_curriculum(content: str) -> list[ParsedCourse]:
         if collecting_points:
             bullet_match = BULLET_RE.match(line)
             if bullet_match:
-                points.append(bullet_match.group(1).strip())
-                continue
-            flush_points()
+                if TOPIC_DIFFICULTY_RE.match(bullet_match.group(1).strip()):
+                    flush_points()
+                else:
+                    points.append(bullet_match.group(1).strip())
+                    continue
+            else:
+                flush_points()
 
         course_match = EXPLICIT_COURSE_RE.match(line)
         if course_match:

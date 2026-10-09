@@ -5,7 +5,17 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from app.db.session import get_db
-from app.db.models.curriculum import Chapter, Course, Curriculum, HavanPromotion, Stream, Topic, University, UniversityCourseMapping
+from app.db.models.curriculum import (
+    Chapter,
+    Course,
+    Curriculum,
+    HavanPromotion,
+    Stream,
+    Topic,
+    University,
+    UniversityCourseMapping,
+    UniversityCourseOffering,
+)
 from app.schemas.curriculum import *
 from app.services.academic_resolver import resolve_stream_courses
 from app.services.curriculum import get_or_404, list_items

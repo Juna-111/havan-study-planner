@@ -223,3 +223,24 @@ class UniversityCourseMappingRead(BaseModel):
     updated_at: datetime
 
 
+class UniversityCourseOfferingRead(BaseModel):
+    id: int
+    curriculum_id: int
+    curriculum_name: str
+    curriculum_version: str
+    university_id: int
+    university_name: str
+    stream_id: int
+    stream_name: str
+    stream_code: str
+    course_id: int
+    course_code: str
+    course_name: str
+    credit_hours: Optional[int]
+    semester_number: int
+    order_index: int
+    status: str
+    created_at: datetime
+    updated_at: datetime
+
+

@@ -40,12 +40,6 @@
 .plan-task { position:relative }
 
 
-.plan-task .chip.info { color:var(--color-white); background:rgba(255,255,255,.14) }
-
-
-.plan-task .chip.success { color:var(--color-white); background:rgba(18,119,90,.75) }
-
-
 .plan-task strong,.plan-task-title { color:var(--color-white) }
 
 

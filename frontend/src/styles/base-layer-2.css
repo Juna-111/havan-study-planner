@@ -253,8 +253,6 @@ to{opacity:1;transform:scale(1)}
   border-color:rgba(255,255,255,.16) !important;
   box-shadow:0 12px 30px rgba(1,1,126,.16) !important;
 }
-.plan-task .chip.info{color:var(--color-white);background:rgba(255,255,255,.14)}
-.plan-task .chip.success{color:var(--color-white);background:rgba(18,119,90,.78)}
 .plan-task .button.primary{color:var(--color-white)}
 .plan-task .button.secondary{color:var(--color-primary);background:var(--color-white);border-color:var(--color-white)}
 .plan-task .button.ghost{color:var(--color-white);background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16)}

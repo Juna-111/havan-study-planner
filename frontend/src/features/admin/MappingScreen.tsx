@@ -69,7 +69,7 @@ export default function MappingScreen() {
 
   useEffect(() => {
     if (streamId) {
-      apiFetch<M[]>('/university-course-mappings?stream_id=' + streamId)
+      apiFetch<M[]>('/university-course-offerings?stream_id=' + streamId)
         .then(setMaps)
         .catch((value) => setError(value instanceof Error ? value.message : 'Could not load mapped courses.'))
     } else {

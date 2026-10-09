@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppShell, PageHeader } from '@/components/layout'
-import { Button, Card, Chip, EmptyState, ErrorState } from '@/components/ui'
+import { Button, Card, Chip, EmptyState, ErrorState, StatusBadge } from '@/components/ui'
 import { getCurrentPlan, planAction, type Plan } from '@/lib/plan'
 import { apiFetch } from '@/lib/api'
 import { EmptyPlanIllustration } from '@/components/brand/illustrations'
@@ -244,7 +244,7 @@ export default function PlanView() {
               {tasks.map((t, index) => (
                 <Card key={t.id} as="article" padding="lg" className={`plan-task havan-task-card ${celebratingTask === t.id ? 'havan-task-celebrate' : ''} ${addedTask === t.id ? 'havan-task-added' : ''}`} style={{ '--motion-delay': `${index * 65}ms` } as React.CSSProperties}>
                   <div className="row">
-                    <Chip tone={t.status === 'DONE' ? 'success' : t.status === 'IN_PROGRESS' ? 'warn' : 'info'}>{t.status === 'DONE' ? 'Completed' : t.status === 'IN_PROGRESS' ? 'In Progress' : 'Planned'}</Chip>
+                    <StatusBadge status={t.status} />
                     <strong>{t.planned_date}</strong>
                   </div>
                   <div className="plan-task-chapter">{t.chapter_name}</div><h2 className="plan-task-title">{t.topic_name}</h2>
