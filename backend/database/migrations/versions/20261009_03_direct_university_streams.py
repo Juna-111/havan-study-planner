@@ -120,8 +120,6 @@ def downgrade() -> None:
         batch.create_index("ix_streams_curriculum_id", ["curriculum_id"])
     with op.batch_alter_table("streams", naming_convention=FK_NAMING) as batch:
         batch.drop_constraint("fk_streams_university_id_universities", type_="foreignkey")
-        batch.drop_constraint("uq_streams_university_code", type_="unique")
-        batch.drop_index("ix_streams_university_id")
         batch.drop_column("university_id")
     with op.batch_alter_table("student_profiles", naming_convention=FK_NAMING) as batch:
         batch.add_column(sa.Column("curriculum_id", sa.Integer(), nullable=True))
