@@ -135,7 +135,7 @@ def downgrade() -> None:
             with op.batch_alter_table(table, naming_convention=FK_NAMING) as batch:
                 batch.add_column(sa.Column("curriculum_id", sa.Integer(), nullable=True))
             op.execute(sa.text(
-                f"UPDATE {table} SET curriculum_id = (SELECT id FROM curriculums "
+                f"UPDATE {table} SET curriculum_id = (SELECT curriculums.id FROM curriculums "
                 f"JOIN streams ON streams.university_id = curriculums.university_id "
                 f"WHERE streams.id = {table}.stream_id LIMIT 1)"
             ))
