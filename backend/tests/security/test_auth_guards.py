@@ -62,6 +62,19 @@ def test_production_rejects_placeholder_secret():
     raise AssertionError("production must reject the placeholder AUTH_SECRET")
 
 
+def test_production_accepts_resend_without_smtp_and_keeps_small_database_pool():
+    settings = Settings(
+        environment="production",
+        auth_secret="a" * 48,
+        database_url="postgresql+psycopg://user:password@ep-example-pooler.neon.tech/db?sslmode=require",
+        resend_api_key="re_test_key",
+        email_from="Havan <reset@example.com>",
+    )
+    assert settings.smtp_user == ""
+    assert settings.db_pool_size == 3
+    assert settings.db_max_overflow == 2
+
+
 def test_cors_has_no_wildcard_host_regex():
     source = Path(__file__).resolve().parents[2] / "app" / "main.py"
     assert "allow_origin_regex" not in source.read_text(encoding="utf-8")

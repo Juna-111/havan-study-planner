@@ -7,16 +7,13 @@ from app.core.config import get_settings
 
 _settings = get_settings()
 
-env = _settings.environment.strip().lower()
-_pool_size = _settings.db_pool_size if _settings.db_pool_size != 5 or env != "production" else 15
-_max_overflow = _settings.db_max_overflow if _settings.db_max_overflow != 10 or env != "production" else 20
 _pool_recycle = _settings.db_pool_recycle
 
 engine = create_engine(
     _settings.database_url,
     pool_pre_ping=True,
-    pool_size=_pool_size,
-    max_overflow=_max_overflow,
+    pool_size=_settings.db_pool_size,
+    max_overflow=_settings.db_max_overflow,
     pool_recycle=_pool_recycle,
 )
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)

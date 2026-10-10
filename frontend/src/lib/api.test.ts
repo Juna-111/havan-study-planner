@@ -20,6 +20,22 @@ describe('API rate-limit feedback', () => {
     })
   })
 
+  it('allows time for a Render Free cold start on password recovery', async () => {
+    let timeoutMs = 0
+    vi.stubGlobal('setTimeout', vi.fn((_callback: TimerHandler, delay: number) => {
+      timeoutMs = delay
+      return 1
+    }))
+    vi.stubGlobal('clearTimeout', vi.fn())
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(
+      JSON.stringify({ message: 'If an account exists, a code has been sent.' }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } },
+    )))
+
+    await apiFetch('/auth/forgot-password', { method: 'POST' })
+    expect(timeoutMs).toBe(75_000)
+  })
+
   it('gives useful guidance when a rate-limit response has no retry header', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(
       JSON.stringify({ detail: 'Too many requests.' }),

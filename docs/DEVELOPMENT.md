@@ -71,7 +71,8 @@ Backend production requires:
 - `ADMIN_EMAILS`
 - `AUTH_TOKEN_TTL_DAYS`
 - `DEFAULT_TIMEZONE=Africa/Addis_Ababa`
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` for password recovery
+- `RESEND_API_KEY` and `EMAIL_FROM` for password recovery on Render Free. Verify the sender domain with the email provider before production.
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` are optional for local development or hosts that permit SMTP egress. Render Free blocks outbound SMTP ports 25, 465, and 587, so do not configure SMTP as its only delivery route.
 - `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT` for browser push reminders. Generate a key pair once with `python scripts/generate_vapid_keys.py` from `backend/`; keep the private key in the backend secret store and use the same pair across deployments.
 
 The API reminder loop runs once per minute. PostgreSQL advisory locking ensures only one API process dispatches reminders when the service has multiple workers or instances. Push delivery requires an HTTPS frontend origin and students must grant browser notification permission; browser vendors and device settings can still suppress delivery.

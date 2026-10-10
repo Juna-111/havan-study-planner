@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import smtplib
 import logging
+import json
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 
@@ -56,6 +59,56 @@ def login(db: Session, email: str, password: str) -> tuple[StudentAccount, str]:
 
 def send_reset_email(email: str, code: str) -> None:
     settings = get_settings()
+    body = (
+        "Your Havan Study Planner verification code is: " + code + "\n\n"
+        + "This code expires in " + str(settings.password_reset_ttl_minutes) + " minutes."
+    )
+    resend_api_key = getattr(settings, "resend_api_key", "").strip()
+    if resend_api_key:
+        sender = (getattr(settings, "email_from", "") or settings.smtp_from or settings.smtp_user).strip()
+        if not sender:
+            logger.error(
+                "Password reset email delivery skipped: EMAIL_FROM is missing.",
+                extra={"email_provider": "resend", "error_type": "EmailConfigurationError"},
+            )
+            return
+        request = Request(
+            "https://api.resend.com/emails",
+            data=json.dumps({
+                "from": sender,
+                "to": [email],
+                "subject": "Havan Study Planner password reset code",
+                "text": body,
+            }).encode("utf-8"),
+            headers={
+                "Authorization": f"Bearer {resend_api_key}",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+        try:
+            with urlopen(request, timeout=10) as response:
+                logger.info(
+                    "Password reset email accepted by provider.",
+                    extra={
+                        "email_provider": "resend",
+                        "provider_status": response.status,
+                        "recipient_domain": email.rpartition("@")[2] or "unknown",
+                    },
+                )
+        except (HTTPError, URLError, TimeoutError, OSError, ValueError) as exc:
+            logger.error(
+                "Password reset email delivery failed: %s",
+                exc,
+                extra={
+                    "email_provider": "resend",
+                    "recipient_domain": email.rpartition("@")[2] or "unknown",
+                    "error_type": type(exc).__name__,
+                },
+                exc_info=True,
+            )
+        return
+
     if not settings.smtp_user or not settings.smtp_password:
         logger.error(
             "Password reset email delivery skipped: SMTP credentials are missing.",

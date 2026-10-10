@@ -30,12 +30,14 @@ class Settings(BaseSettings):
     smtp_user: str = Field("", validation_alias="SMTP_USER")
     smtp_password: str = Field("", validation_alias="SMTP_PASSWORD")
     smtp_from: str = Field("", validation_alias="SMTP_FROM")
+    resend_api_key: str = Field("", validation_alias="RESEND_API_KEY")
+    email_from: str = Field("", validation_alias="EMAIL_FROM")
     vapid_public_key: str = Field("", validation_alias="VAPID_PUBLIC_KEY")
     vapid_private_key: str = Field("", validation_alias="VAPID_PRIVATE_KEY")
     vapid_subject: str = Field("mailto:admin@havan.study", validation_alias="VAPID_SUBJECT")
     password_reset_ttl_minutes: int = Field(10, validation_alias="PASSWORD_RESET_TTL_MINUTES")
-    db_pool_size: int = Field(default=5, validation_alias="DB_POOL_SIZE")
-    db_max_overflow: int = Field(default=10, validation_alias="DB_MAX_OVERFLOW")
+    db_pool_size: int = Field(default=3, validation_alias="DB_POOL_SIZE")
+    db_max_overflow: int = Field(default=2, validation_alias="DB_MAX_OVERFLOW")
     db_pool_recycle: int = Field(default=1800, validation_alias="DB_POOL_RECYCLE")
 
     model_config = SettingsConfigDict(
@@ -62,14 +64,11 @@ class Settings(BaseSettings):
                 )
             if self.smtp_port not in (465, 587):
                 raise RuntimeError("SMTP_PORT must be 465 or 587 in production")
-            if not isinstance(self.smtp_user, str) or not self.smtp_user.strip():
-                raise RuntimeError("SMTP_USER must be set in production")
-            if not isinstance(self.smtp_password, str) or not self.smtp_password.strip():
-                raise RuntimeError("SMTP_PASSWORD must be set in production")
-            if self.db_pool_size == 5 and "DB_POOL_SIZE" not in Field.__dict__:
-                self.db_pool_size = 15
-            if self.db_max_overflow == 10 and "DB_MAX_OVERFLOW" not in Field.__dict__:
-                self.db_max_overflow = 20
+            if self.resend_api_key.strip():
+                if not self.email_from.strip():
+                    raise RuntimeError("EMAIL_FROM must be set when RESEND_API_KEY is configured")
+            elif not self.smtp_user.strip() or not self.smtp_password.strip():
+                raise RuntimeError("Configure RESEND_API_KEY and EMAIL_FROM, or SMTP_USER and SMTP_PASSWORD, in production")
         return self
 
     @field_validator("database_url", mode="before")

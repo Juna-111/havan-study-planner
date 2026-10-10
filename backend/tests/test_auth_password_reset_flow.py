@@ -1,17 +1,60 @@
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 import time
+import json
 
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
+from unittest.mock import Mock
 
 from app.db.models import *  # noqa: F403 - register complete test metadata
 from app.db.models.student import PasswordResetToken
 from app.db.session import Base, get_db
 from app.main import app
 from app.services import auth_service
+
+
+def test_reset_email_uses_resend_https_api_when_configured(monkeypatch):
+    monkeypatch.setattr(
+        auth_service,
+        "get_settings",
+        lambda: SimpleNamespace(
+            resend_api_key="re_test_secret",
+            email_from="Havan <reset@example.com>",
+            smtp_from="",
+            smtp_user="",
+            smtp_password="",
+            password_reset_ttl_minutes=10,
+        ),
+    )
+    captured = {}
+    response = Mock(status=200)
+    response.__enter__ = Mock(return_value=response)
+    response.__exit__ = Mock(return_value=False)
+
+    def fake_urlopen(request, timeout):
+        captured["url"] = request.full_url
+        captured["authorization"] = request.get_header("Authorization")
+        captured["payload"] = json.loads(request.data)
+        captured["timeout"] = timeout
+        return response
+
+    monkeypatch.setattr(auth_service, "urlopen", fake_urlopen)
+    auth_service.send_reset_email("student@example.com", "012345")
+
+    assert captured == {
+        "url": "https://api.resend.com/emails",
+        "authorization": "Bearer re_test_secret",
+        "payload": {
+            "from": "Havan <reset@example.com>",
+            "to": ["student@example.com"],
+            "subject": "Havan Study Planner password reset code",
+            "text": "Your Havan Study Planner verification code is: 012345\n\nThis code expires in 10 minutes.",
+        },
+        "timeout": 10,
+    }
 
 
 class ResponseSendRecorder:

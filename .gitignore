@@ -22,3 +22,7 @@ logs/
 # Rebuild workspace metadata
 .freebuff/
 .qoderignore
+
+artifacts/
+backend/production_audit.sqlite
+

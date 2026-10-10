@@ -200,17 +200,19 @@ export function BottomSheet({
   )
 }
 
-type Topic = { id: string; name: string; minutes: number }
+type Topic = { id: string; name: string; minutes?: number }
 type Chapter = { id: string; name: string; topics: Topic[] }
 type Course = { id: string; name: string; chapters: Chapter[] }
 
 export function TreeSelect({
   courses,
   selected,
+  minutesByTopic = {},
   onChange,
 }: {
   courses: Course[]
   selected: ReadonlySet<string>
+  minutesByTopic?: Record<string, number>
   onChange: (selection: Set<string>) => void
 }) {
   const [open, setOpen] = useState<Set<string>>(new Set())
@@ -231,8 +233,8 @@ export function TreeSelect({
       courses
         .flatMap((course) => course.chapters.flatMap((chapter) => chapter.topics))
         .filter((topic) => selected.has(topic.id))
-        .reduce((sum, topic) => sum + topic.minutes, 0),
-    [courses, selected],
+        .reduce((sum, topic) => sum + (minutesByTopic[topic.id] ?? topic.minutes ?? 0), 0),
+    [courses, selected, minutesByTopic],
   )
 
   return (
@@ -303,7 +305,7 @@ export function TreeSelect({
                           />
                           <span>
                             {topic.name}
-                            <small>{topic.minutes} min</small>
+                            {selected.has(topic.id) && <small>{minutesByTopic[topic.id] ?? topic.minutes ?? 0} min</small>}
                           </span>
                         </label>
                       )) : (

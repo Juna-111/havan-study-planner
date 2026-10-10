@@ -15,6 +15,7 @@ const API_BASE_URL = rawApiBaseUrl
   : 'http://localhost:8000'
 const API_V1_PREFIX = '/api/v1'
 const DEFAULT_TIMEOUT_MS = 15_000
+const FORGOT_PASSWORD_TIMEOUT_MS = 75_000
 const PUBLIC_AUTH_PATHS = new Set([
   '/auth/login',
   '/auth/signup',
@@ -61,6 +62,9 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}, timeoutM
   if (!API_BASE_URL) throw new ApiError(0, 'Havan backend URL is not configured.')
 
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  const requestTimeoutMs = normalizedPath === '/auth/forgot-password' && timeoutMs === DEFAULT_TIMEOUT_MS
+    ? FORGOT_PASSWORD_TIMEOUT_MS
+    : timeoutMs
   const url = `${API_BASE_URL}${API_V1_PREFIX}${normalizedPath}`
   const headers = new Headers(init.headers)
   const isFormData = typeof FormData !== 'undefined' && init.body instanceof FormData
@@ -70,7 +74,7 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}, timeoutM
   if (token && !headers.has('Authorization')) headers.set('Authorization', `Bearer ${token}`)
 
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), timeoutMs)
+  const timeout = setTimeout(() => controller.abort(), requestTimeoutMs)
   try {
     const signal = init.signal && typeof AbortSignal.any === 'function'
       ? AbortSignal.any([init.signal, controller.signal])

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppShell, PageHeader, StickyActionBar } from '@/components/layout'
+import layoutStyles from '@/components/layout/layout.module.css'
 import { Button, Card, EmptyState, ErrorState, NumberStepper, Segmented, TreeSelect } from '@/components/ui'
 import { apiFetch } from '@/lib/api'
 import { createHavanPlan, previewHavanPlan, type HavanPlan, type HavanPlanMode } from '@/lib/havanPlan'
@@ -310,11 +311,11 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
                   topics: chapter.topics.map((topic) => ({
                     id: String(topic.id),
                     name: topic.name,
-                    minutes: topic.estimated_study_minutes,
                   })),
                 })),
               }))}
               selected={new Set([...selected].map(String))}
+              minutesByTopic={Object.fromEntries(selectedTopics.map((topic) => [topic.id, automaticEstimates[topic.id] ?? MIN_TOPIC_MINUTES]))}
               onChange={(next) => {
                 const ids = new Set([...next].map(Number))
                 setSelected(ids)
@@ -478,12 +479,12 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
       </div>
 
       <StickyActionBar>
-        <div className="havan-generate-bar">
-          <div className="havan-generate-summary">
+        <div className={`${layoutStyles['havan-generate-bar']} havan-generate-bar`}>
+          <div className={layoutStyles['havan-generate-summary']}>
             <strong>{selected.size ? `${selected.size} ${selected.size === 1 ? 'topic' : 'topics'} · ${hours}h ${mode === 'today' ? 'today' : 'per study day'}` : 'Choose topics and study time'}</strong>
             <span>{selected.size ? 'Havan is ready to organize your choices.' : 'Your plan is created only after you choose both.'}</span>
           </div>
-          <div className="havan-generate-actions">
+          <div className={layoutStyles['havan-generate-actions']}>
             {builderStep > 1 && <Button variant="secondary" disabled={busy !== null} onClick={() => { setError(''); setBuilderStep((builderStep - 1) as 1|2|3|4) }}>Back</Button>}
             {builderStep < 4 ? (
               <>
