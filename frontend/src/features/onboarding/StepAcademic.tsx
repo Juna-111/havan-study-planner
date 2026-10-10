@@ -2,11 +2,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button, Card, Select } from '@/components/ui'
 import CourseChoice from './CourseChoice'
-import { apiFetch } from '@/lib/api'
+import { apiFetchAllPages } from '@/lib/api'
 import AcademicCatalogRequest from './AcademicCatalogRequest'
 type Opt = { id: number; name: string; status?: string }
 type Course = { id: number; code: string; name: string }
-type Page<T> = { items: T[]; page: number; page_size: number; total: number; pages: number }
 type Props = {
   name: string
   university: string
@@ -31,9 +30,9 @@ export default function StepAcademic(props: Props) {
     let cancelled = false
     setLoading((old) => ({ ...old, universities: true }))
     setLoadError('')
-    apiFetch<Page<Opt>>('/universities?page=1&page_size=100')
+    apiFetchAllPages<Opt>('/universities')
       .then((response) => {
-        if (!cancelled) setUnis(response.items.filter((item) => item.status === 'ACTIVE'))
+        if (!cancelled) setUnis(response.filter((item) => item.status === 'ACTIVE'))
       })
       .catch((value) => {
         if (!cancelled) setLoadError(value instanceof Error ? value.message : 'Could not load universities.')
@@ -55,9 +54,9 @@ export default function StepAcademic(props: Props) {
     const request = ++universityRequest.current
     let cancelled = false
     setLoading((old) => ({ ...old, streams: true }))
-    apiFetch<Page<Opt>>('/streams?university_id=' + props.university + '&page=1&page_size=100')
+    apiFetchAllPages<Opt>('/streams?university_id=' + props.university)
       .then((response) => {
-        if (!cancelled && request === universityRequest.current) setStreams(response.items.filter((item) => item.status === 'ACTIVE'))
+        if (!cancelled && request === universityRequest.current) setStreams(response.filter((item) => item.status === 'ACTIVE'))
       })
       .catch((value) => {
         if (!cancelled && request === universityRequest.current) setLoadError(value instanceof Error ? value.message : 'Could not load streams.')
@@ -74,9 +73,9 @@ export default function StepAcademic(props: Props) {
     const request = ++streamRequest.current
     let cancelled = false
     setLoading((old) => ({ ...old, courses: true }))
-    apiFetch<Page<Course>>('/courses?stream_id=' + props.stream + '&include_freshman=true&page=1&page_size=100')
+    apiFetchAllPages<Course>('/courses?stream_id=' + props.stream + '&include_freshman=true')
       .then((response) => {
-        if (!cancelled && request === streamRequest.current) setCourses(response.items)
+        if (!cancelled && request === streamRequest.current) setCourses(response)
       })
       .catch((value) => {
         if (!cancelled && request === streamRequest.current) setLoadError(value instanceof Error ? value.message : 'Could not load courses.')

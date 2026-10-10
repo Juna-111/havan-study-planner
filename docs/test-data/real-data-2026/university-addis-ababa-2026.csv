@@ -1,3 +1,3 @@
-university_code,university_name,curriculum,curriculum_version,academic_year,stream_code,stream_name,semester,course_code,course_name,credit_hours
-AAU,Addis Ababa University,Harmonized Freshman,2026,2026/27,NAT,Natural Science,1,FLEn1011,Communicative English Language Skills I,3
-AAU,Addis Ababa University,Harmonized Freshman,2026,2026/27,NAT,Natural Science,1,LoCT1011,Critical Thinking,3
+university_code,university_name,stream_code,stream_name,semester,course_code,course_name,credit_hours
+AAU,Addis Ababa University,NAT,Natural Science,1,FLEn1011,Communicative English Language Skills I,3
+AAU,Addis Ababa University,NAT,Natural Science,1,LoCT1011,Critical Thinking,3

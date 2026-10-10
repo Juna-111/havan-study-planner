@@ -20,7 +20,7 @@ from app.db.models.academic_catalog import (
 
 MAX_FILE_SIZE=5*1024*1024
 PROMOTION_FILE_MARKER="TYPE: HAVAN_PROMOTION_V1"
-CSV_COLUMNS={"university_code","university_name","stream_code","stream_name","semester","course_code","course_name","credit_hours"}
+CSV_COLUMN_ORDER=("university_code","university_name","stream_code","stream_name","semester","course_code","course_name","credit_hours")
 @dataclass
 class UniversityImportRow:
  line:int; university_code:str; university_name:str; stream_code:str; stream_name:str; semester:int; course_code:str; course_name:str; credit_hours:int|None
@@ -28,15 +28,27 @@ class UniversityImportRow:
 class PromotionImportRow:
  line:int; course_code:str; chapter_name:str; topic_name:str|None; platform_name:str; description:str|None; button_text:str; url:str; order_index:int; status:str
 def _clean(v:str|None)->str:return(v or "").strip()
+def _reusable_freshman_course(db:Session,code:str,name:str,credit_hours:int|None)->Course|None:
+ course=db.scalar(select(Course).where(func.upper(Course.code)==code.strip().upper(),Course.academic_scope=="FRESHMAN",Course.status=="ACTIVE"))
+ if course is None or course.name.strip().casefold()!=name.strip().casefold():return None
+ if credit_hours is not None and course.credit_hours is not None and course.credit_hours!=credit_hours:return None
+ return course
 def parse_university_csv(raw:bytes)->list[UniversityImportRow]:
  try:text=raw.decode("utf-8-sig")
  except UnicodeDecodeError as e:raise HTTPException(422,"The university CSV must be UTF-8 text.") from e
- reader=csv.DictReader(io.StringIO(text)); headers={_clean(h).lower() for h in(reader.fieldnames or [])}; missing=sorted(CSV_COLUMNS-headers)
- if missing:raise HTTPException(422,"University CSV is missing columns: "+", ".join(missing))
+ reader=csv.DictReader(io.StringIO(text)); headers=tuple(_clean(h).lower() for h in(reader.fieldnames or []))
+ if headers!=CSV_COLUMN_ORDER:raise HTTPException(422,"University CSV header must be exactly: "+",".join(CSV_COLUMN_ORDER))
  rows=[]
  for line,raw_row in enumerate(reader,2):
+  if None in raw_row or any(value is None for value in raw_row.values()):raise HTTPException(422,f"University CSV line {line}: row has a different number of columns than the header.")
   row={str(k).strip().lower():_clean(v) for k,v in raw_row.items() if k is not None}; required=["university_code","university_name","stream_code","stream_name","semester","course_code","course_name"]
   if any(not row.get(k) for k in required):raise HTTPException(422,f"University CSV line {line}: required value is missing.")
+  limits={"university_code":30,"university_name":150,"stream_code":30,"stream_name":100,"course_code":40,"course_name":150}
+  for key,maximum in limits.items():
+   if len(row[key])>maximum:raise HTTPException(422,f"University CSV line {line}: {key} must be {maximum} characters or fewer.")
+  if not re.fullmatch(r"[A-Za-z0-9_-]+",row["university_code"]):raise HTTPException(422,f"University CSV line {line}: university_code may contain only letters, digits, underscores, and hyphens.")
+  if not re.fullmatch(r"[A-Za-z0-9_-]+",row["stream_code"]):raise HTTPException(422,f"University CSV line {line}: stream_code may contain only letters, digits, underscores, and hyphens.")
+  if not re.fullmatch(r"[A-Za-z0-9 ._-]+",row["course_code"]):raise HTTPException(422,f"University CSV line {line}: course_code contains unsupported characters.")
   try:semester=int(row["semester"])
   except ValueError as e:raise HTTPException(422,f"University CSV line {line}: semester must be 1 or 2.") from e
   if semester not in(1,2):raise HTTPException(422,f"University CSV line {line}: semester must be 1 or 2.")
@@ -92,13 +104,9 @@ def _validate_university_references(db:Session,rows:list[UniversityImportRow])->
   registry_key=f"UNIVERSITY:{university.code.upper()}:{stream.code.upper()}:{course_code}"
   course=db.scalar(select(Course).where(Course.registry_key==registry_key,Course.status=="ACTIVE"))
   if course is None:
-   # Existing national freshman courses remain reusable, while ordinary university
-   # courses can now be created directly from this stream's CSV.
-   course=db.scalar(select(Course).where(func.upper(Course.code)==course_code,Course.academic_scope=="FRESHMAN",Course.status=="ACTIVE"))
-  if course is not None and course.name.strip().casefold()!=row.course_name.strip().casefold():
-   raise HTTPException(409,f"University CSV line {row.line}: course {row.course_code} already has a different name.")
-  if course is not None and row.credit_hours is not None and course.credit_hours is not None and course.credit_hours!=row.credit_hours:
-   raise HTTPException(409,f"University CSV line {row.line}: course {row.course_code} already has different credit hours.")
+   # Reuse a national freshman course only when its catalog identity matches.
+   # Universities may legitimately reuse a code for a different local course.
+   course=_reusable_freshman_course(db,course_code,row.course_name,row.credit_hours)
   if course is None: continue
   offering=db.scalar(select(UniversityCourseOffering).where(UniversityCourseOffering.stream_id==stream.id,UniversityCourseOffering.course_id==course.id))
   legacy_mapping=db.scalar(select(UniversityCourseMapping).where(UniversityCourseMapping.stream_id==stream.id,UniversityCourseMapping.course_id==course.id))
@@ -106,8 +114,13 @@ def _validate_university_references(db:Session,rows:list[UniversityImportRow])->
   if offering is None and legacy_mapping is not None and legacy_mapping.status!="ARCHIVED" and legacy_mapping.semester_number!=row.semester: raise HTTPException(409,f"University CSV line {row.line}: course {row.course_code} is already mapped to semester {legacy_mapping.semester_number}.")
 
 def preview_university_import(rows:list[UniversityImportRow],db:Session|None=None)->dict:
- seen=set(); course_semesters={}
+ seen=set(); course_semesters={}; university_names={}; stream_names={}
  for row in rows:
+  university_key=row.university_code.strip().upper(); stream_key=(university_key,row.stream_code.strip().upper())
+  prior_university_name=university_names.setdefault(university_key,row.university_name.strip().casefold())
+  if prior_university_name!=row.university_name.strip().casefold():raise HTTPException(422,f"University CSV line {row.line}: one university_code cannot have multiple university names.")
+  prior_stream_name=stream_names.setdefault(stream_key,row.stream_name.strip().casefold())
+  if prior_stream_name!=row.stream_name.strip().casefold():raise HTTPException(422,f"University CSV line {row.line}: one stream_code cannot have multiple names within a university.")
   course_key=(row.university_code.strip().upper(),row.stream_code.strip().upper(),row.course_code.strip().upper())
   exact_key=course_key+(row.semester,)
   if exact_key in seen:
@@ -146,7 +159,7 @@ def commit_university_import(db:Session,rows:list[UniversityImportRow])->dict:
    registry_key=f"UNIVERSITY:{u.code.upper()}:{s.code.upper()}:{course_code}"
    course=db.scalar(select(Course).where(Course.registry_key==registry_key))
    if course is None:
-    course=db.scalar(select(Course).where(func.upper(Course.code)==course_code,Course.academic_scope=="FRESHMAN",Course.status=="ACTIVE"))
+    course=_reusable_freshman_course(db,course_code,row.course_name,row.credit_hours)
    if course is None:
     course=Course(stream_id=s.id,code=course_code,name=row.course_name.strip(),credit_hours=row.credit_hours,academic_scope="UNIVERSITY",registry_key=registry_key,status="ACTIVE")
     db.add(course);db.flush();counts["courses"]+=1

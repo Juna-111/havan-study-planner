@@ -1,0 +1,5 @@
+university_code,university_name,stream_code,stream_name,semester,course_code,course_name,credit_hours
+EXAMPLE_A,Example University Alpha - Sample Only,CS,Computer Science - Sample Only,1,DEMO101,Foundations of Computing - Sample Only,3
+EXAMPLE_A,Example University Alpha - Sample Only,CS,Computer Science - Sample Only,1,DEMO102,Discrete Mathematics - Sample Only,3
+EXAMPLE_B,Example University Beta - Sample Only,CS,Computer Science - Sample Only,1,DEMO101,Computing Principles - Sample Only,3
+EXAMPLE_B,Example University Beta - Sample Only,CS,Computer Science - Sample Only,1,DEMO102,Mathematics for Computing - Sample Only,3

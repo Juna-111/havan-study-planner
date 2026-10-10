@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { apiFetch } from '@/lib/api'
+import { apiFetch, apiFetchAllPages } from '@/lib/api'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -30,5 +30,30 @@ describe('API rate-limit feedback', () => {
       status: 429,
       message: 'Too many requests. Please wait a few minutes before trying again.',
     })
+  })
+})
+
+describe('apiFetchAllPages', () => {
+  it('loads every university page beyond the first 100 records', async () => {
+    const requestedPages: number[] = []
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input))
+      const page = Number(url.searchParams.get('page'))
+      requestedPages.push(page)
+      const start = (page - 1) * 100
+      const end = Math.min(start + 100, 201)
+      const items = Array.from({ length: end - start }, (_, index) => ({ id: start + index + 1 }))
+      return new Response(JSON.stringify({ items, pages: 3 }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }))
+
+    const universities = await apiFetchAllPages<{ id: number }>('/universities')
+
+    expect(universities).toHaveLength(201)
+    expect(universities[0].id).toBe(1)
+    expect(universities[200].id).toBe(201)
+    expect(requestedPages).toEqual([1, 2, 3])
   })
 })

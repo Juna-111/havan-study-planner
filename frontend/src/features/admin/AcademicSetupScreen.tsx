@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { apiFetch } from '@/lib/api'
+import { apiFetchAllPages } from '@/lib/api'
 import styles from './admin.module.css'
 
 type University = { id: number; name: string; code: string; status: string }
@@ -15,12 +15,12 @@ export default function AcademicSetupScreen({ onImport }: { onImport?: () => voi
 
   useEffect(() => {
     Promise.all([
-      apiFetch<{ items: University[] }>('/universities?page=1&page_size=100'),
-      apiFetch<{ items: Stream[] }>('/streams?page=1&page_size=100'),
+      apiFetchAllPages<University>('/universities'),
+      apiFetchAllPages<Stream>('/streams'),
     ]).then(([universityResult, streamResult]) => {
-      setUniversities(universityResult.items)
-      setStreams(streamResult.items)
-      const firstActive = universityResult.items.find((item) => item.status === 'ACTIVE')
+      setUniversities(universityResult)
+      setStreams(streamResult)
+      const firstActive = universityResult.find((item) => item.status === 'ACTIVE')
       if (firstActive) setUniversityId(String(firstActive.id))
     }).catch((value) => setError(value instanceof Error ? value.message : 'Could not load academic catalog.'))
   }, [])
@@ -38,7 +38,7 @@ export default function AcademicSetupScreen({ onImport }: { onImport?: () => voi
       {error && <div className={styles.alert}>{error}</div>}
       <div className={styles.notice}>
         <h2>Update the catalog</h2>
-        <p>Upload a university CSV to add or update universities, streams, and course offerings.</p>
+        <p>One CSV can add or update multiple universities, their streams, and complete semester course offerings.</p>
         {onImport && <button className={styles.primary} onClick={onImport}>Update university CSV</button>}
       </div>
       <div className={styles.selectors}>

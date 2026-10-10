@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { apiFetch } from '@/lib/api'
+import { apiFetch, apiFetchAllPages } from '@/lib/api'
 import styles from './admin.module.css'
 
 type U = { id: number; name: string; code: string; status: string }
@@ -29,13 +29,13 @@ export default function MappingScreen() {
 
   useEffect(() => {
     Promise.all([
-      apiFetch<{ items: U[] }>('/universities?page=1&page_size=100'),
-      apiFetch<{ items: S[] }>('/streams?page=1&page_size=100'),
+      apiFetchAllPages<U>('/universities'),
+      apiFetchAllPages<S>('/streams'),
     ])
       .then(([universitiesResult, streamsResult]) => {
-        setUniversities(universitiesResult.items)
-        setStreams(streamsResult.items)
-        const firstActiveUniversity = universitiesResult.items.find((item) => item.status === 'ACTIVE')
+        setUniversities(universitiesResult)
+        setStreams(streamsResult)
+        const firstActiveUniversity = universitiesResult.find((item) => item.status === 'ACTIVE')
         if (firstActiveUniversity) {
           setUniversityId(String(firstActiveUniversity.id))
         }

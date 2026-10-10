@@ -1,12 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { apiFetch } from '@/lib/api'
+import { apiFetch, apiFetchAllPages } from '@/lib/api'
 import type { AdminMode } from './AdminShell'
 import styles from './admin.module.css'
 
 type Props = { onMode: (mode: AdminMode) => void }
-type Page<T> = { items: T[] }
 type Item = { id: number; status: string }
 
 export default function AdminOverview({ onMode }: Props) {
@@ -15,16 +14,16 @@ export default function AdminOverview({ onMode }: Props) {
 
   useEffect(() => {
     Promise.all([
-      apiFetch<Page<Item>>('/universities?page=1&page_size=100'),
-      apiFetch<Page<Item>>('/streams?page=1&page_size=100'),
-      apiFetch<Page<Item>>('/courses?page=1&page_size=100'),
+      apiFetchAllPages<Item>('/universities'),
+      apiFetchAllPages<Item>('/streams'),
+      apiFetchAllPages<Item>('/courses'),
       apiFetch<Item[]>('/university-course-offerings'),
       apiFetch<Array<{ status: string }>>('/academic-catalog-requests'),
     ]).then(([universities, streams, courses, mappings, requests]) => {
       setStats({
-        universities: universities.items.filter((item) => item.status === 'ACTIVE').length,
-        streams: streams.items.filter((item) => item.status === 'ACTIVE').length,
-        courses: courses.items.filter((item) => item.status === 'ACTIVE').length,
+        universities: universities.filter((item) => item.status === 'ACTIVE').length,
+        streams: streams.filter((item) => item.status === 'ACTIVE').length,
+        courses: courses.filter((item) => item.status === 'ACTIVE').length,
         mappings: mappings.filter((item) => item.status === 'ACTIVE').length,
         requests: requests.filter((item) => item.status === 'PENDING').length,
       })

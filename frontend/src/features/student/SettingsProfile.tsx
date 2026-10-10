@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Button, Card, NumberStepper } from '@/components/ui'
-import { apiFetch } from '@/lib/api'
+import { apiFetch, apiFetchAllPages } from '@/lib/api'
 import AcademicCatalogRequest from '@/features/onboarding/AcademicCatalogRequest'
 
 const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const
@@ -20,15 +20,15 @@ export default function SettingsProfile({ profile, onUpdate }: { profile: Profil
   const [message, setMessage] = useState('')
 
   useEffect(() => {
-    apiFetch<{ items: Opt[] }>('/universities?page=1&page_size=100')
-      .then((value) => setUniversities(value.items))
+    apiFetchAllPages<Opt>('/universities')
+      .then(setUniversities)
       .catch(() => setUniversities([]))
   }, [])
   useEffect(() => {
     setStreams([])
     if (!universityId) return
-    apiFetch<{ items: Opt[] }>(`/streams?university_id=${universityId}&page=1&page_size=100`)
-      .then((value) => setStreams(value.items))
+    apiFetchAllPages<Opt>(`/streams?university_id=${universityId}`)
+      .then(setStreams)
       .catch(() => setStreams([]))
   }, [universityId])
 

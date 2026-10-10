@@ -101,6 +101,18 @@ def test_promotion_preview_and_commit_process_multiple_blocks():
             db.add(Topic(chapter_id=chapter.id, name="Units", order_index=1))
             db.commit()
 
+            extra_blocks = "\n\n".join(
+                f"""Course_Code: PHY101
+Chapter: Measurement
+Topic: Units
+Platform_Name: Havan Resource {index}
+Description: Additional verified practice resource.
+Button_Text: Open resource
+URL: https://example.com/measurement/{index}
+Order_Index: {index}
+Status: ACTIVE"""
+                for index in range(3, 6)
+            )
             rows = parse_promotion_file(
                 f"""{PROMOTION_FILE_MARKER}
 
@@ -122,17 +134,21 @@ Button_Text: Start practice
 URL: https://example.com/practice
 Order_Index: 2
 Status: ACTIVE
+\n\n{extra_blocks}
 """.encode()
             )
 
-            assert preview_promotion_import(db, rows) == {"promotions": 2}
-            assert commit_promotion_import(db, rows) == {"created": 2, "updated": 0}
+            assert preview_promotion_import(db, rows) == {"promotions": 5}
+            assert commit_promotion_import(db, rows) == {"created": 5, "updated": 0}
 
             saved = list(db.scalars(select(HavanPromotion).order_by(HavanPromotion.order_index)))
-            assert len(saved) == 2
+            assert len(saved) == 5
             assert [item.platform_name for item in saved] == [
                 "Havan Learning Resource",
                 "Havan Exam Preparation",
+                "Havan Resource 3",
+                "Havan Resource 4",
+                "Havan Resource 5",
             ]
     finally:
         Base.metadata.drop_all(engine)
@@ -235,6 +251,56 @@ def test_direct_university_stream_csv_import_creates_course_offering():
     finally:
         Base.metadata.drop_all(engine)
         engine.dispose()
+
+
+def test_university_csv_import_supports_many_universities_with_local_course_code_collisions():
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(engine)
+    try:
+        with Session(engine) as db:
+            db.add(Course(
+                code="ENG101",
+                name="National English",
+                academic_scope="FRESHMAN",
+                registry_key="FRESHMAN:ENG101",
+            ))
+            db.commit()
+            import_rows = [
+                "university_code,university_name,stream_code,stream_name,semester,course_code,course_name,credit_hours"
+            ]
+            for index in range(5):
+                import_rows.append(
+                    f"UNI_{index},University {index},CS,Computer Science,1,ENG101,Local English {index},{3 + index}"
+                )
+            rows = parse_university_csv(("\n".join(import_rows) + "\n").encode())
+
+            assert preview_university_import(rows, db)["universities"] == 5
+            result = commit_university_import(db, rows)
+
+            assert result["universities"] == 5
+            assert result["streams"] == 5
+            assert result["offerings"] == 5
+            assert set(db.scalars(select(University.code))) == {f"UNI_{index}" for index in range(5)}
+            for index in range(5):
+                course = db.scalar(select(Course).where(Course.registry_key == f"UNIVERSITY:UNI_{index}:CS:ENG101"))
+                assert course is not None and course.name == f"Local English {index}"
+    finally:
+        Base.metadata.drop_all(engine)
+        engine.dispose()
+
+
+def test_university_csv_rejects_legacy_curriculum_and_extra_columns():
+    raw = (
+        b"university_code,university_name,curriculum,stream_code,stream_name,semester,course_code,course_name,credit_hours\n"
+        b"UNI_A,University Alpha,Legacy,CSE,Computer Science,1,CS101,Intro,3\n"
+    )
+
+    with pytest.raises(HTTPException, match="header must be exactly"):
+        parse_university_csv(raw)
 
 
 def test_university_preview_rejects_exact_duplicate_mapping():

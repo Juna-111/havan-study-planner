@@ -142,4 +142,22 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   }
 }
 
+export async function apiFetchAllPages<T>(path: string, pageSize = 100): Promise<T[]> {
+  const separator = path.includes('?') ? '&' : '?'
+  const items: T[] = []
+  let page = 1
+  let totalPages = 1
+
+  do {
+    const result = await apiFetch<{ items: T[]; pages: number }>(
+      `${path}${separator}page=${page}&page_size=${pageSize}`,
+    )
+    items.push(...result.items)
+    totalPages = result.pages
+    page += 1
+  } while (page <= totalPages)
+
+  return items
+}
+
 export const getApiBaseUrl = () => API_BASE_URL

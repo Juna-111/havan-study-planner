@@ -56,7 +56,7 @@ export default function CourseRegistryScreen({ onImport }: { onImport?: () => vo
       <header className={styles.header}>
         <span>CONTENT · COURSE REGISTRY</span>
         <h1>Canonical Course Registry</h1>
-        <p>Courses are created, updated, versioned, and populated from the course TXT/MD source. University CSV files only map existing registry courses.</p>
+        <p>Freshman course content comes from TXT/MD imports. University CSV files can add multiple universities and streams, create stream-specific courses, and reuse matching Freshman courses.</p>
       </header>
       {error && <div className={styles.alert}>{error}</div>}
       <div className={styles.notice}>
