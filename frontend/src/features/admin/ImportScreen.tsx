@@ -7,6 +7,7 @@ import styles from './admin.module.css'
 type CoursePreview = { code:string; name:string; content_version:string; category_codes:string[]; action:string; chapters:{name:string;topics:{name:string;difficulty:number;important_points?:string|null}[]}[] }
 
 type ImportKind = 'course' | 'university' | 'promotion'
+const IMPORT_TIMEOUT_MS = 120_000
 
 export default function ImportScreen({ scope }: { scope?: 'catalog' | 'content' }) {
   const [file,setFile]=useState<File|null>(null)
@@ -44,10 +45,10 @@ export default function ImportScreen({ scope }: { scope?: 'catalog' | 'content' 
     try{
       const fd=new FormData();fd.append('file',file)
       if(kind==='university'){
-        const data=await apiFetch<Record<string,number>>('/admin-file-import/university/preview',{method:'POST',body:fd})
+        const data=await apiFetch<Record<string,number>>('/admin-file-import/university/preview',{method:'POST',body:fd},IMPORT_TIMEOUT_MS)
         setSummary({kind,data});setMessage('University import validated. Nothing has been changed.')
       }else if(kind==='promotion'){
-        const data=await apiFetch<Record<string,number>>('/admin-file-import/promotion/preview',{method:'POST',body:fd})
+        const data=await apiFetch<Record<string,number>>('/admin-file-import/promotion/preview',{method:'POST',body:fd},IMPORT_TIMEOUT_MS)
         setSummary({kind,data});setMessage('Havan promotion import validated. Nothing has been changed.')
       }else{
         const data=await apiFetch<CoursePreview[]>('/freshman-registry-import/preview?content_version='+encodeURIComponent(version.trim()||'1.0'),{method:'POST',body:fd})
@@ -63,10 +64,10 @@ export default function ImportScreen({ scope }: { scope?: 'catalog' | 'content' 
     try{
       const fd=new FormData();fd.append('file',file)
       if(kind==='university'){
-        const data=await apiFetch<Record<string,number>>('/admin-file-import/university/commit',{method:'POST',body:fd})
+        const data=await apiFetch<Record<string,number>>('/admin-file-import/university/commit',{method:'POST',body:fd},IMPORT_TIMEOUT_MS)
         setMessage('University import applied: '+data.universities+' universities, '+data.streams+' streams, '+data.courses+' courses, '+data.mappings+' mappings.')
       }else if(kind==='promotion'){
-        const data=await apiFetch<Record<string,number>>('/admin-file-import/promotion/commit',{method:'POST',body:fd})
+        const data=await apiFetch<Record<string,number>>('/admin-file-import/promotion/commit',{method:'POST',body:fd},IMPORT_TIMEOUT_MS)
         setMessage('Havan promotion import applied: '+data.created+' created, '+data.updated+' updated.')
       }else{
         if(!coursePreview.length)return

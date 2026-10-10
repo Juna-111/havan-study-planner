@@ -1,7 +1,7 @@
 import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, event, select
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
@@ -325,6 +325,43 @@ AAU,Addis Ababa University,NAT,Natural Science,2,PHY101,Physics,3
 
     with pytest.raises(HTTPException, match="both semesters"):
         preview_university_import(rows)
+
+
+def test_large_university_csv_preview_uses_batched_database_queries():
+    engine = create_engine("sqlite://")
+    Base.metadata.create_all(engine)
+    try:
+        with Session(engine) as db:
+            university = University(code="AAU", name="Addis Ababa University")
+            db.add(university)
+            db.flush()
+            db.add(Stream(university_id=university.id, code="CS", name="Computer Science"))
+            db.commit()
+
+            csv_rows = ["university_code,university_name,stream_code,stream_name,semester,course_code,course_name,credit_hours"]
+            csv_rows.extend(
+                f"AAU,Addis Ababa University,CS,Computer Science,{1 + index % 2},CS{index:04},Sample Course {index},3"
+                for index in range(1200)
+            )
+            rows = parse_university_csv(("\n".join(csv_rows) + "\n").encode())
+            select_count = [0]
+
+            def count_selects(connection, cursor, statement, parameters, context, executemany):
+                if statement.lstrip().upper().startswith("SELECT"):
+                    select_count[0] += 1
+
+            event.listen(engine, "before_cursor_execute", count_selects)
+            try:
+                summary = preview_university_import(rows, db)
+            finally:
+                event.remove(engine, "before_cursor_execute", count_selects)
+
+            assert summary["rows"] == 1200
+            assert summary["universities"] == 1
+            assert select_count[0] <= 20
+    finally:
+        Base.metadata.drop_all(engine)
+        engine.dispose()
 
 
 def test_promotion_file_normalizes_valid_https_url():

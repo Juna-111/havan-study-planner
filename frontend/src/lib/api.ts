@@ -57,7 +57,7 @@ function formatDetail(detail: unknown): string {
   return 'The request could not be completed.'
 }
 
-export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function apiFetch<T>(path: string, init: RequestInit = {}, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<T> {
   if (!API_BASE_URL) throw new ApiError(0, 'Havan backend URL is not configured.')
 
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
@@ -70,7 +70,7 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   if (token && !headers.has('Authorization')) headers.set('Authorization', `Bearer ${token}`)
 
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS)
+  const timeout = setTimeout(() => controller.abort(), timeoutMs)
   try {
     const signal = init.signal && typeof AbortSignal.any === 'function'
       ? AbortSignal.any([init.signal, controller.signal])

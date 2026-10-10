@@ -47,7 +47,7 @@ async def commit_university(request: Request, file:UploadFile=File(...),db:Sessi
  _assert_payload_within_limit(request, file, "university CSV")
  raw=await file.read()
  if len(raw)>MAX_FILE_SIZE:raise HTTPException(413,"The university CSV must be 5 MB or smaller.")
- rows=parse_university_csv(raw);preview_university_import(rows);return commit_university_import(db,rows)
+ rows=parse_university_csv(raw);return commit_university_import(db,rows)
 
 
 @router.post("/promotion/preview",response_model=PromotionImportPreview)
