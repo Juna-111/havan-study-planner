@@ -135,7 +135,7 @@ def downgrade() -> None:
             with op.batch_alter_table(table, naming_convention=FK_NAMING) as batch:
                 batch.add_column(sa.Column("curriculum_id", sa.Integer(), nullable=True))
             op.execute(sa.text(
-                f"UPDATE {table} SET curriculum_id = (SELECT id FROM curriculums "
+                f"UPDATE {table} SET curriculum_id = (SELECT curriculums.id FROM curriculums "
                 f"JOIN streams ON streams.university_id = curriculums.university_id "
                 f"WHERE streams.id = {table}.stream_id LIMIT 1)"
             ))
@@ -143,6 +143,10 @@ def downgrade() -> None:
                 batch.alter_column("curriculum_id", existing_type=sa.Integer(), nullable=False)
                 batch.create_foreign_key(f"fk_{table}_curriculum_id_curriculums", "curriculums", ["curriculum_id"], ["id"], ondelete="CASCADE")
                 batch.create_index(index, ["curriculum_id"])
+    with op.batch_alter_table("streams", naming_convention=FK_NAMING) as batch:
+        batch.drop_constraint("fk_streams_university_id_universities", type_="foreignkey")
+        batch.drop_column("university_id")
+
     if sa.inspect(op.get_bind()).has_table("academic_catalog_requests"):
         with op.batch_alter_table("academic_catalog_requests") as batch:
             batch.add_column(sa.Column("version", sa.String(length=50), nullable=True))

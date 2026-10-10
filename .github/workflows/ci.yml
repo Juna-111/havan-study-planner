@@ -71,6 +71,8 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Lint
         run: npm run lint
+      - name: Generate Next.js route types
+        run: npm --workspace @havan/study-planner-frontend exec next typegen
       - name: Type check
         run: npx tsc --noEmit -p frontend
       - name: Test
