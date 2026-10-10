@@ -25,6 +25,44 @@ type PlanBuilderProps = {
 }
 
 import { modeCopy } from './PlanBuilderCopy'
+
+const MIN_TOPIC_MINUTES = 5
+const MAX_TOPIC_MINUTES = 1440
+const WEEKDAY_MAP: Record<string, number> = { mon: 0, tue: 1, wed: 2, thu: 3, fri: 4, sat: 5, sun: 6 }
+
+function countAvailableStudyDays(start: Date, horizon: number, weekdays: number[]) {
+  let count = 0
+  for (let offset = 0; offset < horizon; offset += 1) {
+    const day = new Date(start)
+    day.setDate(start.getDate() + offset)
+    if (weekdays.includes((day.getDay() + 6) % 7)) count += 1
+  }
+  return count
+}
+
+function distributeMinutes(topics: Topic[], availableMinutes: number): Record<number, number> {
+  if (!topics.length) return {}
+  const units = Math.floor(Math.max(0, availableMinutes) / MIN_TOPIC_MINUTES)
+  // The planner requires a minimum estimate for every selected topic.
+  const distributableUnits = Math.max(topics.length, units)
+  const weights = topics.map((topic) => Math.max(1, topic.difficulty))
+  const weightTotal = weights.reduce((sum, weight) => sum + weight, 0)
+  const extraUnits = distributableUnits - topics.length
+  const allocations = weights.map((weight) => 1 + Math.floor(extraUnits * weight / weightTotal))
+  let remainder = distributableUnits - allocations.reduce((sum, allocation) => sum + allocation, 0)
+  const order = weights
+    .map((weight, index) => ({ index, fraction: extraUnits * weight / weightTotal % 1 }))
+    .sort((left, right) => right.fraction - left.fraction || left.index - right.index)
+  for (let index = 0; remainder > 0; index += 1) {
+    allocations[order[index % order.length].index] += 1
+    remainder -= 1
+  }
+  return Object.fromEntries(topics.map((topic, index) => [
+    topic.id,
+    Math.min(MAX_TOPIC_MINUTES, allocations[index] * MIN_TOPIC_MINUTES),
+  ]))
+}
+
 function criticalPoints(value?: string | null) {
   if (!value?.trim()) return []
   return value
@@ -47,6 +85,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
   const [busy, setBusy] = useState<'preview' | 'save' | null>(null)
   const [previewPulse, setPreviewPulse] = useState(false)
   const [builderStep, setBuilderStep] = useState<1 | 2 | 3 | 4>(1)
+  const [todayDate] = useState(() => new Date())
 
   useEffect(() => {
     if (initialMode) {
@@ -89,38 +128,36 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
     [courses, selected],
   )
 
-  const selectedMinutes = useMemo(
-    () => selectedTopics.reduce(
-      (total, topic) => total + (topicEstimates[topic.id] ?? topic.estimated_study_minutes),
-      0,
-    ),
-    [selectedTopics, topicEstimates],
-  )
-
-  const studyDayCount = mode === 'today' ? 1 : studyDays.length
+  const todayWeekday = (todayDate.getDay() + 6) % 7
+  const selectedDays = useMemo(() => mode === 'today'
+    ? [todayWeekday]
+    : studyDays.map((day) => WEEKDAY_MAP[day]).filter((day) => day !== undefined), [mode, studyDays, todayWeekday])
+  const studyDayCount = mode === 'today' ? 1 : countAvailableStudyDays(todayDate, horizon, selectedDays)
   const dailyMinutes = hours * 60
+  const availableMinutes = studyDayCount * dailyMinutes
+  const automaticEstimates = useMemo(() => {
+    const manuallyAssigned = selectedTopics.reduce((sum, topic) => sum + (topicEstimates[topic.id] ?? 0), 0)
+    const remainingTopics = selectedTopics.filter((topic) => topicEstimates[topic.id] === undefined)
+    return {
+      ...topicEstimates,
+      ...distributeMinutes(remainingTopics, availableMinutes - manuallyAssigned),
+    }
+  }, [selectedTopics, topicEstimates, availableMinutes])
+
+  const selectedMinutes = selectedTopics.reduce((total, topic) => total + (automaticEstimates[topic.id] ?? MIN_TOPIC_MINUTES), 0)
 
   const input = useMemo(() => {
-    const weekdayMap: Record<string, number> = { mon: 0, tue: 1, wed: 2, thu: 3, fri: 4, sat: 5, sun: 6 }
-    const todayWeekday = (new Date().getDay() + 6) % 7
-    const selectedDays = mode === 'today'
-      ? [todayWeekday]
-      : studyDays.map((day) => weekdayMap[day]).filter((day) => day !== undefined)
     return {
       mode,
       horizon_days: horizon,
       topic_ids: [...selected],
-      topic_estimates: Object.fromEntries(
-        selectedTopics
-          .filter((topic) => topicEstimates[topic.id] !== undefined)
-          .map((topic) => [topic.id, topicEstimates[topic.id]]),
-      ),
+      topic_estimates: Object.fromEntries(selectedTopics.map((topic) => [topic.id, automaticEstimates[topic.id]])),
       study_days: selectedDays,
       hours_per_day: mode === 'today'
         ? { [todayWeekday]: hours }
         : Object.fromEntries(selectedDays.map((weekday) => [weekday, hours])),
     }
-  }, [mode, horizon, selected, selectedTopics, topicEstimates, studyDays, hours])
+  }, [mode, horizon, selected, selectedTopics, automaticEstimates, selectedDays, todayWeekday, hours])
 
   async function previewIt() {
     if (busy || !selected.size) return
@@ -235,13 +272,13 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
         <Card padding="md" className="plan-capacity">
           <div>
             <strong>{selected.size} {selected.size === 1 ? 'topic' : 'topics'} selected</strong>
-            <span>{selectedMinutes} min of estimated study content</span>
+          <span>{selectedMinutes} min allocated study time</span>
           </div>
           <div>
             <strong>{dailyMinutes} min per study day</strong>
-            <span>{studyDayCount * dailyMinutes} min available in this planning window</span>
+            <span>{availableMinutes} min available in this planning window</span>
           </div>
-          <p>Havan does not discover extra topics. It only divides the time you give it across the topics you selected.</p>
+          <p>Available time is divided across your selected topics by difficulty. You can adjust any topic below.</p>
         </Card>
       )}
 
@@ -294,15 +331,15 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
               <div>
                 <span className="app-eyebrow">STEP 2 · TOPIC STUDY TIME</span>
                 <h2>Set time for each topic</h2>
-                <p className="app-meta">Choose a realistic total study time for every selected topic. Havan schedules each topic using its own estimate, so larger or harder topics can get more time.</p>
+                <p className="app-meta">Havan divides your available study time across selected topics by difficulty. Adjust any estimate to fit your needs.</p>
               </div>
               <div className="plan-capacity">
-                <div><strong>{selectedMinutes} min estimated content</strong><span>Across {selectedTopics.length} selected topics</span></div>
+                <div><strong>{selectedMinutes} min allocated study time</strong><span>Across {selectedTopics.length} selected topics</span></div>
                 <div><strong>{hours * 60} min per study day</strong><span>{studyDayCount} selected study days in this plan</span></div>
               </div>
               <div className="havan-topic-time-list" aria-label="Study time by selected topic">
                 {selectedTopics.map((topic) => {
-                  const minutes = topicEstimates[topic.id] ?? topic.estimated_study_minutes
+                  const minutes = automaticEstimates[topic.id] ?? MIN_TOPIC_MINUTES
                   return (
                     <div className="havan-topic-time-edit" key={topic.id}>
                       <div>
@@ -390,7 +427,7 @@ export function PlanBuilder({ initialMode }: PlanBuilderProps) {
                     <article className="havan-topic-insight" key={topic.id}>
                       <div className="havan-topic-insight-heading">
                         <strong>{topic.name}</strong>
-                        <span>{topic.estimated_study_minutes} min</span>
+                        <span>{automaticEstimates[topic.id] ?? MIN_TOPIC_MINUTES} min</span>
                       </div>
                       {points.length > 0 ? (
                         <ul>
